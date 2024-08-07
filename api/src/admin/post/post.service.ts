@@ -1,0 +1,67 @@
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Post } from 'src/schema/post';
+import { Report } from 'src/schema/report';
+import { UploadService } from 'src/upload/upload.service';
+
+@Injectable()
+export class PostService {
+  constructor(
+    @InjectModel(Post.name) private readonly postModel: Model<Post>,
+    @InjectModel(Report.name) private readonly reportModel: Model<Report>,
+    private readonly uploadService: UploadService
+  ) { }
+
+  async getPosts(cursor: string, search: string) {
+    let limit = 12
+    const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
+
+    const query = search
+      ? { username: { $regex: search, $options: 'i' }, ..._cursor }
+      : _cursor;
+
+    const posts = await this.postModel.aggregate([
+      { $match: query },
+      { $sort: { createdAt: -1 } },
+      { $limit: limit + 1 },
+      {
+
+        $lookup: {
+          from: 'users',
+          localField: "user",
+          foreignField: "_id",
+          as: 'user',
+        },
+      },
+    ])
+
+    console.log(cursor, posts)
+
+    const hasNextPage = posts.length > limit
+    const _posts = hasNextPage ? posts.slice(0, -1) : posts
+    const nextCursor = hasNextPage ? _posts[_posts.length - 1].createdAt.toISOString() : null
+    const results = { posts: _posts, nextCursor };
+    return results
+  }
+
+  async deletePost(postDetails: { postId: string, media: { url: string } }) {
+    if (postDetails.media) {
+      const { media } = postDetails
+      console.log(media)
+      for (let image in media) {
+        let imageUrlSplit = media[image].url.split("/")
+        let filename = imageUrlSplit[imageUrlSplit.length - 1]
+        let deleted = await this.uploadService.deleteFromS3(filename)
+        console.log(deleted)
+      }
+    }
+
+    const post = await this.postModel.findByIdAndDelete(postDetails.postId)
+    return post
+  }
+
+  async getReports() {
+    return await this.reportModel.find()
+  }
+}

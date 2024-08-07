@@ -1,0 +1,187 @@
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Counter } from 'src/schema/Counter';
+import { Promotion } from 'src/schema/promotion';
+import { Report } from 'src/schema/report';
+import { Admin } from './schema/admin';
+import { hash } from 'bcrypt';
+import { getFileType } from 'src/utils/getFileType';
+import { v4 as uuidv4 } from 'uuid'
+import { UploadService } from 'src/upload/upload.service';
+import stripe from 'src/utils/stripe.session';
+import Stripe from 'stripe';
+
+@Injectable()
+export class AdminService {
+    constructor(
+        @InjectModel(Admin.name) private readonly adminModel: Model<Admin>,
+        @InjectModel(Report.name) private readonly reportModel: Model<Report>,
+        @InjectModel(Promotion.name) private readonly campaignModel: Model<Promotion>,
+        @InjectModel(Counter.name) private readonly counterModel: Model<Counter>,
+        private readonly uploadService: UploadService
+    ) { }
+
+    async getAdmin(username: string) {
+        console.log(await this.adminModel.find())
+        return await this.adminModel.findOne({ username })
+    }
+
+
+    // use this method with caution
+    async createAdmin(adminDetails) {
+        let admin = await this.adminModel.find()
+        if (admin && admin.length > 0) {
+            throw new BadRequestException("Please remove your first admin account then create a new one")
+        }
+
+        let salt = 6
+        let hashPassword = await hash(adminDetails.password, salt)
+
+        return await this.adminModel.create({ ...adminDetails, password: hashPassword })
+    }
+
+    async getReports(cursor: string, search: string) {
+        let limit = 10
+        const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
+
+        const query = search
+            ? { username: { $regex: search, $options: 'i' }, ..._cursor }
+            : _cursor;
+        console.log(query)
+
+        const reports = await this.reportModel.aggregate([
+            { $match: query },
+            { $sort: { createdAt: -1 } },
+            { $limit: limit }
+        ])
+
+        const hasNextPage = reports.length > limit
+        const _reports = hasNextPage ? reports.slice(0, -1) : reports
+        const nextCursor = hasNextPage ? _reports[_reports.length - 1].createdAt.toISOString() : null
+
+        const results = { reports: _reports, nextCursor };
+        return results
+    }
+
+    async getCampaigns(cursor: string, search: string) {
+        let limit = 10
+        const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
+
+        const query = search
+            ? { username: { $regex: search, $options: 'i' }, ..._cursor }
+            : _cursor;
+        console.log(query)
+
+        const camapaigns = await this.reportModel.aggregate([
+            { $match: query },
+            { $sort: { createdAt: -1 } },
+            { $limit: limit }
+        ])
+
+        const hasNextPage = camapaigns.length > limit
+        const _camapaigns = hasNextPage ? camapaigns.slice(0, -1) : camapaigns
+        const nextCursor = hasNextPage ? _camapaigns[_camapaigns.length - 1].createdAt.toISOString() : null
+
+        const results = { camapaigns: _camapaigns, nextCursor };
+        return results
+    }
+
+    async partialRefund(promotionId) {
+        let campaign = await this.campaignModel.findById(promotionId)
+        if (campaign.paymentDetails.paymentIntentId) {
+            let paymentIntentId = campaign.paymentDetails.paymentIntentId
+            let refundAmount = Number(campaign.paymentDetails.totalAmount) - (Number(campaign.reach) / 1000)
+            console.log(refundAmount)
+            let refund = await this._partialRefund(paymentIntentId, refundAmount)
+            return refund
+        }
+
+        throw new InternalServerErrorException()
+    }
+
+    private async _partialRefund(paymentIntentId: string, amount: number): Promise<Stripe.Refund> {
+        try {
+            const refund = await stripe.refunds.create({
+                payment_intent: paymentIntentId,
+                amount: amount,
+            });
+            return refund;
+        } catch (error) {
+            // Handle any errors
+            throw new Error(`Error processing refund: ${error.message}`);
+        }
+    }
+
+
+    async reportPost(postId, reportData) {
+        const report = await this.reportModel.create({ reportedBy: reportData.userId, type: reportData.type, postId })
+        return report
+    }
+
+
+    async removeReport(reportId) {
+        const report = await this.reportModel.findByIdAndDelete(reportId)
+        return report
+    }
+
+    async getDashboardData() {
+        try {
+            const [counters, latestCampaigns, latestReports] = await Promise.all([
+                this.counterModel.find({
+                    name: { $in: ['users', 'campaigns', 'reports'] }
+                }).lean(),
+
+                this.campaignModel.find()
+                    .sort({ createdAt: -1 })
+                    .limit(6)
+                    .lean(),
+
+                this.reportModel.find()
+                    .sort({ createdAt: -1 })
+                    .limit(6)
+                    .lean()
+            ]);
+
+            const counts = counters.reduce((acc, counter) => {
+                acc["counter.name"] = counter.count;
+                return acc;
+            }, {});
+
+            return {
+                counts,
+                latestCampaigns,
+                latestReports
+            };
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+            throw error;
+        }
+    }
+
+
+    async updateAdmin(adminId: string, updatedDetails: any, file: Express.Multer.File) {
+        let profile: string;
+        if (file) {
+
+            const fileType = getFileType(file.mimetype)
+            const filename = uuidv4()
+
+            let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+
+            if (file.originalname == 'profile') {
+                profile = uploaded.url
+            }
+        }
+        console.log(profile)
+
+        if (profile) {
+            updatedDetails = { ...updatedDetails, profile }
+        }
+
+        console.log(adminId, updatedDetails)
+
+        let updatedAdmin = this.adminModel.findByIdAndUpdate(adminId, { $set: { ...updatedDetails } }, { returnOriginal: false })
+        return updatedAdmin
+    }
+}

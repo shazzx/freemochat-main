@@ -1,0 +1,86 @@
+import { Inject, Injectable } from "@nestjs/common";
+import {Redis} from 'ioredis'
+import { ObjectId } from "mongoose";
+
+@Injectable()
+export class CacheService {
+
+  constructor(@Inject("REDIS_CLIENT") private readonly redis: Redis) {}
+
+  async get(key: string): Promise<string> {
+    return this.redis.get(key);
+  }
+
+  async set(key: string, value: any, expireIn: number) {
+    await this.redis.set(key, value);
+  }
+
+  async invalidate(key: string) {
+    await this.redis.del(key);
+  }
+  async setUserOnline(userData: {userId: string, username: string, images: {profile: string, cover: string}, socketId: string}): Promise<void> {
+    let userId = userData.userId
+    let _userData = JSON.stringify(userData)
+    try {
+      await this.redis.hset('online_users', userId, _userData);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  async setUserOffline(userId: string): Promise<void> {
+    try {
+    await this.redis.hdel('online_users', userId);
+    } catch (error) {
+      console.log(error)      
+    }
+
+    // const friendKeys = await this.redis.keys("user:*:online_friends")
+    // for(const key of friendKeys){
+    //   await this.redis.srem(key, userId)
+    // }
+  }
+
+  async isUserOnline(userId: string): Promise<number> {
+    return await this.redis.hexists(`online_users`, userId);
+  }
+
+
+  async getOnlineFriends(friends: any): Promise<any> {
+    console.log(friends, 'gettings online friends...')
+    return await this.redis.hmget("online_users", ...friends)
+  }
+
+  // async addOnlineFriend(userId: string, friendId: string): Promise<void>{
+  //   await this.redis.sadd(`user:${userId}:online_friends`, friendId)
+  // }
+
+
+  // async removeOnlineFriend(userId: string, friendId: string): Promise<void>{
+  //   await this.redis.srem(`user:${userId}:online_friends`, friendId)
+  // }
+
+  // async getOnlineFriends(userId: string): Promise<string[]> {
+  //   return await this.redis.smembers(`user:${userId}:online_friends`);
+  // }
+
+
+
+  async getOnlineUser(userId: string): Promise<any> {
+    return await this.redis.hget("online_users", userId);
+  }
+}
+  // async cacheCommentsPage(key: string, data) {
+    // if (data.likesCount >= 100) {
+    //   await this.redis.set(`comments:${comment._id}:${page}`, JSON.stringify(comment), {
+    //     keepTtl: true,
+
+    //   });
+    // }
+  // }
+  
+  // async getCommentsPage(key: string): Promise < any > {
+  //   const cachedComment: string = await this.redis.get(key);
+  //   return cachedComment ? JSON.parse(cachedComment) : null;
+  // }
+  
