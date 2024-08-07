@@ -17,7 +17,7 @@ export class Message {
     @Prop({ type: Types.ObjectId, ref: "User" })
     sender: ObjectId
 
-    @Prop({type: String, enum: ["Text", "Voice", "File", "Video", "Audio Call", "Video Call", "Info"]})
+    @Prop({type: String, enum: ["Text", "Voice", "File", "Image", "Video", "Audio Call", "Video Call", "Info"]})
     messageType: string;
 
     @Prop({ type: Types.ObjectId })

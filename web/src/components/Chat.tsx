@@ -28,6 +28,7 @@ import { toast } from "react-toastify";
 
 function Chat({ user, recepientDetails, setChatOpen }) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
+    console.log(recepientDetails.userId)
     const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId)
     const [chatGroupInfo, setChatGroupInfo] = useState(false)
     const [inputValue, setInputValue] = useState("");
@@ -170,14 +171,26 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         // listen chat event messages
         socket.on("chat", (newMessage) => {
             console.log(newMessage)
-            setMessages((previousMessages) => [
-                ...previousMessages,
-                {
-                    recepient: newMessage?.recepientDetails?.userId,
-                    sender: newMessage?.senderDetails?.userId,
-                    content: newMessage?.body,
-                    type: newMessage?.type
-                }]);
+            queryClient.invalidateQueries({queryKey: ["messages", recepientDetails.userId]})
+
+        // queryClient.setQueryData(["messages", recepientDetails.userId], (pages: any) => {
+        //     const updatedMessages = produce(pages, (draft: any) => {
+        //         if (draft.pages[draft.pages.length - 1].messages) {
+        //             draft.pages[draft.pages.length - 1].messages.push({
+        //                 recepient: newMessage?.recepientDetails?.userId,
+        //                 sender: newMessage?.senderDetails?.targetId,
+        //                 content: newMessage?.body,
+        //                 // type: newMessage?.type
+        //             })
+        //             return draft
+        //         }
+        //         throw new Error()
+        //     })
+        //     return updatedMessages
+        // });
+            // setMessages((previousMessages) => [
+                // ...previousMessages,
+                // ]);
         });
 
         // remove all event listeners
@@ -746,10 +759,6 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                         formData.append("messageData", JSON.stringify(messageData))
                         formData.append("file", audioBlob, 'voice')
                         createMessage.mutate({ messageData: { ...messageData, media: { type: "audio", url: URL.createObjectURL(audioBlob), duration: recordingTime } }, formData })
-
-                        // console.log(messageData, recepientDetails)
-                        // let { data } = await axiosClient.post("messages/create", formData, { headers: { 'Content-Type': "multipart/form-data" } })
-                        // console.log(data)
                     }
 
                 }} />

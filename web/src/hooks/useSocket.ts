@@ -9,6 +9,7 @@ export const useSocket = (recepient) => {
     const { socket } = useAppSelector((data) => data.socket) as { socket: Socket }
     const socketRef = useRef(socket);
 
+    console.log('recepeet', recepient)
 
     useEffect(() => {
         const socket = socketRef.current;
@@ -23,6 +24,10 @@ export const useSocket = (recepient) => {
             queryClient.setQueryData(["messages", recepient], (pages: any) => {
                 const updatedMessages = produce(pages, (draft: any) => {
                     console.log(pages)
+                    if(!draft){
+                        console.log('no draft ')
+                        return null
+                    }
                     if (draft.pages[draft.pages.length - 1].messages) {
                         draft.pages[draft.pages.length - 1].messages = [...draft.pages[draft.pages.length - 1].messages, newMessage]
                         return draft

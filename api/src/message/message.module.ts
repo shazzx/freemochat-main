@@ -7,9 +7,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from 'src/auth/auth.module';
 import { UploadModule } from 'src/upload/upload.module';
 import { ChatlistModule } from 'src/chatlist/chatlist.module';
+import { ChatModule } from 'src/chat/chat.module';
 
 @Module({
-  imports: [AuthModule, ChatlistModule, forwardRef(() => UploadModule), JwtModule, MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }])],
+  imports: [AuthModule, forwardRef(() => ChatModule), ChatlistModule, forwardRef(() => UploadModule), JwtModule, MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }])],
   controllers: [MessageController],
   providers: [MessageService],
   exports: [MessageService]

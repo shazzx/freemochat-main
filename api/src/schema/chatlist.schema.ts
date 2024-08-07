@@ -32,7 +32,7 @@ export class ChatItem {
     @Prop({ type: String, enum: ["User", "Page", "ChatGroup"], required: true })
     type: string;
 
-    @Prop({type: String, enum: ["Text", "Voice", "File", "Video", "Audio Call", "Video Call", "Info"]})
+    @Prop({type: String, enum: ["Text", "Voice", "File", "Image", "Video", "Audio Call", "Video Call", "Info"]})
     messageType: string;
 
     @Prop({

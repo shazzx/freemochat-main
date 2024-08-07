@@ -211,7 +211,7 @@ export const useUpdateChatGroup = () => {
 }
 
 export function useMessages({recepientId, isChatGroup}: {recepientId: string, isChatGroup: number}): any {
-console.log(recepientId, isChatGroup)
+console.log(recepientId, isChatGroup, 'recepient id')
     const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
         queryKey: ['messages', recepientId],
         queryFn: ({ pageParam, }) => fetchMessages(pageParam, recepientId, isChatGroup),

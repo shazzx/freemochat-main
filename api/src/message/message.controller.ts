@@ -6,10 +6,14 @@ import { Types } from 'mongoose'
 import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
+import { ChatGateway } from 'src/chat/chat.gateway';
 
 @Controller('messages')
 export class MessageController {
-  constructor(private readonly messageService: MessageService, private readonly uploadService: UploadService) { }
+  constructor(
+    private readonly messageService: MessageService, private readonly uploadService: UploadService,
+    private readonly notificationGateway: ChatGateway
+  ) { }
 
   @UseInterceptors(FileInterceptor('file'))
   @Post("create")
@@ -24,7 +28,11 @@ export class MessageController {
     let uploaded: {url: string, fileName: string, fileType: string} = await this.uploadService.processAndUploadContent(file.buffer, filename, "audio")
     console.log(uploaded)
 
-    res.json(await this.messageService.createMessage({ type, content, sender: new Types.ObjectId(sender), recepient: new Types.ObjectId(recepient), media: { url: uploaded.url, ...mediaDetails }, messageType}))
+    let message = await this.messageService.createMessage({ type, content, sender: new Types.ObjectId(sender), recepient: new Types.ObjectId(recepient), media: { url: uploaded.url, ...mediaDetails }, messageType})
+
+    this.notificationGateway.sendMessage({ type, content, sender: new Types.ObjectId(sender), recepient: new Types.ObjectId(recepient), media: { url: uploaded.url, ...mediaDetails }, messageType})
+
+    res.json(message)
   }
 
   @Get()

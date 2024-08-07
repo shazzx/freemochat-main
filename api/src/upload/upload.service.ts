@@ -33,6 +33,10 @@ export class UploadService {
             credentials: {
                 accessKeyId: process.env.AWS_ACCESS_KEY_ID,
                 secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+                endpoint: "https://bucketshazz.s3.us-east-1.amazonaws.com",
+                region: 'us-east-1',
+                maxAttempts: 5,
+                retryMode: 'adaptive',
             },
         };
 
@@ -48,9 +52,9 @@ export class UploadService {
         if (contentType == 'image') {
             // processedContent = await this.optimizeImage(file);
             // console.log(processedContent, "processedContent")
-            // moderationResult = await this.moderateImage(file);
-            const uploadResult = await this.uploadToS3(file, fileName, contentType);
-            return {url: uploadResult, fileName, fileType: contentType};
+            moderationResult = await this.moderateImage(file);
+            // const uploadResult = await this.uploadToS3(file, fileName, contentType);
+            // return {url: uploadResult, fileName, fileType: contentType};
             // console.log(moderationResult, "moderationresults")
         } else if (contentType == 'video') {
             const inputInfo = await this.getVideoInfo(file);
@@ -72,6 +76,7 @@ export class UploadService {
         else {
             throw new Error('Unsupported file type');
         }
+        console.log(moderationResult)
 
         if (moderationResult.isSafe) {
             const uploadResult = await this.uploadToS3(file, fileName, contentType);
