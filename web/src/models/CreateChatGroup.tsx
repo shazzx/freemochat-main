@@ -251,7 +251,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                                                 <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md' >
                                                     <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' onClick={() => {
                                                         console.log('admin remove')
-                                                        groupMemberToggle.mutate({userId: admin._id})
+                                                        groupMemberToggle.mutate({userId: admin._id, type: "chatgroup"})
 
                                                         }}>
                                                         <RiUserUnfollowLine size={22} />
@@ -310,7 +310,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                                                     <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md'>
                                                         <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' >
                                                             <RiUserUnfollowLine size={22} onClick={() => {
-                                                        groupMemberToggle.mutate({ userId: memberData.user._id, pageIndex, userIndex })
+                                                        groupMemberToggle.mutate({ userId: memberData.user._id, pageIndex, userIndex, type: "chatgroup" })
                                                         console.log('user remove')
 
                                                             }}/>
@@ -369,7 +369,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                                             <div>
                                                 {friend.isGroupMember ? <span className="p-3 bg-card border border-accent">Member</span> :
                                                     <Button onClick={() => {
-                                                        groupMemberToggle.mutate({ userId: friend._id, pageIndex, userIndex })
+                                                        groupMemberToggle.mutate({ userId: friend._id, pageIndex, userIndex, type: "chatgroup" })
                                                     }}>
                                                         Add
                                                     </Button>}

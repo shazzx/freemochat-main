@@ -166,6 +166,10 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         })
 
 
+        socket.on("groupchat", (newMessage) => {
+            queryClient.invalidateQueries({queryKey: ["messages", recepientDetails.groupId] })
+
+        })
 
 
         // listen chat event messages
@@ -237,7 +241,12 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         });
 
 
-        socket.emit("chat", { senderDetails: { targetId: user?._id, username: user?.username }, body: inputValue, recepientDetails: { ...recepientDetails, targetId: messageData.recepeint } });
+        if(recepientDetails.type == "ChatGroup"){
+            socket.emit("groupchat", { senderDetails: { targetId: user?._id, username: user?.username }, body: inputValue, recepientDetails: { ...recepientDetails, targetId: messageData.recepeint } });
+            setInputValue("");
+            return
+        }
+        socket.emit("chat", { senderDetails: { targetId: user?._id, username: user?.username }, body: inputValue, recepientDetails: { ...recepientDetails, groupName: recepientDetails.name, targetId: messageData.recepeint } });
         setInputValue("");
     };
 

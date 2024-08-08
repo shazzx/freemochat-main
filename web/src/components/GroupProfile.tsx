@@ -62,7 +62,7 @@ function GroupProfile() {
     }
 
     const joinGroup = async () => {
-        _joinGroup.mutate({ groupDetails: {groupId: data?._id} })
+        _joinGroup.mutate({ groupDetails: {groupId: data?._id, type: "group"} })
     }
 
     const [mediaOpenModel, setMediaOpenModel] = useState(false)

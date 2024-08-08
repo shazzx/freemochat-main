@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { randomInt } from 'crypto';
-import { Model, Schema, Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { FriendService } from 'src/friend/friend.service';
 import { Story } from 'src/schema/story';
 import { UserService } from 'src/user/user.service';

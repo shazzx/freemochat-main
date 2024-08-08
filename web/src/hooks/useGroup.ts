@@ -211,7 +211,7 @@ export function useGroupMembers(groupId: string): any {
 export const useJoinGroup = () => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (groupData: {groupDetails: {groupId: string, userId?: string}}) => {
+    mutationFn: (groupData: {groupDetails: {groupId: string, userId?: string, type: string}}) => {
       return toggleJoinGroup(groupData)
     },
     onMutate: async ({ groupDetails: {groupId} }) => {

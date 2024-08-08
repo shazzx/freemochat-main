@@ -28,8 +28,8 @@ export const useGroupMemberToggle = (_userId: string, groupId: string) => {
     console.log(groupId, 'groupid')
     const queryClient = useQueryClient()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-        mutationFn: (data: { userId: string, userIndex?: number, pageIndex?: number }) => {
-            return toggleJoinGroup({groupDetails: {userId: data.userId, groupId}})
+        mutationFn: (data: { userId: string, userIndex?: number, pageIndex?: number, type: string }) => {
+            return toggleJoinGroup({groupDetails: {userId: data.userId, groupId, type: data.type}})
         },
 
         // onMutate: async ({userId, userIndex, pageIndex}) => {

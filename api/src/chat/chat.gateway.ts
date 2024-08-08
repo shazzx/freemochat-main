@@ -17,6 +17,7 @@ import { CGroupsService } from 'src/cgroups/cgroups.service';
 import { randomUUID } from 'crypto';
 import { CacheService } from 'src/cache/cache.service';
 import { FriendService } from 'src/friend/friend.service';
+import { MemberService } from 'src/member/member.service';
 
 let connectedUsers = new Map()
 
@@ -30,6 +31,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly chatGroupService: CGroupsService,
     private readonly cacheService: CacheService,
     private readonly friendService: FriendService,
+    private readonly memberService: MemberService
   ) { }
   @WebSocketServer()
   server: Server;
@@ -40,29 +42,47 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('chat')
   async handleMessage(@MessageBody() payload: { senderDetails: { targetId: Types.ObjectId, username: string }, body: string, messageType: string, recepientDetails: { username: string, type: string, targetId: string } }) {
-    
+
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.targetId))
-    console.log(recepient)
-    console.log(recepient.socketId)
-    
-    console.log(`Message received: ${payload.senderDetails.targetId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.targetId + " - " + payload.recepientDetails.username + " - " + payload.body}`);
+    console.log(recepient, recepient)
+
+    this.logger.log(`Message received: ${payload.senderDetails.targetId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.targetId + " - " + payload.recepientDetails.username + " - " + payload.body}`);
 
     try {
-      let message = await this.messageService.createMessage({ type: payload.recepientDetails.type, sender: new Types.ObjectId(payload.senderDetails.targetId), recepient: new Types.ObjectId(payload.recepientDetails.targetId), content: payload.body, gateway: true, messageType: payload.messageType, })
-      // console.log(message)
+      await this.messageService.createMessage({ type: payload.recepientDetails.type, sender: new Types.ObjectId(payload.senderDetails.targetId), recepient: new Types.ObjectId(payload.recepientDetails.targetId), content: payload.body, gateway: true, messageType: payload.messageType, })
+      const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body }, "Text")
 
+      this.server.to(recepient?.socketId).emit('chat', payload);
+      this.server.emit('chatlist', { users: chatlist })
+      return payload;
     } catch (error) {
-      console.log(error)
+      this.logger.error(error)
     }
-
-    const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body }, "Text")
-
-    this.server.to(recepient.socketId).emit('chat', payload);
-    this.server.emit('chatlist', { users: chatlist })
-    return payload;
   }
 
-  async sendMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type: string, duration: string }  }){
+
+  @SubscribeMessage('groupchat')
+  async handleGroupMessage(@MessageBody() payload: { senderDetails: { targetId: Types.ObjectId, username: string }, body: string, messageType: string, recepientDetails: { name: string, type: string, targetId: string } }) {
+
+    // let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.targetId))
+    // console.log(recepient, recepient)
+
+    this.logger.log(`Group Message received: ${payload.senderDetails.targetId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.targetId + " - Group Name: " + payload.recepientDetails.name + " - " + payload.body}`);
+
+    try {
+      await this.messageService.createMessage({ type: payload.recepientDetails.type, sender: new Types.ObjectId(payload.senderDetails.targetId), recepient: new Types.ObjectId(payload.recepientDetails.targetId), content: payload.body, gateway: true, messageType: payload.messageType, })
+      const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body }, "Text")
+
+      console.log('sending to : ', payload.recepientDetails.targetId)
+      this.server.to(payload.recepientDetails.targetId).emit('groupchat', payload);
+      this.server.emit('chatlist', { users: chatlist })
+      return payload;
+    } catch (error) {
+      this.logger.error(error)
+    }
+  }
+
+  async sendMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type: string, duration: string } }) {
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(String(messageDetails.recepient)))
     this.server.to(recepient.socketId).emit('chat', messageDetails);
   }
@@ -164,63 +184,73 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // it will be handled when a client connects to the server
   async handleConnection(socket: Socket) {
     const username = socket.handshake.auth.username
-
     this.logger.log(`Socket connected: ${socket.id}, username: ${username}`);
 
-    let user = await this.userService.getUser(username)
-    let userId = user[0]._id
+    try {
+      const user = await this.userService.getUser(username)
+      const userId = user[0]._id
 
-    if (userId) {
       await this.cacheService.setUserOnline({ username: user[0].username, userId, images: user[0].images, socketId: socket.id });
-      socket.join(userId);
-      await this.friendService.updateOnlineFriends(userId);
       await this.notifyFriendsOfOnlineStatus(userId, true);
+
+      const friends = await this.friendService.getFriends(userId);
+      const online_friends = await this.cacheService.getOnlineFriends(friends)
+      const chatlist = await this.chatlistService.getChatLists(user[0]._id.toString())
+      const groups = await this.memberService.getGroupIds(userId)
+      groups.forEach((group) => {
+        console.log('joining', group)
+        socket.join(group)
+      })
+
+      socket.emit('chatlist', { chatlist })
+      socket.emit('online_friends', { online_friends })
+
+    } catch (error) {
+      this.logger.error(`Socket Id: ${socket.id}, username: ${username}, error: ${error}`);
     }
-
-    const friends = await this.friendService.getFriends(userId);
-    let online_friends = await this.cacheService.getOnlineFriends(friends)
-    // console.log(online_friends, 'online_friends')
-    let chatlist = await this.chatlistService.getChatLists(user[0]._id.toString())
-
-    socket.emit('chatlist', { chatlist })
-    socket.emit('online_friends', { online_friends })
   }
 
   // it will be handled when a client disconnects from the server
   async handleDisconnect(socket: Socket) {
     const username = socket.handshake.auth.username
-    let user = await this.userService.getUser(username)
-    let userId = user[0]._id
+    this.logger.log(`Socket disconnected: ${socket.id}, username: ${username}`);
 
-    if (userId) {
+    try {
+      const user = await this.userService.getUser(username)
+      const userId = user[0]._id
       await this.cacheService.setUserOffline(userId);
       await this.notifyFriendsOfOnlineStatus(userId, false);
-      // console.log(await this.cacheService.getOnlineUser(userId))
-    }
 
-    this.logger.log(`Socket disconnected: ${socket.id}, username: ${username}`);
+
+    } catch (error) {
+      this.logger.error(`Socket Id: ${socket.id}, username: ${username}, error: ${error}`);
+    }
   }
 
   @SubscribeMessage('getOnlineFriends')
   async handleGetOnlineFriends(client: Socket): Promise<string[]> {
     const username = client.handshake.auth.username
-    let user = await this.userService.getUser(username)
-    let userId = user[0]._id
+    const user = await this.userService.getUser(username)
+    const userId = user[0]._id
     return await this.friendService.getOnlineFriends(userId);
   }
 
   private async notifyFriendsOfOnlineStatus(userId: string, isOnline: boolean) {
     const friends = await this.friendService.getFriends(userId);
-    console.log(friends, 'friends')
-    for (const friendId of friends) {
-      let userData = await this.cacheService.getOnlineUser(friendId)
-      if (userData) {
-        const friendData = JSON.parse(userData);
-        this.server.to(friendData.socketId).emit('friendStatus', { 
-          friendId: userId, 
-          isOnline 
-        });
+    try {
+      console.log(friends, 'friends')
+      for (const friendId of friends) {
+        let userData = await this.cacheService.getOnlineUser(friendId)
+        if (userData) {
+          const friendData = JSON.parse(userData);
+          this.server.to(friendData.socketId).emit('friendStatus', {
+            friendId: userId,
+            isOnline
+          });
+        }
       }
+    } catch (error) {
+      this.logger.error(`userId: ${userId}, error: ${error}`);
     }
   }
 }

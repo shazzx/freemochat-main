@@ -22,5 +22,6 @@ import { ChatlistModule } from 'src/chatlist/chatlist.module';
     ])],
   controllers: [MemberController],
   providers: [MemberService],
+  exports: [MemberService]
 })
 export class MemberModule { }

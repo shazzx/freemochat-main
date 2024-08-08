@@ -6,9 +6,10 @@ import { UserModule } from "src/user/user.module";
 import { CGroupsModule } from "src/cgroups/cgroups.module";
 import { CacheModule } from "src/cache/cache.module";
 import { FriendModule } from "src/friend/friend.module";
+import { MemberModule } from "src/member/member.module";
 
 @Module({
-  imports: [forwardRef(() => UserModule), MessageModule, CacheModule, FriendModule, ChatlistModule, CGroupsModule],
+  imports: [forwardRef(() => UserModule), MessageModule, MemberModule, CacheModule, FriendModule, ChatlistModule, CGroupsModule],
   providers: [ChatGateway],
   exports: [ChatGateway],
 })

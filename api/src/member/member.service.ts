@@ -90,6 +90,17 @@ export class MemberService {
         return results
     }
 
+    async getGroupIds(userId) {
+        let query = { member: new Types.ObjectId(userId), type: 'chatgroup' }
+        const groups = await this.memberModel.find( query );
+
+        
+        const _groups = await this.chatGroupModel.find({admins: query.member})
+        console.log(_groups, groups)
+
+        return [...groups.map((group) => group.groupId.toString()), ..._groups.map((group,i) => group._id.toString())]
+    }
+
     async toggleJoin(_userId, groupDetails) {
         let userId = _userId
 
@@ -117,7 +128,7 @@ export class MemberService {
         const deleteResult = await this.memberModel.deleteOne(filter);
 
         if (deleteResult.deletedCount === 0) {
-            await this.memberModel.create(filter);
+            await this.memberModel.create({...filter, type: groupDetails.type});
             let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.groupId, recepient: filter.member, content: "added in group", messageType: "Info", isGroup: true })
             await this.metricsAggregatorService.incrementCount(filter.groupId, "members", "group")
             return true;
