@@ -1,27 +1,28 @@
-import { BadRequestException, Body, Controller, Get, Post, Req, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { Request, Response } from 'express';
+import { Response } from 'express';
+
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
 import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
+import { CreateGroup, CreateGroupDTO, DeleteGroup, DeleteGroupDTO, GroupExists, GroupExistsDTO, GroupJoin, GroupJoinDTO, UpdateGroup, UpdateGroupDTO } from 'src/schema/validation/group';
+import { ZodValidationPipe } from 'src/zod-validation.pipe';
+import { Request } from 'types/global';
 
 @Controller('groups')
 export class GroupsController {
     constructor(private groupsService: GroupsService, private uploadService: UploadService) { }
 
-    // @UseGuards(JwtAuthGuard)
     @Get()
     async getGroup(@Req() req: Request, @Res() res: Response) {
         const { handle } = req.query
-        const { sub } = req.user as { sub: string }
+        const { sub } = req.user
         const group = await this.groupsService.getGroup(handle, sub)
         res.json(group)
     }
 
-
-    // @UseGuards(JwtAuthGuard)
     @Get('all')
     async getGroups(@Req() req: Request, @Res() res: Response) {
         const { sub } = req.user as { sub: string }
@@ -30,30 +31,20 @@ export class GroupsController {
         res.json(groups)
     }
 
-
-    // @UseGuards(JwtAuthGuard)
     @Post("join")
-    async toggleJoin(@Req() req) {
-        const { groupDetails } = req.body
-        const { username, sub } = req.user
+    async toggleJoin(@Body(new ZodValidationPipe(GroupJoin)) body: GroupJoinDTO, @Req() req: Request , @Res() res: Response) {
+        const { groupDetails } = body
+        const {sub} = req.user
         return await this.groupsService.toggleJoin(sub, groupDetails)
-    }
-
-
-    @Post("leave")
-    async leaveGroup(@Req() req) {
-        const { groupDetails } = req.body
-        const { username, sub } = req.user
-        // return await this.groupsService.leaveMember(sub, groupDetails)
     }
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
     async createGroup(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
-        @Body("groupData") groupData: string,
+    @Body(new ZodValidationPipe(CreateGroup, true, "groupData")) body: CreateGroupDTO,
         resposne: Response) {
-        console.log("files :", files, groupData)
-        let { groupDetails } = JSON.parse(groupData)
+        console.log("files :", files, body)
+        let { groupDetails } = body
 
         // let media = {
         //     images: [],
@@ -75,7 +66,7 @@ export class GroupsController {
             }
         }
 
-        console.log(images)
+        // console.log(images)
 
         const { username, sub } = req.user as { username: string, sub: string }
 
@@ -84,21 +75,20 @@ export class GroupsController {
     }
 
 
-    // @UseGuards(JwtAuthGuard)
     @Get("handleExists")
-    async handleExists(@Req() req: Request, @Res() res: Response) {
-        const { handle } = req.query as { handle: string }
+    async handleExists(@Query(new ZodValidationPipe(GroupExists)) query: GroupExistsDTO, @Req() req: Request, @Res() res: Response) {
+        const { handle } = query
+        console.log(handle)
         res.json(await this.groupsService.handleExists(handle))
     }
 
-
-    // @UseGuards(JwtAuthGuard)
     @UseInterceptors(FilesInterceptor('files'))
     @Post("update")
     async updateGroup(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
-        @Body("groupData") groupData: string,
+        @Body(new ZodValidationPipe(UpdateGroup, true, "groupData")) body: UpdateGroupDTO,
         resposne: Response) {
-        let { groupDetails, groupId, images } = JSON.parse(groupData)
+
+        let { groupDetails, groupId, images } = body
         console.log(groupDetails, groupId, images, 'data')
 
         let _images;
@@ -121,16 +111,13 @@ export class GroupsController {
         res.json(await this.groupsService.updateGroup(groupId, { ...groupDetails, images: { ...images, ..._images }, }))
     }
 
-
-    // @UseGuards(JwtAuthGuard)
     @Post("delete")
-    async deleteGroup(@Req() req) {
-        const { groupDetails } = req.body
-        console.log(groupDetails)
+    async deleteGroup(@Body(new ZodValidationPipe(DeleteGroup)) body: DeleteGroupDTO, @Req() req) {
+        const { groupDetails } = body
 
         if (groupDetails.images) {
             const { images } = groupDetails
-            console.log(images)
+
             for (let image in images) {
                 if (typeof images[image] == "string") {
 

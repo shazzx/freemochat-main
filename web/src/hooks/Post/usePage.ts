@@ -125,7 +125,7 @@ export const useUpdatePage = () => {
       toast.error("something went wrong")
       queryClient.setQueryData(['pages'], context.previousPages)
     },
-    onSettled: (e) => {
+    onSettled: (data, err, context) => {
       queryClient.invalidateQueries({ queryKey: ["pages"] })
     }
   })

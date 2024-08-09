@@ -15,7 +15,6 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
     // const [removeMedia, setRemoveMedia] = useState([])
     const [postMedia, setPostMedia] = useState<{ remove: string, url: string, file: string, filename: string }[]>(postDetails ? [...postDetails?.media] : [])
     const [uploading, setUploading] = useState(false)
-    console.log(selected)
 
     const content = useRef<HTMLTextAreaElement>()
 
