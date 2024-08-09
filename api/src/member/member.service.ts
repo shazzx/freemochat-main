@@ -93,10 +93,7 @@ export class MemberService {
     async getGroupIds(userId) {
         let query = { member: new Types.ObjectId(userId), type: 'chatgroup' }
         const groups = await this.memberModel.find( query );
-
-        
         const _groups = await this.chatGroupModel.find({admins: query.member})
-        console.log(_groups, groups)
 
         return [...groups.map((group) => group.groupId.toString()), ..._groups.map((group,i) => group._id.toString())]
     }

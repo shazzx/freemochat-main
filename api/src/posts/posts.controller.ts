@@ -19,6 +19,8 @@ import { Process } from '@nestjs/bull';
 import { OnQueueEvent } from '@nestjs/bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
+import { ZodValidationPipe } from 'src/zod-validation.pipe';
+import { BookmarkPost, BookmarkPostDTO, GetPost, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO } from 'src/schema/validation/post';
 
 // @Processor('media-upload')
 // export class MediaUploadConsumer extends WorkerHost {
@@ -111,47 +113,45 @@ export class PostsController {
 
 
     @Post("post")
-    async getPost(@Req() req) {
+    async getPost(@Body(new ZodValidationPipe(GetPost)) @Req() req: Request, @Res() res: Response) {
         const { postId } = req.body
-        return await this.postService.getPost(postId)
+        res.json(await this.postService.getPost(postId))
     }
 
     @Post("like")
-    async like(@Req() req) {
-        const { postId, authorId, type, targetId } = req.body
+    async like(@Body(new ZodValidationPipe(LikePost)) body: LikePostDTO, @Req() req: Request, @Res() res: Response) {
+        const { postId, authorId, type, targetId } = body
         console.log('author', authorId, targetId)
-        return await this.postService.toggleLike(req.user.sub, postId, "post", authorId, type, targetId)
+        const {sub} = req.user as {sub: string, username: string}
+        res.json(await this.postService.toggleLike(sub, postId, "post", authorId, type, targetId))
     }
 
 
-    @Post("likedBy")
-    async likedBy(@Req() req) {
-        const { postId } = req.body
-        return await this.postService.getLikedUsers({ postId })
-    }
+    // @Post("likedBy")
+    // async likedBy(@Req() req) {
+    //     const { postId } = req.body
+    //     return await this.postService.getLikedUsers({ postId })
+    // }
 
 
     @Post("likeComment")
-    async likeComment(@Req() req) {
-        const { targetId } = req.body
-        return await this.postService.toggleLike(req.user.sub, targetId, "comment")
+    async likeComment(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
+        const { targetId } = body
+        res.json(await this.postService.toggleLike(req.user.sub, targetId, "comment"))
     }
 
     @Post("likeReply")
-    async likeReply(@Req() req) {
-        const { targetId } = req.body
-        return await this.postService.toggleLike(req.user.sub, targetId, "reply")
+    async likeReply(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
+        const { targetId } = body
+        res.json(await this.postService.toggleLike(req.user.sub, targetId, "reply"))
     }
-
-
 
     @Post("bookmark")
-    async bookmarkPost(@Req() req) {
-        const { postId, targetId, type } = req.body
+    async bookmarkPost(@Body(new ZodValidationPipe(BookmarkPost)) body: BookmarkPostDTO, @Req() req, @Res() res: Response) {
+        const { postId, targetId, type } = body
         const { sub } = req.user
-        return await this.postService.toggleBookmark(sub, postId, targetId, type)
+        res.json(await this.postService.toggleBookmark(sub, postId, targetId, type))
     }
-
 
     @Get("bookmarks")
     async getBookmarkedPosts(@Req() req: Request, @Res() res: Response) {
@@ -185,7 +185,6 @@ export class PostsController {
 
     @Get("promotedPosts")
     async getPromotedPosts(@Req() req, @Res() res: Response) {
-        console.log('promotedPosts')
         res.json(await this.postService.getPromotedPosts(req.user.sub, 'pakistan'))
     }
 

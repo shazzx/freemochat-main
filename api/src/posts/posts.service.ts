@@ -549,7 +549,6 @@ export class PostsService {
         //         },
         //     },
         // ]);
-        console.log(await this.promotionModel.find())
         // const promotedPosts = await this.promotionModel.aggregate([
         //     {
         //         $match: {
@@ -883,7 +882,6 @@ export class PostsService {
                 },
             },
         ]);
-        console.log(promotedPosts)
         return promotedPosts
     }
 

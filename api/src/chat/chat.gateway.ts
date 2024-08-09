@@ -190,6 +190,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const user = await this.userService.getUser(username)
       const userId = user[0]._id
 
+      await this.cacheService.setUserOffline(userId)
       await this.cacheService.setUserOnline({ username: user[0].username, userId, images: user[0].images, socketId: socket.id });
       await this.notifyFriendsOfOnlineStatus(userId, true);
 

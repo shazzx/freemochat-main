@@ -228,7 +228,7 @@ export class CommentService {
     }
 
     async removeComment(commentDetails) {
-        if (commentDetails.audio) {
+        if (commentDetails?.audio) {
             let deleted = await this.uploadService.deleteFromS3(commentDetails.audio.src)
             console.log(deleted, 'deleted')
         }

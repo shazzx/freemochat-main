@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { UserChatListService } from 'src/chatlist/chatlist.service';
@@ -102,6 +102,10 @@ export class MessageService {
                   { $replaceRoot: { newRoot: '$allMessages' } },
             ]).sort({ createdAt: -1 } );
     
+        }
+
+        if(!messages){
+          throw new BadRequestException("Please provide proper details")
         }
 
         console.log(query)

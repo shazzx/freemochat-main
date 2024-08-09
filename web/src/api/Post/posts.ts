@@ -9,6 +9,7 @@ interface CreateCommentResponse {
   comment: string
 }
 
+
 export async function fetchFeed(pageParam) {
   const response = await axiosClient.get("posts/feed", {
     params: { cursor: pageParam }

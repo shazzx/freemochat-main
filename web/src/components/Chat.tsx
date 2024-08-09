@@ -226,6 +226,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
         // send a message to the server
         // setMessages((previousMessages) => [...previousMessages, ]);
+        
         const messageData = { recepeint: recepientDetails.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, type: recepientDetails?.type, messageType: "Text" }
         console.log(messageData)
 
