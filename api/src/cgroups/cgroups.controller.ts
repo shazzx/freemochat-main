@@ -1,39 +1,37 @@
-import { BadRequestException, Body, Controller, Get, Post, Req, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CGroupsService } from './cgroups.service';
-import { Request, Response } from 'express';
+import {  Response } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
+import { Request } from 'types/global';
+import { ZodValidationPipe } from 'src/zod-validation.pipe';
+import { CreateChatGroup, CreateChatGroupDTO, GetChatGroup, GetChatGroupDTO, UpdateChatGroup, UpdateChatGroupDTO } from 'src/schema/validation/chatagroup';
 
 @Controller('chatgroups')
 export class CGroupsController {
     constructor(private chatGroupService: CGroupsService, private uploadService: UploadService) { }
 
     @Get()
-    async getGroups(@Req() req, @Res() res: Response) {
-        const { username, sub } = req.user
+    async getGroups(@Req() req: Request, @Res() res: Response) {
+        const { sub } = req.user
         res.json(await this.chatGroupService.getGroups(sub))
     }
 
     @Get('group')
-    async getGroup(@Req() req, @Res() res: Response) {
-        const {sub} = req.user as {sub : string}
-        res.json(await this.chatGroupService.getGroup(sub, req.query.id))
+    async getGroup(@Query(new ZodValidationPipe(GetChatGroup)) query: GetChatGroupDTO, @Req() req: Request, @Res() res: Response) {
+        const {sub} = req.user
+        const {id} = query
+        res.json(await this.chatGroupService.getGroup(sub, id))
     }
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
-    async createGroup(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
-        @Body("groupData") groupData: string,
+    async createGroup(@Body(new ZodValidationPipe(CreateChatGroup, true, "groupData")) body: CreateChatGroupDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
         resposne: Response) {
-        console.log("files :", files, groupData)
-        let { groupDetails } = JSON.parse(groupData)
-
-        // let media = {
-        //     images: [],
-        //     videos: []
-        // }
+        console.log("files :", files, body)
+        let { groupDetails } = body
 
         let images;
         for (let file of files) {
@@ -52,17 +50,16 @@ export class CGroupsController {
 
         console.log(images)
 
-        const { username, sub } = req.user as { username: string, sub: string }
+        const { sub } = req.user 
 
-        // await this.uploadService.storeMedia({ username, userId: sub, type: "group" }, media)
         res.json(await this.chatGroupService.createGroup(sub, { ...groupDetails, images }))
     }
+
     @UseInterceptors(FilesInterceptor('files'))
     @Post("update")
-    async updateGroup(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
-        @Body("groupData") groupData: string,
+    async updateGroup(@Body(new ZodValidationPipe(UpdateChatGroup, true, "groupData")) body: UpdateChatGroupDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
         resposne: Response) {
-        let { groupDetails, groupId, images } = JSON.parse(groupData)
+        let { groupDetails, groupId, images } = body
         console.log(groupDetails, groupId, images, 'data')
 
         let _images;
@@ -85,7 +82,6 @@ export class CGroupsController {
         res.json(await this.chatGroupService.updateGroup(groupId, { ...groupDetails, images: { ...images, ..._images }, }))
     }
 
-    // @UseGuards(JwtAuthGuard)
     @Post("join")
     async joinChatGroup(@Req() req) {
         const { groupDetails } = req.body
@@ -93,8 +89,6 @@ export class CGroupsController {
         return await this.chatGroupService.joinChatGroup({ username, userId: sub }, groupDetails)
     }
 
-
-    // @UseGuards(JwtAuthGuard)
     @Post("leave")
     async leaveChatGroup(@Req() req) {
         const { groupDetails } = req.body
@@ -102,15 +96,6 @@ export class CGroupsController {
         return await this.chatGroupService.leaveChatGroup({ username, userId: sub }, groupDetails)
     }
 
-
-    // @Post("update")
-    // async updateGroup(@Req() req) {
-    //     const { userDetails, groupDetails } = req.body
-    //     return await this.chatGroupService.updateGroup(userDetails.username, groupDetails)
-    // }
-
-
-    // @UseGuards(JwtAuthGuard)
     @Post("delete")
     async deleteGroup(@Req() req) {
         const { groupId } = req.body
