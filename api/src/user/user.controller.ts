@@ -1,27 +1,36 @@
-import { BadRequestException, Body, Controller, Get, Post, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 import { UserService } from './user.service';
-import { Request, Response } from 'express';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Response } from 'express';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { CreateUserSchema } from 'src/dto/user/create-user.dto';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
 import { Public } from 'src/auth/public.decorator';
+import { CreateUser, CreateUserDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, UpdateUser, UpdateUserDTO } from 'src/schema/validation/user';
+import { Request } from 'types/global';
+import { Cursor, CursorDTO } from 'src/schema/validation/global';
 
 @Controller('user')
 export class UserController {
 
-    constructor(private authService: AuthService, private userService: UserService, private readonly uploadService: UploadService) { }
+    constructor(
+        private authService: AuthService,
+        private userService: UserService,
+        private readonly uploadService: UploadService
+    ) { }
+
     @Public()
     @Post("create")
-    // async createUser(@Body(new ZodValidationPipe(CreateUserSchema)) @Req() req, @Res() response: Response) {
+    async createUser(
+        @Body(new ZodValidationPipe(CreateUser)) createUserDTO: CreateUserDTO,
+        @Req() req: Request,
+        @Res() response: Response) {
 
-    async createUser(@Req() req, @Res() response: Response) {
-        const { firstname, lastname, username, email, password, confirmPassword, address, phone } = req.body
-        console.log(req.body)
+        const { firstname, lastname, username, email, password, confirmPassword, address, phone } = createUserDTO
+        console.log(createUserDTO)
+
         let user = await this.userService.createUser({ firstname, lastname, username, email, password, confirmPassword, address, phone })
 
         const payload = await this.authService.login(user)
@@ -37,8 +46,8 @@ export class UserController {
 
     @Public()
     @Post('login')
-    async loginUser(@Req() req: Request, @Res({ passthrough: true }) response: Response) {
-        const { username, password } = req.body
+    async loginUser(@Body(new ZodValidationPipe(LoginUser)) loginUserDTO: LoginUserDTO, @Req() req: Request, @Res({ passthrough: true }) response: Response) {
+        const { username, password } = loginUserDTO
         console.log(username, password)
         const user = await this.authService.validateUser(username, password)
         console.log('validate user', user)
@@ -56,7 +65,7 @@ export class UserController {
 
     @Public()
     @Post("refresh-token")
-    async refreshToken(@Req() req: Request, @Res() response: Response) {
+    async refreshToken(@Req() req: Request, @Res() res: Response) {
         const refreshToken = req.cookies.refreshToken
         if (!refreshToken) {
             return new BadRequestException("something went wrong")
@@ -64,83 +73,82 @@ export class UserController {
 
         console.log(refreshToken, 'refresh')
         const accessToken = await this.authService.refreshToken(refreshToken)
-        return response.json({ accessToken })
+        res.json({ accessToken })
     }
 
     @Get("")
-    async getUser(@Req() req: Request, @Res() response: Response) {
-        const userPayload = req.user as { username: string, sub: string }
-        console.log('getuserpaylod', userPayload)
-        const query = req.query as { username: string }
+    async getUser(@Query(new ZodValidationPipe(GetUser)) getUserDTO: GetUserDTO, @Req() req: Request, @Res() res: Response) {
+        const userPayload = req.user
+        const query = getUserDTO
+
         const username = query.username || userPayload.username
         const user = await this.userService.getUser(username, null, userPayload.sub)
-        console.log(user)
-        response.json(user[0])
+
+        res.json(user[0])
     }
 
     @Post("request")
-    async friendRequest(@Req() req: Request, @Res() response: Response) {
-        const { sub } = req.user as { username: string, sub: string }
-        const { recepientId } = req.body
+    async friendRequest(@Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, @Req() req: Request, @Res() response: Response) {
+        const { sub } = req.user
+        const { recepientId } = friendGeneralDTO
         response.json({ user: await this.userService.toggleRequest(sub, recepientId) })
     }
 
     @Post("friend/remove")
-    async removeFriend(@Req() req: Request, @Res() response: Response) {
-        const { sub } = req.user as { username: string, sub: string }
-        const { recepientId } = req.body
+    async removeFriend(@Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, @Req() req: Request, @Res() response: Response) {
+        const { sub } = req.user
+        const { recepientId } = friendGeneralDTO
         response.json(await this.userService.removeFriend(sub, recepientId))
     }
 
     @Post("request/accept")
-    async acceptRequest(@Req() req: Request, @Res() response: Response) {
-        const { sub } = req.user as { username: string, sub: string }
-        const { recepientId } = req.body
+    async acceptRequest(@Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, @Req() req: Request, @Res() response: Response) {
+        const { sub } = req.user
+        const { recepientId } = friendGeneralDTO
         response.json(await this.userService.acceptFriendRequest(sub, recepientId))
     }
 
     @Post("request/reject")
-    async rejectRequest(@Req() req: Request, @Res() response: Response) {
-        const { sub } = req.user as { username: string, sub: string }
-        const { recepientId } = req.body
+    async rejectRequest(@Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, @Req() req: Request, @Res() response: Response) {
+        const { sub } = req.user
+        const { recepientId } = friendGeneralDTO
         response.json(await this.userService.rejectFriendRequest(sub, recepientId))
     }
 
     @Post("follow")
-    async toggleFollow(@Req() req: Request, @Res() response: Response) {
-        const { sub } = req.user as { username: string, sub: string }
-        const { recepientId } = req.body
+    async toggleFollow(@Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, @Req() req: Request, @Res() response: Response) {
+        const { sub } = req.user
+        const { recepientId } = friendGeneralDTO
         response.json(await this.userService.toggleFollow(sub, recepientId))
     }
 
     @Get("friends")
-    async getFriends(@Req() req: Request, @Res() response: Response) {
-        const { userId, groupId, cursor } = req.query
-        const { sub } = req.user as { username: string, sub: string }
-        response.json(await this.userService.getFriends(cursor, userId ? userId : sub, groupId))
+    async getFriends(@Query(new ZodValidationPipe(GetFriends)) getFriendsDTO: GetFriendsDTO, @Req() req: Request, @Res() res: Response) {
+        const { userId, groupId, cursor } = getFriendsDTO
+        const { sub } = req.user
+        res.json(await this.userService.getFriends(cursor, userId ? userId : sub, groupId))
     }
 
     @Get("requests")
-    async getFriendRequests(@Req() req: Request, @Res() response: Response) {
-        const { cursor } = req.query
-        const { sub } = req.user as { username: string, sub: string }
+    async getFriendRequests(
+        @Query(new ZodValidationPipe(Cursor)) cursorDTO: CursorDTO,
+        @Req() req: Request,
+        @Res() response: Response) {
+
+        const { cursor } = cursorDTO
+        const { sub } = req.user
         response.json(await this.userService.getFriendRequests(cursor, sub))
     }
 
-    @Get("followers")
-    async getFollowers(@Req() req: Request, @Res() response: Response) {
-    }
-
-
-
     @UseInterceptors(FileInterceptor('file'))
-    // @UseGuards(JwtAuthGuard)
     @Post("update")
-    async updateUser(@Req() req: Request, @Res() res: Response, @UploadedFile() file: Express.Multer.File,
-        @Body("userData") userData: string,
-        resposne: Response) {
-        const _userData = JSON.parse(userData)
-        const { images } = _userData as { images: { profile: string, cover: string } }
+    async updateUser(
+        @Body(new ZodValidationPipe(UpdateUser, true, "userData")) updateUserDTO: UpdateUserDTO,
+        @Req() req: Request,
+        @Res() res: Response,
+        @UploadedFile() file: Express.Multer.File,) {
+
+        const { images } = updateUserDTO
         const { sub } = req.user as { sub: string, username: string }
 
         let _images = {}
@@ -159,22 +167,13 @@ export class UserController {
             }
         }
 
-        console.log(_userData)
-        let user = await this.userService.updateUser(sub, { ..._userData, images: _images })
+        console.log(updateUserDTO)
+        let user = await this.userService.updateUser(sub, { ...updateUserDTO, images: _images })
         res.json(user)
     }
 
-    // @UseGuards(JwtAuthGuard)
-    @Get("users")
-    async getUsers(@Req() req: Request, @Res() response: Response) {
-        response.json({
-            user: "user data"
-        })
-    }
-
-    // @UseGuards(JwtAuthGuard)
     @Post("delete")
     async deleteUser(@Req() req) {
-        return await this.userService.deleteUser(req.user.id)
+        return await this.userService.deleteUser(req.user.sub)
     }
 }

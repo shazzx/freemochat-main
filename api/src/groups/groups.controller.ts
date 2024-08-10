@@ -10,39 +10,36 @@ import { v4 as uuidv4 } from 'uuid'
 import { CreateGroup, CreateGroupDTO, DeleteGroup, DeleteGroupDTO, GroupExists, GroupExistsDTO, GroupJoin, GroupJoinDTO, UpdateGroup, UpdateGroupDTO } from 'src/schema/validation/group';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
 import { Request } from 'types/global';
+import { Handle, HandleDTO } from 'src/schema/validation/global';
 
 @Controller('groups')
 export class GroupsController {
     constructor(private groupsService: GroupsService, private uploadService: UploadService) { }
 
     @Get()
-    async getGroup(@Req() req: Request, @Res() res: Response) {
-        const { handle } = req.query
+    async getGroup(@Body(new ZodValidationPipe(Handle)) handleDTO: HandleDTO, @Req() req: Request, @Res() res: Response) {
+        const { handle } = handleDTO
         const { sub } = req.user
-        const group = await this.groupsService.getGroup(handle, sub)
-        res.json(group)
+        res.json(await this.groupsService.getGroup(handle, sub))
     }
 
     @Get('all')
     async getGroups(@Req() req: Request, @Res() res: Response) {
-        const { sub } = req.user as { sub: string }
-        const groups = await this.groupsService.getGroups(sub)
-        console.log(groups, 'controller lever')
-        res.json(groups)
+        const { sub } = req.user
+        res.json(await this.groupsService.getGroups(sub))
     }
 
     @Post("join")
     async toggleJoin(@Body(new ZodValidationPipe(GroupJoin)) body: GroupJoinDTO, @Req() req: Request , @Res() res: Response) {
         const { groupDetails } = body
         const {sub} = req.user
-        return await this.groupsService.toggleJoin(sub, groupDetails)
+        res.json(await this.groupsService.toggleJoin(sub, groupDetails))
     }
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
     async createGroup(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
-    @Body(new ZodValidationPipe(CreateGroup, true, "groupData")) body: CreateGroupDTO,
-        resposne: Response) {
+    @Body(new ZodValidationPipe(CreateGroup, true, "groupData")) body: CreateGroupDTO) {
         console.log("files :", files, body)
         let { groupDetails } = body
 

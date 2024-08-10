@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
 import { CreatePage, CreatePageDTO, DeletePage, DeletePageDTO, PageExists, PageExistsDTO, PageFollow, PageFollowDTO, UpdatePage, UpdatePageDTO } from 'src/schema/validation/page';
+import { Handle, HandleDTO } from 'src/schema/validation/global';
 
 
 @Controller('page')
@@ -16,14 +17,13 @@ export class PageController {
 
     }
 
-    // @UseGuards(JwtAuthGuard)
     @Get()
-    async getPage(@Req() req, @Res() res: Response) {
-        const { handle } = req.query
+    async getPage(@Query(new ZodValidationPipe(Handle)) handleDTO: HandleDTO, @Req() req, @Res() res: Response) {
+        const { handle } = handleDTO
         const { sub } = req.user
+
         const page = await this.pageService.getPage(handle, sub)
         res.json(page)
-
     }
 
     @Post("follow")
@@ -35,14 +35,14 @@ export class PageController {
 
     @Get("all")
     async getPages(@Req() req) {
-        return await this.pageService.getPages(req.user.sub)
+        const {sub} = req.user
+        return await this.pageService.getPages(sub)
     }
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
     async createPage(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
-    @Body(new ZodValidationPipe(CreatePage, true, "pageData")) body: CreatePageDTO,
-        resposne: Response) {
+    @Body(new ZodValidationPipe(CreatePage, true, "pageData")) body: CreatePageDTO) {
         console.log("files :", files, body)
         let { pageDetails } = body
 
@@ -74,13 +74,10 @@ export class PageController {
         res.json(await this.pageService.createPage({ username, sub }, { ...pageDetails, images }))
     }
 
-
-    // @UseGuards(JwtAuthGuard)
     @UseInterceptors(FilesInterceptor('files'))
     @Post("update")
     async updatePage(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
-    @Body(new ZodValidationPipe(UpdatePage, true, "pageData")) body: UpdatePageDTO,
-        resposne: Response) {
+    @Body(new ZodValidationPipe(UpdatePage, true, "pageData")) body: UpdatePageDTO) {
         let { pageDetails, pageId, images } = body
 
         let _images;

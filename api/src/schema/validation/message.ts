@@ -1,0 +1,28 @@
+import {z} from 'zod'
+import { Cursor, ValidMongoId } from './global'
+
+export const CreateMessage = z.object({
+    sender: ValidMongoId,
+    recepient: ValidMongoId,
+    content: z.string(),
+    type: z.string(),
+    messageType: z.string(),
+    mediaDetails: z.object({
+        type: z.string(),
+        duration: z.string().optional(),
+    })
+})
+
+export const GetMessages = Cursor.extend({
+    recepientId: ValidMongoId.optional(),
+    type: z.string(),
+    isChatGroup: z.number(),
+})
+
+export const RemoveMessage = z.object({
+    messageId: ValidMongoId.optional(),
+})
+
+export type CreateMessageDTO = z.infer<typeof CreateMessage>
+export type GetMessagesDTO = z.infer<typeof GetMessages>
+export type RemoveMessageDTO = z.infer<typeof RemoveMessage>

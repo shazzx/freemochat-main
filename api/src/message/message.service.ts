@@ -11,7 +11,7 @@ export class MessageService {
         private readonly chatlistService: UserChatListService,
     ) { }
 
-    async createMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type: string, duration: string }, gateway?:boolean, isGroup?: boolean, removeUser?: boolean, removeChat?: boolean  }) {
+    async createMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: string }, gateway?:boolean, isGroup?: boolean, removeUser?: boolean, removeChat?: boolean  }) {
         if(!messageDetails?.gateway){
             await this.chatlistService.createOrUpdateChatList(messageDetails.sender.toString(), messageDetails.recepient.toString(), messageDetails.type, { sender: messageDetails.sender, encryptedContent: messageDetails?.isGroup ? messageDetails.content: messageDetails.messageType }, messageDetails.messageType, messageDetails.removeUser, messageDetails.removeChat )
         }

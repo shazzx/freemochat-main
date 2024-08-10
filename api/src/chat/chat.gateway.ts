@@ -82,7 +82,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  async sendMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type: string, duration: string } }) {
+  async sendMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: string } }) {
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(String(messageDetails.recepient)))
     this.server.to(recepient.socketId).emit('chat', messageDetails);
   }

@@ -13,6 +13,10 @@ export const Cursor = z.object({
         .nullable(),
 })
 
+export const Handle = z.object({
+  handle: z.string()
+})
+
 export const ValidMongoId = z.string().refine(
     (val) => Types.ObjectId.isValid(val),
     {
@@ -20,4 +24,5 @@ export const ValidMongoId = z.string().refine(
     }
   );
 
-export type CursorDTO = z.infer<typeof Cursor>
+  export type CursorDTO = z.infer<typeof Cursor>
+  export type HandleDTO = z.infer<typeof Handle>

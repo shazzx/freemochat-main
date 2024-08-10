@@ -24,7 +24,7 @@ export class UserService {
 
     }
 
-    async createUser(user: { firstname: string, lastname: string, username: string, email: string, password: string, confirmPassword: string, address: { country: string, city: string, area: string, }, phone: string }): Promise<any> {
+    async createUser(user: { firstname: string, lastname: string, username: string, email: string, password: string, confirmPassword: string, address: { country?: string, city?: string, area?: string, }, phone: string }): Promise<any> {
         const { firstname, lastname, username, email, password, confirmPassword, address, phone } = user
 
         if (password !== confirmPassword) {
