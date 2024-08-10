@@ -111,6 +111,11 @@ export class PageService {
         return false;
     }
 
+    async getRawPage(pageId: string) {
+        return this.pageModal.findById(pageId)
+    }
+
+
     async getPages(userId) {
         let pages = await this.pageModal.find({ user: userId })
         return pages

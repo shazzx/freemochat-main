@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Req, Res, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { PageService } from './pages.service';
 import {  Response } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -64,7 +64,7 @@ export class PageController {
             { ...pageDetails, isUploaded: files.length > 0 ? false : null }
         )
 
-        this.eventEmiiter.emit("page.profiles.upload", { uploadPromise, targetId: page._id.toString() })
+        this.eventEmiiter.emit("page.profiles.upload", { uploadPromise, targetId: page._id.toString(), images: {} })
 
         res.json(page)
     }
@@ -75,22 +75,37 @@ export class PageController {
     @Body(new ZodValidationPipe(UpdatePage, true, "pageData")) body: UpdatePageDTO) {
         let { pageDetails, pageId, images } = body
 
-        let _images;
-        for (let file of files) {
-            const fileType = getFileType(file.mimetype)
-            const filename = uuidv4()
-            console.log(file)
-            let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-            console.log(uploaded)
-            if (file.originalname == 'profile') {
-                _images = { ..._images, profile: uploaded }
-            }
-            if (file.originalname == 'cover') {
-                _images = { ..._images, cover: uploaded }
-            }
+        let page = await this.pageService.getRawPage(pageId)
+
+        if(!page || page.isUploaded == false){
+            throw new BadRequestException()
         }
 
-        res.json(await this.pageService.updatePage(pageId, { ...pageDetails, images: { ...images, ..._images }, }))
+        const uploadPromise = files.map((file) => {
+            const fileType = getFileType(file.mimetype)
+            const filename = uuidv4()
+            const originalname = file.originalname
+            return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, originalname)
+        })
+
+
+        // let _images;
+        // for (let file of files) {
+        //     const fileType = getFileType(file.mimetype)
+        //     const filename = uuidv4()
+        //     console.log(file)
+        //     let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+        //     console.log(uploaded)
+        //     if (file.originalname == 'profile') {
+        //         _images = { ..._images, profile: uploaded }
+        //     }
+        //     if (file.originalname == 'cover') {
+        //         _images = { ..._images, cover: uploaded }
+        //     }
+        // }
+        this.eventEmiiter.emit("page.profiles.upload", { uploadPromise, targetId: page._id.toString(), images })
+        
+        res.json(await this.pageService.updatePage(pageId, { ...pageDetails, isUploaded: files.length > 0 ? false : null }))
     }
 
     @Get("handleExists")

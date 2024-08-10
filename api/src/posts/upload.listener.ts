@@ -54,26 +54,30 @@ export class UploadListener {
     }
 
     @OnEvent("page.profiles.upload")
-    async handleProfilesUpload({ uploadPromise, targetId }: {
+    async handleProfilesUpload({ uploadPromise, targetId, images }: {
         uploadPromise: any,
-        targetId: string
+        targetId: string,
+        images?: { profile?: string, cover?: string }
     }) {
         try {
             const files = await Promise.all(uploadPromise)
 
-            let images;
+            let _images;
             for (let file of files) {
                 if (file.originalname == 'profile') {
-                    images = { ...images, profile: file.url }
+                    _images = { ..._images, profile: file.url }
                 }
                 if (file.originalname == 'cover') {
-                    images = { ...images, cover: file.url }
+                    _images = { ..._images, cover: file.url }
                 }
             }
     
             console.log(images, targetId, files)
-            await this.pageService.updatePage(targetId, {images, isUploaded: null});
-            await this.chatGateway.uploadSuccess({isSuccess: true})
+            await this.pageService.updatePage(targetId, {images: {...images, ..._images}, isUploaded: null});
+            await this.chatGateway.uploadSuccess({isSuccess: true, target: {
+                type: "page",
+                targetId,
+            }})
         } catch (error) {
             console.error(`Error uploading media for page ${targetId}:`, error);
             await this.chatGateway.uploadSuccess({isSuccess: false})

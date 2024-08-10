@@ -23,16 +23,17 @@ export const UpdatePage = z.object({
         about: z.string()
     }),
     pageId: z.string(),
-    images: z.array(z.object({
-        url: z.string(),
-        fileName: z.string().optional()
-    })).optional(),
+    images: z.object({profile: z.string().optional(), cover: z.string().optional()}).optional(),
+    // images: z.object({
+    //     url: z.string(),
+    //     fileName: z.string().optional()
+    // }).optional(),
 })
 
 
 export const DeletePage = z.object({
     pageDetails: z.object({
-        images: z.array(z.string()).optional(),
+        images: z.object({profile: z.string().optional(), cover: z.string().optional()}).optional(),
         pageId: z.string(),
     }),
 })

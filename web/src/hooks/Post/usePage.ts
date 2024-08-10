@@ -75,9 +75,18 @@ export const useCreatePage = () => {
     onError: (err, newPage, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData(['pages'], context.previousPages)
+      const previousPages = queryClient.getQueryData(['pages'])
+
+      queryClient.setQueryData(['pages'], previousPages)
     },
-    onSettled: (e) => {
+    onSettled: (data, err, {images}) => {
+      queryClient.setQueryData(['pages'], (pages: any) => {
+        const updatedPages = produce(pages, (draft: any) => {
+          pages.splice(0, 1)
+          return [{...data, images}, ...pages]
+        })
+        return updatedPages
+      });
       // uncommeting this will refetch the comments again from the server to be in sync
       // queryClient.invalidateQueries({ queryKey: ["comments"] })
     }

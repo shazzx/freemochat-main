@@ -177,10 +177,9 @@ export function ManagePages() {
     const [modelState, setModelState] = useState(false)
 
     const removePage = async (_data) => {
-        console.log(_data.row.original._id, _data.row.index, _data.row.original.images)
-        if (_data.row.original._id == null) {
-            console.log(_data)
-            console.error("please try again later")
+        // console.log(_data.row.original._id, _data.row.index, _data.row.original.images)
+        if (_data.row.original._id == null || _data.row.original.isUploaded == false) {
+            toast.info('please wait...')
             return
         }
 
@@ -206,9 +205,11 @@ export function ManagePages() {
     }
 
     const editPage = async ({ pageDetails, imageUpload, coverImageUpload }) => {
+        console.log(editPageDetails, 'editpagedetails')
 
-        if (updatePageMutation.isPending) {
+        if (editPageDetails.isUploaded == false || updatePageMutation.isPending || !editPageDetails._id) {
             toast.info('please wait...')
+            setEditModelState(false)
             return
         }
 

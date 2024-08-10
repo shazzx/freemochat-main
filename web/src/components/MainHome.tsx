@@ -76,6 +76,11 @@ const MainHome = ({ children }: any) => {
     })
 
     socket.on("upload-status", (data) => {
+      if(data.isSuccess && data.target.type == "page"){
+        // const {targetId} = data.target
+        queryClient.invalidateQueries({ queryKey: ['page'] })
+        queryClient.invalidateQueries({ queryKey: ['pages'] })
+      }
       if(data.isSuccess){
         console.log('upload-success')
       }else{

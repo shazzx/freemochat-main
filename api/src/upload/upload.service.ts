@@ -45,7 +45,12 @@ export class UploadService {
         this.textractClient = new TextractClient(awsConfig);
     }
 
-    async processAndUploadContent(file: Buffer, fileName: string, contentType: string, originalname?: string) {
+    async processAndUploadContent(
+        file: Buffer, 
+        fileName: string, 
+        contentType: string, 
+        originalname?: string, 
+        ) {
         let processedContent: Buffer;
         let moderationResult: { isSafe: boolean; labels: string[] };
 
@@ -70,7 +75,6 @@ export class UploadService {
         } else if (contentType == 'audio') {
             const uploadResult = await this.uploadToS3(file, fileName, contentType);
             return {url: uploadResult, fileName, fileType: contentType};
-
         }
 
         else {
