@@ -89,28 +89,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage("joingroup")
   async handleJoinGroup(client: Socket, payload: { userId: string, groupId: string }) {
-    const group: any = await this.chatGroupService.joinChatGroup({ userId: payload.userId }, { groupId: payload.groupId })
-    let recepientId = this.connectedUsers.get(client.handshake.auth.username)
-    console.log(client.handshake.auth)
+    // const group: any = await this.chatGroupService.joinChatGroup({ userId: payload.userId }, { groupId: payload.groupId })
+    // let recepientId = this.connectedUsers.get(client.handshake.auth.username)
+    // console.log(client.handshake.auth)
 
-    console.log(group)
-    client.join(group._id.toString())
-    console.log(client.rooms)
-    this.server.to(recepientId).emit("joingroup", 'joined')
-    return group
+    // console.log(group)
+    // client.join(group._id.toString())
+    // console.log(client.rooms)
+    // this.server.to(recepientId).emit("joingroup", 'joined')
+    // return group
   }
 
-  @SubscribeMessage("leavegroup")
-  async handleLeaveGroup(client: Socket, payload: { userId: string, groupId: string }) {
-    const group: any = await this.chatGroupService.leaveChatGroup({ userId: payload.userId }, { groupId: payload.groupId })
-    client.leave(group._id.toString())
-    let recepientId = this.connectedUsers.get(client.handshake.auth.username)
+  // @SubscribeMessage("leavegroup")
+  // async handleLeaveGroup(client: Socket, payload: { userId: string, groupId: string }) {
+  //   const group: any = await this.chatGroupService.leaveChatGroup({ userId: payload.userId }, { groupId: payload.groupId })
+  //   client.leave(group._id.toString())
+  //   let recepientId = this.connectedUsers.get(client.handshake.auth.username)
 
-    console.log(client.rooms)
-    this.server.to(recepientId).emit("leavegroup", 'left')
+  //   console.log(client.rooms)
+  //   this.server.to(recepientId).emit("leavegroup", 'left')
 
-    return group
-  }
+  //   return group
+  // }
 
   @SubscribeMessage("chatgroup")
   handleGroupMessages(@MessageBody() payload: { userId: string, groupId: string, senderDetails: { userId: Types.ObjectId, username: string }, body: string, recepientDetails: { userId: Types.ObjectId, username: string, type: string, groupId: Types.ObjectId } }): { senderDetails: { userId: Types.ObjectId, username: string }, body: string, recepientDetails: { userId: Types.ObjectId, username: string, type: string, groupId: Types.ObjectId } } {

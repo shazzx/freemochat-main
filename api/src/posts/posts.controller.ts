@@ -1,8 +1,7 @@
-import { BadRequestException, Body, Controller, Get, Post, Req, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import {  Body, Controller, Get, Post, Query, Req, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { PostsService } from './posts.service';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Types } from 'mongoose'
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
@@ -20,7 +19,10 @@ import { OnQueueEvent } from '@nestjs/bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, GetPost, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, CreatePost, CreatePostDTO, DeletePost, DeletePostDTO, GetPost, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { Request } from 'types/global';
+import { Cursor, CursorDTO } from 'src/schema/validation/global';
+import { z } from 'zod';
 
 // @Processor('media-upload')
 // export class MediaUploadConsumer extends WorkerHost {
@@ -98,7 +100,7 @@ export class PostsController {
 
     @Get()
     async getPosts(@Req() req: Request, @Res() response: Response) {
-        const { sub } = req.user as { sub: string }
+        const { sub } = req.user
         const { type, cursor, targetId } = req.query
         console.log(targetId, 'targetid')
         response.json(await this.postService.getPosts(cursor, sub, targetId, type))
@@ -106,149 +108,15 @@ export class PostsController {
 
     @Get('feed')
     async feed(@Req() req: Request, @Res() response: Response) {
-        const user = req.user as { sub: string }
+        const user = req.user
         const cursor = req.query.cursor
         response.json(await this.postService.feed(user.sub, cursor))
     }
 
 
-    @Post("post")
-    async getPost(@Body(new ZodValidationPipe(GetPost)) @Req() req: Request, @Res() res: Response) {
-        const { postId } = req.body
-        res.json(await this.postService.getPost(postId))
-    }
-
-    @Post("like")
-    async like(@Body(new ZodValidationPipe(LikePost)) body: LikePostDTO, @Req() req: Request, @Res() res: Response) {
-        const { postId, authorId, type, targetId } = body
-        console.log('author', authorId, targetId)
-        const {sub} = req.user as {sub: string, username: string}
-        res.json(await this.postService.toggleLike(sub, postId, "post", authorId, type, targetId))
-    }
-
-
-    // @Post("likedBy")
-    // async likedBy(@Req() req) {
-    //     const { postId } = req.body
-    //     return await this.postService.getLikedUsers({ postId })
-    // }
-
-
-    @Post("likeComment")
-    async likeComment(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
-        const { targetId } = body
-        res.json(await this.postService.toggleLike(req.user.sub, targetId, "comment"))
-    }
-
-    @Post("likeReply")
-    async likeReply(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
-        const { targetId } = body
-        res.json(await this.postService.toggleLike(req.user.sub, targetId, "reply"))
-    }
-
-    @Post("bookmark")
-    async bookmarkPost(@Body(new ZodValidationPipe(BookmarkPost)) body: BookmarkPostDTO, @Req() req, @Res() res: Response) {
-        const { postId, targetId, type } = body
-        const { sub } = req.user
-        res.json(await this.postService.toggleBookmark(sub, postId, targetId, type))
-    }
-
-    @Get("bookmarks")
-    async getBookmarkedPosts(@Req() req: Request, @Res() res: Response) {
-        const { sub } = req.user as { sub: string, username: string }
-        const { cursor } = req.query
-        res.json(await this.postService.getBookmarks(cursor, sub))
-    }
-
-
-    @Post("report")
-    async reportPost(@Req() req) {
-        const { postId, reportData } = req.body
-        const { userId, type, reportMessage } = reportData
-        return await this.postService.reportPost(postId, { userId, type, reportMessage })
-    }
-
-    @Get("promotions")
-    async getPromotions(@Req() req) {
-        const { cursor, reverse } = req.query
-        console.log(reverse)
-        return await this.postService.getPromotions(cursor, req.user.sub, reverse)
-    }
-
-    @Post("promotion")
-    async promotePost(@Req() req) {
-        const { postId, promotionDetails } = req.body
-        const { reachTarget } = promotionDetails
-
-        return { sessionId: await this.postService.postPromotion(postId, req.user.sub, { reachTarget }) }
-    }
-
-    @Get("promotedPosts")
-    async getPromotedPosts(@Req() req, @Res() res: Response) {
-        res.json(await this.postService.getPromotedPosts(req.user.sub, 'pakistan'))
-    }
-
-    @Post("view")
-    async viewPost(@Req() req, @Res() res: Response) {
-        const { postId, type } = req.body
-        console.log('viewPost')
-        res.json(await this.postService.viewPost(req.user.sub, postId, type))
-    }
-
-    @Public()
-    @Post("testing/promoted")
-    async testingPromotedPosts(@Req() req, @Res() res: Response) {
-        res.json(await this.postService.testingPromotedPosts({ country: "pakistan", city: "karachi", area: "pipri" }))
-    }
-
-    @Public()
-    @Post("promotion/webhook")
-    async promotionWebhook(@Req() req, @Res() res: Response) {
-        const event = req.body;
-
-        console.log(event.type)
-        const paymentIntent: any = event.data.object;
-        const promotionId = paymentIntent.metadata
-        // Handle the event
-        switch (event.type) {
-            case 'payment_intent.succeeded':
-                const paymentIntent: any = event.data.object;
-                res.json(await this.handlePaymentIntentSucceeded(paymentIntent))
-                break;
-            case 'payment_intent.failed':
-                res.json(await this.handlePaymentIntentFailed(paymentIntent))
-
-            case 'payment_method.attached':
-                const paymentMethod = event.data.object;
-                break;
-            // ... handle other event types
-            default:
-                console.log(`Unhandled event type ${event.type}`);
-        }
-
-        // Return a response to acknowledge receipt of the event
-    }
-
-
-
-    private async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-        return await this.postService.promotionPaymentSuccess(paymentIntent.metadata.promotionId, paymentIntent.metadata.totalAmount, paymentIntent.id)
-    }
-
-    private async handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
-        return await this.postService.promotionPaymentFailure(paymentIntent.metadata.promotionId)
-    }
-
-    @Post("promotion/activationToggle")
-    async promotionActivationToggle(@Req() req, @Res() res: Response) {
-        const { postId } = req.body
-        console.log('promotion activationToggle')
-        res.json(await this.postService.promotionActivationToggle(postId))
-    }
-
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
-    async createPost(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
+    async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
         @Body("postData") postData: string) {
 
         const uploadPromise = files.map((file) => {
@@ -257,15 +125,13 @@ export class PostsController {
             return this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
         })
 
-
-        const { sub } = req.user as { username: string, sub: string }
-        const _postData = JSON.parse(postData)
-        let targetId = _postData.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(_postData.targetId)
+        const { sub } = req.user 
+        let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId)
 
         let uploadedPost = await this.postService.createPost(
             {
-                ..._postData,
-                isUploaded: files.length > 0 ? true : false,
+                ...createPostDTO,
+                isUploaded: files.length > 0 ? false : true,
                 targetId,
                 user: sub
             })
@@ -294,11 +160,9 @@ export class PostsController {
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("update")
-    async updatePost(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
-        @Body("postData") postData: string,
-        resposne: Response) {
+    async updatePost(@Body(new ZodValidationPipe(UpdatePost, true, "postData")) updatePostDto: UpdatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
         console.log("files :", files)
-        const _postData = JSON.parse(postData) as { postId: string, content: string, type: string, media: { url: string, remove?: boolean, type: string }[] }
+        const _postData = updatePostDto
 
         const media = {
             images: [],
@@ -371,18 +235,18 @@ export class PostsController {
     }
 
     @Post("delete")
-    async deletePost(@Req() req) {
-        const { postDetails } = req.body
+    async deletePost(@Body(new ZodValidationPipe(DeletePost)) deletePostDTO: DeletePostDTO, @Req() req, @Res() res: Response) {
+        const { postDetails } = deletePostDTO
         console.log(postDetails.media)
 
-        const { sub } = req.user as { sub: string }
+        const { sub } = req.user
 
         let media: { images: string[], videos: string[] } = {
             images: [],
             videos: []
         }
 
-        if (postDetails.media.length > 0) {
+        if (postDetails.media && postDetails.media.length > 0) {
             const { media } = postDetails
             for (let image in media) {
                 if (typeof media[image].url == 'string') {
@@ -394,7 +258,7 @@ export class PostsController {
             }
         }
 
-        if (postDetails.media.length > 0) {
+        if (postDetails.media && postDetails.media.length > 0) {
             for (let file in postDetails.media) {
                 if (postDetails.media[file].type == 'video') {
                     media.videos.push(postDetails.media[file].url)
@@ -409,6 +273,144 @@ export class PostsController {
 
         this.chatGateway.uploadSuccess({isSuccess: true})
 
-        return await this.postService.deletePost(postDetails.postId)
+        res.json(await this.postService.deletePost(postDetails.postId))
     }
+
+    @Post("post")
+    async getPost(@Body(new ZodValidationPipe(GetPost)) @Req() req: Request, @Res() res: Response) {
+        const { postId } = req.body
+        res.json(await this.postService.getPost(postId))
+    }
+
+    @Post("like")
+    async like(@Body(new ZodValidationPipe(LikePost)) body: LikePostDTO, @Req() req: Request, @Res() res: Response) {
+        const { postId, authorId, type, targetId } = body
+        console.log('author', authorId, targetId)
+        const {sub} = req.user as {sub: string, username: string}
+        res.json(await this.postService.toggleLike(sub, postId, "post", authorId, type, targetId))
+    }
+
+
+    // @Post("likedBy")
+    // async likedBy(@Req() req) {
+    //     const { postId } = req.body
+    //     return await this.postService.getLikedUsers({ postId })
+    // }
+
+
+    @Post("likeComment")
+    async likeComment(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
+        const { targetId } = body
+        res.json(await this.postService.toggleLike(req.user.sub, targetId, "comment"))
+    }
+
+    @Post("likeReply")
+    async likeReply(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
+        const { targetId } = body
+        res.json(await this.postService.toggleLike(req.user.sub, targetId, "reply"))
+    }
+
+    @Post("bookmark")
+    async bookmarkPost(@Body(new ZodValidationPipe(BookmarkPost)) body: BookmarkPostDTO, @Req() req, @Res() res: Response) {
+        const { postId, targetId, type } = body
+        const { sub } = req.user
+        res.json(await this.postService.toggleBookmark(sub, postId, targetId, type))
+    }
+
+    @Get("bookmarks")
+    async getBookmarkedPosts(@Query(new ZodValidationPipe(Cursor)) cursorDTO: CursorDTO, @Req() req: Request, @Res() res: Response) {
+        const { sub } = req.user
+        const { cursor } = cursorDTO
+        console.log(cursor, 'bookmarks')
+        res.json(await this.postService.getBookmarks(cursor, sub))
+    }
+
+
+    @Post("report")
+    async reportPost(@Body(new ZodValidationPipe(ReportPost)) reportPostDTO: ReportPostDTO, @Req() req, @Res() res: Response) {
+        const { postId, reportData } = reportPostDTO
+        const { userId, type, reportMessage } = reportData
+        res.json(await this.postService.reportPost(postId, { userId, type, reportMessage }))
+    }
+
+    @Get("promotions")
+    async getPromotions(@Query(new ZodValidationPipe(GetPromotions)) query: GetPromotionsDTO, @Req() req, @Res() res: Response) {
+        const { cursor, reverse } = query
+        console.log(reverse, 'get promotions')
+        res.json(await this.postService.getPromotions(cursor, req.user.sub, reverse))
+    }
+
+    @Post("promotion")
+    async promotePost(@Body(new ZodValidationPipe(PromotePost)) promotePostDTO: PromotePostDTO, @Req() req, @Res() res: Response) {
+        const { postId, promotionDetails } = promotePostDTO
+        const { reachTarget } = promotionDetails
+
+        return { sessionId: await this.postService.postPromotion(postId, req.user.sub, { reachTarget }) }
+    }
+
+    @Get("promotedPosts")
+    async getPromotedPosts(@Req() req: Request, @Res() res: Response) {
+        const {sub} = req.user
+        res.json(await this.postService.getPromotedPosts(sub, 'pakistan'))
+    }
+
+    @Post("view")
+    async viewPost(@Body(new ZodValidationPipe(ViewPost)) viewPostDTO: ViewPostDTO, @Req() req, @Res() res: Response) {
+        const { postId, type } = viewPostDTO
+        const {sub} = req.user
+        console.log('viewPost')
+        res.json(await this.postService.viewPost(sub, postId, type))
+    }
+
+    // @Public()
+    // @Post("testing/promoted")
+    // async testingPromotedPosts(@Req() req, @Res() res: Response) {
+    //     res.json(await this.postService.testingPromotedPosts({ country: "pakistan", city: "karachi", area: "pipri" }))
+    // }
+
+    @Public()
+    @Post("promotion/webhook")
+    async promotionWebhook(@Req() req, @Res() res: Response) {
+        const event = req.body;
+
+        console.log(event.type)
+        const paymentIntent: any = event.data.object;
+        const promotionId = paymentIntent.metadata
+        // Handle the event
+        switch (event.type) {
+            case 'payment_intent.succeeded':
+                const paymentIntent: any = event.data.object;
+                res.json(await this.handlePaymentIntentSucceeded(paymentIntent))
+                break;
+            case 'payment_intent.failed':
+                res.json(await this.handlePaymentIntentFailed(paymentIntent))
+
+            case 'payment_method.attached':
+                const paymentMethod = event.data.object;
+                break;
+            // ... handle other event types
+            default:
+                console.log(`Unhandled event type ${event.type}`);
+        }
+
+        // Return a response to acknowledge receipt of the event
+    }
+
+
+
+    private async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+        return await this.postService.promotionPaymentSuccess(paymentIntent.metadata.promotionId, paymentIntent.metadata.totalAmount, paymentIntent.id)
+    }
+
+    private async handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
+        return await this.postService.promotionPaymentFailure(paymentIntent.metadata.promotionId)
+    }
+
+    @Post("promotion/activationToggle")
+    async promotionActivationToggle(@Body(new ZodValidationPipe(PromotionActivation)) promotionActivationDTO: PromotionActivationDTO, @Req() req: Request, @Res() res: Response) {
+        const { postId } = promotionActivationDTO
+        console.log('promotion activationToggle')
+        res.json(await this.postService.promotionActivationToggle(postId))
+    }
+
 }

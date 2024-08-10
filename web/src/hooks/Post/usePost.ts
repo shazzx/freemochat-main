@@ -104,8 +104,11 @@ export const useCreatePost = (key: string, targetId?: string) => {
       toast.error(err.message)
       queryClient.setQueryData([key, targetId], context.previousPosts)
     },
-    onSettled: () => {
-      // queryClient.invalidateQueries({ queryKey: [key, targetId] })
+    onSettled: (data) => {
+      console.log(data)
+      if(data.isUploaded == true){
+        queryClient.invalidateQueries({ queryKey: [key, targetId] })
+      }
     }
   })
 

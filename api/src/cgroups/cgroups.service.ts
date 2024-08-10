@@ -1,10 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UserChatListService } from 'src/chatlist/chatlist.service';
 import { ChatGroup } from 'src/schema/cgroup';
 import { Types } from 'mongoose'
-import { InternalServerError } from '@aws-sdk/client-rekognition';
 import { MessageService } from 'src/message/message.service';
 
 @Injectable()
@@ -101,21 +100,21 @@ export class CGroupsService {
     }
 
 
-    async joinChatGroup(userDetails, groupDetails) {
-        let group = await this.chatGroupModel.findById(groupDetails.groupId)
-        if (!group) {
-            return new BadRequestException()
-        }
+    // async joinChatGroup(userDetails, groupDetails) {
+    //     let group = await this.chatGroupModel.findById(groupDetails.groupId)
+    //     if (!group) {
+    //         return new BadRequestException()
+    //     }
 
         // group.members.push(userDetails.userId)
         // await group.save()
         // console.log(group)
         // return group
-    }
+    // }
 
 
-    async leaveChatGroup(userDetails, groupDetails: any) {
-        let group = await this.chatGroupModel.findById(groupDetails.groupId)
+    // async leaveChatGroup(userDetails, groupDetails: any) {
+    //     let group = await this.chatGroupModel.findById(groupDetails.groupId)
 
         // if (!group) {
         //     return new BadRequestException()
@@ -134,7 +133,7 @@ export class CGroupsService {
         // group.members.splice(memberIndex)
         // await group.save()
         // return group
-    }
+    // }
 
     // async updateGroup(groupId: string, groupDetails: any) {
     //     let updatedGroup = await this.chatGroupModel.findByIdAndUpdate(groupId, groupDetails, { returnOriginal: false })

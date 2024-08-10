@@ -82,19 +82,19 @@ export class CGroupsController {
         res.json(await this.chatGroupService.updateGroup(groupId, { ...groupDetails, images: { ...images, ..._images }, }))
     }
 
-    @Post("join")
-    async joinChatGroup(@Req() req) {
-        const { groupDetails } = req.body
-        const { username, sub } = req.user
-        return await this.chatGroupService.joinChatGroup({ username, userId: sub }, groupDetails)
-    }
+    // @Post("join")
+    // async joinChatGroup(@Body(new ZodValidationPipe(JoinGroup)) body: JoinGroupDTO, @Req() req) {
+    //     const { groupDetails } = req.body
+    //     const { username, sub } = req.user
+    //     return await this.chatGroupService.joinChatGroup({ username, userId: sub }, groupDetails)
+    // }
 
-    @Post("leave")
-    async leaveChatGroup(@Req() req) {
-        const { groupDetails } = req.body
-        const { username, sub } = req.user
-        return await this.chatGroupService.leaveChatGroup({ username, userId: sub }, groupDetails)
-    }
+    // @Post("leave")
+    // async leaveChatGroup(@Req() req) {
+    //     const { groupDetails } = req.body
+    //     const { username, sub } = req.user
+    //     return await this.chatGroupService.leaveChatGroup({ username, userId: sub }, groupDetails)
+    // }
 
     @Post("delete")
     async deleteGroup(@Req() req) {

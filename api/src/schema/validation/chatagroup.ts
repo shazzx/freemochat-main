@@ -41,8 +41,16 @@ export const GetChatGroup = z.object({
     id: z.string()
 })
 
+
+export const JoinGroup = z.object({
+    groupDetails: z.object({
+        groupId: z.string(),
+    }),
+})
+
 export type GroupJoinDTO = z.infer<typeof GroupJoin>
 export type CreateChatGroupDTO = z.infer<typeof CreateChatGroup>
 export type GetChatGroupDTO = z.infer<typeof GetChatGroup>
 export type UpdateChatGroupDTO = z.infer<typeof UpdateChatGroup>
 export type DeleteGroupDTO = z.infer<typeof DeleteGroup>
+export type JoinGroupDTO = z.infer<typeof JoinGroup>
