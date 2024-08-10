@@ -46,7 +46,10 @@ export class UserController {
 
     @Public()
     @Post('login')
-    async loginUser(@Body(new ZodValidationPipe(LoginUser)) loginUserDTO: LoginUserDTO, @Req() req: Request, @Res({ passthrough: true }) response: Response) {
+    async loginUser(
+        @Body(new ZodValidationPipe(LoginUser)) loginUserDTO: LoginUserDTO, 
+        @Req() req: Request, 
+        @Res({ passthrough: true }) response: Response) {
         const { username, password } = loginUserDTO
         console.log(username, password)
         const user = await this.authService.validateUser(username, password)
@@ -65,7 +68,9 @@ export class UserController {
 
     @Public()
     @Post("refresh-token")
-    async refreshToken(@Req() req: Request, @Res() res: Response) {
+    async refreshToken(
+        @Req() req: Request, 
+        @Res() res: Response) {
         const refreshToken = req.cookies.refreshToken
         if (!refreshToken) {
             return new BadRequestException("something went wrong")
@@ -77,7 +82,10 @@ export class UserController {
     }
 
     @Get("")
-    async getUser(@Query(new ZodValidationPipe(GetUser)) getUserDTO: GetUserDTO, @Req() req: Request, @Res() res: Response) {
+    async getUser(
+        @Query(new ZodValidationPipe(GetUser)) getUserDTO: GetUserDTO, 
+        @Req() req: Request, 
+        @Res() res: Response) {
         const userPayload = req.user
         const query = getUserDTO
 
@@ -88,42 +96,60 @@ export class UserController {
     }
 
     @Post("request")
-    async friendRequest(@Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, @Req() req: Request, @Res() response: Response) {
+    async friendRequest(
+        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, 
+        @Req() req: Request, 
+        @Res() response: Response) {
         const { sub } = req.user
         const { recepientId } = friendGeneralDTO
         response.json({ user: await this.userService.toggleRequest(sub, recepientId) })
     }
 
     @Post("friend/remove")
-    async removeFriend(@Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, @Req() req: Request, @Res() response: Response) {
+    async removeFriend(
+        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, 
+        @Req() req: Request, 
+        @Res() response: Response) {
         const { sub } = req.user
         const { recepientId } = friendGeneralDTO
         response.json(await this.userService.removeFriend(sub, recepientId))
     }
 
     @Post("request/accept")
-    async acceptRequest(@Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, @Req() req: Request, @Res() response: Response) {
+    async acceptRequest(
+        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, 
+        @Req() req: Request, 
+        @Res() response: Response) {
         const { sub } = req.user
         const { recepientId } = friendGeneralDTO
         response.json(await this.userService.acceptFriendRequest(sub, recepientId))
     }
 
     @Post("request/reject")
-    async rejectRequest(@Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, @Req() req: Request, @Res() response: Response) {
+    async rejectRequest(
+        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, 
+        @Req() req: Request, 
+        @Res() response: Response) {
         const { sub } = req.user
         const { recepientId } = friendGeneralDTO
         response.json(await this.userService.rejectFriendRequest(sub, recepientId))
     }
 
     @Post("follow")
-    async toggleFollow(@Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, @Req() req: Request, @Res() response: Response) {
+    async toggleFollow(
+        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, 
+        @Req() req: Request, 
+        @Res() response: Response) {
         const { sub } = req.user
         const { recepientId } = friendGeneralDTO
         response.json(await this.userService.toggleFollow(sub, recepientId))
     }
 
     @Get("friends")
-    async getFriends(@Query(new ZodValidationPipe(GetFriends)) getFriendsDTO: GetFriendsDTO, @Req() req: Request, @Res() res: Response) {
+    async getFriends(
+        @Query(new ZodValidationPipe(GetFriends)) getFriendsDTO: GetFriendsDTO, 
+        @Req() req: Request, 
+        @Res() res: Response) {
         const { userId, groupId, cursor } = getFriendsDTO
         const { sub } = req.user
         res.json(await this.userService.getFriends(cursor, userId ? userId : sub, groupId))

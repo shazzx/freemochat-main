@@ -1,7 +1,6 @@
-import { Body, Controller, Get, Post, Query, Req, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Body, Controller, Get, Post, Query, Req, Res, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { PageService } from './pages.service';
-import { query, Request, Response } from 'express';
+import {  Response } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
@@ -9,16 +8,20 @@ import { UploadService } from 'src/upload/upload.service';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
 import { CreatePage, CreatePageDTO, DeletePage, DeletePageDTO, PageExists, PageExistsDTO, PageFollow, PageFollowDTO, UpdatePage, UpdatePageDTO } from 'src/schema/validation/page';
 import { Handle, HandleDTO } from 'src/schema/validation/global';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Request } from 'types/global';
 
 
 @Controller('page')
 export class PageController {
-    constructor(private pageService: PageService, private readonly uploadService: UploadService) {
-
-    }
+    constructor(
+        private readonly pageService: PageService, 
+        private readonly uploadService: UploadService,
+        private readonly eventEmiiter: EventEmitter2,
+    ) {}
 
     @Get()
-    async getPage(@Query(new ZodValidationPipe(Handle)) handleDTO: HandleDTO, @Req() req, @Res() res: Response) {
+    async getPage(@Query(new ZodValidationPipe(Handle)) handleDTO: HandleDTO, @Req() req: Request, @Res() res: Response) {
         const { handle } = handleDTO
         const { sub } = req.user
 
@@ -27,7 +30,7 @@ export class PageController {
     }
 
     @Post("follow")
-    async followPage(@Body(new ZodValidationPipe(PageFollow)) body: PageFollowDTO, @Req() req, @Res() res: Response) {
+    async followPage(@Body(new ZodValidationPipe(PageFollow)) body: PageFollowDTO, @Req() req: Request, @Res() res: Response) {
         const { pageDetails} = body
         const { username, sub } = req.user
         return await this.pageService.toggleFollow(sub, pageDetails)
@@ -46,32 +49,24 @@ export class PageController {
         console.log("files :", files, body)
         let { pageDetails } = body
 
-        // let media = {
-        //     images: [],
-        //     videos: []
-        // }
-
-        let images;
-        for (let file of files) {
+        const uploadPromise = files.map((file) => {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
-            console.log(file)
-            let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-            console.log(uploaded)
-            if (file.originalname == 'profile') {
-                images = { ...images, profile: uploaded }
-            }
-            if (file.originalname == 'cover') {
-                images = { ...images, cover: uploaded }
-            }
-        }
+            const originalname = file.originalname
+            return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, originalname)
+            
+        })
 
-        console.log(images)
+        const { username, sub } = req.user
 
-        const { username, sub } = req.user as { username: string, sub: string }
+        let page = await this.pageService.createPage(
+            { username, sub }, 
+            { ...pageDetails, isUploaded: files.length > 0 ? false : null }
+        )
 
-        // await this.uploadService.storeMedia({ username, userId: sub }, media)
-        res.json(await this.pageService.createPage({ username, sub }, { ...pageDetails, images }))
+        this.eventEmiiter.emit("page.profiles.upload", { uploadPromise, targetId: page._id.toString() })
+
+        res.json(page)
     }
 
     @UseInterceptors(FilesInterceptor('files'))
@@ -105,7 +100,7 @@ export class PageController {
     }
 
     @Post("delete")
-    async deletePage(@Body(new ZodValidationPipe(DeletePage)) body: DeletePageDTO, @Req() req) {
+    async deletePage(@Body(new ZodValidationPipe(DeletePage)) body: DeletePageDTO, @Req() req: Request, @Res() res: Response) {
         const { pageDetails } = body
 
         console.log(pageDetails)
@@ -121,6 +116,6 @@ export class PageController {
             }
         }
 
-        return await this.pageService.deletePage(pageDetails.pageId)
+        res.json(await this.pageService.deletePage(pageDetails.pageId))
     }
 }

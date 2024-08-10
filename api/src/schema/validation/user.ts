@@ -42,7 +42,7 @@ export const LoginUser = z.object({
 
 
 export const GetUser = z.object({
-    username: z.string(),
+    username: z.string().optional(),
 })
 
 export const FriendGeneral = z.object({

@@ -21,6 +21,10 @@ export class Page {
     @Prop()
     images: Images
 
+    // this property is only for profile images to know about background image processing 
+    @Prop({type: Boolean, default: null})
+    isUploaded: Boolean
+
     @Prop({ type: Types.ObjectId, ref: "User" })
     user: ObjectId
 

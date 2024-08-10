@@ -45,7 +45,7 @@ export class UploadService {
         this.textractClient = new TextractClient(awsConfig);
     }
 
-    async processAndUploadContent(file: Buffer, fileName: string, contentType: string) {
+    async processAndUploadContent(file: Buffer, fileName: string, contentType: string, originalname?: string) {
         let processedContent: Buffer;
         let moderationResult: { isSafe: boolean; labels: string[] };
 
@@ -80,7 +80,7 @@ export class UploadService {
 
         if (moderationResult.isSafe) {
             const uploadResult = await this.uploadToS3(file, fileName, contentType);
-            return {url: uploadResult, fileName, fileType: contentType};
+            return {url: uploadResult, fileName, fileType: contentType, originalname};
         } else {
             throw new Error('Content violates moderation policies');
         }
