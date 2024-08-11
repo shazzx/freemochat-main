@@ -9,7 +9,7 @@ export const CreateMessage = z.object({
     messageType: z.string(),
     mediaDetails: z.object({
         type: z.string(),
-        duration: z.string().optional(),
+        duration: z.number().optional(),
     })
 })
 

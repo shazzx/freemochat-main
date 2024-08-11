@@ -5,7 +5,7 @@ import { Socket } from 'socket.io-client'
 import { Button } from '@/components/ui/button'
 import { useSocket } from '@/hooks/useSocket'
 
-function VideoCallRecepient({ recepientDetails, setVideoCallState}) {
+function VideoCallRecepient({ recepientDetails, setVideoCallStatec}) {
     const socket = useSocket()
 
     useEffect(() => {

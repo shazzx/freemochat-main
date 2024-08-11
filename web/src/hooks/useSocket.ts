@@ -20,6 +20,7 @@ export const useSocket = (recepient? :string) => {
                 recepient: message?.recepientDetails?.userId,
                 sender: message?.senderDetails?.userId,
                 content: message?.body,
+                media: message?.media,
                 type: message?.type
             }
             queryClient.setQueryData(["messages", recepient], (pages: any) => {

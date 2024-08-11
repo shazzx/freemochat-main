@@ -26,12 +26,13 @@ export class MessageController {
     @Res() res: Response,
     @UploadedFile() file: Express.Multer.File) {
     let { type, content, sender, recepient, mediaDetails, messageType } = createMessageDTO
+    console.log(createMessageDTO, 'call')
 
     const fileType = getFileType(file.mimetype)
     const filename = uuidv4()
 
     console.log(fileType, filename, type, content, sender, recepient)
-    let uploaded: { url: string, fileName: string, fileType: string } = await this.uploadService.processAndUploadContent(file.buffer, filename, "audio")
+    let uploaded: { url: string, fileName: string, fileType: string } = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
     console.log(uploaded)
 
     let message = await this.messageService.createMessage({ type, content, sender: new Types.ObjectId(sender), recepient: new Types.ObjectId(recepient), media: { url: uploaded.url, ...mediaDetails }, messageType })
