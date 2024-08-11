@@ -11,13 +11,18 @@ import { CreateGroup, CreateGroupDTO, DeleteGroup, DeleteGroupDTO, GroupExists, 
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
 import { Request } from 'types/global';
 import { Handle, HandleDTO } from 'src/schema/validation/global';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Controller('groups')
 export class GroupsController {
-    constructor(private groupsService: GroupsService, private uploadService: UploadService) { }
+    constructor(
+        private groupsService: GroupsService, 
+        private uploadService: UploadService,
+        private readonly eventEmiiter: EventEmitter2,
+    ) { }
 
     @Get()
-    async getGroup(@Body(new ZodValidationPipe(Handle)) handleDTO: HandleDTO, @Req() req: Request, @Res() res: Response) {
+    async getGroup(@Query(new ZodValidationPipe(Handle)) handleDTO: HandleDTO, @Req() req: Request, @Res() res: Response) {
         const { handle } = handleDTO
         const { sub } = req.user
         res.json(await this.groupsService.getGroup(handle, sub))
@@ -43,32 +48,44 @@ export class GroupsController {
         console.log("files :", files, body)
         let { groupDetails } = body
 
+        const uploadPromise = files.map((file) => {
+            const fileType = getFileType(file.mimetype)
+            const filename = uuidv4()
+            const originalname = file.originalname
+            return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, originalname)
+            
+        })
+
         // let media = {
         //     images: [],
         //     videos: []
         // }
 
-        let images;
-        for (let file of files) {
-            const fileType = getFileType(file.mimetype)
-            const filename = uuidv4()
-            console.log(file)
-            let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-            console.log(uploaded)
-            if (file.originalname == 'profile') {
-                images = { ...images, profile: uploaded }
-            }
-            if (file.originalname == 'cover') {
-                images = { ...images, cover: uploaded }
-            }
-        }
+        
+
+        // let images;
+        // for (let file of files) {
+        //     const fileType = getFileType(file.mimetype)
+        //     const filename = uuidv4()
+        //     console.log(file)
+        //     let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+        //     console.log(uploaded)
+        //     if (file.originalname == 'profile') {
+        //         images = { ...images, profile: uploaded }
+        //     }
+        //     if (file.originalname == 'cover') {
+        //         images = { ...images, cover: uploaded }
+        //     }
+        // }
 
         // console.log(images)
+        const { sub } = req.user 
+        
+        let group = await this.groupsService.createGroup(sub, { ...groupDetails})
 
-        const { username, sub } = req.user as { username: string, sub: string }
+        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: group._id.toString(), images: {}, type: 'group' })
 
-        // await this.uploadService.storeMedia({ username, userId: sub, type: "group" }, media)
-        res.json(await this.groupsService.createGroup(sub, { ...groupDetails, images }))
+        res.json(group)
     }
 
 
@@ -86,26 +103,21 @@ export class GroupsController {
         resposne: Response) {
 
         let { groupDetails, groupId, images } = body
-        console.log(groupDetails, groupId, images, 'data')
+        let group = await this.groupsService.getRawGroup(groupId)
 
-        let _images;
-        for (let file of files) {
-            const fileType = getFileType(file.mimetype)
-            const filename = uuidv4()
-            let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-            if (file.originalname == 'profile' && typeof uploaded == 'string') {
-                _images = { ..._images, profile: uploaded }
-            }
-            if (file.originalname == 'cover' && typeof uploaded == 'string') {
-                _images = { ..._images, cover: uploaded }
-            }
-
-            if (typeof uploaded !== 'string') {
-                throw new BadRequestException()
-            }
+        if(!group || group.isUploaded == false){
+            throw new BadRequestException()
         }
 
-        res.json(await this.groupsService.updateGroup(groupId, { ...groupDetails, images: { ...images, ..._images }, }))
+        const uploadPromise = files.map((file) => {
+            const fileType = getFileType(file.mimetype)
+            const filename = uuidv4()
+            const originalname = file.originalname
+            return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, originalname)
+        })
+
+        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: group._id.toString(), images })
+        res.json(await this.groupsService.updateGroup(groupId, { ...groupDetails, isUploaded: files.length > 0 ? false : null }))
     }
 
     @Post("delete")

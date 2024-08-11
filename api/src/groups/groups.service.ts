@@ -14,7 +14,7 @@ export class GroupsService {
     ) { }
 
     async getGroup(handle, userId) {
-        console.log(handle, userId)
+        console.log(handle, 'handle', userId, 'userid')
         const group = await this.groupModal.aggregate([
             { $match: { handle } },
             {
@@ -98,6 +98,9 @@ export class GroupsService {
         return groupData
     }
 
+    async getRawGroup(groupId){
+        return await this.groupModal.findById(groupId)
+    }
 
     async getGroups(userId) {
         const groups = await this.groupModal.find({ user: new Types.ObjectId(userId) })

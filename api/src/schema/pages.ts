@@ -15,7 +15,7 @@ export class Page {
     @Prop()
     name: String;
 
-    @Prop()
+    @Prop({type: String, unique: true})
     handle: String;
 
     @Prop()

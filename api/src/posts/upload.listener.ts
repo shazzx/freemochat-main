@@ -5,20 +5,23 @@ import { MediaService } from "src/media/media.service";
 import { Types } from 'mongoose'
 import { ChatGateway } from "src/chat/chat.gateway";
 import { PageService } from "src/pages/pages.service";
+import { GroupsService } from "src/groups/groups.service";
 
 @Injectable()
 export class UploadListener {
     constructor(
         private readonly postsService: PostsService,
         private readonly pageService: PageService,
+        private readonly groupsService: GroupsService,
         private readonly mediaService: MediaService,
         private readonly chatGateway: ChatGateway
     ) { }
     @OnEvent("files.uploaded")
-    async handleFlesUploadedEvent({ uploadPromise, postId, targetId }: {
+    async handleFlesUploadedEvent({ uploadPromise, postId, targetId, type }: {
         uploadPromise: any,
         postId: string,
-        targetId: Types.ObjectId
+        targetId: Types.ObjectId,
+        type: string
     }) {
         try {
             const files = await Promise.all(uploadPromise)
@@ -40,24 +43,28 @@ export class UploadListener {
                 }
             }
 
-
             const postDetails = { media: postMedia, isUploaded: true }
             console.log(postDetails, postId, targetId, 'meda upload consumer')
             await this.postsService.updatePost(postId, postDetails);
             await this.mediaService.storeMedia(targetId, media)
-            await this.chatGateway.uploadSuccess({isSuccess: true})
+            await this.chatGateway.uploadSuccess({ isSuccess: true, target: {
+                targetId,
+                type, 
+                invalidate: "posts"
+            } })
         } catch (error) {
             console.error(`Error uploading media for post ${postId}:`, error);
             await this.postsService.deletePost(postId);
-            await this.chatGateway.uploadSuccess({isSuccess: false})
+            await this.chatGateway.uploadSuccess({ isSuccess: false })
         }
     }
 
-    @OnEvent("page.profiles.upload")
-    async handleProfilesUpload({ uploadPromise, targetId, images }: {
+    @OnEvent("profiles.upload")
+    async handleProfilesUpload({ uploadPromise, targetId, images, type }: {
         uploadPromise: any,
         targetId: string,
-        images?: { profile?: string, cover?: string }
+        images?: { profile?: string, cover?: string },
+        type: string,
     }) {
         try {
             const files = await Promise.all(uploadPromise)
@@ -71,16 +78,31 @@ export class UploadListener {
                     _images = { ..._images, cover: file.url }
                 }
             }
-    
-            console.log(images, targetId, files)
-            await this.pageService.updatePage(targetId, {images: {...images, ..._images}, isUploaded: null});
-            await this.chatGateway.uploadSuccess({isSuccess: true, target: {
-                type: "page",
-                targetId,
-            }})
+
+            if(type == 'group'){
+                await this.groupsService.updateGroup(targetId, { images: { ...images, ..._images }, isUploaded: null });
+                await this.chatGateway.uploadSuccess({
+                    isSuccess: true, target: {
+                        type: "group",
+                        targetId,
+                    }
+                })
+            }
+
+            if (type == 'page') {
+                console.log(images, targetId, files)
+                await this.pageService.updatePage(targetId, { images: { ...images, ..._images }, isUploaded: null });
+                await this.chatGateway.uploadSuccess({
+                    isSuccess: true, target: {
+                        type: "page",
+                        targetId,
+                    }
+                })
+            }
+
         } catch (error) {
-            console.error(`Error uploading media for page ${targetId}:`, error);
-            await this.chatGateway.uploadSuccess({isSuccess: false})
+                console.error(`Error uploading media for page ${targetId}:`, error);
+                await this.chatGateway.uploadSuccess({ isSuccess: false })
         }
     }
 }

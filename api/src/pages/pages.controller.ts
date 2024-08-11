@@ -64,7 +64,7 @@ export class PageController {
             { ...pageDetails, isUploaded: files.length > 0 ? false : null }
         )
 
-        this.eventEmiiter.emit("page.profiles.upload", { uploadPromise, targetId: page._id.toString(), images: {} })
+        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: page._id.toString(), images: {} })
 
         res.json(page)
     }
@@ -103,7 +103,7 @@ export class PageController {
         //         _images = { ..._images, cover: uploaded }
         //     }
         // }
-        this.eventEmiiter.emit("page.profiles.upload", { uploadPromise, targetId: page._id.toString(), images })
+        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: page._id.toString(), images })
         
         res.json(await this.pageService.updatePage(pageId, { ...pageDetails, isUploaded: files.length > 0 ? false : null }))
     }

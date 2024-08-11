@@ -137,7 +137,7 @@ export class PostsController {
             })
 
         if (files.length > 0) {
-            this.eventEmiiter.emit("files.uploaded", { uploadPromise, postId: uploadedPost._id.toString(), targetId })
+            this.eventEmiiter.emit("files.uploaded", { uploadPromise, postId: uploadedPost._id.toString(), targetId, type: createPostDTO.type })
         }
 
         // if(files.length > 0){

@@ -68,19 +68,33 @@ export const useSocket = (recepient? :string) => {
           })
       
           socket.on("upload-status", (data) => {
-            if(data.isSuccess && data.target.type == "page"){
-              // const {targetId} = data.target
-              queryClient.invalidateQueries({ queryKey: ['page'] })
-              queryClient.invalidateQueries({ queryKey: ['pages'] })
-            }
+            console.log(data, 'upload status')
             if(data.isSuccess){
               console.log('upload-success')
             }else{
               toast.error("something went wrong try agan later")
             }
+
+            if(data.isSuccess && data.target?.invalidate == "posts"){
+              queryClient.invalidateQueries({ queryKey: [data.target.type+"Posts", data.target.targetId] })
+              queryClient.invalidateQueries({ queryKey: [data.target.type+"Media", data.target.targetId] })
+            }
+
+            if(data.isSuccess && data.target.type == "page"){
+              // const {targetId} = data.target
+              queryClient.invalidateQueries({ queryKey: ['page'] })
+              queryClient.invalidateQueries({ queryKey: ['pages'] })
+              return
+            }
+            if(data.isSuccess && data.target.type == "group"){
+              // const {targetId} = data.target
+              queryClient.invalidateQueries({ queryKey: ['group'] })
+              queryClient.invalidateQueries({ queryKey: ['groups'] })
+              return
+            }
+            
               queryClient.invalidateQueries({ queryKey: ['userPosts', user._id] })
               queryClient.invalidateQueries({ queryKey: ['userMedia', user._id] })
-      
           })
       
           socket.on("chatlist", (chatlists) => {

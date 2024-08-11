@@ -23,16 +23,13 @@ export const UpdateGroup = z.object({
         description: z.string()
     }),
     groupId: z.string(),
-    images: z.array(z.object({
-        url: z.string(),
-        fileName: z.string().optional()
-    })).optional(),
+    images: z.object({profile: z.string().optional(), cover: z.string().optional()}).optional(),
 })
 
 
 export const DeleteGroup = z.object({
     groupDetails: z.object({
-        images: z.array(z.string()).optional(),
+        images: z.object({profile: z.string().optional(), cover: z.string().optional()}).optional(),
         groupId: z.string(),
     }),
 })
