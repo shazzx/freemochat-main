@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { memo, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   LocalUser,
@@ -13,21 +13,28 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Mic } from "lucide-react";
 import { MdPhone } from "react-icons/md";
-import { useAppSelector } from "@/app/hooks";
+import CallSecondsCounter from "../CallSecondsCounter";
+import { useSocket } from "@/hooks/useSocket";
 
 
-export const AgoraAudio = ({ channel, callDetails }) => {
+const AudioCall = ({ channel, callDetails, cancelCall }) => {
   console.log(callDetails)
-
   const appId = 'f41145d4d6fa4a3caab3104ac89622ec'
+  const socket = useSocket()
+
 
   const [activeConnection, setActiveConnection] = useState(true);
-
   const [micOn, setMic] = useState(true);
-
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
 
-  const navigate = useNavigate()
+
+  useEffect(() => {
+    socket.on("call-end", (data) => {
+      console.log('call end', data)
+      setActiveConnection(false)
+      cancelCall("AUDIO")
+    })
+  })
 
   useJoin(
     {
@@ -46,13 +53,6 @@ export const AgoraAudio = ({ channel, callDetails }) => {
 
   // play the remote user audio tracks
   audioTracks.forEach((track) => track.play());
-
-  useEffect(() => {
-    console.log(localMicrophoneTrack)
-  }, [localMicrophoneTrack])
-
-  const { user } = useAppSelector(state => state.user)
-  console.log(user)
 
   return (
     <div className="absolute overflow-hidden flex items-center justify-center">
@@ -84,7 +84,7 @@ export const AgoraAudio = ({ channel, callDetails }) => {
 
           </div>
           <div className='w-full sm:max-w-[420px] border-2 border-accent z-10 h-full sm:max-h-[80%] py-40 flex flex-col items-center rounded-md gap-12 bg-dark overflow-hidden'>
-            <div className='flex flex-col gap-2 items-center justify-center'>
+            <div className='flex flex-col gap-4 items-center justify-center'>
               <div className='w-28 h-28 border-2 border-accent rounded-full flex items-center justify-center bg-accent overflow-hidden'>
                 <Avatar className="flex  items-center justify-center">
                   <AvatarImage src={callDetails?.recepientDetails?.profile} alt="Avatar" />
@@ -97,20 +97,27 @@ export const AgoraAudio = ({ channel, callDetails }) => {
               </div>
             </div>
             <div >
-              <span>Calling...</span>
-            </div>  <button
-              onClick={() => {
-                setActiveConnection(false)
-                navigate('/')
-              }}>
-              <MdPhone size={32} color="red" />
-            </button>
-            <button className="btn" onClick={() => setMic(a => !a)}>
-              <Mic color="red" size={32} />
-            </button>
+              <CallSecondsCounter isCallActive={true} key={callDetails.userId} />
+            </div>
+            <div className="flex gap-12 absolute bottom-32">
+              <button className="rounded-full p-[14px] bg-red-500 hover:bg-red-400 active:bg-red-600"
+                onClick={async () => {
+                  setActiveConnection(false)
+                  socket.emit("call-end",  callDetails )
+                  cancelCall("AUDIO")
+                }}>
+                <MdPhone size={32} color="white" />
+              </button>
+
+              <button className="rounded-full p-[14px] bg-red-500" onClick={() => setMic(a => !a)}>
+                <Mic color="white" size={32} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   )
 }
+
+export default memo(AudioCall)

@@ -1,15 +1,18 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
+import { useAppSelector } from '@/app/hooks'
+import { Socket } from 'socket.io-client'
 import { Button } from '@/components/ui/button'
 import { useSocket } from '@/hooks/useSocket'
+import { MdPhone } from 'react-icons/md'
 
-function AudioCallCaller({ recepientDetails, setAudioCallCaller }) {
+function AudioCallRecepient({ recepientDetails, setAudioCallRecepient }) {
     const socket = useSocket()
 
     useEffect(() => {
 
         socket.on("call-decline", (data) => {
-            setAudioCallCaller(false)
+            setAudioCallRecepient(false)
         })
 
         return () => {
@@ -18,11 +21,19 @@ function AudioCallCaller({ recepientDetails, setAudioCallCaller }) {
         }
     }, [])
 
+
+    const callDecline = () => {
+        socket.emit('call-decline', { recepientDetails })
+        setAudioCallRecepient(false)
+    }
+
+    const callAccept = () => {
+        socket.emit('call-accept', { type: "AUDIO", recepientDetails })
+    }
+
     return (
         <div className='fixed inset-0 z-50  w-screen overflow-hidden h-screen flex items-center justify-center'>
-            <div className='absolute backdrop-blur-[1.5px] w-screen h-screen' onClick={() => {
-                setAudioCallCaller(false)
-            }}>
+            <div className='absolute backdrop-blur-[1.5px] w-screen h-screen'>
 
             </div>
             <div className='w-full sm:max-w-[420px] border-2 border-accent z-10 h-full sm:max-h-[80%] py-40 flex flex-col items-center rounded-md gap-12 bg-dark overflow-hidden'>
@@ -41,14 +52,18 @@ function AudioCallCaller({ recepientDetails, setAudioCallCaller }) {
                 <div >
                     <span>Calling...</span>
                 </div>
-                <div className='flex gap-2'>
-                    <Button onClick={() => {
-                        setAudioCallCaller(false)
-                    }} className='bg-destructive hover:bg-red-800 cursor-pointer'>Cancel</Button>
+                <div className="flex gap-12 absolute bottom-32">
+                    <Button type="button" className="rounded-full p-4 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={callDecline}>                
+                        <MdPhone size={32} color="white" />
+                    </Button>
+
+                    <Button className="rounded-full p-4 bg-green-500 hover:bg-green-400 active:bg-green-600" type="button" onClick={callAccept} >
+                        <MdPhone size={32} color="white" />
+                    </Button>
                 </div>
             </div>
         </div>
     )
 }
 
-export default AudioCallCaller
+export default AudioCallRecepient

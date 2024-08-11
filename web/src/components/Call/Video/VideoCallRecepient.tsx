@@ -3,9 +3,10 @@ import React, { useEffect } from 'react'
 import { useAppSelector } from '@/app/hooks'
 import { Socket } from 'socket.io-client'
 import { Button } from '@/components/ui/button'
+import { useSocket } from '@/hooks/useSocket'
 
-function VideoCallRecepient({ recepientDetails, setVideoCallState }) {
-    const { socket } = useAppSelector((state) => state.socket) as { socket: Socket }
+function VideoCallRecepient({ recepientDetails, setVideoCallState}) {
+    const socket = useSocket()
 
     useEffect(() => {
 
@@ -13,13 +14,13 @@ function VideoCallRecepient({ recepientDetails, setVideoCallState }) {
             setVideoCallState(false)
         })
 
-        socket.on("call-cancel", (data) => {
+        socket.on("call-end", (data) => {
             setVideoCallState(false)
         })
 
         return () => {
-            socket.off("connect");
             socket.off("call-decline");
+            socket.off("call-end");
         }
     }, [])
 

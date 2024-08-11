@@ -142,29 +142,39 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage("call-decline")
   async handleCallDecline(@MessageBody() payload) {
-    const recepientId = this.connectedUsers.get(payload.recepientDetails.username)
+    console.log(payload, 'decline payload')
+    if(payload.recepientDetails && !payload.recepientDetails.userId){
+      throw new BadRequestException('recepient id required')
+    }
+    let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
+
     console.log(payload, 'declined')
 
-    this.server.to(recepientId).emit("call-decline", { status: "DECLINED", payload })
+    this.server.to(recepient?.socketId).emit("call-decline", { status: "DECLINED", payload })
   }
 
   @SubscribeMessage("call-accept")
   async handleCallAccept(@MessageBody() payload) {
-    const recepientId = this.connectedUsers.get(payload.recepientDetails.username)
+    if(payload.recepientDetails && !payload.recepientDetails.userId){
+      throw new BadRequestException('recepient id required')
+    }
+    let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
     console.log(payload, 'accepted')
     const uuid = '3u293urasdjkof'
+
 
     this.server.emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.recepientDetails })
   }
 
-  @SubscribeMessage("call-cancel")
+  @SubscribeMessage("call-end")
   async cancelCall(@MessageBody() payload) {
+    if(payload.recepientDetails && !payload.recepientDetails.userId){
+      throw new BadRequestException('recepient id required')
+    }
     console.log(payload)
-    const recepientId = this.connectedUsers.get(payload.recepientDetails.username)
-    console.log(recepientId)
-    console.log(recepientId)
+    let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
 
-    this.server.to(recepientId).emit("call-cancel", { status: "CANCELED", payload })
+    this.server.emit("call-end", { status: "END", payload })
   }
 
   async handleNotifications(event) {

@@ -10,8 +10,8 @@ import { Socket } from "socket.io-client";
 import { Button } from "./ui/button";
 import VideoCallRecepient from "./Call/Video/VideoCallRecepient";
 import VideoCallCaller from "./Call/Video/VideoCallCaller";
-import AudioCallCaller from "./Call/Video/Audio/AudioCallCaller";
-import AudioCallRecepient from "./Call/Video/Audio/AudioCallRecepient";
+import AudioCallCaller from "./Call/Audio/AudioCallCaller";
+import AudioCallRecepient from "./Call/Audio/AudioCallRecepient";
 // import { isMobile } from 'react-device-detect'
 import Agora from "./Call/agora/AgoraRTC";
 import { DropdownUser } from "./Dropdowns/DropdownUser";
@@ -25,6 +25,8 @@ import { produce } from "immer";
 import { useSocket } from "@/hooks/useSocket";
 import CreateChatGroup from "@/models/CreateChatGroup";
 import { toast } from "react-toastify";
+import AudioCall from "./Call/Audio/AudioCall";
+import VideoCall from "./Call/Video/VideoCall";
 
 function Chat({ user, recepientDetails, setChatOpen }) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
@@ -141,6 +143,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
             console.log(data)
             if (data.type == 'VIDEO') {
                 setVideoCallState("CALLING")
+                setCallDetails(data)
             }
             if (data.type == 'AUDIO') {
                 setAudioCallState("CALLING")
@@ -154,16 +157,21 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         })
 
         socket.on("call-accept", (data) => {
-            console.log(data)
-            setAudioCallState("ACCEPTED")
-            setCallDetails(data)
-            setAudioCallCallerState(false)
+            if(data?.type == "AUDIO"){
+                setAudioCallState("ACCEPTED")
+                setCallDetails(data)
+                setAudioCallCallerState(false)
+            }else{
+                setVideoCallState("ACCEPTED")
+                setCallDetails(data)
+                setVideoCallCallerState(false)
+            }
         })
 
 
-        socket.on("call-cancel", (data) => {
-            console.log(data)
-        })
+        // socket.on("call-end", (data) => {
+        //     console.log(data)
+        // })
 
 
         socket.on("groupchat", (newMessage) => {
@@ -173,9 +181,9 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
 
         // listen chat event messages
-        socket.on("chat", (newMessage) => {
-            console.log(newMessage)
-            queryClient.invalidateQueries({queryKey: ["messages", recepientDetails.userId]})
+        // socket.on("chat", (newMessage) => {
+        //     console.log(newMessage)
+            // queryClient.invalidateQueries({queryKey: ["messages", recepientDetails.userId]})
 
         // queryClient.setQueryData(["messages", recepientDetails.userId], (pages: any) => {
         //     const updatedMessages = produce(pages, (draft: any) => {
@@ -195,7 +203,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
             // setMessages((previousMessages) => [
                 // ...previousMessages,
                 // ]);
-        });
+        // });
 
         // remove all event listeners
         return () => {
@@ -252,7 +260,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     };
 
 
-    // audio video calling
+    // audio / video calling
     const initiateAudioCall = useCallback(() => {
         setAudioCallCallerState(true)
         socket.emit("initiate-call", { type: 'AUDIO', userDetails: { userId: user?._id, username: user?.username, profile: user?.images?.profile }, recepientDetails })
@@ -261,7 +269,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
     const initiateVideoCall = useCallback(() => {
         setVideoCallCallerState(true)
-        // socket.emit("initiate-call", { type: 'VIDEO', userDetails: { userId: user?._id, username: user?.username, profile: user?.images?.profile }, recepientDetails })
+        socket.emit("initiate-call", { type: 'VIDEO', userDetails: { userId: user?._id, username: user?.username, profile: user?.images?.profile }, recepientDetails })
     }, [])
 
     // chat method
@@ -330,6 +338,29 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         setChatGroupInfo(false)
     }
 
+    let cancelCall = async(type) => {
+        try {
+            if(type == "AUDIO"){
+                console.log('audio call end')
+
+                setAudioCallCallerState(false)
+                setAudioCallState("NEUTRAL")
+                const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaStream.getTracks().forEach(track => track.stop())
+            }else{
+                console.log('video call end')
+                setVideoCallCallerState(false)
+                setVideoCallState("NEUTRAL")
+                const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                mediaStream.getTracks().forEach(track => track.stop())
+            }
+            setCallDetails(null)
+        } catch (error) {
+            console.log(error)
+            // location.reload()
+        }
+    }
+
 
     return (
         <div className='flex flex-col min-w-[380px] h-full w-full' >
@@ -362,8 +393,14 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
 
             {/* accepted call */}
-            {audioCallState == "ACCEPTED" && callDetails.type == "AUDIO" && callDetails.channel &&
-                <Agora callDetails={callDetails} channel={callDetails.channel} />
+            {audioCallState == "ACCEPTED" && callDetails?.type == "AUDIO" && callDetails?.channel &&
+                <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={AudioCall} />
+            }
+
+
+            {/* accepted call */}
+            {videoCallState == "ACCEPTED" && callDetails?.type == "VIDEO" && callDetails?.channel &&
+                <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} />
             }
             
             <div className='flex items-center justify-between p-3 border border-muted'>

@@ -15,6 +15,7 @@ export const useSocket = (recepient? :string) => {
         const socket = socketRef.current;
 
         socket.on('chat', (message) => {
+          console.log(message, 'new message')
             let newMessage = {
                 recepient: message?.recepientDetails?.userId,
                 sender: message?.senderDetails?.userId,
@@ -90,7 +91,7 @@ export const useSocket = (recepient? :string) => {
           return () => {
             socket.off("connect");
             socket.off("disconnect");
-            socket.off("chat");
+            // socket.off("chat");
             socket.off("chatlist");
             socket.off("upload-status");
             socket.off("friendOnlineStatusChange");

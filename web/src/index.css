@@ -137,3 +137,122 @@
 audio::-moz-progress-bar {
   display: none;
 }
+
+
+
+#controlsToolbar {
+  bottom: 35px;
+  right: 35px;
+  position: fixed;
+  z-index: 99;
+}
+
+#mediaControls button {
+  margin: 0 5px 7.5px;
+  padding: 10px;
+}
+
+#mediaControls button:hover {
+  border-color: #099DFD;
+}
+
+
+#endConnection {
+  border-color: red;
+  opacity: 50%;
+}
+
+#endConnection:hover {
+  background-color: red;
+  border-color: white;
+  opacity: 100%;
+}
+
+#videoCallContainer{
+  overflow: hidden;
+  padding: 40px;
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+}
+
+
+.remote-audio-container {
+  position: relative;
+  max-width: 1200px;
+  min-width: 360px;
+  overflow: hidden;
+}
+
+#audioCallContainer{
+  overflow: hidden;
+  padding: 40px;
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+}
+
+#localAudio {
+  width: 50vw;
+  aspect-ratio: 16/9;
+  max-width: 480px;
+  min-width: 360px;
+  position: fixed;
+  right: 25px;
+  bottom: 25px;
+  margin: 0;
+}
+
+.remote-audio-container {
+  position: relative;
+  max-width: 1200px;
+  min-width: 360px;
+  overflow: hidden;
+}
+
+.mainContainer{
+  width: 100vw;
+  height: 100vh;
+}
+
+
+/* video call */
+
+/* remote user */
+.remoteVideoContainer{
+  display: flex;
+  background-color: black;
+  align-items: center;
+  justify-content: center;
+  width: inherit;
+  height: inherit;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px;
+}
+
+.remote-video-container-mobile{
+  aspect-ratio: 9/16;
+  height: 100%;
+}
+
+.remote-video-container{
+  border-radius: 6px;
+  overflow: hidden;
+  aspect-ratio: 9/5;
+  width: 95%;
+}
+
+/* local video */
+
+#localVideo {
+  box-sizing: border-box;
+  aspect-ratio: 16/9;
+  min-width: 360px;
+  border-radius: 6px;
+  overflow: hidden;
+  position: fixed;
+  right: 25px;
+  bottom: 25px;
+  margin: 0;
+}
