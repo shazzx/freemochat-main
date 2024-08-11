@@ -128,6 +128,7 @@ console.log(userId, groupId, 'fetchn friend')
     const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
         queryKey: ['userFriends', userId],
         queryFn: ({ pageParam, }) => userFriends(pageParam, userId, groupId),
+        enabled: !!groupId,
         refetchInterval: false,
         refetchOnWindowFocus: false,
         refetchOnMount: true,

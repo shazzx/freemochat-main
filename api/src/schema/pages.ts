@@ -10,7 +10,7 @@ class Images {
     cover: String
 }
 
-@Schema()
+@Schema({timestamps: true})
 export class Page {
     @Prop()
     name: String;

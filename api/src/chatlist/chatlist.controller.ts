@@ -7,7 +7,6 @@ import { UserChatListService } from './chatlist.service';
 export class ChatlistController {
     constructor(private readonly chatlistService: UserChatListService) { }
 
-    // @UseGuards(JwtAuthGuard)
     @Get("")
     async getChatList(@Req() req: Request, @Res() response: Response) {
         const { sub } = req.user as { username: string, sub: string }

@@ -36,79 +36,78 @@ import { socketConnect } from "@/websocket/socket.io"
 import { toast } from "react-toastify"
 import { useDispatch } from "react-redux"
 import { setSocket } from "@/app/features/user/socketSlice"
+import { useSocket } from "@/hooks/useSocket"
 
 
 const MainHome = ({ children }: any) => {
   const { user } = useAppSelector((state) => state.user)
-  const queryClient = useQueryClient()
-  const socket = socketConnect(user.username)
-  const dispatch = useAppDispatch()
 
-  useEffect(() => {
-    socket.on("connect", () => { // fire when we have connection
-      console.log("Socket connected");
-      dispatch(setSocket(socket))
-    });
+  // useEffect(() => {
+  //   socket.on("connect", () => { // fire when we have connection
+  //     console.log("Socket connected");
+  //     dispatch(setSocket(socket))
+  //   });
 
-    socket.on("disconnect", () => { // fire when socked is disconnected
-      console.log("Socket disconnected");
-    });
+    // socket.on("disconnect", () => { // fire when socked is disconnected
+    //   console.log("Socket disconnected");
+    // });
 
-    socket.on("notification", (data) => {
-      console.log(data)
-    })
+    // socket.on("notification", (data) => {
+    //   console.log(data)
+    // })
 
-    socket.on("users", (users) => {
-      console.log(users)
-    })
+    // socket.on("users", (users) => {
+    //   console.log(users)
+    // })
 
-    socket.on("getOnlineFriends", (onlineFriends) => {
-      console.log(onlineFriends)
-    })
+    // socket.on("getOnlineFriends", (onlineFriends) => {
+    //   console.log(onlineFriends)
+    // })
 
-    socket.on("friendOnlineStatusChange", (statusChange) => {
-      console.log(statusChange)
-    })
+    // socket.on("friendOnlineStatusChange", (statusChange) => {
+    //   console.log(statusChange)
+    // })
     
 
-    socket.on("friendStatus", (data) => {
-      console.log(data, 'friend status')
-    })
+    // socket.on("friendStatus", (data) => {
+    //   console.log(data, 'friend status')
+    // })
 
-    socket.on("upload-status", (data) => {
-      if(data.isSuccess && data.target.type == "page"){
-        // const {targetId} = data.target
-        queryClient.invalidateQueries({ queryKey: ['page'] })
-        queryClient.invalidateQueries({ queryKey: ['pages'] })
-      }
-      if(data.isSuccess){
-        console.log('upload-success')
-      }else{
-        toast.error("something went wrong try agan later")
-      }
-        queryClient.invalidateQueries({ queryKey: ['userPosts', user._id] })
-        queryClient.invalidateQueries({ queryKey: ['userMedia', user._id] })
+    // socket.on("upload-status", (data) => {
+    //   if(data.isSuccess && data.target.type == "page"){
+    //     // const {targetId} = data.target
+    //     queryClient.invalidateQueries({ queryKey: ['page'] })
+    //     queryClient.invalidateQueries({ queryKey: ['pages'] })
+    //   }
+    //   if(data.isSuccess){
+    //     console.log('upload-success')
+    //   }else{
+    //     toast.error("something went wrong try agan later")
+    //   }
+    //     queryClient.invalidateQueries({ queryKey: ['userPosts', user._id] })
+    //     queryClient.invalidateQueries({ queryKey: ['userMedia', user._id] })
 
-    })
+    // })
 
-    socket.on("chatlist", (chatlists) => {
-      queryClient.invalidateQueries({ queryKey: ['chatlist'] })
-      // console.log(chatlists)
-    })
+    // socket.on("chatlist", (chatlists) => {
+    //   queryClient.invalidateQueries({ queryKey: ['chatlist'] })
+    //   // console.log(chatlists)
+    // })
 
 
-    // listen chat event messages
-    socket.on("chat", (newMessage) => {
-      console.log(newMessage)
-    });
+    // // listen chat event messages
+    // socket.on("chat", (newMessage) => {
+    //   console.log(newMessage)
+    // });
 
-    // remove all event listeners
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("chat");
-    };
-  }, []);
+    // // remove all event listeners
+    // return () => {
+    //   socket.off("connect");
+    //   socket.off("disconnect");
+    //   socket.off("chat");
+    // };
+  // }, []);
+  const socket = useSocket()
 
 
   const navigate = useNavigate()

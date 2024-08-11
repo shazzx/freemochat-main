@@ -1,15 +1,15 @@
 import { useAppSelector } from "@/app/hooks";
+import { socketConnect } from "@/websocket/socket.io";
 import { useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
 import { useEffect, useRef } from "react";
-import { Socket } from "socket.io-client";
+import { toast } from "react-toastify";
 
-export const useSocket = (recepient) => {
+export const useSocket = (recepient? :string) => {
     const queryClient = useQueryClient();
-    const { socket } = useAppSelector((data) => data.socket) as { socket: Socket }
+    const {user} = useAppSelector(state => state.user)
+    const socket = socketConnect(user && user.username)
     const socketRef = useRef(socket);
-
-    console.log('recepeet', recepient)
 
     useEffect(() => {
         const socket = socketRef.current;
@@ -40,9 +40,66 @@ export const useSocket = (recepient) => {
 
         });
 
-        return () => {
+        socket.on("disconnect", () => { // fire when socked is disconnected
+            console.log("Socket disconnected");
+          });
+      
+          socket.on("notification", (data) => {
+            console.log(data)
+          })
+      
+          socket.on("users", (users) => {
+            console.log(users)
+          })
+      
+          socket.on("getOnlineFriends", (onlineFriends) => {
+            console.log(onlineFriends)
+          })
+      
+          socket.on("friendOnlineStatusChange", (statusChange) => {
+            console.log(statusChange)
+          })
+          
+      
+          socket.on("friendStatus", (data) => {
+            console.log(data, 'friend status')
+          })
+      
+          socket.on("upload-status", (data) => {
+            if(data.isSuccess && data.target.type == "page"){
+              // const {targetId} = data.target
+              queryClient.invalidateQueries({ queryKey: ['page'] })
+              queryClient.invalidateQueries({ queryKey: ['pages'] })
+            }
+            if(data.isSuccess){
+              console.log('upload-success')
+            }else{
+              toast.error("something went wrong try agan later")
+            }
+              queryClient.invalidateQueries({ queryKey: ['userPosts', user._id] })
+              queryClient.invalidateQueries({ queryKey: ['userMedia', user._id] })
+      
+          })
+      
+          socket.on("chatlist", (chatlists) => {
+            queryClient.invalidateQueries({ queryKey: ['chatlist'] })
+            // console.log(chatlists)
+          })
+      
+          // remove all event listeners
+          return () => {
+            socket.off("connect");
+            socket.off("disconnect");
+            socket.off("chat");
+            socket.off("chatlist");
+            socket.off("upload-status");
+            socket.off("friendOnlineStatusChange");
+            socket.off("friendStatus");
+            socket.off("users");
+            socket.off("getOnlineFriends");
+            socket.off("notification");
             socket.off('newMessage');
-        };
+          };
     }, [queryClient]);
 
     return socketRef.current;

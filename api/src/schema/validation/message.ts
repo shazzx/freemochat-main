@@ -15,8 +15,8 @@ export const CreateMessage = z.object({
 
 export const GetMessages = Cursor.extend({
     recepientId: ValidMongoId.optional(),
-    type: z.string(),
-    isChatGroup: z.number(),
+    type: z.string().optional(),
+    isChatGroup: z.string(),
 })
 
 export const RemoveMessage = z.object({

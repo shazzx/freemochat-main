@@ -3,9 +3,10 @@ import React, { useEffect } from 'react'
 import { useAppSelector } from '@/app/hooks'
 import { Socket } from 'socket.io-client'
 import { Button } from '@/components/ui/button'
+import { useSocket } from '@/hooks/useSocket'
 
 function AudioCallRecepient({ recepientDetails, setAudioCallRecepient }) {
-    const { socket } = useAppSelector((state) => state.socket) as { socket: Socket }
+    const socket = useSocket()
 
     useEffect(() => {
 

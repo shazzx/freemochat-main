@@ -45,22 +45,22 @@ export class MessageController {
   async getMessages(
     @Query(new ZodValidationPipe(GetMessages)) getMessagesDTO: GetMessagesDTO,
     @Req() req: Request,
-    @Res() response: Response) {
+    @Res() res: Response) {
 
     const { sub } = req.user
     const { cursor, recepientId, isChatGroup } = getMessagesDTO
 
-    response.json(await this.messageService.getMessages(cursor, sub, recepientId, isChatGroup))
+    res.json(await this.messageService.getMessages(cursor, sub, recepientId, Number(isChatGroup)))
   }
 
   @Post("remove")
   async removeMessage(
     @Body(new ZodValidationPipe(RemoveMessage)) removeMessageDTO: RemoveMessageDTO,
     @Req() req: Request,
-    @Res() response: Response) {
+    @Res() res: Response) {
 
     const { sub } = req.user
     const { messageId } = removeMessageDTO
-    response.json(await this.messageService.removeMessage(sub, messageId))
+    res.json(await this.messageService.removeMessage(sub, messageId))
   }
 }

@@ -103,9 +103,9 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                     <TabsContent value="general" className="h-full">
 
                         <Card x-chunk="dashboard-01-chunk-5" className="w-full bg-background h-full border-none ">
-                            <CardContent className="flex flex-col gap-2 p-0" >
+                            <CardContent className="flex flex-col gap-2 p-0">
                                 {chatList?.users?.length > 0 ? chatList?.users?.map((chat) => (
-                                    <div className="flex gap-4 cursor-pointer w-full p-4 bg-card hover:bg-accent" onClick={() => {
+                                    <div className="flex gap-4 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={() => {
                                         if (chat.type == "Page") {
                                             setRecepientDetails({ userId: chat?.recepient?._id, username: chat?.recepient.handle, images: chat?.recepient?.images, name: chat?.recepient?.name, type: "Page", onlineStatus: chat.onlineStatus })
                                         } else {
@@ -148,7 +148,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                         <Card x-chunk="dashboard-01-chunk-5" className="w-full bg-background h-full border-none">
                             <CardContent className="flex flex-col gap-2 p-0">
                                 {chatList?.groups?.length > 0 ? chatList?.groups?.map((chat) => (
-                                    <div className="flex gap-2 cursor-pointer w-full p-4 bg-card hover:bg-accent" onClick={() => {
+                                    <div className="flex gap-2 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={() => {
                                         console.log(chat?.recepient?.images)
                                         setRecepientDetails({ userId: chat?.recepient?._id, groupId: chat?.recepient?._id, images: chat?.recepient?.images, name: chat?.recepient?.name, description: chat?.recepient?.description, type: "ChatGroup" })
                                         setChatOpen(true)

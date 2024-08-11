@@ -117,7 +117,7 @@ export class PageService {
 
 
     async getPages(userId) {
-        let pages = await this.pageModal.find({ user: userId })
+        let pages = await this.pageModal.find({ user: userId }).sort({createdAt: -1})
         return pages
     }
 

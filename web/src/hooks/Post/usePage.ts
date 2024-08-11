@@ -79,11 +79,11 @@ export const useCreatePage = () => {
 
       queryClient.setQueryData(['pages'], previousPages)
     },
-    onSettled: (data, err, {images}) => {
+    onSettled: (data) => {
       queryClient.setQueryData(['pages'], (pages: any) => {
         const updatedPages = produce(pages, (draft: any) => {
           pages.splice(0, 1)
-          return [{...data, images}, ...pages]
+          return [{...data}, ...pages]
         })
         return updatedPages
       });

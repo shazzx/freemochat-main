@@ -6,7 +6,7 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { forwardRef, Inject, Logger } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { MessageService } from 'src/message/message.service';
 import { UserChatListService } from 'src/chatlist/chatlist.service';
@@ -131,10 +131,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // calling logic
   @SubscribeMessage("initiate-call")
   async handleCallInitiation(@MessageBody() payload) {
-    const recepientId = this.connectedUsers.get(payload.recepientDetails.username)
-    console.log(payload, 'initiated')
+    if(payload.recepientDetails && !payload.recepientDetails.userId){
+      throw new BadRequestException('recepient id required')
+    }
+    console.log(payload)
+    let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
 
-    this.server.to(recepientId).emit("initiate-call", { userDetails: payload?.userDetails, type: payload?.type })
+    this.server.to(recepient?.socketId).emit("initiate-call", { userDetails: payload?.userDetails, type: payload?.type })
   }
 
   @SubscribeMessage("call-decline")

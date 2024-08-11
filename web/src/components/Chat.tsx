@@ -32,7 +32,6 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId)
     const [chatGroupInfo, setChatGroupInfo] = useState(false)
     const [inputValue, setInputValue] = useState("");
-    const [messages, setMessages] = useState([]);
     const [groupData, setGroupData] = useState(null)
     const chatContainerRef = useRef(null)
     const [isRecording, setIsRecording] = useState(false)
@@ -133,6 +132,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
 
     socket.on("friendStatus", (data) => {
+        console.log(data, 'friend status')
         setIsOnline(data.isOnline)
       })
 

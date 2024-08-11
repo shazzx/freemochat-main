@@ -100,9 +100,6 @@ export class UserService {
                 },
             },
         ]);
-        console.log(friends)
-
-
 
         const hasNextPage = friends.length > limit;
         const _friends = hasNextPage ? friends.slice(0, -1) : friends;
