@@ -45,14 +45,8 @@ export class User {
     @Prop()
     phone: number;
 
-    @Prop({type: Boolean, default: false})
-    verified: boolean;
-
     @Prop()
     bio: string;
-
-    @Prop({ default: true })
-    isActive: boolean
 
     @Prop({ required: true })
     address: Address
@@ -62,6 +56,20 @@ export class User {
         images: string[];
         videos: string[];
     };
+
+    // auth related
+    @Prop({type: String, required: true})
+    secret: string;
+
+    @Prop({type: Boolean, default: false})
+    isEmailVerified: boolean;
+
+    @Prop({type: Boolean, default: false})
+    isPhoneVerified: boolean;
+
+    @Prop({ default: false })
+    isActive: boolean
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

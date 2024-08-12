@@ -37,6 +37,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { UploadListener } from './posts/upload.listener';
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatModule } from './chat/chat.module';
+import { EncryptionModule } from './encryption/encryption.module';
+import { CryptoModule } from './crypto/crypto.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -79,6 +81,8 @@ import { ChatModule } from './chat/chat.module';
     BackgroundjobsModule,
     MediaConsumerModule,
     ChatModule,
+    EncryptionModule,
+    CryptoModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: "APP_GUARD", useClass: JwtAuthGuard }, UploadListener],

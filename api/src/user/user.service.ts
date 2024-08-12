@@ -8,6 +8,7 @@ import { Friend } from 'src/schema/friends';
 import { Follower } from 'src/schema/followers';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 import { NotificationService } from 'src/notification/notification.service';
+import { CryptoService } from 'src/crypto/crypto.service';
 
 
 @Injectable()
@@ -19,24 +20,23 @@ export class UserService {
         @InjectModel(Friend.name) private readonly friendModel: Model<Friend>,
         @InjectModel(Follower.name) private readonly followerModel: Model<Follower>,
         // private readonly notificationsService: NotificationService,
-        private readonly metricsAggregatorService: MetricsAggregatorService
+        private readonly metricsAggregatorService: MetricsAggregatorService,
+        private readonly cryptoService: CryptoService
     ) {
 
     }
 
-    async createUser(user: { firstname: string, lastname: string, username: string, email: string, password: string, confirmPassword: string, address: { country?: string, city?: string, area?: string, }, phone: string }): Promise<any> {
-        const { firstname, lastname, username, email, password, confirmPassword, address, phone } = user
+    async createUser(user: { firstname: string, lastname: string, username: string, email: string, password: string, confirmPassword: string, address: { country?: string, city?: string, area?: string, }, phone: string, secret: string }): Promise<any> {
+        const { firstname, lastname, username, email, password, confirmPassword, address, phone, secret } = user
 
         if (password !== confirmPassword) {
             throw new BadRequestException("provide correct username or password")
         }
-        console.log(user)
 
-        let salt = 6
-        let hashPassword = await hash(password, salt)
+        let hashedPassword = this.cryptoService.hash(password, 16)
 
-        const _user = new this.userModel({ firstname, lastname, username, email, password: hashPassword, phone, address })
-        return _user.save()
+        const _user = await this.userModel.create({ firstname, lastname, username, email, password: hashedPassword, phone, address, secret })
+        return _user
     }
 
     async getUsers(): Promise<any> {

@@ -1,10 +1,14 @@
 import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses';
 import { Injectable } from '@nestjs/common';
 import { SnsService } from 'src/sns/sns.service';
+import * as otplib from 'otplib'
+import * as crypto from 'crypto'
 
 @Injectable()
 export class OtpService {
-  private readonly sesClient
+  private readonly sesClient: SESClient
+  private readonly otpSecret = process.env.OTP_SECRET || 'shazzx';
+
   constructor(private readonly snsService: SnsService) {
     this.sesClient = new SESClient({
       region: process.env.AWS_S3_REGION,
@@ -16,12 +20,15 @@ export class OtpService {
 
   }
 
-  generateOTP(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+  async generateOtp(secret: string): Promise<string> {
+    return otplib.authenticator.generate(secret);
   }
 
+  async verifyOtp(token: string, secret: string): Promise<boolean> {
+    return otplib.authenticator.verify({ token, secret });
+  }
 
-  async sendOtpEmail(to: string, otp: string) {
+  async sendOTPEmail(to: string, otp: string) {
     const params = {
       Source: 'thanosgaming121@gmail.com',
       Destination: {
@@ -40,6 +47,7 @@ export class OtpService {
     };
 
     try {
+      console.log('sending otp email...')
       await this.sesClient.send(new SendEmailCommand(params));
     } catch (error) {
       console.error('Error sending email:', error);
@@ -47,11 +55,15 @@ export class OtpService {
     }
   }
 
-  async sendOTP(phoneNumber: string): Promise<string> {
-    const otp = this.generateOTP();
+  async sendOTPPhone(otp: string, phoneNumber: string): Promise<string> {
     const message = `Your OTP is: ${otp}`;
+    try {
+      console.log("sending otp sms..")
+      await this.snsService.sendSMS(phoneNumber, message);
+    } catch (error) {
+      console.error(error)      
+    }
 
-    await this.snsService.sendSMS(phoneNumber, message);
 
     return otp;
   }

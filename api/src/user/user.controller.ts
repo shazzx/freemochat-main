@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, InternalServerErrorException, Post, Query, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 import { UserService } from './user.service';
 import { Response } from 'express';
@@ -11,6 +11,8 @@ import { Public } from 'src/auth/public.decorator';
 import { CreateUser, CreateUserDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, UpdateUser, UpdateUserDTO } from 'src/schema/validation/user';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
+import { OtpService } from 'src/otp/otp.service';
+import { CryptoService } from 'src/crypto/crypto.service';
 
 @Controller('user')
 export class UserController {
@@ -18,7 +20,9 @@ export class UserController {
     constructor(
         private authService: AuthService,
         private userService: UserService,
-        private readonly uploadService: UploadService
+        private readonly uploadService: UploadService,
+        private readonly otpService: OtpService,
+        private readonly cryptoService: CryptoService
     ) { }
 
     @Public()
@@ -26,22 +30,37 @@ export class UserController {
     async createUser(
         @Body(new ZodValidationPipe(CreateUser)) createUserDTO: CreateUserDTO,
         @Req() req: Request,
-        @Res() response: Response) {
+        @Res() res: Response) {
 
-        const { firstname, lastname, username, email, password, confirmPassword, address, phone } = createUserDTO
+        try {
+            const { firstname, lastname, username, email, password, confirmPassword, address, phone } = createUserDTO
         console.log(createUserDTO)
 
-        let user = await this.userService.createUser({ firstname, lastname, username, email, password, confirmPassword, address, phone })
+        const secret = await this.cryptoService.generateSecret()
+        const encryptedSecret = this.cryptoService.encrypt(secret)
 
-        const payload = await this.authService.login(user)
+        let user = await this.userService.createUser({ firstname, lastname, username, email, password, confirmPassword, address, phone, secret: encryptedSecret })
 
-        response.cookie("refreshToken", payload.refresh_token, {
-            httpOnly: true,
-            sameSite: 'strict',
-            maxAge: 60 * 60
-        }).json({
-            access_token: payload.access_token, user
-        })
+        const emailOTP = await this.otpService.generateOtp(encryptedSecret)
+        const phoneOTP = await this.otpService.generateOtp(encryptedSecret)
+
+        await this.otpService.sendOTPEmail(user.email, emailOTP)
+        await this.otpService.sendOTPPhone(user.phone, phoneOTP)
+
+        res.json({success: true})
+
+        } catch (error) {
+            throw new InternalServerErrorException(error)            
+        }
+        // const payload = await this.authService.login(user)
+
+        // response.cookie("refreshToken", payload.refresh_token, {
+        //     httpOnly: true,
+        //     sameSite: 'strict',
+        //     maxAge: 60 * 60
+        // }).json({
+        //     access_token: payload.access_token, user
+        // })
     }
 
     @Public()
