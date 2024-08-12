@@ -1,12 +1,19 @@
 import {z} from 'zod'
 import { Cursor, ValidMongoId } from './global'
+// firstname: 'shahzad',
+//   lastname: 'ali',
+//   username: 'shahzadali',
+//   email: 'shahzadali@gmail.com',
+//   address: { country: 'pakistan', city: 'karachi', area: 'Pipri' },
+//   password: 'shazzhere',
+//   confirmPassword: 'shazzhere'
 
 export const CreateUser = z.object({
     firstname: z.string(),
     lastname: z.string().optional(),
     username: z.string(),
     email: z.string(),
-    phone: z.string(),
+    phone: z.string().optional(),
     password: z.string(),
     confirmPassword: z.string(),
     address: z.object({

@@ -33,7 +33,7 @@ export class UserService {
             throw new BadRequestException("provide correct username or password")
         }
 
-        let hashedPassword = this.cryptoService.hash(password, 16)
+        let hashedPassword = await this.cryptoService.hash(password, 16)
 
         const _user = await this.userModel.create({ firstname, lastname, username, email, password: hashedPassword, phone, address, secret })
         return _user

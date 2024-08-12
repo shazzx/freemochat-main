@@ -6,7 +6,7 @@ import * as otplib from 'otplib';
 @Injectable()
 export class CryptoService {
   private readonly algorithm = 'aes-256-cbc';
-  private readonly key = crypto.scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32);
+  private readonly key = crypto.scryptSync("process.env.ENCRYPTION_KEY", 'salt', 32);
 
   encrypt(text: string): string {
     const iv = crypto.randomBytes(16);

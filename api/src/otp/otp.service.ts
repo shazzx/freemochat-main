@@ -55,7 +55,7 @@ export class OtpService {
     }
   }
 
-  async sendOTPPhone(otp: string, phoneNumber: string): Promise<string> {
+  async sendOTPPhone(phoneNumber: string, otp: string): Promise<string> {
     const message = `Your OTP is: ${otp}`;
     try {
       console.log("sending otp sms..")

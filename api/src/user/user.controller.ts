@@ -34,22 +34,27 @@ export class UserController {
 
         try {
             const { firstname, lastname, username, email, password, confirmPassword, address, phone } = createUserDTO
-        console.log(createUserDTO)
 
         const secret = await this.cryptoService.generateSecret()
         const encryptedSecret = this.cryptoService.encrypt(secret)
 
         let user = await this.userService.createUser({ firstname, lastname, username, email, password, confirmPassword, address, phone, secret: encryptedSecret })
 
+        console.log("user created")
+
         const emailOTP = await this.otpService.generateOtp(encryptedSecret)
         const phoneOTP = await this.otpService.generateOtp(encryptedSecret)
 
-        await this.otpService.sendOTPEmail(user.email, emailOTP)
-        await this.otpService.sendOTPPhone(user.phone, phoneOTP)
+        console.log("emailOTP: ", emailOTP, "phoneOTP: ", phoneOTP)
+
+        await this.otpService.sendOTPEmail("thanosgaming121@gmail.com", emailOTP)
+
+        await this.otpService.sendOTPPhone("923122734021", phoneOTP)
 
         res.json({success: true})
 
         } catch (error) {
+            console.log(error)
             throw new InternalServerErrorException(error)            
         }
         // const payload = await this.authService.login(user)
