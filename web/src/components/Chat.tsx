@@ -749,7 +749,9 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                     <input
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={handleSendMessage}
+                        onKeyDown={(e: any) => {
+                            handleSendMessage(e)
+                        }}
                         type="search"
                         placeholder="Type your message..."
                         className="w-full appearance-none bg-background pl-8 shadow-none border-none focus:outline-none"
@@ -810,7 +812,9 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
                 }} />
                 {!isRecording &&
-                    <Button className="p-0 m-0 bg-transparent" onClick={handleSendMessage}>
+                    <Button className="p-0 m-0 bg-transparent" onClick={() => {
+                        handleSendMessage()
+                    }}>
 
                         <svg width="47" className="stroke-white dark:stroke-white" cursor="pointer" height="50" viewBox="0 0 47 50" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <rect x="0.5" y="1" width="46" height="48" rx="4" fill="#433FFA" />

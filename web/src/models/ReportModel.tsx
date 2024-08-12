@@ -1,19 +1,15 @@
 import { axiosClient } from "@/api/axiosClient"
-import { loginSuccess } from "@/app/features/user/authSlice"
-import { useAppDispatch, useAppSelector } from "@/app/hooks"
-import { CheckboxReactHookFormSingle } from "@/components/Checkbox"
-import { ComboboxForm } from "@/components/Comboxbox"
+import { useAppSelector } from "@/app/hooks"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { useMutation } from "@tanstack/react-query"
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 
 function ReportModel({ setModelTrigger, postId }) {
 
     const { user } = useAppSelector(data => data.user)
 
-    const [selectedReportIndex, setSelectedReportIndex] = useState()
-    const reportMessage = useRef()
+    const [selectedReportIndex, setSelectedReportIndex] = useState(-1)
+    const reportMessage = useRef<HTMLTextAreaElement>()
 
     const reportTypes = [
         "Abuse", "Nudity", "Other"

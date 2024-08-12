@@ -37,7 +37,7 @@ function ImageCrop({ imageBase64, imageSrc, uploadImage, setImageView, imageType
         cropConfig.height
       )
 
-      canvas.toBlob((blob) => {
+      canvas.toBlob((blob: any) => {
         blob.filename = imageSrc.name
         SetCroppedImageSrc(blob)
         SetCroppedImage(URL.createObjectURL(blob))
@@ -73,11 +73,11 @@ function ImageCrop({ imageBase64, imageSrc, uploadImage, setImageView, imageType
             keepSelection={false}
             minHeight={imageSizeState == "image-height" ? 80 : 150}
             onComplete={(cropConfig) => cropImage(cropConfig)}
-            onChange={(c) => SetCrop(c)}
+            onChange={(c: any) => SetCrop(c)}
           >
 
             <div className={`image-crop ${imageSizeState && imageSizeState + "-plus"}`}>
-              <img className={imageSizeState && imageSizeState} src={imageBase64 && imageBase64} alt="" onLoad={(image) => {
+              <img className={imageSizeState && imageSizeState} src={imageBase64 && imageBase64} alt="" onLoad={(image: any) => {
                 image.target.naturalHeight > image.target.naturalWidth && SetImageSizeState('image-height')
                 image.target.naturalWidth > image.target.naturalHeight && SetImageSizeState('image-width')
                 let cropper = image.target.naturalHeight / image.target.naturalWidth
@@ -85,18 +85,20 @@ function ImageCrop({ imageBase64, imageSrc, uploadImage, setImageView, imageType
 
                 SetTargetImage(image.target)
 
+                let _target: any = {
+                  unit: 'px',
+                  width: image.target.height * 0.2,
+                  height: image.target.height * 0.2,
+                }
                 image.target.naturalWidth > image.target.naturalHeight &&
-                  SetCrop({
-                    unit: 'px',
-                    width: image.target.height * 0.2,
-                    height: image.target.height * 0.2,
-                  })
-                image.target.naturalHeight > image.target.naturalWidth &&
-                  SetCrop({
+                  SetCrop(_target)
+                  let target: any = {
                     unit: 'px',
                     width: image.target.width * 0.3,
                     height: image.target.width * 0.3,
-                  })
+                  }
+                image.target.naturalHeight > image.target.naturalWidth &&
+                  SetCrop(target)
 
 
               }} />
@@ -113,28 +115,31 @@ function ImageCrop({ imageBase64, imageSrc, uploadImage, setImageView, imageType
             keepSelection={true}
             minHeight={imageSizeState == "image-height" ? 50 : 100}
             onComplete={(cropConfig) => cropImage(cropConfig)}
-            onChange={(c) => SetCrop(c)}
+            onChange={(c: any) => SetCrop(c)}
           >
 
             <div className={`image-crop ${imageSizeState && imageSizeState + "-plus"}`}>
-              <img className={imageSizeState && imageSizeState} src={imageBase64 && imageBase64} alt="" onLoad={(image) => {
+              <img className={imageSizeState && imageSizeState} src={imageBase64 && imageBase64} alt="" onLoad={(image: any) => {
 
                 image.target.naturalHeight > image.target.naturalWidth && SetImageSizeState('image-height')
                 image.target.naturalWidth > image.target.naturalHeight && SetImageSizeState('image-width')
 
+                let _target: any = {
+                  unit: 'px',
+                  width: image.target.height * 0.4,
+                  height: image.target.height * 0.15,
+                }
                 SetTargetImage(image.target)
                 image.target.naturalWidth > image.target.naturalHeight &&
-                  SetCrop({
-                    unit: 'px',
-                    width: image.target.height * 0.4,
-                    height: image.target.height * 0.15,
-                  })
-                image.target.naturalHeight > image.target.naturalWidth &&
-                  SetCrop({
+                  SetCrop(_target)
+
+                  let target: any = {
                     unit: 'px',
                     width: image.target.width * 0.25,
                     height: image.target.width * 0.090,
-                  })
+                  }
+                image.target.naturalHeight > image.target.naturalWidth &&
+                  SetCrop(target)
               }} />
             </div>
           </ReactCrop>}

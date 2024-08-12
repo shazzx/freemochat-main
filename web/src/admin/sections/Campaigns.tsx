@@ -1,25 +1,19 @@
 import { AdminDataTable } from '@/components/TestDataTable'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useRemoveUser, useSuspendUser, useUsers } from '@/hooks/Admin/useUser'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
 import { useQueryClient } from '@tanstack/react-query'
 import { MoreHorizontal } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import debounce from 'lodash.debounce'
-import { format } from 'date-fns'
 import { useCampaigns } from '@/hooks/Admin/useCampaign'
-
-
-
 
 function CampaignSection() {
     const searchRef = useRef()
     const [search, setSearch] = useState()
     const queryClient = useQueryClient()
-    const [users, setUsers] = useState([])
 
-    let { data, isSuccess, fetchNextPage, isFetchingNextPage } = useCampaigns(searchRef)
+    let { data, fetchNextPage } = useCampaigns(searchRef)
 
     const columns = [
         {

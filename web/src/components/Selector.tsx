@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const Selector = () => {
-    const [countries, setCountries] = useState();
+    const [countries, setCountries] = useState([]);
     const [selectedCountry, setSelectedCountry] = useState('');
     useEffect(() => {
         console.log(countries)

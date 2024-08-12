@@ -54,7 +54,7 @@ export const useCampaignsActivationToggle = () => {
 
         onError: (err, newComment, context) => {
             toast.error("something went wrong")
-            queryClient.setQueryData(['campaigns'], context.previousComments)
+            // queryClient.setQueryData(['campaigns'], context.previousComments)
         },
         onSettled: (e) => {
             // uncommeting this will refetch the comments again from the server to be in sync

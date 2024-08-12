@@ -11,7 +11,7 @@ const AudioPlayer = ({ src, duration }) => {
     const audio = audioRef.current;
     // audio.addEventListener('loadedmetadata', onLoadedMetadata);
     audio.addEventListener('timeupdate', onTimeUpdate);
-    audio.addEventListener('end', (e) => {
+    audio.addEventListener('end', () => {
       console.log('end')
     })
     return () => {

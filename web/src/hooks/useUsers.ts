@@ -6,7 +6,7 @@ export const useUsers = () => {
   };
   
   export const useUser = (id: string) => {
-    return useApiQueryb<User>(['user', id], `/users/${id}`);
+    return useApiQuery<User>(['user', id], `/users/${id}`);
   };
   
   export const useCreateUser = () => {

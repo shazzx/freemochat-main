@@ -86,7 +86,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                 <CreateChatGroup setCurrentTab={setCurrentTab} currentTab={currentTab} setModelTrigger={setGroupModelState} createGroup={createGroup} />
             }
             {newChatModelState &&
-                <NewChat setChatOpen={setChatOpen} setNewChatModelState={setNewChatModelState} groups={data} friends={userFriends.data} setRecepientDetails={setRecepientDetails} chatList={chatList} setCurrentTab={setCurrentTab} />
+                <NewChat setChatOpen={setChatOpen} setNewChatModelState={setNewChatModelState} groups={data} friends={userFriends.data} setRecepientDetails={setRecepientDetails} setCurrentTab={setCurrentTab} />
             }
             <div className='relative h-full w-full border border-muted '>
                 <div className="p-5 flex items-center gap-2 font-medium text-xl pb-5">

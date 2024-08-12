@@ -82,7 +82,7 @@ const Comment: FC<any> = ({ reply, comment, pageIndex, commentIndex, userId, ref
                                             setCommentDetails({ content: comment.content, commentId: comment._id, pageIndex, commentIndex })
                                         }}>Edit</DropdownMenuItem>
                                         <DropdownMenuItem className='cursor-pointer' onClick={async () => {
-                                            deleteComment.mutate({ commentId: comment._id, pageIndex, commentIndex })
+                                            deleteComment.mutate({ postId: comment.post, commentId: comment._id, pageIndex, commentIndex })
                                         }}>Remove</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>

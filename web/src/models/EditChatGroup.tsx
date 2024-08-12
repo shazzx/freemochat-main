@@ -1,13 +1,12 @@
 import { axiosClient } from "@/api/axiosClient"
 import { useAppSelector } from "@/app/hooks"
-import ImageCrop from "@/components/image upload/ImageCrop"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Label } from "@radix-ui/react-dropdown-menu"
-import { useMutation } from "@tanstack/react-query"
-import { Camera, CameraIcon, EllipsisVertical } from "lucide-react"
+import { Label } from "@radix-ui/react-dropdown-menu"
+import { Camera} from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import { Socket } from "socket.io-client"
 
 function EditChatGroup({ setModelTrigger, groupDetails }) {
     const { socket } = useAppSelector((data) => data.socket) as { socket: Socket }
@@ -34,8 +33,8 @@ function EditChatGroup({ setModelTrigger, groupDetails }) {
         }
         return data
     }
-    const groupName = useRef()
-    const groupDescription = useRef()
+    const groupName = useRef<HTMLInputElement>()
+    const groupDescription = useRef<HTMLInputElement>()
 
     useEffect(() => {
         let getFriends = async () => {

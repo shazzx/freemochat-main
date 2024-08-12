@@ -30,7 +30,7 @@ export type ValidFieldNames =
     | "confirmPassword";
 
 
-export const UserSchema: ZodType<FormData> = z
+export const UserSchema = z
     .object({
         firstname: z.string().max(64, { message: "must be longer than 5 characters" }),
         lastname: z.string().max(32, { message: "must be longer than 5 characters" }),
