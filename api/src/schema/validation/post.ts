@@ -59,7 +59,7 @@ export const ReportPost = z.object({
 })
 
 export const GetPromotions = Cursor.extend({
-    reverse: z.boolean().optional(),
+    reverse: z.string(),
 })
 
 

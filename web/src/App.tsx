@@ -27,6 +27,7 @@ import PagesSection from './sections/PagesSection'
 import { AdminLogin } from './admin/pages/Login'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
 import CampaignSection from './sections/CampaignSection'
+import AuthVerificationForm from './components/Auth/AuthVerificationForm'
 
 function App() {
 
@@ -34,6 +35,8 @@ function App() {
     <>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <Routes>
+        <Route path="/auth" element={<AuthVerificationForm/>} />
+
           <Route path="/search" element={
             <ProtectedRoute>
               <MainHome children={<SearchSection />} />

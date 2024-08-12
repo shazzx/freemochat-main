@@ -45,6 +45,9 @@ export class User {
     @Prop()
     phone: number;
 
+    @Prop({type: Boolean, default: false})
+    verified: boolean;
+
     @Prop()
     bio: string;
 

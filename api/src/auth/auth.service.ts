@@ -1,12 +1,19 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { compare } from 'bcrypt'
 import { jwtConstants } from './constants';
+import { InjectModel } from '@nestjs/mongoose';
+import { OTP } from 'src/schema/otp';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class AuthService {
-    constructor(private userService: UserService, private jwtService: JwtService) { }
+    constructor(
+        private userService: UserService, 
+        private jwtService: JwtService,
+        @InjectModel(OTP.name) private readonly otpModel: Model<OTP>
+    ) { }
 
     async validateUser(username: string, password: string): Promise<any> {
         let user: any = await this.userService.findUser(username)
@@ -41,5 +48,30 @@ export class AuthService {
             console.log(error)
             return false
         }
+    }
+
+    async otpEmailVerification(userId, otpData) {
+        const otp = await this.otpModel.findOne({user: userId})
+        if(!otp){
+            throw new BadRequestException()
+        }
+
+        if(otp.email === otpData.code){
+            return true
+        }
+        return false
+    }
+
+
+    async otpPhoneVerification(userId, otpData) {
+        const otp = await this.otpModel.findOne({user: userId})
+        if(!otp){
+            throw new BadRequestException()
+        }
+
+        if(otp.phone === otpData.code){
+            return true
+        }
+        return false
     }
 }

@@ -8,11 +8,15 @@ import { jwtConstants } from './constants';
 import { JwtStrategy } from './jwt.strategy';
 import { AccountManagementModule } from 'src/account-management/account-management.module';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { Mongoose } from 'mongoose';
+import { MongooseModule } from '@nestjs/mongoose';
+import { OTP, OTPSchema } from 'src/schema/otp';
 
 @Module({
   imports: [
     forwardRef(() => UserModule),
     PassportModule,
+    MongooseModule.forFeature([{name: OTP.name, schema: OTPSchema}]),
     AccountManagementModule,
     JwtModule.register({
       secret: jwtConstants.secret,
