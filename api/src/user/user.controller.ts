@@ -35,25 +35,19 @@ export class UserController {
         try {
             const { firstname, lastname, username, email, password, confirmPassword, address, phone } = createUserDTO
 
-            const secret = await this.cryptoService.generateSecret()
-            const encryptedSecret = this.cryptoService.encrypt(secret)
+            const secret = await this.otpService.generateSecret()
             const tempSecret = uuidv4()
 
-            let user = await this.userService.createUser({ firstname, lastname, username, email, password, confirmPassword, address, phone, secret: encryptedSecret, tempSecret })
+            let user = await this.userService.createUser({ firstname, lastname, username, email, password, confirmPassword, address, phone, secret: secret.base32, tempSecret })
 
             console.log("user created")
+            const phoneOTP = await this.otpService.generateOtp(secret)
+            const emailOTP = await this.otpService.generateOtp(secret)
 
-            const emailOTP = await this.otpService.generateOtp(encryptedSecret)
-            const phoneOTP = await this.otpService.generateOtp(encryptedSecret)
+            console.log('phoneOTP: ', phoneOTP, "emailOTP: ", emailOTP, "tempSecret: ", tempSecret, "secret: ", secret)
 
-            this.otpService.verifyOtp(encryptedSecret, emailOTP)
-
-            console.log("emailOTP: ", emailOTP, "phoneOTP: ", phoneOTP)
-
-            await this.otpService.sendOTPEmail("thanosgaming121@gmail.com", emailOTP)
-
-            await this.otpService.sendOTPPhone("923122734021", phoneOTP)
-
+            // await this.otpService.sendOTPEmail("thanosgaming121@gmail.com", phoneOTP)
+            // await this.otpService.sendOTPPhone("923122734021", phoneOTP)
 
             res.json({ success: true, tempSecret, username: user.username, message: "account created successfully", verification: "pending" })
 
@@ -78,42 +72,53 @@ export class UserController {
     async veriyfOTP(
         @Body(new ZodValidationPipe(VerifyOTP)) verifyOTP: VerifyOTPDTO,
         @Req() req: Request,
-        @Res({ passthrough: true }) response: Response) {
-        const { username, tempSecret, otp } = verifyOTP
+        @Res({ passthrough: true }) res: Response) {
+        const { username, authId, otp, type } = verifyOTP
         try {
             const user = await this.userService.findUser(username)
             if (!user) {
                 throw new BadRequestException()
             }
 
-            if (!user.tempSecret || user.tempSecret !== tempSecret) {
+            if (!user.tempSecret || user.tempSecret !== authId) {
                 console.log('bad request')
                 throw new BadRequestException()
             }
 
             const userSecret = user.secret
-            const decryptedSecret = this.cryptoService.decrypt(userSecret)
-            console.log(decryptedSecret)
-            let isValid = this.otpService.verifyOtp(otp, decryptedSecret)
+            console.log(userSecret, 'secret')
+
+            let isValid = this.otpService.verifyOtp(otp, userSecret)
 
             if (!isValid) {
-                throw new BadRequestException()
+                throw new BadRequestException("OTP is not valid")
             }
 
-            await this.userService.updateUser(user._id, { tempSecret: null })
+            if(type == 'email' && user.isPhoneVerified){
+                await this.userService.updateUser(user._id, { tempSecret: null, isEmailVerified: true })
+                return res.json({success: true, email: true, phone: true})
+            }
 
-            const payload = await this.authService.login(user)
-            console.log('payload ', payload)
+            if(type == 'phone' && user.isEmailVerified){
+                await this.userService.updateUser(user._id, { tempSecret: null, isPhoneVerified: true })
+                return res.json({success: true, email: true, phone: true})
+            }
 
-            response.cookie("refreshToken", payload.refresh_token, {
-                httpOnly: true,
-                sameSite: 'strict',
-                maxAge: 7 * 24 * 60 * 60 * 1000
-            }).json({
-                access_token: payload.access_token
-            })
+            if(type == 'email'){
+                await this.userService.updateUser(user._id, { isEmailVerified: true })
+                res.json({success: true, phone: true})
+                return res.json({success: true, email: true})
+            }
+
+            if(type == 'phone'){
+                await this.userService.updateUser(user._id, { isPhoneVerified: true })
+                return res.json({success: true, phone: true})
+            }
+
+            throw new BadRequestException()
+
         } catch (error) {
-            throw new Error(error)
+            res.json({success: false, error: error})
         }
     }
 

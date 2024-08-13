@@ -67,7 +67,8 @@ export const GetFriends = Cursor.extend({
 export const VerifyOTP = Cursor.extend({
     username: z.string().min(5),
     otp: z.string(),
-    tempSecret: z.string().refine(
+    type: z.string(),
+    authId: z.string().refine(
         (val) => isUUID(val),
         {
             message: 'Invalid UUID',

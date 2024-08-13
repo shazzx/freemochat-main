@@ -1,9 +1,7 @@
 import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses';
 import { Injectable } from '@nestjs/common';
 import { SnsService } from 'src/sns/sns.service';
-import * as otplib from 'otplib'
-import * as crypto from 'crypto'
-
+import speakeasy, { GeneratedSecret } from 'speakeasy'
 @Injectable()
 export class OtpService {
   private readonly sesClient: SESClient
@@ -20,12 +18,19 @@ export class OtpService {
 
   }
 
-  async generateOtp(secret: string): Promise<string> {
-    return otplib.authenticator.generate(secret);
+  async generateSecret(): Promise<GeneratedSecret> {
+    return speakeasy.generateSecret({length: 20});
   }
 
-  async verifyOtp(token: string, secret: string): Promise<boolean> {
-    return otplib.authenticator.verify({ token, secret });
+  async generateOtp(secret: GeneratedSecret): Promise<string> {
+    return speakeasy.totp({
+      secret: secret.base32,
+      encoding: 'base32'
+    });
+  }
+
+  verifyOtp(token: string, secret: string): boolean {
+    return speakeasy.totp.verify({token, secret, encoding: 'base32'});
   }
 
   async sendOTPEmail(to: string, otp: string) {
