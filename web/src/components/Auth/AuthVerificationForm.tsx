@@ -26,19 +26,28 @@ function AuthVerificationForm() {
     const navigate = useNavigate()
     const params = useParams()
     const [searchParams] = useSearchParams()
-    console.log(searchParams.get("auth_id"), 'auth id')
-    console.log(params.username)
+    const authId = searchParams.get("auth_id")
+    const username  = params.username
+    if(!authId || !username){
+        navigate("/login")
+    }
 
     const dispatch = useAppDispatch()
 
-    const loginUser = async (data: any) => {
-        const response = await axiosClient.post("/user/verfy-otp", data)
-        return response.data
+    const verifyOTP = async (data: any) => {
+        const response = await axiosClient.post("/user/verify-otp", data, {timeout: 20000})
+        console.log(response.data)
+        // return response.data
     }
 
     const mutation = useMutation({
-        mutationFn: async (data): Promise<any> => {
-            return await loginUser(data)
+        mutationFn: async (data: {pin: number}): Promise<any> => {
+            let _data = {
+                otp: data.pin,
+                authId,
+                username
+            }
+            return await verifyOTP(_data)
         },
         onError: () => {
         }
@@ -53,11 +62,11 @@ function AuthVerificationForm() {
     const onSubmit = async (data) => {
         mutation.mutate(data)
         console.log(data)
-
     }
+
     if (mutation.isSuccess) {
-        dispatchUser()
-        navigate("/")
+        // dispatchUser()
+        // navigate("/")
     }
     const [signupButtonState, setSignupButtonState] = useState(false)
 
@@ -69,8 +78,8 @@ function AuthVerificationForm() {
                     <CardTitle className="text-2xl">Verification</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-12 max-w-96 p-4">
-                    <InputOTPForm label="Email Verification" description="Please enter the one-time password sent to your email."/>
-                    <InputOTPForm label="Phone Verification" description="Please enter the one-time password sent to your phone."/>
+                    <InputOTPForm onSubmit={onSubmit} label="Email Verification" description="Please enter the one-time password sent to your email."/>
+                    <InputOTPForm label="Phone Verification" description="Please enter the one-time password sent to your phone." onSubmit={onSubmit} />
                 </CardContent>
             </Card>
         </div>

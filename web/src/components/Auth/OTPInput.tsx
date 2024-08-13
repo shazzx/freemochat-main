@@ -27,7 +27,7 @@ const FormSchema = z.object({
   }),
 })
 
-export function InputOTPForm({label, description}: {label: string, description: string}) {
+export function InputOTPForm({label, description, onSubmit}: {label: string, description: string, onSubmit}) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -35,7 +35,8 @@ export function InputOTPForm({label, description}: {label: string, description: 
     },
   })
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  function _onSubmit(data: z.infer<typeof FormSchema>) {
+    onSubmit(data)
     toast({
       title: "You submitted the following values:",
       description: (
@@ -48,7 +49,7 @@ export function InputOTPForm({label, description}: {label: string, description: 
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
+      <form onSubmit={form.handleSubmit(_onSubmit)} className="w-full space-y-6">
         <FormField
           control={form.control}
           name="pin"

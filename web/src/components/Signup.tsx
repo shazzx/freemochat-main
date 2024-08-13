@@ -43,7 +43,7 @@ export function Signup() {
     }, [errors])
 
     const signupUser = async (_data) => {
-        const { data } = await axiosClient.post("/user/create", _data)
+        const { data } = await axiosClient.post("/user/create", _data, {timeout: 30000})
         return data
     }
 
