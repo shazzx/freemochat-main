@@ -35,7 +35,7 @@ function App() {
     <>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <Routes>
-        <Route path="/auth" element={<AuthVerificationForm/>} />
+        <Route path="/auth/:username" element={<AuthVerificationForm/>} />
 
           <Route path="/search" element={
             <ProtectedRoute>

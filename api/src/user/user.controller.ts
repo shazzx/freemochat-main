@@ -8,7 +8,7 @@ import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
 import { Public } from 'src/auth/public.decorator';
-import { CreateUser, CreateUserDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, UpdateUser, UpdateUserDTO } from 'src/schema/validation/user';
+import { CreateUser, CreateUserDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, UpdateUser, UpdateUserDTO, VerifyOTP, VerifyOTPDTO } from 'src/schema/validation/user';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import { OtpService } from 'src/otp/otp.service';
@@ -35,27 +35,31 @@ export class UserController {
         try {
             const { firstname, lastname, username, email, password, confirmPassword, address, phone } = createUserDTO
 
-        const secret = await this.cryptoService.generateSecret()
-        const encryptedSecret = this.cryptoService.encrypt(secret)
+            const secret = await this.cryptoService.generateSecret()
+            const encryptedSecret = this.cryptoService.encrypt(secret)
+            const tempSecret = uuidv4()
 
-        let user = await this.userService.createUser({ firstname, lastname, username, email, password, confirmPassword, address, phone, secret: encryptedSecret })
+            let user = await this.userService.createUser({ firstname, lastname, username, email, password, confirmPassword, address, phone, secret: encryptedSecret, tempSecret })
 
-        console.log("user created")
+            console.log("user created")
 
-        const emailOTP = await this.otpService.generateOtp(encryptedSecret)
-        const phoneOTP = await this.otpService.generateOtp(encryptedSecret)
+            const emailOTP = await this.otpService.generateOtp(encryptedSecret)
+            const phoneOTP = await this.otpService.generateOtp(encryptedSecret)
 
-        console.log("emailOTP: ", emailOTP, "phoneOTP: ", phoneOTP)
+            this.otpService.verifyOtp(encryptedSecret, emailOTP)
 
-        await this.otpService.sendOTPEmail("thanosgaming121@gmail.com", emailOTP)
+            console.log("emailOTP: ", emailOTP, "phoneOTP: ", phoneOTP)
 
-        await this.otpService.sendOTPPhone("923122734021", phoneOTP)
+            await this.otpService.sendOTPEmail("thanosgaming121@gmail.com", emailOTP)
 
-        res.json({success: true})
+            await this.otpService.sendOTPPhone("923122734021", phoneOTP)
+
+
+            res.json({ success: true, tempSecret, username: user.username, message: "account created successfully", verification: "pending" })
 
         } catch (error) {
             console.log(error)
-            throw new InternalServerErrorException(error)            
+            throw new InternalServerErrorException(error)
         }
         // const payload = await this.authService.login(user)
 
@@ -68,15 +72,60 @@ export class UserController {
         // })
     }
 
+
+    @Public()
+    @Post('verify-otp')
+    async veriyfOTP(
+        @Body(new ZodValidationPipe(VerifyOTP)) verifyOTP: VerifyOTPDTO,
+        @Req() req: Request,
+        @Res({ passthrough: true }) response: Response) {
+        const { username, tempSecret, otp } = verifyOTP
+        try {
+            const user = await this.userService.findUser(username)
+            if (!user) {
+                throw new BadRequestException()
+            }
+
+            if (!user.tempSecret || user.tempSecret !== tempSecret) {
+                console.log('bad request')
+                throw new BadRequestException()
+            }
+
+            const userSecret = user.secret
+            let isValid = this.otpService.verifyOtp(otp, userSecret)
+
+            if (!isValid) {
+                throw new BadRequestException()
+            }
+
+            await this.userService.updateUser(user._id, { tempSecret: null })
+
+            const payload = await this.authService.login(user)
+            console.log('payload ', payload)
+
+            response.cookie("refreshToken", payload.refresh_token, {
+                httpOnly: true,
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            }).json({
+                access_token: payload.access_token
+            })
+        } catch (error) {
+            throw new Error(error)
+        }
+    }
+
+
     @Public()
     @Post('login')
     async loginUser(
-        @Body(new ZodValidationPipe(LoginUser)) loginUserDTO: LoginUserDTO, 
-        @Req() req: Request, 
+        @Body(new ZodValidationPipe(LoginUser)) loginUserDTO: LoginUserDTO,
+        @Req() req: Request,
         @Res({ passthrough: true }) response: Response) {
         const { username, password } = loginUserDTO
         console.log(username, password)
         const user = await this.authService.validateUser(username, password)
+
         console.log('validate user', user)
         const payload = await this.authService.login(user)
         console.log('payload ', payload)
@@ -93,7 +142,7 @@ export class UserController {
     @Public()
     @Post("refresh-token")
     async refreshToken(
-        @Req() req: Request, 
+        @Req() req: Request,
         @Res() res: Response) {
         const refreshToken = req.cookies.refreshToken
         if (!refreshToken) {
@@ -107,8 +156,8 @@ export class UserController {
 
     @Get("")
     async getUser(
-        @Query(new ZodValidationPipe(GetUser)) getUserDTO: GetUserDTO, 
-        @Req() req: Request, 
+        @Query(new ZodValidationPipe(GetUser)) getUserDTO: GetUserDTO,
+        @Req() req: Request,
         @Res() res: Response) {
         const userPayload = req.user
         const query = getUserDTO
@@ -121,8 +170,8 @@ export class UserController {
 
     @Post("request")
     async friendRequest(
-        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, 
-        @Req() req: Request, 
+        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO,
+        @Req() req: Request,
         @Res() response: Response) {
         const { sub } = req.user
         const { recepientId } = friendGeneralDTO
@@ -131,8 +180,8 @@ export class UserController {
 
     @Post("friend/remove")
     async removeFriend(
-        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, 
-        @Req() req: Request, 
+        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO,
+        @Req() req: Request,
         @Res() response: Response) {
         const { sub } = req.user
         const { recepientId } = friendGeneralDTO
@@ -141,8 +190,8 @@ export class UserController {
 
     @Post("request/accept")
     async acceptRequest(
-        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, 
-        @Req() req: Request, 
+        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO,
+        @Req() req: Request,
         @Res() response: Response) {
         const { sub } = req.user
         const { recepientId } = friendGeneralDTO
@@ -151,8 +200,8 @@ export class UserController {
 
     @Post("request/reject")
     async rejectRequest(
-        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, 
-        @Req() req: Request, 
+        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO,
+        @Req() req: Request,
         @Res() response: Response) {
         const { sub } = req.user
         const { recepientId } = friendGeneralDTO
@@ -161,8 +210,8 @@ export class UserController {
 
     @Post("follow")
     async toggleFollow(
-        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO, 
-        @Req() req: Request, 
+        @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO,
+        @Req() req: Request,
         @Res() response: Response) {
         const { sub } = req.user
         const { recepientId } = friendGeneralDTO
@@ -171,8 +220,8 @@ export class UserController {
 
     @Get("friends")
     async getFriends(
-        @Query(new ZodValidationPipe(GetFriends)) getFriendsDTO: GetFriendsDTO, 
-        @Req() req: Request, 
+        @Query(new ZodValidationPipe(GetFriends)) getFriendsDTO: GetFriendsDTO,
+        @Req() req: Request,
         @Res() res: Response) {
         const { userId, groupId, cursor } = getFriendsDTO
         const { sub } = req.user

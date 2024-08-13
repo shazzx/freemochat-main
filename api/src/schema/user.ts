@@ -33,8 +33,11 @@ export class User {
     @Prop({ unique: true })
     username: string;
 
-    @Prop()
-    images: Images
+    @Prop({type: String, default: null})
+    profile: string
+
+    @Prop({type: String, default: null})
+    cover: string
 
     @Prop({ unique: true, validate: { validator: (email: string) => isEmail(email) } })
     email: string;
@@ -60,6 +63,9 @@ export class User {
     // auth related
     @Prop({type: String, required: true})
     secret: string;
+
+    @Prop({type: String, default: null})
+    tempSecret: string
 
     @Prop({type: Boolean, default: false})
     isEmailVerified: boolean;

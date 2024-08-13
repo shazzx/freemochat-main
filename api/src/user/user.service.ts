@@ -26,8 +26,8 @@ export class UserService {
 
     }
 
-    async createUser(user: { firstname: string, lastname: string, username: string, email: string, password: string, confirmPassword: string, address: { country?: string, city?: string, area?: string, }, phone: string, secret: string }): Promise<any> {
-        const { firstname, lastname, username, email, password, confirmPassword, address, phone, secret } = user
+    async createUser(user: { firstname: string, lastname: string, username: string, email: string, password: string, confirmPassword: string, address: { country?: string, city?: string, area?: string, }, phone: string, secret: string, tempSecret: string }): Promise<any> {
+        const { firstname, lastname, username, email, password, confirmPassword, address, phone, secret, tempSecret } = user
 
         if (password !== confirmPassword) {
             throw new BadRequestException("provide correct username or password")
@@ -35,7 +35,7 @@ export class UserService {
 
         let hashedPassword = await this.cryptoService.hash(password, 16)
 
-        const _user = await this.userModel.create({ firstname, lastname, username, email, password: hashedPassword, phone, address, secret })
+        const _user = await this.userModel.create({ firstname, lastname, username, email, password: hashedPassword, phone, address, secret, tempSecret })
         return _user
     }
 

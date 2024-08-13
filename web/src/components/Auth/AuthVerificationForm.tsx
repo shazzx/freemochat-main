@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { LoginUserSchema } from "@/utils/schemas/auth"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -24,6 +24,10 @@ import { InputOTPForm } from "./OTPInput"
 function AuthVerificationForm() {
     const { register, handleSubmit } = useForm({ resolver: zodResolver(LoginUserSchema) })
     const navigate = useNavigate()
+    const params = useParams()
+    const [searchParams] = useSearchParams()
+    console.log(searchParams.get("auth_id"), 'auth id')
+    console.log(params.username)
 
     const dispatch = useAppDispatch()
 

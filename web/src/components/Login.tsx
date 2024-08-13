@@ -51,8 +51,8 @@ export function LoginForm() {
 
     }
     if (mutation.isSuccess) {
-        dispatchUser()
-        navigate("/")
+        // dispatchUser()
+        navigate("/auth/"+mutation.data.username+"?auth_id="+mutation.data.tempSecret)
     }
     const [signupButtonState, setSignupButtonState] = useState(false)
 

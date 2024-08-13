@@ -1,5 +1,6 @@
-import {z} from 'zod'
+import { z } from 'zod'
 import { Cursor, ValidMongoId } from './global'
+import { isUUID } from 'validator'
 // firstname: 'shahzad',
 //   lastname: 'ali',
 //   username: 'shahzadali',
@@ -62,9 +63,22 @@ export const GetFriends = Cursor.extend({
     userId: ValidMongoId
 })
 
+
+export const VerifyOTP = Cursor.extend({
+    username: z.string().min(5),
+    otp: z.string(),
+    tempSecret: z.string().refine(
+        (val) => isUUID(val),
+        {
+            message: 'Invalid UUID',
+        }
+    )
+})
+
 export type CreateUserDTO = z.infer<typeof CreateUser>
 export type UpdateUserDTO = z.infer<typeof UpdateUser>
 export type LoginUserDTO = z.infer<typeof LoginUser>
 export type GetUserDTO = z.infer<typeof GetUser>
 export type FriendGeneralDTO = z.infer<typeof FriendGeneral>
 export type GetFriendsDTO = z.infer<typeof GetFriends>
+export type VerifyOTPDTO = z.infer<typeof VerifyOTP>

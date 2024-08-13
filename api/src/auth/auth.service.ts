@@ -16,7 +16,7 @@ export class AuthService {
     ) { }
 
     async validateUser(username: string, password: string): Promise<any> {
-        let user: any = await this.userService.findUser(username)
+        let user = await this.userService.findUser(username)
         if (!user) {
             throw new UnauthorizedException()
         }
@@ -27,7 +27,24 @@ export class AuthService {
             throw new UnauthorizedException()
         }
 
-        return user
+        let verification = {
+            email: false,
+            phone: false
+        }
+
+        if(user.isEmailVerified){
+            verification.email = true
+        }
+
+        if(user.isPhoneVerified){
+            verification.phone = true
+        }
+
+        if(verification.email && verification.phone){
+            return user
+        }
+
+        return {success: false, verification}
     }
 
     async login(user: any) {
