@@ -34,7 +34,7 @@ module.exports = {
         'profile': "hsl(var(--profile))",
         particles: "hsl(var(--particles))",
         background: "hsl(var(--background))",
-        'background-extra': "hsl(var(--background-extra))",
+        'background-secondary': "hsl(var(--background-secondary))",
         dark: "hsl(var(--dark))",
         foreground: "hsl(var(--foreground))",
         primary: {

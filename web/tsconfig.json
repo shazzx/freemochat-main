@@ -12,6 +12,7 @@
         "./src/*"
       ]
     },
+    "outDir": "./build",
 
     "strictNullChecks": false,
     /* Bundler mode */

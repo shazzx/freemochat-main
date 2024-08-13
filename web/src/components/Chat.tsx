@@ -578,7 +578,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                             </Avatar>
                                         </div>
                                         <div className="relative max-w-80 w-fit">
-                                            <div className="relative p-2 border border-muted text-sm text-primary-foreground rounded-lg pl-3"
+                                            <div className="relative p-2 border border-muted text-sm text-foreground rounded-lg pl-3"
 
                                                 onMouseEnter={() => {
                                                     setDropDownMessageIndex(messageIndex)
@@ -754,7 +754,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                         }}
                         type="search"
                         placeholder="Type your message..."
-                        className="w-full appearance-none bg-background pl-8 shadow-none border-none focus:outline-none"
+                        className="w-full appearance-none bg-background-secondary pl-8 shadow-none border-none focus:outline-none"
                     />
 
                     <div className="relative">
@@ -816,7 +816,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                         handleSendMessage()
                     }}>
 
-                        <svg width="47" className="stroke-white dark:stroke-white" cursor="pointer" height="50" viewBox="0 0 47 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg width="47" className="stroke-white" cursor="pointer" height="50" viewBox="0 0 47 50" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <rect x="0.5" y="1" width="46" height="48" rx="4" fill="#433FFA" />
                             <rect x="0.5" y="1" width="46" height="48" rx="4" stroke="#433FFA" stroke-linejoin="bevel" />
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M30.8814 24.0836L15.786 17.1726C15.3915 16.963 14.9089 16.9431 14.4952 17.1194C14.0815 17.2957 13.7897 17.6456 13.7148 18.0552C13.72 18.1913 13.7561 18.3249 13.8209 18.4477L16.695 24.7566C16.8392 25.1756 16.9177 25.6109 16.9282 26.0497C16.9178 26.4886 16.8393 26.9239 16.695 27.3428L13.8209 33.6518C13.7561 33.7746 13.72 33.9082 13.7148 34.0443C13.7902 34.4533 14.0819 34.8025 14.4952 34.9785C14.9085 35.1545 15.3905 35.1347 15.7846 34.9256L30.8814 28.0147C31.7233 27.6594 32.2618 26.8926 32.2618 26.0491C32.2618 25.2057 31.7233 24.4389 30.8814 24.0836V24.0836Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />

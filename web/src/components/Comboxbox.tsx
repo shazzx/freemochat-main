@@ -41,7 +41,7 @@ export function Combobox({getSelected}) {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[120px] justify-between"
+          className="w-[120px] bg-card text-foreground border border-accent justify-between"
         >
           {value
             ? frameworks.find((framework) => framework.value === value)?.label

@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser'
 import { RedisIoAdapter } from './config/socket.io-adapter';
-import { createClient } from 'redis';
 
 declare const module: any
 

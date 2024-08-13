@@ -96,13 +96,12 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                 <Tabs defaultValue={currentTab} value={currentTab} onValueChange={(e) => {
                     setCurrentTab(e)
                 }} className="w-full h-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="general">General</TabsTrigger>
-                        <TabsTrigger value="groups">Groups</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-2 bg-background-secondary border border-accent">
+                        <TabsTrigger value="general" className="data-[state=active]:bg-background-secondary data-[state=active]text-foreground" >General</TabsTrigger>
+                        <TabsTrigger value="groups" className="data-[state=active]:bg-background-secondary data-[state=active]text-foreground">Groups</TabsTrigger>
                     </TabsList>
                     <TabsContent value="general" className="h-full">
-
-                        <Card x-chunk="dashboard-01-chunk-5" className="w-full bg-background h-full border-none ">
+                        <Card x-chunk="dashboard-01-chunk-5" className="w-full bg-background-secondary h-full border-none ">
                             <CardContent className="flex flex-col gap-2 p-0">
                                 {chatList?.users?.length > 0 ? chatList?.users?.map((chat) => (
                                     <div className="flex gap-4 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={() => {

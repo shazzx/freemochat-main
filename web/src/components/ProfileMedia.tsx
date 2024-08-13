@@ -4,7 +4,7 @@ import { Card } from './ui/card'
 function ProfileMedia({ media, setMediaModelDetails, setMediaOpenDetails, setMediaOpenModel }) {
     console.log(media, 'media')
     return (
-        <Card className='hidden lg:flex sticky top-2 flex-col h-fit gap-1 p-3'>
+        <Card className='hidden lg:flex sticky top-2 flex-col h-fit gap-1 border border-accent p-5'>
             <div>Media</div>
             {media.length > 0 && <div className='max-w-80 items-center flex gap-2 flex-wrap '>
                 {media && media?.images?.length > 0 && media.images.map((media, i) => {
@@ -15,7 +15,7 @@ function ProfileMedia({ media, setMediaModelDetails, setMediaOpenDetails, setMed
                         return null
                     }
                     return (
-                        <div className='relative h-24 w-24 rounded-lg  overflow-hidden' onClick={() => {
+                        <div className='relative h-24 w-24 rounded-md  overflow-hidden' onClick={() => {
                             setMediaModelDetails(media, setMediaOpenDetails, setMediaOpenModel, "image")
                         }}>
                             <img className='absolute inset-0 w-full h-full object-cover' src={media} alt="" />

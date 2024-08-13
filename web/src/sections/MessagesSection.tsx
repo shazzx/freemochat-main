@@ -11,7 +11,7 @@ function MessagesSection() {
     const { data, isLoading } = useUserChatlist()
 
     return (
-        <div className="flex w-full">
+        <div className="flex w-full bg-background-secondary">
             <div className="flex w-full">
                 <ChatSidebar setChatOpen={setChatOpen} chatOpen={chatOpen} setRecepientDetails={setRecepientDetails} chatList={!isLoading && data} />
                 {chatOpen && recepientDetails?.type !== "ChatGroup" &&

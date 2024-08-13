@@ -121,7 +121,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     // }
 
     return (
-        <div className='w-full flex flex-col overflow-y-auto border-muted'>
+        <div className='w-full flex flex-col overflow-y-auto border-muted bg-background-secondary'>
             {/* media model (when you click any media in the profile main page this model will open) */}
             {mediaOpenModel && mediaOpenDetails &&
                 <MediaOpenModel mediaOpenDetails={mediaOpenDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
@@ -145,7 +145,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                 <div className='pl-1 lg:pl-0 lg:pt-8'>
                                     <div className='flex flex-col'>
                                         <div className='leading-3'>{firstname} {lastname}</div>
-                                        <div className='text-gray-400 text-sm'>@{username}</div>
+                                        <div className='text-gray-500 text-sm'>@{username}</div>
                                     </div>
                                     <div>
                                         <p className='leading-tight text-sm'>{bio}</p>
@@ -229,7 +229,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                             {<div className='flex-responsive w-full items-center md:items-start p-2 flex gap-2  border-muted'>
                                 <div className='max-w-xl w-full flex flex-col gap-2 '>
                                     {isSelf &&
-                                        <div className='w-full flex items-center justify-center h-fit border border-muted p-3 bg-card'>
+                                        <div className='w-full flex rounded-md items-center justify-center h-fit border border-accent p-3 bg-card'>
                                             <div className="w-full flex-1">
                                                 <form onSubmit={async (e) => {
                                                     e.preventDefault()

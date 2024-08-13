@@ -1,0 +1,24 @@
+# version: 1
+# frontend:
+#   phases:
+#     preBuild:
+#       commands:
+#         - npm ci
+#     build:
+#       commands:
+#         - npm run build
+#   artifacts:
+#     baseDirectory: dist
+#     files:
+#       - '**/*'
+
+version: 1
+frontend:
+  phases:
+    build:
+      commands:
+        - echo "No build required"
+  artifacts:
+    baseDirectory: /
+    files:
+      - '**/*'

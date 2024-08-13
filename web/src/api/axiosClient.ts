@@ -2,7 +2,9 @@ import { store } from '@/app/store';
 import axios from 'axios'
 
 
+// const baseURL = "https://ec2-54-164-199-173.compute-1.amazonaws.com:3001/api"
 const baseURL = "http://localhost:3000/api"
+
 
 
 export const axiosClient = axios.create({

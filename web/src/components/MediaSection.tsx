@@ -4,7 +4,7 @@ const MediaSection = ({media, setMediaOpenDetails, setMediaOpenModel }) => {
     // let media = { images: [], videos: [] }
 
     return (
-        <div className='flex flex-col gap-4'>
+        <div className='flex flex-col gap-4 p-4'>
             <Card className='flex flex-col w-full h-fit gap-1 p-4'>
                 <div>Photos</div>
                 <div className='flex flex-wrap gap-2'>
