@@ -92,7 +92,9 @@ export class UserController {
             }
 
             const userSecret = user.secret
-            let isValid = this.otpService.verifyOtp(otp, userSecret)
+            const decryptedSecret = this.cryptoService.decrypt(userSecret)
+            console.log(decryptedSecret)
+            let isValid = this.otpService.verifyOtp(otp, decryptedSecret)
 
             if (!isValid) {
                 throw new BadRequestException()
@@ -163,9 +165,9 @@ export class UserController {
         const query = getUserDTO
 
         const username = query.username || userPayload.username
-        const user = await this.userService.getUser(username, null, userPayload.sub)
+        const user = await this.userService.findUser(username)
 
-        res.json(user[0])
+        res.json(user)
     }
 
     @Post("request")

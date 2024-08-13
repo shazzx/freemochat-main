@@ -32,9 +32,9 @@ export const GetPost = z.object({
 
 export const LikePost = z.object({
     postId: ValidMongoId,
-    authorId: z.string(),
-    targetId: z.string(),
-    type: z.string(),
+    authorId: z.string().optional(),
+    targetId: z.string().optional(),
+    type: z.string().optional(),
 })
 
 export const LikeCommentOrReply = z.object({

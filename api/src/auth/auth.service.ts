@@ -28,8 +28,8 @@ export class AuthService {
         }
 
         let verification = {
-            email: false,
-            phone: false
+            email: true,
+            phone: true
         }
 
         if(user.isEmailVerified){

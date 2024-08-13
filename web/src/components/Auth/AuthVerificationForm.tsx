@@ -32,7 +32,7 @@ function AuthVerificationForm() {
     const dispatch = useAppDispatch()
 
     const loginUser = async (data: any) => {
-        const response = await axiosClient.post("/user/login", data, { withCredentials: true })
+        const response = await axiosClient.post("/user/verfy-otp", data)
         return response.data
     }
 

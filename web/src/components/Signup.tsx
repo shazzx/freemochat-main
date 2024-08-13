@@ -66,8 +66,8 @@ export function Signup() {
 
     if (isSuccess) {
         showToast("signed up successfully", "success")
-        dispatchData(data)
-        navigate('/')
+        // dispatchData(data)
+        navigate("/auth/"+data?.username+"?auth_id="+data?.tempSecret)
     }
 
     const onSubmit = (_data) => {
