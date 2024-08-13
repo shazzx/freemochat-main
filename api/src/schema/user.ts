@@ -62,7 +62,11 @@ export class User {
 
     // auth related
     @Prop({type: String, required: true})
-    secret: string;
+    emailSecret: string;
+
+
+    @Prop({type: String, required: true})
+    phoneSecret: string;
 
     @Prop({type: String, default: null})
     tempSecret: string

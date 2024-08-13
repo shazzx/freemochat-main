@@ -20,6 +20,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 import { toast } from "@/components/ui/use-toast"
+import { axiosClient } from "@/api/axiosClient"
 
 const FormSchema = z.object({
   pin: z.string().min(6, {
@@ -27,7 +28,7 @@ const FormSchema = z.object({
   }),
 })
 
-export function InputOTPForm({label, description, onSubmit}: {label: string, description: string, onSubmit}) {
+export function InputOTPForm({label, description, onSubmit, type, otpResend}: {label: string, description: string, onSubmit, type: string, otpResend}) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -36,7 +37,7 @@ export function InputOTPForm({label, description, onSubmit}: {label: string, des
   })
 
   function _onSubmit(data: z.infer<typeof FormSchema>) {
-    onSubmit(data)
+    onSubmit({...data, type})
     toast({
       title: "You submitted the following values:",
       description: (
@@ -75,7 +76,13 @@ export function InputOTPForm({label, description, onSubmit}: {label: string, des
             </FormItem>
           )}
         />
+        <div className="flex gap-2">
+
+        <Button type="button" onClick={() => {
+          otpResend(type)
+        }}>Resend</Button>
         <Button type="submit">Verify</Button>
+        </div>
       </form>
     </Form>
   )

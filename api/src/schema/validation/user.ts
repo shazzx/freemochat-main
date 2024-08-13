@@ -64,7 +64,7 @@ export const GetFriends = Cursor.extend({
 })
 
 
-export const VerifyOTP = Cursor.extend({
+export const VerifyOTP = z.object({
     username: z.string().min(5),
     otp: z.string(),
     type: z.string(),
@@ -76,6 +76,18 @@ export const VerifyOTP = Cursor.extend({
     )
 })
 
+export const resendOTP = z.object({
+    username: z.string().min(5),
+    type: z.string(),
+    authId: z.string().refine(
+        (val) => isUUID(val),
+        {
+            message: 'Invalid UUID',
+        }
+    )
+})
+
+
 export type CreateUserDTO = z.infer<typeof CreateUser>
 export type UpdateUserDTO = z.infer<typeof UpdateUser>
 export type LoginUserDTO = z.infer<typeof LoginUser>
@@ -83,3 +95,4 @@ export type GetUserDTO = z.infer<typeof GetUser>
 export type FriendGeneralDTO = z.infer<typeof FriendGeneral>
 export type GetFriendsDTO = z.infer<typeof GetFriends>
 export type VerifyOTPDTO = z.infer<typeof VerifyOTP>
+export type resendOTPDTO = z.infer<typeof resendOTP>

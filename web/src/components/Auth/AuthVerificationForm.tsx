@@ -20,6 +20,7 @@ import { store } from "@/app/store"
 import { setUser } from "@/app/features/user/userSlice"
 import { useState } from "react"
 import { InputOTPForm } from "./OTPInput"
+import { toast } from "react-toastify"
 
 function AuthVerificationForm() {
     const { register, handleSubmit } = useForm({ resolver: zodResolver(LoginUserSchema) })
@@ -39,19 +40,34 @@ function AuthVerificationForm() {
         console.log(response.data)
         // return response.data
     }
-
+    // 139578 emailOTP:  653196
     const mutation = useMutation({
-        mutationFn: async (data: {pin: number}): Promise<any> => {
+        mutationFn: async (data: {pin: string, type: string}): Promise<any> => {
             let _data = {
                 otp: data.pin,
+                type: data.type,
                 authId,
                 username
             }
             return await verifyOTP(_data)
         },
-        onError: () => {
+        onError: (e: any) => {
+            if(e.response.data.error.message){
+                toast.info("Wrong or expired OTP")
+            }
+        },
+        onSettled: (data) => {
+            console.log(data)
         }
     })
+
+    const otpResend  = async(type: string) => {
+        const {data} = await axiosClient.post("/user/resend-otp", {type, authId, username})
+        console.log(data)
+        if(data.success){
+            toast.success(data.message)
+        }
+      }
 
     const dispatchUser = async () => {
         dispatch(setAccessToken(mutation.data.access_token))
@@ -78,8 +94,8 @@ function AuthVerificationForm() {
                     <CardTitle className="text-2xl">Verification</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-12 max-w-96 p-4">
-                    <InputOTPForm onSubmit={onSubmit} label="Email Verification" description="Please enter the one-time password sent to your email."/>
-                    <InputOTPForm label="Phone Verification" description="Please enter the one-time password sent to your phone." onSubmit={onSubmit} />
+                    <InputOTPForm otpResend={otpResend} onSubmit={onSubmit} type="email" label="Email Verification" description="Please enter the one-time password sent to your email."/>
+                    <InputOTPForm otpResend={otpResend} onSubmit={onSubmit} type="phone" label="Phone Verification" description="Please enter the one-time password sent to your phone."  />
                 </CardContent>
             </Card>
         </div>

@@ -18,19 +18,20 @@ export class OtpService {
 
   }
 
-  async generateSecret(): Promise<GeneratedSecret> {
+  generateSecret(): GeneratedSecret {
     return speakeasy.generateSecret({length: 20});
   }
 
-  async generateOtp(secret: GeneratedSecret): Promise<string> {
+  generateOtp(secret: GeneratedSecret): string {
     return speakeasy.totp({
       secret: secret.base32,
-      encoding: 'base32'
+      encoding: 'base32',
+      algorithm: "sha256",
     });
   }
 
   verifyOtp(token: string, secret: string): boolean {
-    return speakeasy.totp.verify({token, secret, encoding: 'base32'});
+    return speakeasy.totp.verify({token, secret, algorithm: 'sha256', encoding: 'base32', window: 10});
   }
 
   async sendOTPEmail(to: string, otp: string) {
