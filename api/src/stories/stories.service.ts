@@ -60,32 +60,22 @@ export class StoriesService {
     }
 
 
-    async updateStory(username: string, storyDetails: any) {
-        let user: any = await this.userService.getUser(username)
-        let storyIndex = user.stories.findIndex(story => story.id === storyDetails.id)
-        if (storyIndex == -1) {
-            throw new BadRequestException()
-        }
+    // async updateStory(username: string, storyDetails: any) {
+    //     let user: any = await this.userService.getUser(username)
+    //     let storyIndex = user.stories.findIndex(story => story.id === storyDetails.id)
+    //     if (storyIndex == -1) {
+    //         throw new BadRequestException()
+    //     }
 
-        user.stories[storyIndex].title = storyDetails.title
+    //     user.stories[storyIndex].title = storyDetails.title
 
-        this.userService.updateUser(username, user)
+    //     this.userService.updateUser(username, user)
 
-        return user.stories[storyIndex]
-    }
+    //     return user.stories[storyIndex]
+    // }
 
 
-    async deleteStory(username: string, storyDetails: any) {
-        let user: any = await this.userService.getUser(username)
-        let storyIndex = user.stories.findIndex(story => story.id === storyDetails.id)
-        if (storyIndex == -1) {
-            throw new BadRequestException()
-        }
-
-        user.stories.splice(storyIndex, 1)
-
-        this.userService.updateUser(username, user)
-
-        return "story deleted"
+    async deleteStory(storyId: string) {
+        return await this.storyModel.findByIdAndDelete(storyId)
     }
 }

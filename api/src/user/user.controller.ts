@@ -301,28 +301,29 @@ export class UserController {
         @Res() res: Response,
         @UploadedFile() file: Express.Multer.File,) {
 
-        const { images } = updateUserDTO
+        // const { images } = updateUserDTO
         const { sub } = req.user as { sub: string, username: string }
 
-        let _images = {}
-        let uploaded;
+        let images = {}
+        console.log(file)
         if (file) {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
 
-            uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+            let {url} = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
 
             if (file.originalname == 'profile') {
-                _images = { ...images, profile: uploaded }
+                images = { profile: url }
             }
             if (file.originalname == 'cover') {
-                _images = { ...images, cover: uploaded }
+                images = { cover: url }
             }
         }
 
-        console.log(updateUserDTO)
-        let user = await this.userService.updateUser(sub, { ...updateUserDTO, images: _images })
-        res.json(user)
+        console.log(updateUserDTO, images)
+
+        let user = await this.userService.updateUser(sub, { ...updateUserDTO, ...images })
+        res.json({user})
     }
 
     @Post("delete")

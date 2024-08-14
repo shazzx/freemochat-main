@@ -48,6 +48,9 @@ export class CacheService {
 
   async getOnlineFriends(friends: any): Promise<any> {
     console.log(friends, 'gettings online friends...')
+    if(friends.length == 0){
+      return []
+    }
     return await this.redis.hmget("online_users", ...friends)
   }
 

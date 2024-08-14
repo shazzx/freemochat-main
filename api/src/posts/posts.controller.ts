@@ -116,8 +116,7 @@ export class PostsController {
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
-    async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
-        @Body("postData") postData: string) {
+    async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
 
         const uploadPromise = files.map((file) => {
             const fileType = getFileType(file.mimetype)

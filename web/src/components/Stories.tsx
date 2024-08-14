@@ -3,12 +3,17 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "./ui/button"
 import { useAppSelector } from "@/app/hooks"
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu"
+import { EllipsisVertical } from "lucide-react"
+import { RiUserUnfollowFill } from "react-icons/ri"
+import { MdRemove, MdRemoveCircle } from "react-icons/md"
+import { CiSquareRemove } from "react-icons/ci"
 
 function Stories() {
     let [storyUrl, setStoryUrl] = useState(undefined)
     let [storySrc, setStorySrc] = useState(undefined)
     let [stories, setStories] = useState([])
-    let [userStory, setUserStory] = useState({ stories: null })
+    let [userStory, setUserStory] = useState({ stories: [], user: null })
     let [storyViewIndex, setStoryViewIndex] = useState(null)
     let [openedStoryIndex, setOpenedStoryIndex] = useState(null)
     const { user } = useAppSelector((data) => data.user)
@@ -17,11 +22,17 @@ function Stories() {
     const [isPaused, setIsPaused] = useState(false)
     const storyTimeRef = useRef(null)
 
-    let uploadStory = async () => {
+    let uploadStory = async (story: File) => {
         let formData = new FormData();
-        formData.append('file', storySrc)
-        console.log(storySrc)
-        await axiosClient.post("/stories/create", formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+        formData.append('file', story)
+        console.log(story)
+        let _userStories  = userStory
+        if(!_userStories?.user){
+            _userStories.user = user
+        }
+        _userStories.stories.unshift({url: URL.createObjectURL(story)})
+        setUserStory({...userStory, ..._userStories})
+        await axiosClient.post("/stories/create", formData, { headers: { "Content-Type": 'multipart/form-data' } })
     }
 
     useEffect(() => {
@@ -47,6 +58,8 @@ function Stories() {
     let [openStory, setOpenStory] = useState(false)
     useEffect(() => {
         console.log(stories.length)
+        setIsPaused(true)
+
         if (stories.length > 0 && openedStoryIndex >= 0 && storyViewIndex >= 0 && !isPaused) {
             console.log(openedStoryIndex, storyViewIndex)
             storyTimeRef.current = setInterval(() => {
@@ -75,7 +88,6 @@ function Stories() {
 
 
     const pauseStory = () => {
-        setIsPaused(true)
         clearInterval(storyTimeRef.current)
     }
 
@@ -107,21 +119,45 @@ function Stories() {
                     }}>
                     </div>
                     <div className="relative h-screen z-50">
-                        <div className="absolute p-2 flex gap-2">
+                        <div className="absolute w-full items-center p-2 flex gap-2">
                             <div className='w-14 h-14 bg-accent flex items-center justify-center rounded-full overflow-hidden border-2 border-primary-active'>
                                 <Avatar className="flex">
                                     <AvatarImage src={stories[openedStoryIndex].user?.images?.profile} alt="Avatar" />
                                     <AvatarFallback>{stories[openedStoryIndex].user?.firstname[0]?.toUpperCase() + stories[openedStoryIndex].user?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                 </Avatar>
+
                             </div>
 
-                            <div className="flex flex-col">
-                                <div className="text-md">
+                            <div className="flex flex-1 justify-between">
+                                <div className="flex flex-col">
+                                <div className="text-md text-white">
                                     {stories[openedStoryIndex].user?.firstname + stories[openedStoryIndex].user?.lastname}
                                 </div>
-                                <span className="text-sm">
+                                <span className="text-sm text-gray-300">
                                     @{stories[openedStoryIndex].user?.username}
                                 </span>
+                                </div>
+                                < DropdownMenu >
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-10 w-8 text-white  p-2 rounded-md">
+                                        <EllipsisVertical className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md'>
+                                        <DropdownMenuItem className=' cursor-pointer hover:bg-accent flex gap-2 p-2 items-center justify-center z-20' onClick={async () => {
+                                            axiosClient.post("/stories/delete", {storyId: stories[openedStoryIndex]?.stories[storyViewIndex]?._id, url: stories[openedStoryIndex]?.stories[storyViewIndex]?._id })
+                                            let _stories = [...stories]
+                                            _stories[openedStoryIndex].stories.splice(storyViewIndex, 1)
+                                            setStories(_stories)
+                                            setOpenedStoryIndex(0)
+                                            setStoryViewIndex(0)
+                                            setStoryViewModelState(false)
+                                            setOpenStory(false)
+                                        }}><CiSquareRemove size={22} /> <span>Remove</span></DropdownMenuItem>
+
+                                </DropdownMenuContent>
+
+                            </DropdownMenu>
                             </div>
                         </div>
                         <div className="flex items-center aspect-auto max-w-96 h-full justify-center overflow-hidden bg-dark ">
@@ -177,7 +213,7 @@ function Stories() {
                                 formData.append("data", JSON.stringify({ details: { username, userId: user?._id, type: 'story' } }))
                                 // const response = await axiosClient.post("/upload/single", formData, { headers: { 'Content-Type': 'multipart/form-data' } })
                                 // const { data } = await axiosClient.post("/stories/create", { storyDetails: { url: response.data } })
-                                uploadStory()
+                                // uploadStory()
                             }}>Upload</Button>
                         </div>
                     </div>
@@ -185,16 +221,14 @@ function Stories() {
             }
             <div className='relative flex text-sm flex-col items-center gap-2'>
                 {/* story upload */}
-                <form onSubmit={uploadStory} className='image-upload_form'>
+                <form className='image-upload_form'>
                     <label htmlFor="image">
                         <div className='w-5 h-5 z-10 bottom-7 right-0 bg-primary text-primary-foreground  shadow-md rounded-full text-base font-medium flex items-center justify-center absolute '>
                             +
                         </div>
                     </label>
-                    <input className="hidden" type="file" accept='image/*' id='image' onChange={async (e) => {
-                        setStoryUrl(URL.createObjectURL(e.target.files[0]))
-                        setStorySrc(e.target.files[0])
-                        setStoryViewModelState(true)
+                    <input className="hidden" name="image" type="file" accept='image/*' id='image' onChange={(e) => {
+                        uploadStory(e.target.files[0])
                     }} />
                 </form>
 
@@ -227,7 +261,7 @@ function Stories() {
                     return (
                         <div className='relative flex text-sm flex-col items-center gap-2'>
                             {/* story upload */}
-                            <form onSubmit={uploadStory} className='image-upload_form'>
+                            {/* <form  className='image-upload_form'>
                                 <label htmlFor="image">
                                 </label>
                                 <input className="hidden" type="file" accept='image/*' id='image' onChange={async (e) => {
@@ -241,7 +275,7 @@ function Stories() {
                                         setStoryViewModelState(true)
                                     }
                                 }} />
-                            </form>
+                            </form> */}
 
                             <div className='w-14 h-14 flex items-center justify-center rounded-full overflow-hidden border-2 border-primary-active'>
                                 <img className='w-full' src={storyMain?.stories[0].url} alt="" onClick={() => {

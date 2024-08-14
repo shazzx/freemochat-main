@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { getFileType } from 'src/utils/getFileType';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
+import { DeleteStory, DeleteStoryDTO } from 'src/schema/validation/stories';
 
 @Controller('stories')
 export class StoriesController {
@@ -23,7 +24,8 @@ export class StoriesController {
         const fileType = getFileType(file.mimetype)
         const filename = uuidv4()
 
-        let url = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+        let { url } = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+        console.log(url)
 
         res.json(await this.storiesService.createStory(sub, { url }))
     }
@@ -34,9 +36,19 @@ export class StoriesController {
     //     return await this.storiesService.updateStory(userDetails.username, storyDetails)
     // }
 
-    // @Post("delete")
-    // async deleteStory(@Body(new ZodValidationPipe(DeleteStory)) updateStoryDTO: DeleteStoryDTO, @Req() req) {
-    //     const { userDetails, storyDetails } = req.body
-    //     return await this.storiesService.deleteStory(userDetails.username, storyDetails)
-    // }
+    @Post("delete")
+    async deleteStory(@Body(new ZodValidationPipe(DeleteStory)) deleteStoryDTO: DeleteStoryDTO, @Res() res: Response) {
+        const { storyId, url } = deleteStoryDTO
+        let imageUrlSplit = url.split("/")
+        console.log(url)
+        let filename = imageUrlSplit[imageUrlSplit.length - 1]
+        let deleted = await this.uploadService.deleteFromS3(filename)
+        console.log(deleted)
+
+        if(deleted){
+            return res.json(await this.storiesService.deleteStory(storyId))
+        }
+
+        res.status(500).json({success: false, message: 'something  went wrong'})
+    }
 }
