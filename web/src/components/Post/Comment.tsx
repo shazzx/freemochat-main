@@ -65,11 +65,11 @@ const Comment: FC<any> = ({ reply, comment, pageIndex, commentIndex, userId, ref
                                 <AvatarFallback>{(comment?.user?.firstname[0]?.toUpperCase()) + (comment?.user?.lastname[0]?.toUpperCase())}</AvatarFallback>
                             </Avatar>
                         </div>
-                        <div className='flex flex-col'>
+                        <div className='flex flex-col '>
                             <div className='flex px-2 gap-4 text-xs'>
                                 <span className="font-medium">{comment?.user?.firstname} {comment?.user?.lastname}</span>
                             </div>
-                            <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-muted text-sm rounded-lg ">
+                            <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-accent bg-card dark:bg-transparent text-sm rounded-lg ">
                                 <p >{comment?.content}</p>
 
                                 < DropdownMenu >

@@ -28,6 +28,9 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RiUserFollowLine, RiUserUnfollowFill, RiUserUnfollowLine } from "react-icons/ri";
 import { FaUserFriends } from 'react-icons/fa'
 import { domain } from '@/config/domain'
+import { useInView } from 'react-intersection-observer'
+import Friends from './tabs/profile/Friends'
+import Followers from './tabs/profile/Followers'
 const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const localUserData = useAppSelector(data => data.user)
     const isSelf = role === 'self'
@@ -44,7 +47,6 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const removeFriend = useRemoveFriend(username, _id)
     const followUserToggle = useFollowUserToggle(username, _id)
     const userFollowers = !query.isLoading ? useUserFollowers(_id) : useUserFollowers()
-    console.log(userFollowers)
     const userFriends = !query.isLoading ? useUserFriends(_id) : useUserFriends()
     const createPost = useCreatePost("userPosts", _id)
     const updatePost = useUpdatePost("userPosts", _id)
@@ -61,7 +63,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
     const [searchParams, setSearchParams] = useSearchParams()
     // console.log(setSearchParams)
-    const { data, isLoading } = useUserPosts("user", _id)
+    const { data, isLoading, fetchNextPage } = useUserPosts("user", _id)
     const userMedia = useMedia("userMedia", _id)
     const media = userMedia?.data
 
@@ -112,13 +114,16 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
         setPosts(_post)
     }
-    console.log(address)
+
     const [mediaOpenModel, setMediaOpenModel] = useState(false)
     const [mediaOpenDetails, setMediaOpenDetails] = useState({ type: '', url: '' })
-    // const setMediaModelDetails = (media, type) => {
-    //     setMediaOpenModel(true)
-    //     setMediaOpenDetails({ type: 'image', url: media })
-    // }
+
+    // post in view
+    const { inView, ref } = useInView()
+    useEffect(() => {
+        fetchNextPage()
+        console.log('yes')
+    }, [inView])
 
     return (
         <div className='w-full flex flex-col overflow-y-auto border-muted bg-background-secondary'>
@@ -258,9 +263,14 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                         </div>}
                                     <div className='flex w-full items-center flex-col gap-2 '>
                                         {!isLoading && data.length > 0 ? data?.map((page, pageIndex) => {
-                                            return page.posts.map((post, postIndex) => (
-                                                <Post useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} username={username} userId={user?._id} removePost={removePost} type={"user"} key={post?._id} self={isSelf} profile={images?.profile} />
-                                            ))
+                                            return page.posts.map((post, postIndex) => {
+                                                if (pageIndex == data.length - 1 && postIndex == data[pageIndex].posts.length - 3) {
+                                                    return (
+                                                        <Post scrollRef={ref} useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} username={username} userId={user?._id} removePost={removePost} type={"user"} key={post?._id} self={isSelf} profile={images?.profile} />
+                                                    )
+                                                }
+                                                return <Post useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} username={username} userId={user?._id} removePost={removePost} type={"user"} key={post?._id} self={isSelf} profile={images?.profile} />
+                                            })
                                         })
                                             :
                                             <div>
@@ -268,7 +278,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                             </div>
                                         }
 
-                                        {posts?.length == 0 &&
+                                        {!isLoading && data && data[0]?.posts == 0 &&
                                             <HelperMessage message={"you don't have published posts"} svg={
                                                 <svg width="180" height="120" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="transparent" d="M0 0h900v600H0z" /><path d="M705.499 375.559h-49.367c-12.097 0-22.231-8.232-22.231-18.659 0-5.213 2.615-9.878 6.538-13.171 3.923-3.292 9.481-5.488 15.693-5.488h7.193c6.211 0 11.769-2.195 15.692-5.488 3.924-3.292 6.539-7.957 6.539-13.17 0-10.153-9.808-18.659-22.231-18.659H512.54c-3.939 0-6.471-4.842-6.471-8.781 0-9.878-9.481-17.836-21.251-17.836h-56.112a5.35 5.35 0 1 1 0-10.701h215.003c9.481 0 18.308-3.293 24.52-8.506 6.211-5.214 10.135-12.622 10.135-20.58 0-16.189-15.693-29.086-34.655-29.086H532.662c-17.423 0-34.67-13.445-52.094-13.445h-62c-9.093 0-16.464-7.371-16.464-16.464 0-9.092 7.371-16.463 16.464-16.463h138.83c6.539 0 12.75-2.196 17-5.763 4.251-3.567 6.866-8.506 6.866-14.268 0-10.976-10.789-20.031-23.866-20.031H237.329c-6.538 0-12.75 2.195-17 5.762-4.25 3.567-6.866 8.507-6.866 14.269 0 10.976 10.789 20.031 23.866 20.031h8.174c10.788 0 19.943 7.408 19.943 16.738 0 4.664-2.289 8.78-5.885 11.799-3.596 3.018-8.5 4.939-14.058 4.939h-39.559c-6.866 0-13.405 2.469-17.982 6.311-4.577 3.841-7.519 9.055-7.519 15.092 0 11.799 11.442 21.128 25.174 21.128h40.213c13.077 0 23.866 9.055 23.866 20.031 0 5.488-2.616 10.427-6.866 13.994s-10.135 5.762-16.674 5.762h-35.962c-5.885 0-11.116 1.921-15.039 5.214-3.923 3.292-6.212 7.683-6.212 12.622 0 9.878 9.481 17.836 21.251 17.836h29.097c16.674 0 30.078 11.25 30.078 25.244 0 6.86-3.27 13.445-8.827 17.835-5.558 4.665-13.078 7.409-21.251 7.409h-40.54c-8.173 0-15.693 2.744-20.924 7.409-5.558 4.39-8.827 10.701-8.827 17.561 0 13.72 13.404 24.97 29.751 24.97h125.18c13.825 0 27.405 7.683 41.23 7.683h22.8c8.714 0 15.778 7.064 15.778 15.778 0 8.713-7.064 15.777-15.778 15.777h-55.494c-7.192 0-13.404 2.47-17.981 6.311-4.577 3.842-7.52 9.33-7.52 15.092 0 11.799 11.443 21.403 25.501 21.403h340.012c7.192 0 13.404-2.47 17.981-6.311 4.577-3.842 7.52-9.33 7.52-15.092 0-11.799-11.443-21.403-25.501-21.403h-10.135c-10.462 0-18.635-7.134-18.635-15.64 0-4.39 1.961-8.232 5.557-10.976 3.27-2.744 8.174-4.665 13.405-4.665h42.828c7.193 0 13.404-2.469 17.982-6.311 4.577-3.841 7.519-9.329 7.519-15.091 0-12.348-11.443-21.952-25.501-21.952z" fill="url(#a)" /><path d="M596 169.612v285.435C596 475.869 579.137 493 558.059 493h-12.383c-7.641 0-13.965-4.217-19.234-9.752-8.432-9.224-12.911-21.348-12.911-33.999v-32.945c0-13.178-10.803-23.984-23.977-23.984H337V169.612c0-11.86 9.749-21.612 21.605-21.612h215.79c12.12 0 21.605 9.752 21.605 21.612z" fill="#1b374c" /><path d="M535 512H295.002C267.995 512 246 490.285 246 463.623v-31.61C246 418.27 257.415 407 271.336 407h204.639c13.921 0 25.336 11.27 25.336 25.013v34.359c0 12.919 4.733 25.837 13.643 35.458C520.244 507.602 526.926 512 535 512z" fill="#1b374c" /><circle cx="396.5" cy="224.5" r="15.5" fill="#fff" /><circle cx="396.5" cy="274.5" r="15.5" fill="#fff" /><circle cx="396.5" cy="324.5" r="15.5" fill="#fff" /><rect x="431" y="209" width="123" height="31" rx="15.5" fill="#fff" /><rect x="431" y="259" width="123" height="32" rx="16" fill="#fff" /><rect x="431" y="309" width="123" height="31" rx="15.5" fill="#fff" /><defs><linearGradient id="a" x1="461.983" y1="702.686" x2="454.308" y2="-287.923" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" /><stop offset="1" stop-color="#EEE" /></linearGradient></defs></svg>
                                             } />
@@ -280,114 +290,10 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                             }
                         </TabsContent>
                         <TabsContent value="friends" className="">
-                            <div className='flex-responsive w-full items-center md:items-start p-2 flex gap-2 border-muted'>
-                                <div className='max-w-xl w-full flex flex-col gap-2 '>
-                                    <div className='flex w-full items-center  flex-col gap-2 '>
-                                        {userFriends.isSuccess && userFriends.data?.map((page) => {
-                                            return page.friends.map((friend) => {
-                                                friend = friend.friend
-                                                return (
-
-                                                    <div className='flex flex-col gap-1 w-full bg-card'>
-                                                        <div className='flex-responsive items-center p-2 gap-2 relative w-full '>
-                                                            <Link to={domain + "/user/" + friend?.username} className='cursor-pointer flex w-full gap-2'>
-                                                                <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
-                                                                    <Avatar >
-                                                                        <AvatarImage src={friend?.images?.profile} alt="Avatar" />
-                                                                        <AvatarFallback className='text-2xl'>{friend?.firstname[0]?.toUpperCase() + friend?.lastname[0]?.toUpperCase()}</AvatarFallback>
-                                                                    </Avatar>
-                                                                </div>
-                                                                <div className="flex flex-col justify-center">
-                                                                    <div className=''>{friend?.firstname + " " + friend?.lastname}</div>
-                                                                    <div className='text-gray-400 text-sm'>@{friend?.username}</div>
-
-                                                                </div>
-                                                            </Link>
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" className="h-8 w-8 bg-card p-2 rounded-md">
-                                                                        <span className="sr-only">Open menu</span>
-                                                                        <EllipsisVertical className="h-4 w-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end" className='bg-card p-2 rounded-md'>
-                                                                    <DropdownMenuItem onClick={async () => {
-                                                                        removeFriend.mutate({ recepientId: friend._id })
-                                                                    }}>Remove</DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
-                                                        </div>
-                                                    </div>
-                                                )
-                                            })
-                                        })}
-
-                                        {userFriends.isSuccess && (userFriends?.data[0]?.friends?.length == 0 || !userFriends?.data[0]?.friends) &&
-                                            <HelperMessage message={"you don't have friends"} svg={
-                                                <svg width="180" height="120" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="transparent" d="M0 0h900v600H0z" /><path d="M705.499 375.559h-49.367c-12.097 0-22.231-8.232-22.231-18.659 0-5.213 2.615-9.878 6.538-13.171 3.923-3.292 9.481-5.488 15.693-5.488h7.193c6.211 0 11.769-2.195 15.692-5.488 3.924-3.292 6.539-7.957 6.539-13.17 0-10.153-9.808-18.659-22.231-18.659H512.54c-3.939 0-6.471-4.842-6.471-8.781 0-9.878-9.481-17.836-21.251-17.836h-56.112a5.35 5.35 0 1 1 0-10.701h215.003c9.481 0 18.308-3.293 24.52-8.506 6.211-5.214 10.135-12.622 10.135-20.58 0-16.189-15.693-29.086-34.655-29.086H532.662c-17.423 0-34.67-13.445-52.094-13.445h-62c-9.093 0-16.464-7.371-16.464-16.464 0-9.092 7.371-16.463 16.464-16.463h138.83c6.539 0 12.75-2.196 17-5.763 4.251-3.567 6.866-8.506 6.866-14.268 0-10.976-10.789-20.031-23.866-20.031H237.329c-6.538 0-12.75 2.195-17 5.762-4.25 3.567-6.866 8.507-6.866 14.269 0 10.976 10.789 20.031 23.866 20.031h8.174c10.788 0 19.943 7.408 19.943 16.738 0 4.664-2.289 8.78-5.885 11.799-3.596 3.018-8.5 4.939-14.058 4.939h-39.559c-6.866 0-13.405 2.469-17.982 6.311-4.577 3.841-7.519 9.055-7.519 15.092 0 11.799 11.442 21.128 25.174 21.128h40.213c13.077 0 23.866 9.055 23.866 20.031 0 5.488-2.616 10.427-6.866 13.994s-10.135 5.762-16.674 5.762h-35.962c-5.885 0-11.116 1.921-15.039 5.214-3.923 3.292-6.212 7.683-6.212 12.622 0 9.878 9.481 17.836 21.251 17.836h29.097c16.674 0 30.078 11.25 30.078 25.244 0 6.86-3.27 13.445-8.827 17.835-5.558 4.665-13.078 7.409-21.251 7.409h-40.54c-8.173 0-15.693 2.744-20.924 7.409-5.558 4.39-8.827 10.701-8.827 17.561 0 13.72 13.404 24.97 29.751 24.97h125.18c13.825 0 27.405 7.683 41.23 7.683h22.8c8.714 0 15.778 7.064 15.778 15.778 0 8.713-7.064 15.777-15.778 15.777h-55.494c-7.192 0-13.404 2.47-17.981 6.311-4.577 3.842-7.52 9.33-7.52 15.092 0 11.799 11.443 21.403 25.501 21.403h340.012c7.192 0 13.404-2.47 17.981-6.311 4.577-3.842 7.52-9.33 7.52-15.092 0-11.799-11.443-21.403-25.501-21.403h-10.135c-10.462 0-18.635-7.134-18.635-15.64 0-4.39 1.961-8.232 5.557-10.976 3.27-2.744 8.174-4.665 13.405-4.665h42.828c7.193 0 13.404-2.469 17.982-6.311 4.577-3.841 7.519-9.329 7.519-15.091 0-12.348-11.443-21.952-25.501-21.952z" fill="url(#a)" /><path d="M596 169.612v285.435C596 475.869 579.137 493 558.059 493h-12.383c-7.641 0-13.965-4.217-19.234-9.752-8.432-9.224-12.911-21.348-12.911-33.999v-32.945c0-13.178-10.803-23.984-23.977-23.984H337V169.612c0-11.86 9.749-21.612 21.605-21.612h215.79c12.12 0 21.605 9.752 21.605 21.612z" fill="#1b374c" /><path d="M535 512H295.002C267.995 512 246 490.285 246 463.623v-31.61C246 418.27 257.415 407 271.336 407h204.639c13.921 0 25.336 11.27 25.336 25.013v34.359c0 12.919 4.733 25.837 13.643 35.458C520.244 507.602 526.926 512 535 512z" fill="#1b374c" /><circle cx="396.5" cy="224.5" r="15.5" fill="#fff" /><circle cx="396.5" cy="274.5" r="15.5" fill="#fff" /><circle cx="396.5" cy="324.5" r="15.5" fill="#fff" /><rect x="431" y="209" width="123" height="31" rx="15.5" fill="#fff" /><rect x="431" y="259" width="123" height="32" rx="16" fill="#fff" /><rect x="431" y="309" width="123" height="31" rx="15.5" fill="#fff" /><defs><linearGradient id="a" x1="461.983" y1="702.686" x2="454.308" y2="-287.923" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" /><stop offset="1" stop-color="#EEE" /></linearGradient></defs></svg>
-                                            } />
-                                        }
-                                    </div>
-                                </div>
-                                <ProfileMedia media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
-                            </div>
+                            <Friends userFriends={!isLoading && userFriends} removeFriend={removeFriend} media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                         </TabsContent>
                         <TabsContent value="followers" className="">
-                            <div className='flex-responsive w-full items-center md:items-start p-2 flex gap-2 border-muted'>
-                                <div className='max-w-xl w-full flex flex-col gap-2 '>
-                                    {userFollowers.isSuccess && userFollowers.data.map((page) => {
-                                        return page.followers.map((follower) => {
-                                            follower = follower.follower
-                                            console.log(follower)
-                                            return (
-
-                                                <div className='flex flex-col gap-1 w-full bg-card'>
-                                                    <div className='flex-responsive items-center p-2 gap-2 relative w-full '>
-                                                        <div className='flex w-full gap-2'>
-                                                            <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
-                                                                <Avatar >
-                                                                    <AvatarImage src={follower?.images?.profile} alt="Avatar" />
-                                                                    <AvatarFallback className='text-2xl'>{follower?.firstname[0]?.toUpperCase() + follower?.lastname[0]?.toUpperCase()}</AvatarFallback>
-                                                                </Avatar>
-                                                            </div>
-                                                            <div className="flex flex-col justify-center">
-                                                                <div className=''>{follower?.firstname + " " + follower?.lastname}</div>
-                                                                <div className='text-gray-400 text-sm'>@{follower?.username}</div>
-
-                                                            </div>
-                                                        </div>
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" className="h-8 w-8 bg-card p-2 rounded-md">
-                                                                    <span className="sr-only">Open menu</span>
-                                                                    <EllipsisVertical className="h-4 w-4" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end" className='bg-card border-2 border-accent rounded-md'>
-                                                                <DropdownMenuItem className=' cursor-pointer hover:bg-accent flex gap-2 p-2 items-center justify-center' onClick={async () => {
-                                                                    followUserToggle.mutate({ recepientId: _id })
-                                                                }}>
-                                                                    <RiUserUnfollowLine size={22} /> <span>Remove</span>
-                                                                </DropdownMenuItem>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    </div>
-                                                </div>
-                                            )
-                                        })
-
-                                    })}
-
-                                    {userFollowers.isSuccess && userFollowers.data[0].followers.length == 0 &&
-                                        <HelperMessage message={"you don't have followers"} svg={
-                                            <svg width="180" height="120" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="transparent" d="M0 0h900v600H0z" /><path d="M705.499 375.559h-49.367c-12.097 0-22.231-8.232-22.231-18.659 0-5.213 2.615-9.878 6.538-13.171 3.923-3.292 9.481-5.488 15.693-5.488h7.193c6.211 0 11.769-2.195 15.692-5.488 3.924-3.292 6.539-7.957 6.539-13.17 0-10.153-9.808-18.659-22.231-18.659H512.54c-3.939 0-6.471-4.842-6.471-8.781 0-9.878-9.481-17.836-21.251-17.836h-56.112a5.35 5.35 0 1 1 0-10.701h215.003c9.481 0 18.308-3.293 24.52-8.506 6.211-5.214 10.135-12.622 10.135-20.58 0-16.189-15.693-29.086-34.655-29.086H532.662c-17.423 0-34.67-13.445-52.094-13.445h-62c-9.093 0-16.464-7.371-16.464-16.464 0-9.092 7.371-16.463 16.464-16.463h138.83c6.539 0 12.75-2.196 17-5.763 4.251-3.567 6.866-8.506 6.866-14.268 0-10.976-10.789-20.031-23.866-20.031H237.329c-6.538 0-12.75 2.195-17 5.762-4.25 3.567-6.866 8.507-6.866 14.269 0 10.976 10.789 20.031 23.866 20.031h8.174c10.788 0 19.943 7.408 19.943 16.738 0 4.664-2.289 8.78-5.885 11.799-3.596 3.018-8.5 4.939-14.058 4.939h-39.559c-6.866 0-13.405 2.469-17.982 6.311-4.577 3.841-7.519 9.055-7.519 15.092 0 11.799 11.442 21.128 25.174 21.128h40.213c13.077 0 23.866 9.055 23.866 20.031 0 5.488-2.616 10.427-6.866 13.994s-10.135 5.762-16.674 5.762h-35.962c-5.885 0-11.116 1.921-15.039 5.214-3.923 3.292-6.212 7.683-6.212 12.622 0 9.878 9.481 17.836 21.251 17.836h29.097c16.674 0 30.078 11.25 30.078 25.244 0 6.86-3.27 13.445-8.827 17.835-5.558 4.665-13.078 7.409-21.251 7.409h-40.54c-8.173 0-15.693 2.744-20.924 7.409-5.558 4.39-8.827 10.701-8.827 17.561 0 13.72 13.404 24.97 29.751 24.97h125.18c13.825 0 27.405 7.683 41.23 7.683h22.8c8.714 0 15.778 7.064 15.778 15.778 0 8.713-7.064 15.777-15.778 15.777h-55.494c-7.192 0-13.404 2.47-17.981 6.311-4.577 3.842-7.52 9.33-7.52 15.092 0 11.799 11.443 21.403 25.501 21.403h340.012c7.192 0 13.404-2.47 17.981-6.311 4.577-3.842 7.52-9.33 7.52-15.092 0-11.799-11.443-21.403-25.501-21.403h-10.135c-10.462 0-18.635-7.134-18.635-15.64 0-4.39 1.961-8.232 5.557-10.976 3.27-2.744 8.174-4.665 13.405-4.665h42.828c7.193 0 13.404-2.469 17.982-6.311 4.577-3.841 7.519-9.329 7.519-15.091 0-12.348-11.443-21.952-25.501-21.952z" fill="url(#a)" /><path d="M596 169.612v285.435C596 475.869 579.137 493 558.059 493h-12.383c-7.641 0-13.965-4.217-19.234-9.752-8.432-9.224-12.911-21.348-12.911-33.999v-32.945c0-13.178-10.803-23.984-23.977-23.984H337V169.612c0-11.86 9.749-21.612 21.605-21.612h215.79c12.12 0 21.605 9.752 21.605 21.612z" fill="#1b374c" /><path d="M535 512H295.002C267.995 512 246 490.285 246 463.623v-31.61C246 418.27 257.415 407 271.336 407h204.639c13.921 0 25.336 11.27 25.336 25.013v34.359c0 12.919 4.733 25.837 13.643 35.458C520.244 507.602 526.926 512 535 512z" fill="#1b374c" /><circle cx="396.5" cy="224.5" r="15.5" fill="#fff" /><circle cx="396.5" cy="274.5" r="15.5" fill="#fff" /><circle cx="396.5" cy="324.5" r="15.5" fill="#fff" /><rect x="431" y="209" width="123" height="31" rx="15.5" fill="#fff" /><rect x="431" y="259" width="123" height="32" rx="16" fill="#fff" /><rect x="431" y="309" width="123" height="31" rx="15.5" fill="#fff" /><defs><linearGradient id="a" x1="461.983" y1="702.686" x2="454.308" y2="-287.923" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" /><stop offset="1" stop-color="#EEE" /></linearGradient></defs></svg>
-                                        } />}
-
-                                </div>
-                                <ProfileMedia media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
-
-                                {/* <ProfileMedia media={media} setMediaModelDetails={setMediaModelDetails} /> */}
-                            </div>
+                            <Followers userFollowers={!userFollowers.isLoading && userFollowers} followUserToggle={followUserToggle} recepientId={_id} media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                         </TabsContent>
                         <TabsContent value="media" className='flex flex-col gap-2'>
                             <MediaSection media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
@@ -449,7 +355,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                             </div>
                                         </div>
                                     }
-                                              
+
                                     {address &&
                                         <div className="flex gap-4 w-full">
                                             {address.country &&

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { Ref, useEffect, useState } from 'react'
 import { Card, CardContent, CardFooter, CardHeader } from './ui/card'
 import PostModel from '@/models/PostModel'
 import { axiosClient } from '@/api/axiosClient'
@@ -37,9 +37,10 @@ interface PostProps {
     isAdmin?: boolean
     isSearch?: boolean
     query?: string
+    scrollRef?: any
 }
 
-const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useLikePost, useBookmarkPost, type, fetchNextPage, self, profile, isAdmin, isSearch, query}) => {
+const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useLikePost, useBookmarkPost, type, fetchNextPage, self, profile, isAdmin, isSearch, query, scrollRef}) => {
     const [shareState, setShareState] = useState(false)
     const [ref, inView] = useInView()
     const [date, setDate] = useState("")
@@ -152,7 +153,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 postPromotion &&
                 <PostPromotionModel postId={postData?._id} setPostPromotion={setPostPromotion} />
             }
-            <Card className="w-full border-muted">
+            <Card className="w-full border-muted" ref={scrollRef}>
                 <CardHeader className='p-3' >
                     <div className='flex items-center justify-between'>
 

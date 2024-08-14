@@ -278,7 +278,7 @@ const MainHome = ({ children }: any) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 md:relative z-50">
+          <div className="flex items-center gap-3 md:relative">
             <MdGroup size="24px" cursor="pointer" onClick={async () => {
               if (friendRequestState == false) {
                 setFriendRequestState(true)

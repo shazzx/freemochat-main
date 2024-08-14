@@ -90,7 +90,7 @@ function FeedSection() {
                         {!isLoading && data.length > 0 ? data.map((page, i) => {
 
                             return page.posts.map((post, postIndex) => (
-                                <Post useLikePost={useLikeFeedPost} useBookmarkPost={useBookmarkFeedPost} pageIndex={i} postIndex={postIndex} postData={post} userId={user?._id} username={user?.username} profile={user?.images?.profile} key={post?._id} type="user" />
+                                <Post  useLikePost={useLikeFeedPost} useBookmarkPost={useBookmarkFeedPost} pageIndex={i} postIndex={postIndex} postData={post} userId={user?._id} username={user?.username} profile={user?.images?.profile} key={post?._id} type="user" />
                             ))
 
                         })
@@ -99,15 +99,7 @@ function FeedSection() {
                         }
                     </div>
                 </div>
-                {/* <div className='flex w-full items-center  flex-col gap-2 '>
-                    <Post />
-                    <Post />
-                </div> */}
             </div>
-            {/* <div className='w-80 h-full hidden lg:flex '>
-            </div> */}
-
-
         </div>
     )
 }

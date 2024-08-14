@@ -97,7 +97,7 @@ function Stories() {
 
 
     return (
-        <div className='flex gap-3  overflow-hidden  overflow-x-auto z-40'>
+        <div className='flex gap-3  overflow-hidden  overflow-x-auto z-50'>
             {openStory && openedStoryIndex >= 0 && storyViewIndex >= 0 && stories?.length > 0 &&
                 // <div className="z-50 absolute top-0 left-0 w-full h-full flex overflow-hidden items-center justify-center bg-black" onClick={() => {
                 // }}>

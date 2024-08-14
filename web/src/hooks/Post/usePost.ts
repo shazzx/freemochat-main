@@ -34,7 +34,7 @@ export function useFeed(): any {
 }
 
 export function useUserPosts(type: string, targetId: string): any {
-
+  
   const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
     queryKey: ['userPosts', targetId],
     queryFn: ({ pageParam, }) => fetchPosts(pageParam, type, targetId),
