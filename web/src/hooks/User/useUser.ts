@@ -1,4 +1,3 @@
-import { joinGroup } from "@/api/Page/group.api"
 import { acceptFriendRequest, fetchUser, followUserToggle, rejectFriendRequest, removeFriend, sendFriendRequest, userFollowers, userFriendRequests, userFriends } from "@/api/User/users.api"
 import { useAppSelector } from "@/app/hooks"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -23,78 +22,6 @@ export const useUser = (username, shouldFetch) => {
         isSuccess,
     }
 }
-
-// export const useUserMedia = (username, shouldFetch) => {
-//     const { data, isLoading, isError, isFetched, isSuccess } = useQuery({
-//         queryKey: ['user'],
-//         queryFn: () => {
-//             return fetchUser(username)
-//         },
-
-//     })
-//     console.log(data)
-
-//     return {
-//         data,
-//         isLoading,
-//         isError,
-//         isFetched,
-//         isSuccess,
-//     }
-// }
-
-
-// export const useFollowPage = () => {
-//     const queryClient = useQueryClient()
-//     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-//         mutationFn: (pageDetails: { pageId: string }) => {
-//             return followPage({ pageDetails })
-//         },
-
-
-//         onMutate: async ({ pageId }) => {
-//             await queryClient.cancelQueries({ queryKey: ['page'] })
-//             const previousPage = queryClient.getQueryData(['page'])
-
-//             queryClient.setQueryData(['page'], (page: any) => {
-//                 const updatedPage = produce(page, (draft: any) => {
-//                     if (draft.isFollower) {
-//                         draft.isFollower = false
-//                         return draft
-//                     }
-//                     if (draft.isFollower == false) {
-//                         draft.isFollower = true
-//                         return draft
-//                     }
-
-//                     throw new Error()
-//                 })
-//                 return updatedPage
-//             });
-
-//             return { previousPage };
-//         },
-
-//         onError: (err, newComment, context) => {
-//             console.log(err)
-//             toast.error("something went wrong")
-//             queryClient.setQueryData(['page'], context.previousPage)
-//         },
-//         onSettled: (e) => {
-//             // uncommeting this will refetch the comments again from the server to be in sync
-//             // queryClient.invalidateQueries({ queryKey: ["page"] })
-//         }
-//     })
-
-//     return {
-//         data,
-//         isPending,
-//         isSuccess,
-//         mutateAsync,
-//         mutate
-//     }
-// }
-
 
 export function useUserFollowers(userId?: string): any {
 

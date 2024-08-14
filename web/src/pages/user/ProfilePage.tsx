@@ -41,7 +41,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     // const rejectFriendRequest = useRejectFriendRequest()
     let user = isSelf ? localUserData.user : query.isFetched && query?.data
 
-    const { _id, firstname, lastname, username, email, images, bio, areFriends, isFollowed, friendRequest, followersCount, friendsCount, address } = user
+    const { _id, firstname, lastname, username, email, images, bio, areFriends, isFollowed, friendRequest, followersCount, friendsCount, address, profile, cover } = user
 
     const friendRequestToggle = useFriendRequestToggle(username)
     const removeFriend = useRemoveFriend(username, _id)
@@ -75,17 +75,16 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     }, [newPost])
 
     // profile upload
-    const uploadSingle = async (media, type, images, completeUser) => {
+    const uploadSingle = async (media, type, completeUser) => {
         const formData = new FormData()
         if (media) {
             formData.append("file", media, type)
         }
         if (completeUser) {
-            formData.append('userData', JSON.stringify({ ...completeUser, images: [] }))
+            formData.append('userData', JSON.stringify({ ...completeUser }))
 
-        } else {
-
-            formData.append('userData', JSON.stringify({ images }))
+        } else{
+            formData.append('userData', JSON.stringify({}))
         }
 
         axiosClient.post("/user/update", formData, { headers: { "Content-Type": 'multipart/form-data' } })
@@ -139,12 +138,12 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
             <div className='flex w-full flex-col items-center w-ful'>
                 <div className="flex max-w-5xl w-full flex-col justify-cente relative">
                     {/* cover image component */}
-                    <Cover cover={images?.cover} />
+                    <Cover cover={cover} />
 
                     {/* profile image */}
                     <div className='flex justify-between'>
                         <div className='flex-responsive gap-2 relative pl-4 sm:pl10 left max-w-[90%] sm:w-full bottom-6'>
-                            <Profile image={images?.profile} fallbackName={firstname && firstname[0]?.toUpperCase() + lastname && lastname[0]?.toUpperCase()} width={'w-24'} smWidth={'w-32'} height={'h-24'} smHeight={'h-32'} />
+                            <Profile image={profile} fallbackName={firstname && firstname[0]?.toUpperCase()} width={'w-24'} smWidth={'w-32'} height={'h-24'} smHeight={'h-32'} />
 
                             <div className='flex gap-4'>
                                 <div className='pl-1 lg:pl-0 lg:pt-8'>
@@ -307,7 +306,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                 <div>
                                                     Firstname
                                                 </div>
-                                                <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>
+                                                <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full max-w-64'>
                                                     {firstname}
                                                 </div>
                                             </div>
@@ -317,7 +316,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                 <div>
                                                     Lastname
                                                 </div>
-                                                <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>{lastname}</div>
+                                                <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full max-w-64'>{lastname}</div>
                                             </div>
                                         }
 
@@ -329,7 +328,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                 <div>
                                                     Username
                                                 </div>
-                                                <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>
+                                                <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full max-w-64'>
                                                     {username}
                                                 </div>
                                             </div>
@@ -339,7 +338,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                 <div>
                                                     Email
                                                 </div>
-                                                <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>{email}</div>
+                                                <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full max-w-64'>{email}</div>
                                             </div>
                                         }
 
@@ -350,7 +349,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                             <div>
                                                 Bio
                                             </div>
-                                            <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>
+                                            <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full max-w-64'>
                                                 <p className='text-sm'>{bio}</p>
                                             </div>
                                         </div>
@@ -363,7 +362,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                     <div>
                                                         Country
                                                     </div>
-                                                    <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>
+                                                    <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full max-w-64'>
                                                         {address.country}
                                                     </div>
                                                 </div>
@@ -373,7 +372,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                     <div>
                                                         City
                                                     </div>
-                                                    <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>{address.city}</div>
+                                                    <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full max-w-64'>{address.city}</div>
                                                 </div>
                                             }
 
@@ -385,8 +384,8 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                             <div>
                                                 Area
                                             </div>
-                                            <div className='bg-card rounded-md w-full max-w-64'>
-                                                <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>{address?.area}</div>
+                                            <div className='bg-gray-100 dark:bg-card rounded-md w-full max-w-64'>
+                                                <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full max-w-64'>{address?.area}</div>
                                             </div>
                                         </div>
                                     }

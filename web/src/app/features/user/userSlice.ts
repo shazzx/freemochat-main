@@ -12,21 +12,21 @@ const userSlice = createSlice({
             state.user = action.payload
         },
         updateUser(state, action) {
-            state.user = action.payload
+            state.user = {...state.user, ...action.payload}
         },
         updateProfile(state, action) {
-            if(!state.user.images){
-                state.user = {...state.user, images: {profile: action.payload}}
+            if(!state.user.profile){
+                state.user = {...state.user, profile: action.payload}
                 return 
             }
-            state.user.images.profile = action.payload
+            state.user.profile = action.payload
         },
         updateCover(state, action) {
-            if(!state.user.images){
-                state.user = {...state.user, images: {cover: action.payload}}
+            if(!state.user.cover){
+                state.user = {...state.user, cover: action.payload}
                 return 
             }
-            state.user.images.cover = action.payload
+            state.user.cover = action.payload
         }
     }
 })

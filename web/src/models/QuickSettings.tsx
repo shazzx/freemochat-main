@@ -1,4 +1,4 @@
-import { updateCover, updateProfile } from "@/app/features/user/userSlice"
+import { updateCover, updateProfile, updateUser } from "@/app/features/user/userSlice"
 import { useAppDispatch } from "@/app/hooks"
 import ImageCropper from "@/components/ImageCropper"
 import Cover from "@/components/profile/Cover"
@@ -34,10 +34,6 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
 
     const dispatch = useAppDispatch()
-    const [profileImage, setProfileImage] = useState(images?.profile)
-    const [coverImage, setCoverImage] = useState(images?.cover)
-    // console.log(profileUploadBlob, profileImage, coverImage, coverUploadBlob, setUploadImageState, setProfileImage, setCoverImage)
-
 
     // references
     const usernameRef = useRef<HTMLInputElement>()
@@ -73,7 +69,8 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     const onSubmit = async (data) => {
         console.log(data)
 
-        uploadSingle(null, null, null, data)
+        dispatch(updateUser(data))
+        uploadSingle(null, null, data)
 
         // let profile;
         // if (uploadImageState) {
@@ -125,16 +122,9 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                 profileForCrop && cropperModel &&
                 <ImageCropper image={profileForCrop} aspect={4 / 4} setCropperModel={setCropperModel} _onCropComplete={(croppedImage) => {
                     let imageUrl = URL.createObjectURL(croppedImage)
-                    let _images = {};
-                    if (images?.profile && !images.profile.startsWith('blob')) {
-                        _images = { profile: images.profile }
-                    }
-                    if (images?.cover && !images.cover.startsWith('blob')) {
-                        _images = { ..._images, cover: images.cover }
-                    }
                     setProfileLocalUrl(imageUrl)
                     dispatch(updateProfile(imageUrl))
-                    uploadSingle(croppedImage, 'profile', _images)
+                    uploadSingle(croppedImage, 'profile')
                     setProfileForCrop(undefined)
                     if (profileInputRef.current.value) {
                         profileInputRef.current.value = null
@@ -145,18 +135,10 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                 coverForCrop && cropperModel &&
                 <ImageCropper image={coverForCrop} aspect={9 / 4} setCropperModel={setCropperModel} _onCropComplete={(croppedImage) => {
                     let imageUrl = URL.createObjectURL(croppedImage)
-                    let _images = {};
-                    if (images?.profile && !images.profile.startsWith('blob')) {
-                        _images = { profile: images.profile }
-                    }
-                    if (images?.cover && !images.cover.startsWith('blob')) {
-                        _images = { ..._images, cover: images.cover }
-                    }
-                    console.log(_images)
                     setCoverLocalUrl(imageUrl)
                     dispatch(updateCover(imageUrl))
                     setCoverUploadBlob(croppedImage)
-                    uploadSingle(croppedImage, 'cover', _images)
+                    uploadSingle(croppedImage, 'cover')
                     setCoverForCrop(undefined)
                     if (coverInputRef.current.value) {
                         coverInputRef.current.value = null

@@ -13,7 +13,7 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
     const [selected, setSelected] = useState("public")
     const [media, setMedia] = useState([])
     // const [removeMedia, setRemoveMedia] = useState([])
-    const [postMedia, setPostMedia] = useState<{ remove: string, url: string, file: string, filename: string }[]>(postDetails ? [...postDetails?.media] : [])
+    const [postMedia, setPostMedia] = useState<{ remove: string, url: string, file: string, filename: string }[]>((postDetails && postDetails?.media) ? [...postDetails?.media] : [])
     const [uploading, setUploading] = useState(false)
 
     const content = useRef<HTMLTextAreaElement>()
