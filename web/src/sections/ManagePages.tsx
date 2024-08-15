@@ -227,7 +227,7 @@ export function ManagePages() {
         formData.append("pageData", JSON.stringify(_pageDetails))
         console.log(pageDetails)
 
-        updatePageMutation.mutate({ updatedPageDetails: pageDetails, images, formData, pageDetails: { index: editPageIndex } })
+        updatePageMutation.mutate({ updatedPageDetails: pageDetails, ...images, formData, pageDetails: { index: editPageIndex } })
         setEditModelState(false)
     }
 

@@ -64,7 +64,7 @@ export class PageController {
             { ...pageDetails, isUploaded: files.length > 0 ? false : null }
         )
 
-        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: page._id.toString(), images: {} })
+        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: page._id.toString(), images: {}, type: 'page' })
 
         res.json(page)
     }

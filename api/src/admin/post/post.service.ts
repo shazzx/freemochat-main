@@ -25,15 +25,61 @@ export class PostService {
       { $match: query },
       { $sort: { createdAt: -1 } },
       { $limit: limit + 1 },
+
       {
-        $lookup: {
-          from: 'users',
-          localField: "targetId",
-          foreignField: "_id",
-          as: 'target',
-        },
+          $lookup: {
+              from: 'users',
+              localField: 'targetId',
+              foreignField: '_id',
+              as: 'userTarget'
+          }
       },
-    ])
+      {
+          $lookup: {
+              from: 'groups',
+              localField: 'targetId',
+              foreignField: '_id',
+              as: 'groupTarget'
+          }
+      },
+      {
+          $lookup: {
+              from: 'pages',
+              localField: 'targetId',
+              foreignField: '_id',
+              as: 'pageTarget'
+          }
+      },
+      {
+          $addFields: {
+              target: {
+                  $switch: {
+                      branches: [
+                          { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                          { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                          { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                      ],
+                      default: null
+                  }
+              },
+          }
+      },
+
+      {
+          $project: {
+              _id: 1,
+              content: 1,
+              media: 1,
+              user: 1,
+              target: 1,
+              targetId: 1,
+              type: 1,
+              updatedAt: 1,
+              createdAt: 1,
+          },
+      },
+  ]);
+
 
     console.log(cursor, posts)
 

@@ -223,7 +223,7 @@ export function ManageGroups() {
         coverImageUpload && formData.append("files", coverImageUpload, 'cover')
         const _groupDetails = { groupDetails: { ...groupData }, groupId: editGroupDetails._id, images: editGroupDetails.images }
         formData.append("groupData", JSON.stringify(_groupDetails))
-        const updatedGroupDetails = { updatedGroupDetails: groupData, images, formData, groupDetails: { index: editGroupIndex } }
+        const updatedGroupDetails = { updatedGroupDetails: groupData, ...images, formData, groupDetails: { index: editGroupIndex } }
         console.log(_groupDetails, updatedGroupDetails)
         updateGroupMutation.mutate(updatedGroupDetails)
         setEditModelState(false)

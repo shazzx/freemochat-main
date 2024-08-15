@@ -5,10 +5,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Group, GroupSchema } from 'src/schema/group';
 import { GroupsModule } from 'src/groups/groups.module';
 import { JwtModule } from '@nestjs/jwt';
-import { MetricsAggregatorModule } from 'src/metrics-aggregator/metrics-aggregator.module';
+import { UploadModule } from 'src/upload/upload.module';
 
 @Module({
-  imports: [GroupsModule, JwtModule, MongooseModule.forFeature([{ name: Group.name, schema: GroupSchema }])],
+  imports: [
+    GroupsModule,
+    JwtModule,
+    UploadModule,
+    MongooseModule.forFeature([{ name: Group.name, schema: GroupSchema }])],
   controllers: [GroupController],
   providers: [GroupService],
 })

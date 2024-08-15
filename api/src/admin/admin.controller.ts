@@ -8,11 +8,15 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import stripe from 'src/utils/stripe.session';
 import Stripe from 'stripe';
 import { Public } from 'src/auth/public.decorator';
+import { AccountManagementService } from 'src/account-management/account-management.service';
 
 @Controller('admin')
 export class AdminController {
     private readonly stripe
-    constructor(private readonly adminService: AdminService, private readonly authService: AuthService) {
+    constructor(
+        private readonly adminService: AdminService, 
+        private readonly authService: AuthService,
+    ) {
         this.stripe = stripe
      }
 
@@ -82,6 +86,7 @@ export class AdminController {
         const { cursor, search } = req.query as { cursor: string, search: string }
         response.json(await this.adminService.getReports(cursor, search))
     }
+
 
 
     @IsAdminRoute()

@@ -52,8 +52,9 @@ export const useRemoveGroup = () => {
 
             queryClient.setQueryData(['groupsAdmin'], (pages: any) => {
                 const updatedUsers = produce(pages, (draft: any) => {
+                    
                     draft.pages.forEach((page, pageIndex) => {
-                        page.users.forEach((post, groupIndex) => {
+                        page.groups.forEach((post, groupIndex) => {
                             if (post._id == context.groupId) {
                                 draft.pages[pageIndex].groups.splice(groupIndex, 1)
                             }

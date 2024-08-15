@@ -57,7 +57,7 @@ function ReportsSection() {
         {
             header: "Username",
             cell: ({ row }) => (
-                <div>@{row.original.reportedBy[0].username}</div>
+                <div>{row.original?.reportedBy[0]?.username ? "@" + row.original?.reportedBy[0]?.username : "deleted user"}</div>
             ),
         },
 

@@ -38,4 +38,13 @@ export class PageService {
         const results = { pages: _pages, nextCursor };
         return results
     }
+    async getPage(pageId: string){
+        let page = await this.pageModel.findById(pageId)
+        return page
+    }
+
+    async deletePage(pageId: string){
+        let page = await this.pageModel.findByIdAndDelete(pageId)
+        return page
+    }
 }

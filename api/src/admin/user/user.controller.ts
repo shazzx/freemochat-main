@@ -4,10 +4,15 @@ import { UserService } from '../../user/user.service';
 import { Request, Response } from 'express';
 import { IsAdminRoute } from '../utils/isAdminRoute.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AccountManagementService } from 'src/account-management/account-management.service';
 
 @Controller('admin')
 export class UserController {
-  constructor(private readonly adminUserService: AdminUserService, private readonly userService: UserService) { }
+  constructor(
+    private readonly adminUserService: AdminUserService, 
+    private readonly userService: UserService,
+    private readonly accountManagementService: AccountManagementService
+  ) { }
 
   @UseGuards(JwtAuthGuard)
   @IsAdminRoute()
@@ -26,5 +31,13 @@ export class UserController {
     console.log(userId)
     response.json(await this.userService.deleteUser(userId))
   }
+
+  @IsAdminRoute()
+  @Post("user/suspend")
+  async createUser(@Req() req, @Res() response: Response) {
+    const { userId, reason } = req.body
+    response.json(await this.accountManagementService.toggleSuspendUser(userId, reason))
+  }
+
 
 }

@@ -136,8 +136,10 @@ export class UploadListener {
                 }
             }
 
+            console.log(_images)
+
             if (type == 'group') {
-                await this.groupsService.updateGroup(targetId, { images: { ...images, ..._images }, isUploaded: null });
+                await this.groupsService.updateGroup(targetId, { ..._images, isUploaded: null });
                 await this.chatGateway.uploadSuccess({
                     isSuccess: true, target: {
                         type: "group",
@@ -147,8 +149,8 @@ export class UploadListener {
             }
 
             if (type == 'page') {
-                console.log(images, targetId, files)
-                await this.pageService.updatePage(targetId, { images: { ...images, ..._images }, isUploaded: null });
+                console.log(images, targetId, files, 'page', targetId)
+                await this.pageService.updatePage(targetId, {  ..._images , isUploaded: null });
                 await this.chatGateway.uploadSuccess({
                     isSuccess: true, target: {
                         type: "page",

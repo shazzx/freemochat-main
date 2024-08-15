@@ -134,28 +134,38 @@ export function AdminDataTable({ columns, data , title, filter, reverse, setReve
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row, index) => {
-
-                return (<TableRow
+                return (
+                <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  onClick={() => {
-                    if(setModelState && setItemIndex){
-                      setModelState(true)
-                      setItemIndex(index)
-                    }
-                  }}
                 >
                   {row.getVisibleCells().map((cell) => {
                     if (row.index, data?.length - 1) {
-                      return (<TableCell ref={ref} key={cell.id}>
+                      return (
+                      
+                      <TableCell onClick={() => {
+                        if(setModelState && setItemIndex && cell.column.id !== "actions"){
+                          setModelState(true)
+                          setItemIndex(index)
+                        }
+                      }} ref={ref} key={cell.id}>
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
                         )}
-                      </TableCell>)
+                      </TableCell>
+                      )
 
                     }
-                    return (<TableCell key={cell.id}>
+                    return (
+                    <TableCell 
+                      onClick={() => {
+                        if(setModelState && setItemIndex && cell.column.id !== "actions"){
+                          setModelState(true)
+                          setItemIndex(index)
+                        }
+                      }}
+                    key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()

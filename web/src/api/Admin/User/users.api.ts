@@ -13,7 +13,7 @@ export const removeUser = async (userId) => {
 
 
 export const suspendUser = async (userId) => {
-    const { data } = await axiosClient.post("/account-management/suspend", { userId })
+    const { data } = await axiosClient.post("/admin/user/suspend", { userId })
     console.log(data)
     return data
 }

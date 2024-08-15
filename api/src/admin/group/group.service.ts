@@ -38,6 +38,11 @@ export class GroupService {
 
     }
 
+    async getGroup(groupId: string) {
+        let group = await this.groupModel.findById(groupId)
+        return group
+    }
+
     async deleteGroup(groupId: string) {
         let deletedGroup = await this.groupModel.findByIdAndDelete(groupId)
         return deletedGroup

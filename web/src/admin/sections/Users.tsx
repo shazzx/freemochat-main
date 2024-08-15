@@ -97,7 +97,8 @@ function UsersSection() {
             id: "actions",
             header: "Action",
             enableHiding: false,
-            cell: (data) => {
+            cell: ({row}) => {
+                const isSuspended = row.original?.isSuspended
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -107,14 +108,12 @@ function UsersSection() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => {
-                                let userId = data.row.original?._id
+                            <DropdownMenuItem className='p-2 bg-card cursor-pointer hover:bg-accent px-4 border border-accent'  onClick={() => {
+                                let userId = row.original?._id
                                 suspendUser.mutate({ userId })
-                            }}>Suspend</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {
-                                let userId = data.row.original?._id
+                            }}>{isSuspended ? "Activate" : "Suspend"}</DropdownMenuItem>
+                            <DropdownMenuItem className='p-2 bg-card cursor-pointer hover:bg-accent px-4 border border-accent' onClick={() => {
+                                let userId = row.original?._id
                                 removeUser.mutate({ userId })
                             }}>Remove</DropdownMenuItem>
                         </DropdownMenuContent>

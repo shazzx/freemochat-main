@@ -1,15 +1,6 @@
 import { Schema, Prop, SchemaFactory } from "@nestjs/mongoose";
 import { ObjectId, Types } from 'mongoose'
 
-
-class Images {
-    @Prop()
-    profile: String;
-
-    @Prop()
-    cover: String
-}
-
 @Schema({timestamps: true})
 export class Page {
     @Prop()
@@ -18,8 +9,11 @@ export class Page {
     @Prop({type: String, unique: true})
     handle: String;
 
-    @Prop()
-    images: Images
+    @Prop({type: String})
+    profile: string
+
+    @Prop({type: String})
+    cover: string
 
     // this property is only for profile images to know about background image processing 
     @Prop({type: Boolean, default: null})

@@ -118,7 +118,7 @@ export const useUpdatePage = () => {
       queryClient.setQueryData(['pages'], (pages: any) => {
         const updatedPages = produce(pages, (draft: any) => {
           console.log(draft[pageDetails.index])
-          draft[pageDetails.index] = { ...draft[pageDetails.index], images: { ...draft[pageDetails.index].images, ...images }, ...updatedPageDetails }
+          draft[pageDetails.index] = { ...draft[pageDetails.index],  ...images , ...updatedPageDetails }
           console.log(draft[pageDetails.index])
 
           return draft

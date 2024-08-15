@@ -65,7 +65,8 @@ export class PageService {
                     _id: 1,
                     name: 1,
                     handle: 1,
-                    images: 1,
+                    profile: 1,
+                    cover: 1,
                     followersCount: 1,
                     admins: 1,
                     about: 1,
@@ -128,9 +129,8 @@ export class PageService {
     }
 
     async updatePage(pageId: string, updatedDetails) {
-        console.log(updatedDetails)
+        console.log("page being updated...")
         let _updatedDetails = await this.pageModal.findByIdAndUpdate(pageId, { $set: updatedDetails }, { new: true })
-        console.log(_updatedDetails)
         return _updatedDetails
     }
 

@@ -54,10 +54,10 @@ export const useRemovePage = () => {
 
             queryClient.setQueryData(['pagesAdmin'], (pages: any) => {
                 const updatedPages = produce(pages, (draft: any) => {
-                    draft.pages.forEach((page, pageIndex) => {
-                        page.users.forEach((page, pageIndex) => {
+                    draft.pages.forEach((page, mainPageIndex) => {
+                        page.pages.forEach((page, pageIndex) => {
                             if (page._id == context.pageId) {
-                                draft.pages[pageIndex].pages.splice(pageIndex, 1)
+                                draft.pages[mainPageIndex].pages.splice(pageIndex, 1)
                             }
                         })
                     })

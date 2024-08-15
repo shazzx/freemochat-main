@@ -54,12 +54,22 @@ function PostsSection() {
             ),
         },
 
+
+        {
+            header: "Type",
+            cell: ({ row }) => (
+                <div>{row.original.type}</div>
+            ),
+        },
+
+
         {
             header: "Posted By",
             cell: ({ row }) => (
-                <div>@{row.original.target[0]?.username || row.original.target[0]?.username}</div>
+                <div>@{row.original.target?.username || row.original.target?.handle}</div>
             ),
         },
+
 
         {
             accessorKey: "createdAt",
@@ -83,9 +93,7 @@ function PostsSection() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => {
+                            <DropdownMenuItem className='p-2 bg-card cursor-pointer hover:bg-accent px-4 border border-accent' onClick={() => {
                                 let postId = data.row.original?._id
                                 let media = data.row.original?.media
                                 console.log(media, postId)
@@ -126,7 +134,7 @@ function PostsSection() {
 
     return (
         <main className="w-full overflow-auto px-8 py-4">
-            <AdminDataTable title={"Users"} filter={true} columns={columns} data={isSuccess && data} handleSearchChange={handleSearchChange} fetchNextPage={_fetchNextPage} />
+            <AdminDataTable filterValue="Posted By" title={"Users"} filter={true} columns={columns} data={isSuccess && data} handleSearchChange={handleSearchChange} fetchNextPage={_fetchNextPage} />
         </main>
     )
 }

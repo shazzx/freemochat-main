@@ -7,7 +7,7 @@ export const fetchGroups = async (param: string, search: string) => {
 }
 
 export const removeGroup = async (groupId: string) => {
-    const { data } = await axiosClient.post("/admin/group/remove", { groupId })
-    console.log(data)
-    return data
+    // const { data } = await axiosClient.post("/admin/group/remove", { groupId })
+    // console.log(data)
+    // return data
 }

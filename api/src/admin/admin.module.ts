@@ -16,6 +16,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { AuthModule } from './auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
 import { UploadModule } from 'src/upload/upload.module';
+import { AccountManagementModule } from 'src/account-management/account-management.module';
 
 @Module({
   imports: [

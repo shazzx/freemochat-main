@@ -6,9 +6,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Page, PageSchema } from 'src/schema/pages';
 import { JwtModule } from '@nestjs/jwt';
 import counterSchema, { Counter } from 'src/schema/Counter';
+import { UploadModule } from 'src/upload/upload.module';
 
 @Module({
-  imports: [PagesModule, JwtModule, MongooseModule.forFeature([{ name: Page.name, schema: PageSchema }])],
+  imports: [
+    JwtModule, 
+    UploadModule,
+    MongooseModule.forFeature([{ name: Page.name, schema: PageSchema }])],
   controllers: [PageController],
   providers: [PageService],
 })

@@ -97,9 +97,7 @@ function PagesSection() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => {
+                            <DropdownMenuItem className='p-2 bg-card cursor-pointer hover:bg-accent px-4 border border-accent' onClick={() => {
                                 let pageId = data.row.original?._id
                                 removePage.mutate({ pageId })
                             }}>Remove</DropdownMenuItem>

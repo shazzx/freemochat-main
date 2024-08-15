@@ -83,7 +83,7 @@ function GroupsSection() {
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => {
+                            <DropdownMenuItem className='p-2 bg-card cursor-pointer hover:bg-accent px-4 border border-accent' onClick={() => {
                                 let groupId = data.row.original?._id
                                 removeGroup.mutate({ groupId })
                             }}>Remove</DropdownMenuItem>
@@ -156,9 +156,7 @@ function GroupsSection() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => {
+                            <DropdownMenuItem className='p-2 bg-card cursor-pointer hover:bg-accent px-4 border border-accent' onClick={() => {
                                 let groupId = data.row.original?._id
                                 removeChatGroup.mutate({ groupId })
                             }}>Remove</DropdownMenuItem>

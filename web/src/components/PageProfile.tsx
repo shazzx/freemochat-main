@@ -179,11 +179,11 @@ function PageProfile() {
             {postModal && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
             <div className='flex w-full flex-col items-center w-ful'>
                 <div className="flex max-w-5xl w-full flex-col justify-cente relative">
-                    <Cover cover={_pageData?.data?.images?.cover} />
+                    <Cover cover={_pageData?.data?.cover} />
                     <div className='flex justify-between'>
                         <div className='flex-responsive gap-2 relative pl-4 sm:pl-6 left max-w-[90%] sm:w-full bottom-6'>
 
-                            <Profile image={_pageData?.data?.images?.profile} fallbackName={!_pageData.isLoading && _pageData?.data?.name[0]?.toUpperCase() + _pageData?.data?.name[1]?.toUpperCase()} width={'w-24'} smWidth={'w-32'} height={'h-24'} smHeight={'h-32'} />
+                            <Profile image={_pageData?.data?.profile} fallbackName={!_pageData.isLoading && _pageData?.data?.name[0]?.toUpperCase() + _pageData?.data?.name[1]?.toUpperCase()} width={'w-24'} smWidth={'w-32'} height={'h-24'} smHeight={'h-32'} />
                             <div className='flex gap-4 items-end mb-4'>
                                 <div>
                                     <div className='flex flex-col'>
@@ -222,7 +222,7 @@ function PageProfile() {
                                                     <div className='w-12'>
                                                         <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
                                                             <Avatar >
-                                                                <AvatarImage src={_pageData?.data?.images?.profile} alt="Avatar" />
+                                                                <AvatarImage src={_pageData?.data?.profile} alt="Avatar" />
                                                                 <AvatarFallback>{firstname[0]?.toUpperCase() + lastname[0]?.toUpperCase()}</AvatarFallback>
                                                             </Avatar>
                                                         </div>
@@ -276,7 +276,7 @@ function PageProfile() {
                                                         <div className='flex w-full gap-2'>
                                                             <div className='w-16 h-16  rounded-md flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                                                 <Avatar >
-                                                                    <AvatarImage src={followerData?.follower?.images?.profile} alt="Avatar" />
+                                                                    <AvatarImage src={followerData?.follower?.profile} alt="Avatar" />
                                                                     <AvatarFallback className='text-2xl'>{followerData?.follower?.firstname[0]?.toUpperCase() + followerData?.follower?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                                                 </Avatar>
                                                             </div>
