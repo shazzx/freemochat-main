@@ -28,9 +28,11 @@ export class JwtAuthGuard implements CanActivate {
                     secret: jwtConstants.secret
                 }
             );
+            console.log(payload)
 
             request['admin'] = payload;
-        } catch {
+        } catch (error) {
+            console.log(error)
             throw new UnauthorizedException();
         }
         return true;

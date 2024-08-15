@@ -17,7 +17,7 @@ function Stories() {
     let [storyViewIndex, setStoryViewIndex] = useState(null)
     let [openedStoryIndex, setOpenedStoryIndex] = useState(null)
     const { user } = useAppSelector((data) => data.user)
-    const { username, firstname, lastname, images } = user
+    const { username, firstname, lastname, profile, cover } = user
     let [storyViewModelState, setStoryViewModelState] = useState(undefined)
     const [isPaused, setIsPaused] = useState(false)
     const storyTimeRef = useRef(null)
@@ -122,7 +122,7 @@ function Stories() {
                         <div className="absolute w-full items-center p-2 flex gap-2">
                             <div className='w-14 h-14 bg-accent flex items-center justify-center rounded-full overflow-hidden border-2 border-primary-active'>
                                 <Avatar className="flex">
-                                    <AvatarImage src={stories[openedStoryIndex].user?.images?.profile} alt="Avatar" />
+                                    <AvatarImage src={stories[openedStoryIndex].user?.profile} alt="Avatar" />
                                     <AvatarFallback>{stories[openedStoryIndex].user?.firstname[0]?.toUpperCase() + stories[openedStoryIndex].user?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                 </Avatar>
 
@@ -241,7 +241,7 @@ function Stories() {
                             setOpenStory(true)
                         }} />
                         : <Avatar className="flex">
-                            <AvatarImage src={images?.profile} alt="Avatar" />
+                            <AvatarImage src={profile} alt="Avatar" />
                             <AvatarFallback>{firstname[0]?.toUpperCase() + lastname[0]?.toUpperCase()}</AvatarFallback>
                         </Avatar>
                     }

@@ -21,7 +21,7 @@ function NewChat({ setChatOpen, setNewChatModelState, setRecepientDetails, frien
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
                 setNewChatModelState(false)
             }}></div>
-            <div className='relative h-full w-full sm:w-[400px] lg:w-[560px] bg-background border-2 border-muted shadow-md '>
+            <div className='relative h-full w-full sm:w-[400px] lg:w-[560px] bg-background border-2 border-accent shadow-md '>
                 <div className="p-4 font-medium text-xl pb-5">
                     <h2>New Chat</h2>
                 </div>
@@ -32,12 +32,10 @@ function NewChat({ setChatOpen, setNewChatModelState, setRecepientDetails, frien
                     </TabsList>
                     <TabsContent value="friends" className="h-full">
 
-                        <Card x-chunk="dashboard-01-chunk-5" className="gnome-terminal
-                 border-none ">
+                        <Card x-chunk="dashboard-01-chunk-5" className="border-none">
                             <CardContent className="grid gap-8 w-full p-0">
 
-                                {
-                                    friends[0].friends.length > 0 ? friends?.map((page) => {
+                                {friends.length > 0 ? friends?.map((page) => {
                                         return page.friends.map((friend) => {
                                             friend = friend.friend
                                             return (

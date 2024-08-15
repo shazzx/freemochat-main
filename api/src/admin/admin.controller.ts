@@ -7,6 +7,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import stripe from 'src/utils/stripe.session';
 import Stripe from 'stripe';
+import { Public } from 'src/auth/public.decorator';
 
 @Controller('admin')
 export class AdminController {
@@ -18,6 +19,8 @@ export class AdminController {
     @IsAdminRoute()
     @Post('login')
     async loginUser(@Req() @Req() req: Request, @Res({ passthrough: true }) response: Response) {
+        try {
+            
         const { username, password } = req.body
         const user = await this.authService.validateUser(username, password)
         console.log(user)
@@ -31,6 +34,9 @@ export class AdminController {
         }).json({
             access_token: payload.access_token, user
         })
+        } catch (error) {
+          console.log(error)  
+        }
     }
 
 
@@ -58,11 +64,13 @@ export class AdminController {
         response.json(await this.adminService.getAdmin("shazzx"))
     }
 
+    // @Public()
+    // @Get('create')
     @IsAdminRoute()
     @Post('create')
     async createAdmin(@Req() req: Request, @Res() response: Response) {
         const { firstname, lastname, username, password, email } = req.body
-        response.json(await this.adminService.createAdmin({ firstname, lastname, username, password, email }))
+        response.json(await this.adminService.createAdmin({ firstname: 'shahzad', lastname: 'ali', username: "shazzadmin", password: "shazzadmin", email: 'shazzadmin@gmail.com' }))
     }
 
 

@@ -19,7 +19,7 @@ import { useChatGroups, useCreateChatGroup } from "@/hooks/Chat/main"
 import { useUserFriends } from "@/hooks/User/useUser"
 import CreateChatGroup from "@/models/CreateChatGroup"
 import NewChat from "@/models/NewChat"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { MdCancel, MdGroups, MdMessage } from "react-icons/md"
 import { BiSolidMessageSquareAdd } from "react-icons/bi";
 import { useSocket } from "@/hooks/useSocket"
@@ -50,6 +50,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
     const [groupModelState, setGroupModelState] = useState(false)
     const [newChatModelState, setNewChatModelState] = useState(false)
     const [currentTab, setCurrentTab] = useState("general")
+    const newChatRef = useRef(null)
     const socket = useSocket(user._id)
 
     useEffect(() =>{ 
@@ -79,6 +80,21 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
           setGroupModelState(false)
     }
 
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (newChatRef.current && !newChatRef.current.contains(event.target)) {
+                setChatOptions(false);
+            }
+        }
+
+        if (chatOptions) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [chatOptions])
 
     return (
         <div className={`min-w-[260px] sm:max-w-[460px] w-full flex h-full ${chatOpen && "hidden lg:flex"}`}>
@@ -185,9 +201,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                     </TabsContent>
                 </Tabs>
 
-                <div className="absolute bottom-4 right-4 w-12 h-12 flex items-center justify-center border-foreground text-2xl font-md" onClick={() => {
-                    // setFriendListState(!friendListState)
-                }}>
+                <div className="absolute bottom-4 right-4 w-12 h-12 flex items-center justify-center border-foreground text-2xl font-md" ref={newChatRef}>
                     {!chatOptions ?
 
                         <BiSolidMessageSquareAdd size="36" cursor="pointer" onClick={() => {
@@ -200,7 +214,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                 </div>
 
                 {chatOptions &&
-                    <div className=" absolute bottom-20 right-2 w-[200px] bg-card">
+                    <div className=" absolute bottom-20 right-2 w-[200px] bg-card" ref={newChatRef}>
                         <div className="" onClick={() => {
                             setChatOptions(false)
                         }}>

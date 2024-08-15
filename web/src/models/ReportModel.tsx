@@ -15,12 +15,14 @@ function ReportModel({ setModelTrigger, postId }) {
         "Abuse", "Nudity", "Other"
     ]
 
+    console.log(reportTypes)
+
     return (
-        <div className='absolute top-0 right-0 w-screen z-50 sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
+        <div className='fixed inset-0 z-50  w-screen sm:p-8 overflow-hidden h-screen flex items-center justify-center' key={postId}>
             <div className='absolute top-0 right-0 opacity-15  bg-black w-full h-full' onClick={() => {
                 setModelTrigger(false)
             }}></div>
-            <div className='flex flex-col gap-4 z-10 p-4 w-96 bg-background rounded-lg h-fit overflow-auto'>
+            <div className='flex flex-col gap-4 z-10 p-4 w-96 bg-background rounded-lg h-fit overflow-auto border-accent border'>
                 <div>
                     {reportTypes.map((type, i) => (
                         <div className={`p-2 cursor-pointer rounded-md ${i == selectedReportIndex && "bg-primary"}`} onClick={() => {

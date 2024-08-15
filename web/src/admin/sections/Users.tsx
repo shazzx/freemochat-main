@@ -18,12 +18,10 @@ function UsersSection() {
     const queryClient = useQueryClient()
     const [users, setUsers] = useState([])
 
-    let { data, isSuccess, fetchNextPage, isFetchingNextPage } = useUsers(searchRef)
+    let { data, isSuccess, fetchNextPage } = useUsers(searchRef)
 
     const suspendUser = useSuspendUser()
     const removeUser = useRemoveUser()
-    const [currentIndex, setCurrentIndex] = useState(0)
-
 
     const columns = [
         {

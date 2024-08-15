@@ -6,7 +6,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { MoreHorizontal } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import debounce from 'lodash.debounce'
-import { format } from 'date-fns'
 import { usePages, useRemovePage } from '@/hooks/Admin/usePage'
 
 
@@ -17,10 +16,9 @@ function PagesSection() {
     const [search, setSearch] = useState()
     const queryClient = useQueryClient()
 
-    let { data, isSuccess, fetchNextPage, isFetchingNextPage } = usePages(searchRef)
+    let { data, isLoading, fetchNextPage} = usePages(searchRef)
 
     const removePage = useRemovePage()
-
 
     const columns = [
         {
@@ -119,10 +117,10 @@ function PagesSection() {
         },
     ]
 
-
     const debouncedSearch = debounce((value) => {
         setSearch(value)
     }, 300);
+
     console.log(data)
 
     useEffect(() => {
@@ -147,7 +145,7 @@ function PagesSection() {
 
     return (
         <main className="w-full overflow-auto px-8 py-4">
-            <AdminDataTable title={"Pages"} filter={true} columns={columns} data={isSuccess && data} handleSearchChange={handleSearchChange} fetchNextPage={_fetchNextPage} />
+            <AdminDataTable title={"Pages"} filter={true} columns={columns} data={data} handleSearchChange={handleSearchChange} fetchNextPage={_fetchNextPage} />
         </main>
     )
 }

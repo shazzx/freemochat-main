@@ -29,7 +29,7 @@ function AdminProtectedRoute({ children }) {
 
             } catch (error) {
                 console.log(error)
-                return navigate('/admin/login')
+                // return navigate('/admin/login')
             }
         }
 
@@ -40,9 +40,9 @@ function AdminProtectedRoute({ children }) {
         return null
     }
 
-    if (isFetched && !admin) {
-        return <Navigate to="/login" replace />
-    }
+    // if (isFetched && !admin) {
+    //     return <Navigate to="/admin/login" replace />
+    // }
 
     return children
 }

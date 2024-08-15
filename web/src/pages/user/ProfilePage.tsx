@@ -41,7 +41,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     // const rejectFriendRequest = useRejectFriendRequest()
     let user = isSelf ? localUserData.user : query.isFetched && query?.data
 
-    const { _id, firstname, lastname, username, email, images, bio, areFriends, isFollowed, friendRequest, followersCount, friendsCount, address, profile, cover } = user
+    const { _id, firstname, lastname, username, email, bio, areFriends, isFollowed, friendRequest, followersCount, friendsCount, address, profile, cover } = user
 
     const friendRequestToggle = useFriendRequestToggle(username)
     const removeFriend = useRemoveFriend(username, _id)
@@ -242,7 +242,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                         <div className='w-12'>
                                                             <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
                                                                 <Avatar >
-                                                                    <AvatarImage src={images?.profile} alt="Avatar" />
+                                                                    <AvatarImage src={profile} alt="Avatar" />
                                                                     <AvatarFallback>{firstname[0]?.toUpperCase() + lastname[0]?.toUpperCase()}</AvatarFallback>
                                                                 </Avatar>
                                                             </div>
@@ -265,10 +265,10 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                             return page.posts.map((post, postIndex) => {
                                                 if (pageIndex == data.length - 1 && postIndex == data[pageIndex].posts.length - 3) {
                                                     return (
-                                                        <Post scrollRef={ref} useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} username={username} userId={user?._id} removePost={removePost} type={"user"} key={post?._id} self={isSelf} profile={images?.profile} />
+                                                        <Post scrollRef={ref} useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} username={username} userId={user?._id} removePost={removePost} type={"user"} key={post?._id} self={isSelf} profile={profile} />
                                                     )
                                                 }
-                                                return <Post useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} username={username} userId={user?._id} removePost={removePost} type={"user"} key={post?._id} self={isSelf} profile={images?.profile} />
+                                                return <Post useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} username={username} userId={user?._id} removePost={removePost} type={"user"} key={post?._id} self={isSelf} profile={profile} />
                                             })
                                         })
                                             :

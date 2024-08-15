@@ -8,6 +8,7 @@ import { useBookmarkFeedPost, useCreatePost, useFeed, useLikeFeedPost } from '@/
 import CPostModal from '@/models/CPostModal'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import React, { useEffect, useMemo, useState } from 'react'
+import { useInView } from 'react-intersection-observer'
 import { useSearchParams } from 'react-router-dom'
 
 function FeedSection() {
@@ -15,33 +16,22 @@ function FeedSection() {
     const [postModal, setPostModal] = useState(false)
     const [feed, setFeed] = useState([])
     const { user } = useAppSelector((data) => data.user)
+    const { inView, ref } = useInView()
+    const { data, isLoading, fetchNextPage } = useFeed()
 
-    const { data, isSuccess, isLoading, fetchNextPage } = useFeed()
-    useEffect(() => {
-        console.log(!isLoading, data)
-    }, [data])
+    // useEffect(() => {
 
-    useEffect(() => {
+    //     let promotionPaymentSuccess = async () => {
+    //         const { data } = await axiosClient.get("posts/promotion/payment/success?promotionId=" + searchParams.get("promotionId"))
+    //         console.log(data)
+    //     }
 
-        let promotionPaymentSuccess = async () => {
-            const { data } = await axiosClient.get("posts/promotion/payment/success?promotionId=" + searchParams.get("promotionId"))
-            console.log(data)
-        }
-        let feed = async () => {
-            const { data } = await axiosClient.get("/posts/feed")
-            let posts = data.reverse()
-            console.log(posts)
-            setFeed(posts)
-        }
-
-        // feed()
-
-        if (searchParams.get("success")) {
-            promotionPaymentSuccess()
-        }
+    //     if (searchParams.get("success")) {
+    //         promotionPaymentSuccess()
+    //     }
 
 
-    }, [])
+    // }, [])
 
     const createPost = useCreatePost("userPosts", user?._id)
 
@@ -51,6 +41,12 @@ function FeedSection() {
         createPost.mutate({ content, formData, selectedMedia, type: "user", target: user })
         setPostModal(false)
     }
+
+    useEffect(() => {
+        console.log('fetching next posts...')
+        fetchNextPage()
+    }, [inView])
+
 
     return (
         <div className='w-full z-10 flex justify-center md:justify-normal overflow-y-auto border-muted px-4 md:px-6 lg:px-24'>
@@ -69,12 +65,13 @@ function FeedSection() {
                                     <div className='w-12'>
                                         <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
                                             <Avatar >
-                                                <AvatarImage src={user?.images?.profile} alt="Avatar" />
+                                                <AvatarImage src={user?.profile} alt="Avatar" />
                                                 <AvatarFallback>{user?.firstname[0]?.toUpperCase() + user?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                         </div>
                                     </div>
                                     <Input
+
                                         type="text"
                                         placeholder="Start writing a post"
                                         className="max-w-2xl appearance-none bg-background shadow-none"
@@ -87,11 +84,18 @@ function FeedSection() {
                         </div>
                     </div>
                     <div className='flex w-full items-center  flex-col gap-2  '>
-                        {!isLoading && data.length > 0 ? data.map((page, i) => {
+                        {!isLoading && data.length > 0 ? data.map((page, pageIndex: number) => {
 
-                            return page.posts.map((post, postIndex) => (
-                                <Post  useLikePost={useLikeFeedPost} useBookmarkPost={useBookmarkFeedPost} pageIndex={i} postIndex={postIndex} postData={post} userId={user?._id} username={user?.username} profile={user?.images?.profile} key={post?._id} type="user" />
-                            ))
+                            return page.posts.map((post, postIndex: number) => {
+                                if (pageIndex == data.length -1 && data[pageIndex].posts.length - 2 == postIndex) {
+                                    return (
+                                        <Post useLikePost={useLikeFeedPost} useBookmarkPost={useBookmarkFeedPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} userId={user?._id} username={user?.username} profile={user?.profile} key={post?._id} type="user" scrollRef={ref} />
+                                    )
+                                }
+                                return (
+                                    <Post useLikePost={useLikeFeedPost} useBookmarkPost={useBookmarkFeedPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} userId={user?._id} username={user?.username} profile={user?.profile} key={post?._id} type="user" />
+                                )
+                            })
 
                         })
                             :

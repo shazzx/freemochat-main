@@ -34,7 +34,6 @@ export function AdminLogin() {
         },
         onError: (e) => {
             console.log(e)
-
         }
     })
 

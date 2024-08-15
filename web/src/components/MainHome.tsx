@@ -145,7 +145,7 @@ const MainHome = ({ children }: any) => {
                   className={`flex items-center gap-[14px] rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary ${active == "/profile" && 'bg-primary-active text-primary-foreground hover:text-primary-foreground'}`}              >
                   <div className='w-9 h-9 rounded-full flex items-center justify-center bg-accent overflow-hidden'>
                     <Avatar className="sm:flex">
-                      <AvatarImage src={user?.images?.profile} alt="Avatar" />
+                      <AvatarImage src={user?.profile} alt="Avatar" />
                       <AvatarFallback>{user?.firstname[0]?.toUpperCase() + user?.lastname[0]?.toUpperCase()}</AvatarFallback>
                     </Avatar>
                   </div>
@@ -298,7 +298,7 @@ const MainHome = ({ children }: any) => {
                 <Button variant="secondary" size="icon" className="rounded-full">
                   <div className='w-9 h-9 flex items-center justify-center  rounded-full overflow-hidden'>
                     <Avatar className="sm:flex">
-                      <AvatarImage src={user?.images?.profile} alt="Avatar" />
+                      <AvatarImage src={user?.profile} alt="Avatar" />
                       <AvatarFallback>{user?.firstname[0]?.toUpperCase() + user?.lastname[0]?.toUpperCase()}</AvatarFallback>
                     </Avatar>
                   </div>
@@ -339,7 +339,7 @@ const MainHome = ({ children }: any) => {
                   className={`flex items-center gap-[14px] rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary ${active == "/profile" && 'bg-primary-active text-primary-foreground hover:text-primary-foreground'}`}              >
                   <div className='w-9 h-9 rounded-full flex items-center justify-center bg-accent overflow-hidden'>
                     <Avatar className="sm:flex">
-                      <AvatarImage src={user?.images?.profile} alt="Avatar" />
+                      <AvatarImage src={user?.profile} alt="Avatar" />
                       <AvatarFallback className="text-foreground" >{user?.firstname[0]?.toUpperCase() + user?.lastname[0]?.toUpperCase()}</AvatarFallback>
                     </Avatar>
                   </div>

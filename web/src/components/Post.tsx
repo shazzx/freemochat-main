@@ -103,7 +103,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         if (postData) {
             let date = format(postData.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')
             console.log(date)
-            setProfile(postData?.target?.images?.profile)
+            setProfile(postData?.target?.profile)
             setFullname(postData?.firstname + postData?.lastname)
             setDate(date)
         }
@@ -117,12 +117,10 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             }
         }
 
-        // Add event listener when dropdown is open
         if (shareState) {
             document.addEventListener('mousedown', handleClickOutside);
         }
 
-        // Clean up the event listener
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
@@ -154,7 +152,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             if (shareState) {
                 setShareState(false)
             }
-        }}>
+        }} key={postData && postData._id}>
             {
                 editPostModelState &&
                 <CPostModal setModelTrigger={setEditPostModelState} editPost={true} postDetails={postData} updatePost={_updatePost} />
@@ -176,7 +174,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             <Card className="w-full border-muted" ref={scrollRef}>
                 <CardHeader className='p-3' >
                     <div className='flex items-center justify-between'>
-
                         <Link to={`${domain}/${postData?.type}/${navigation}`}>
                             <div className='flex gap-2'>
                                 <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
@@ -207,7 +204,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 </div>
                             </div>
                         </Link>
-                        <DropdownMenuMain deletePost={deletePost} setConfirmModelState={setConfirmModelState} setReportModelState={setReportModelState} reportModelState={reportModelState} postPromotion={postPromotion} setPostPromotion={setPostPromotion} setEditPostModelState={setEditPostModelState} postBy={true} />
+                        <DropdownMenuMain deletePost={deletePost} setConfirmModelState={setConfirmModelState} setReportModelState={setReportModelState} reportModelState={reportModelState} postPromotion={postPromotion} setPostPromotion={setPostPromotion} setEditPostModelState={setEditPostModelState} postBy={postData?.targetId == user._id} />
                     </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-2 text-2xl p-0 px-3 font-bold">
