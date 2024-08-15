@@ -17,8 +17,9 @@ function ReportsSection() {
     const [search, setSearch] = useState()
     const queryClient = useQueryClient()
 
-    let { data, isSuccess, fetchNextPage, isFetchingNextPage } = useReports(searchRef)
+    let { data, isSuccess, fetchNextPage} = useReports(searchRef)
 
+    console.log(data)
     const removeReport = useRemoveReport()
 
 
@@ -46,47 +47,24 @@ function ReportsSection() {
             enableHiding: false,
         },
         {
-            accessorKey: "name",
-            header: "User",
+            accessorKey: "postId",
+            header: "Post Id",
             cell: ({ row }) => (
-                <div className="capitalize">{row.original?.firstname + " " + row.original?.lastname}</div>
+                <div className="capitalize">{row.original?.postId}</div>
             ),
         },
         {
-            accessorKey: "username",
             header: "Username",
             cell: ({ row }) => (
-                <div>@{row.getValue("username")}</div>
+                <div>@{row.original.reportedBy[0].username}</div>
             ),
         },
-
-        {
-            accessorKey: "email",
-            header: "Email",
-            cell: ({ row }) => (
-                <div className="capitalize">{row.getValue("email")}</div>
-            ),
-        },
-        {
-            accessorKey: "isActive",
-            header: "Status",
-            cell: ({ row }) => {
-                const isActive = row.getValue("isActive")
-                const isSuspended = row.original?.isSuspended
-
-                let status = isSuspended ? "suspended" : isActive ? 'Active' : 'Deactivated'
-                return <div className="capitalize">{status}</div>
-            }
-
-        },
-
 
         {
             accessorKey: "createdAt",
-            header: "Acount Creation Date",
+            header: "Reported On",
             cell: ({ row }) => (
-                <div></div>
-                // <div className="capitalize">{format(row.getValue("createdAt"), 'MMM d, yyy h:mm a')}</div>
+                <div className="capitalize">{format(row.getValue("createdAt"), 'MMM d, yyy h:mm a')}</div>
             ),
 
 

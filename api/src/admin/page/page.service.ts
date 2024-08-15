@@ -18,7 +18,17 @@ export class PageService {
         const pages = await this.pageModel.aggregate([
             { $match: query },
             { $sort: { createdAt: -1 } },
-            { $limit: limit }
+            { $limit: limit },
+            {
+                $lookup: {
+                    from: "users",
+                    let: { userId: { $toObjectId: "$user" } },
+                    pipeline: [
+                      { $match: { $expr: { $eq: ["$_id", "$$userId"] } } }
+                    ],
+                    as: "user"
+                }
+            }
         ])
 
         const hasNextPage = pages.length > limit

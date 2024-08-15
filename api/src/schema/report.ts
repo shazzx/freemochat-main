@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { ObjectId, Types } from "mongoose";
 
-@Schema()
+@Schema({timestamps: true})
 export class Report {
     @Prop({ type: Types.ObjectId, ref: "User" })
     reportedBy: ObjectId
@@ -12,11 +12,8 @@ export class Report {
     @Prop()
     reportMessage: String;
 
-    @Prop({ type: Types.ObjectId })
+    @Prop({ type: Types.ObjectId, ref: "Post" })
     postId: ObjectId
-
-    @Prop()
-    date: Date
 }
 
 export const ReportSchema = SchemaFactory.createForClass(Report)

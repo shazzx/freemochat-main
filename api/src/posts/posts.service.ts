@@ -1273,13 +1273,9 @@ export class PostsService {
         return user[0].bookmarkedPosts
     }
 
-    async reportPost(postId, reportData) {
-
-        const post = await this.postModel.findById(postId)
-        const report: any = await this.reportModel.create({ reportedBy: reportData.userId, type: reportData.type, postId: reportData.postId })
-        post.reports.push(report._id)
-        post.save()
-        return post
+    async reportPost(postId: string, {userId, type, reportMessage}) {
+        const report = await this.reportModel.create({ reportedBy: new Types.ObjectId(userId), type, postId: new Types.ObjectId(postId), reportMessage })
+        return report
     }
 
     async createPost(postData: any) {

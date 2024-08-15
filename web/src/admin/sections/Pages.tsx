@@ -3,20 +3,18 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
 import { useQueryClient } from '@tanstack/react-query'
-import { MoreHorizontal } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import debounce from 'lodash.debounce'
 import { usePages, useRemovePage } from '@/hooks/Admin/usePage'
-
-
-
+import { format } from 'date-fns'
 
 function PagesSection() {
     const searchRef = useRef()
     const [search, setSearch] = useState()
     const queryClient = useQueryClient()
 
-    let { data, isLoading, fetchNextPage} = usePages(searchRef)
+    let { data, isSuccess, fetchNextPage} = usePages(searchRef)
 
     const removePage = useRemovePage()
 
@@ -45,24 +43,33 @@ function PagesSection() {
         },
         {
             accessorKey: "name",
-            header: "User",
+            header: ({ column }) => {
+                return (
+                    <div className="flex items-center cursor-pointer select-none"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Page
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </div>
+                )
+            },
             cell: ({ row }) => (
-                <div className="capitalize">{row.original?.firstname + " " + row.original?.lastname}</div>
+                <div className="capitalize">{row.getValue("name")}</div>
             ),
         },
         {
             accessorKey: "username",
             header: "Username",
             cell: ({ row }) => (
-                <div>@{row.getValue("username")}</div>
+                <div>@{row.original.user[0].username}</div>
             ),
         },
 
         {
-            accessorKey: "email",
-            header: "Email",
+            accessorKey: "handle",
+            header: "Handle",
             cell: ({ row }) => (
-                <div className="capitalize">{row.getValue("email")}</div>
+                <div className="capitalize">{row.getValue("handle")}</div>
             ),
         },
         {
@@ -82,10 +89,9 @@ function PagesSection() {
         {
             accessorKey: "createdAt",
             header: "Acount Creation Date",
-            cell: ({ row }) => (
-                <div></div>
-                // <div className="capitalize">{format(row.getValue("createdAt"), 'MMM d, yyy h:mm a')}</div>
-            ),
+            cell: ({ row }) => {
+                return <div className="capitalize">{row?.original?.createdAt ? format(row.original.createdAt, 'MMM d, yyy h:mm a') : null}</div>
+            },
 
 
         },

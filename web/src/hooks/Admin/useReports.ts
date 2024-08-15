@@ -2,6 +2,7 @@ import {  removePage } from "@/api/Admin/Page/page.api";
 import { fetchReports } from "@/api/Admin/report.api";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
+import { useMemo } from "react";
 import { toast } from "react-toastify";
 
 export function useReports(search): any {
@@ -16,10 +17,14 @@ export function useReports(search): any {
         initialPageParam: null,
         getNextPageParam: (lastPage) => lastPage.nextCursor
     });
-    console.log(error)
 
+    let reports = useMemo(
+        () => data?.pages.flatMap((page) => page.reports) ?? []
+        ,
+        [data]
+    )
     return {
-        data: data?.pages ?? [],
+        data: reports ?? [],
         isLoading,
         isSuccess,
         isFetching,

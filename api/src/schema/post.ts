@@ -33,29 +33,14 @@ export class Post {
 
     @Prop({type: String, required: true})
     content: String;
-
-    @Prop({type: [Types.ObjectId], ref: "User"})
-    bookmarked: ObjectId[]
-
+    
     @Prop({type: String})
     visibility: String;
-
+    
     @Prop({type: Array<Media>})
     media: Media[]
 
-    @Prop({ type: [Promotion], ref: "Promotion" })
-    promotions: ObjectId[]
-
-    @Prop({ type: [Types.ObjectId], ref: "User" })
-    likedBy: ObjectId[]
-
-    @Prop({ type: [Types.ObjectId], ref: "Comment" })
-    comments: ObjectId[]
-
-    @Prop({ type: [Types.ObjectId], ref: "Report" })
-    reports: ObjectId[]
-
-    @Prop({type: Date, default: Date.now})
+    @Prop({type: Date, default: Date.now()})
     createdAt: Date
 }
 

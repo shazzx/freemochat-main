@@ -48,12 +48,21 @@ export class AdminService {
         const query = search
             ? { username: { $regex: search, $options: 'i' }, ..._cursor }
             : _cursor;
-        console.log(query)
 
         const reports = await this.reportModel.aggregate([
             { $match: query },
             { $sort: { createdAt: -1 } },
-            { $limit: limit }
+            { $limit: limit },
+            {
+                $lookup: {
+                    from: "users",
+                    let: { userId: { $toObjectId: "$reportedBy" } },
+                    pipeline: [
+                      { $match: { $expr: { $eq: ["$_id", "$$userId"] } } }
+                    ],
+                    as: "reportedBy"
+                }
+            }
         ])
 
         const hasNextPage = reports.length > limit
