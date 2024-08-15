@@ -1,4 +1,4 @@
-import {  Body, Controller, Get, Post, Query, Req, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { PostsService } from './posts.service';
 import { Response } from 'express';
@@ -124,13 +124,13 @@ export class PostsController {
             return this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
         })
 
-        const { sub } = req.user 
+        const { sub } = req.user
         let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId)
 
         let uploadedPost = await this.postService.createPost(
             {
                 ...createPostDTO,
-                isUploaded: files.length > 0 ? false : true,
+                isUploaded: files.length > 0 ? false : null,
                 targetId,
                 user: sub
             })
@@ -138,20 +138,6 @@ export class PostsController {
         if (files.length > 0) {
             this.eventEmiiter.emit("files.uploaded", { uploadPromise, postId: uploadedPost._id.toString(), targetId, type: createPostDTO.type })
         }
-
-        // if(files.length > 0){
-        //     console.log('there we go')
-        //     console.log(files, targetId, uploadedPost, 'before queue')
-        //     try {
-        //         await this.mediaUploadQueue.add("media", {
-        //             files: base64,
-        //             targetId,
-        //             postId: uploadedPost._id,
-        //         })
-        //     } catch (error) {
-        //         console.log(error)
-        //     }
-        // }
 
         res.json(uploadedPost)
     }
@@ -163,74 +149,94 @@ export class PostsController {
         console.log("files :", files)
         const _postData = updatePostDto
 
-        const media = {
-            images: [],
-            videos: []
+        // const media = {
+        //     images: [],
+        //     videos: []
+        // }
+
+        // const removeMedia = {
+        //     images: [],
+        //     videos: []
+        // }
+
+        // const postMedia = []
+
+        // if (_postData.media.length > 0) {
+        //     const { media } = _postData
+        //     for (let file in media) {
+        //         if (media[file].remove) {
+        //             let imageUrlSplit = media[file].url.split("/")
+        //             console.log(`deleting ${imageUrlSplit} from s3...`)
+        //             let filename = imageUrlSplit[imageUrlSplit.length - 1]
+        //             await this.uploadService.deleteFromS3(filename)
+        //         }
+        //     }
+        // }
+
+        // _postData.media.forEach((_media) => {
+        //     if (!_media?.remove && _media.type == 'video') {
+        //         postMedia.push({ type: 'video', url: _media.url })
+        //     }
+        //     if (!_media?.remove && _media.type == 'image') {
+        //         postMedia.push({ type: 'image', url: _media.url })
+        //     }
+        //     if (_media?.remove && _media.type == 'video') {
+        //         removeMedia.videos.push(_media.url)
+        //     }
+        //     if (_media?.remove && _media.type == 'image') {
+        //         removeMedia.images.push(_media.url)
+        //     }
+        // })
+
+        // for (let file of files) {
+        //     const fileType = getFileType(file.mimetype)
+        //     const filename = uuidv4()
+        //     console.log(file)
+        //     let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+        //     console.log(uploaded)
+        //     if (fileType == 'video') {
+        //         media.videos.push(uploaded.url)
+        //         postMedia.push({ type: 'video', url: uploaded.url })
+        //     }
+        //     if (fileType == 'image') {
+        //         media.images.push(uploaded.url)
+        //         postMedia.push({ type: 'image', url: uploaded.url })
+        //     }
+        // }
+
+        // const { sub } = req.user as { username: string, sub: string }
+
+        // await this.mediaService.storeMedia(new Types.ObjectId(sub), media)
+        // await this.mediaService.removeMedia(new Types.ObjectId(sub), removeMedia)
+
+        // console.log(postMedia, media, removeMedia)
+        // this.chatGateway.uploadSuccess({isSuccess: true})
+
+        const post = await this.postService.getPost(_postData.postId)
+
+        if (!post || post.isUploaded == false) {
+            throw new BadRequestException("please wait previous post update is in process...")
         }
 
-        const removeMedia = {
-            images: [],
-            videos: []
-        }
-
-        const postMedia = []
-
-        if (_postData.media.length > 0) {
-            const { media } = _postData
-            for (let file in media) {
-                if (media[file].remove) {
-                    let imageUrlSplit = media[file].url.split("/")
-                    console.log(`deleting ${imageUrlSplit} from s3...`)
-                    let filename = imageUrlSplit[imageUrlSplit.length - 1]
-                    await this.uploadService.deleteFromS3(filename)
-                }
-            }
-        }
-
-        _postData.media.forEach((_media) => {
-            if (!_media?.remove && _media.type == 'video') {
-                postMedia.push({ type: 'video', url: _media.url })
-            }
-            if (!_media?.remove && _media.type == 'image') {
-                postMedia.push({ type: 'image', url: _media.url })
-            }
-            if (_media?.remove && _media.type == 'video') {
-                removeMedia.videos.push(_media.url)
-            }
-            if (_media?.remove && _media.type == 'image') {
-                removeMedia.images.push(_media.url)
-            }
-        })
-
-        for (let file of files) {
-            const fileType = getFileType(file.mimetype)
-            const filename = uuidv4()
-            console.log(file)
-            let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-            console.log(uploaded)
-            if (fileType == 'video') {
-                media.videos.push(uploaded.url)
-                postMedia.push({ type: 'video', url: uploaded.url })
-            }
-            if (fileType == 'image') {
-                media.images.push(uploaded.url)
-                postMedia.push({ type: 'image', url: uploaded.url })
-            }
-        }
-
-        const { sub } = req.user as { username: string, sub: string }
-
-        await this.mediaService.storeMedia(new Types.ObjectId(sub), media)
-        await this.mediaService.removeMedia(new Types.ObjectId(sub), removeMedia)
-
-        console.log(postMedia, media, removeMedia)
-        this.chatGateway.uploadSuccess({isSuccess: true})
-
-        res.json(await this.postService.updatePost(_postData.postId,
+        let uploadedPost = await this.postService.updatePost(
+            _postData.postId,
             {
-                content: _postData.content,
-                media: postMedia,
-            }))
+                ...updatePostDto,
+                isUploaded: files.length > 0 ? false : null,
+            })
+
+        if (files.length > 0) {
+
+            const uploadPromise = files.map((file) => {
+                const fileType = getFileType(file.mimetype)
+                const filename = uuidv4()
+                return this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+            })
+
+            this.eventEmiiter.emit("files.uploaded", { uploadPromise, postId: post._id.toString(), targetId: post.targetId, type: post.type, uploadType: 'update', _postData })
+        }
+
+        res.json(uploadedPost)
     }
 
     @Post("delete")
@@ -270,7 +276,7 @@ export class PostsController {
             await this.mediaService.removeMedia(new Types.ObjectId(sub), media)
         }
 
-        this.chatGateway.uploadSuccess({isSuccess: true})
+        this.chatGateway.uploadSuccess({ isSuccess: true })
 
         res.json(await this.postService.deletePost(postDetails.postId))
     }
@@ -285,7 +291,7 @@ export class PostsController {
     async like(@Body(new ZodValidationPipe(LikePost)) body: LikePostDTO, @Req() req: Request, @Res() res: Response) {
         const { postId, authorId, type, targetId } = body
         console.log('author', authorId, targetId)
-        const {sub} = req.user as {sub: string, username: string}
+        const { sub } = req.user as { sub: string, username: string }
         res.json(await this.postService.toggleLike(sub, postId, "post", authorId, type, targetId))
     }
 
@@ -349,14 +355,14 @@ export class PostsController {
 
     @Get("promotedPosts")
     async getPromotedPosts(@Req() req: Request, @Res() res: Response) {
-        const {sub} = req.user
+        const { sub } = req.user
         res.json(await this.postService.getPromotedPosts(sub, 'pakistan'))
     }
 
     @Post("view")
     async viewPost(@Body(new ZodValidationPipe(ViewPost)) viewPostDTO: ViewPostDTO, @Req() req, @Res() res: Response) {
         const { postId, type } = viewPostDTO
-        const {sub} = req.user
+        const { sub } = req.user
         console.log('viewPost')
         res.json(await this.postService.viewPost(sub, postId, type))
     }

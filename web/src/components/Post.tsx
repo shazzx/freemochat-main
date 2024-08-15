@@ -1,4 +1,4 @@
-import React, { Ref, useEffect, useState } from 'react'
+import React, { Ref, useEffect, useRef, useState } from 'react'
 import { Card, CardContent, CardFooter, CardHeader } from './ui/card'
 import PostModel from '@/models/PostModel'
 import { axiosClient } from '@/api/axiosClient'
@@ -50,22 +50,22 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     const [editPostModelState, setEditPostModelState] = useState(false)
     const [_profile, setProfile] = useState(undefined)
     const [fullname, setFullname] = useState(undefined)
+    const { user } = useAppSelector((state) => state.user)
+    const shareRef = useRef(null)
+    const [expanded, setExpanded] = useState(false)
+    const words = postData?.content?.split(' ')
+    const expandable = words?.slice(0, 40).join(' ')
+
     const { mutate } = useLikePost(isSearch ? query : type + "Posts", postData?.targetId)
     const bookmarkMutation = useBookmarkPost(isSearch ? query : type + "Posts", postData?.targetId, isSearch)
-    const { user } = useAppSelector((state) => state.user)
+    const updatePost = useUpdatePost(type + "Posts", postData?.targetId)
     const removePost = useRemovePost(type + "Posts", postData?.targetId)
-
 
     const deletePost = async () => {
         removePost.mutate({ postId: postData?._id, postIndex, pageIndex, media: postData?.media, })
         toast.success("Post deleted")
 
     }
-    const [expanded, setExpanded] = useState(false)
-    const words = postData?.content?.split(' ')
-    const expandable = words?.slice(0, 40).join(' ')
-
-    const updatePost = useUpdatePost(type + "Posts", postData?.targetId)
 
     const _updatePost = async ({ content, selectedMedia, formData, media, setModelTrigger }) => {
         let _media = media.filter((media) => {
@@ -78,7 +78,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         formData.append("postData", JSON.stringify(postDetails))
         updatePost.mutate({ content, formData, selectedMedia, pageIndex, postIndex, postId: postData?._id, media })
         setModelTrigger(false)
-        toast.success("Post updated")
     }
 
     const [postPromotion, setPostPromotion] = useState(false)
@@ -110,7 +109,28 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         }
     }, [postData]);
 
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (shareRef.current && !shareRef.current.contains(event.target)) {
+                setShareState(false);
+            }
+        }
+
+        // Add event listener when dropdown is open
+        if (shareState) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        // Clean up the event listener
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [shareState])
+
+
     let navigation = postData?.type == "user" ? postData?.target?.username : postData?.target?.handle
+
     if (postData?.isUploaded == false) {
         return (
             <div className='max-w-xl w-full bg-card flex gap-4 p-3 sm:min-w-[420px]' >
@@ -270,7 +290,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                             <span className='text-sm hidden sm:block' >Share</span>
                             {shareState &&
-                                <div className='absolute flex items-center justify-center top-10 -left-5 drop-shadow-xl z-10 bg-card rounded-md p-2'>
+                                <div className='border-accent border absolute flex items-center justify-center top-10 -left-5 drop-shadow-xl z-10 bg-card rounded-md p-2' ref={shareRef}>
                                     <WhatsappShareButton url={'localhost:5173'} >
                                         <div className='flex gap-1 items-center justify-center'>
                                             <WhatsappIcon borderRadius={60} size={24} /> <span>Whatsapp</span>

@@ -974,11 +974,12 @@ export class PostsService {
     }
 
     async getPost(postId) {
-        const post = await this.postModel.findOne({ _id: postId }).populate([
-            {
-                path: "comments.user",
-                model: 'User'
-            }, { path: "user", model: "User" }])
+        const post = await this.postModel.findById( postId)
+        // .populate([
+        //     {
+        //         path: "comments.user",
+        //         model: 'User'
+        //     }, { path: "user", model: "User" }])
 
         return post
     }

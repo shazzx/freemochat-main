@@ -26,13 +26,13 @@ export async function fetchPosts(pageParam, type, targetId?) {
 
 
 export async function createPost(formData: FormData) {
-  const response = await axiosClient.post("/posts/create", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 20000000 })
+  const response = await axiosClient.post("/posts/create", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 20000 })
   return response.data;
 }
 
 
 export async function updatePost(formData: FormData) {
-  const response = await axiosClient.post("/posts/update", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 200000000 })
+  const response = await axiosClient.post("/posts/update", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 20000 })
   return response.data;
 }
 

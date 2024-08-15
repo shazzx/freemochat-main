@@ -6,6 +6,7 @@ import { Types } from 'mongoose'
 import { ChatGateway } from "src/chat/chat.gateway";
 import { PageService } from "src/pages/pages.service";
 import { GroupsService } from "src/groups/groups.service";
+import { UploadService } from "src/upload/upload.service";
 
 @Injectable()
 export class UploadListener {
@@ -14,14 +15,17 @@ export class UploadListener {
         private readonly pageService: PageService,
         private readonly groupsService: GroupsService,
         private readonly mediaService: MediaService,
-        private readonly chatGateway: ChatGateway
+        private readonly chatGateway: ChatGateway,
+        private readonly uploadService: UploadService,
     ) { }
     @OnEvent("files.uploaded")
-    async handleFlesUploadedEvent({ uploadPromise, postId, targetId, type }: {
+    async handleFlesUploadedEvent({ uploadPromise, postId, targetId, type, uploadType, _postData }: {
         uploadPromise: any,
         postId: string,
         targetId: Types.ObjectId,
         type: string
+        uploadType?: string
+        _postData?: any
     }) {
         try {
             const files = await Promise.all(uploadPromise)
@@ -43,18 +47,71 @@ export class UploadListener {
                 }
             }
 
-            const postDetails = { media: postMedia, isUploaded: true }
-            console.log(postDetails, postId, targetId, 'meda upload consumer')
+            if (uploadType == 'update') {
+
+                const removeMedia = {
+                    images: [],
+                    videos: []
+                }
+
+
+                if (_postData.media.length > 0) {
+                    const { media } = _postData
+                    for (let file in media) {
+                        if (media[file].remove) {
+                            let imageUrlSplit = media[file].url.split("/")
+                            console.log(`deleting ${imageUrlSplit} from s3...`)
+                            let filename = imageUrlSplit[imageUrlSplit.length - 1]
+                            await this.uploadService.deleteFromS3(filename)
+                        }
+                    }
+                }
+
+                _postData.media.forEach((_media) => {
+                    if (!_media?.remove && _media.type == 'video') {
+                        postMedia.push({ type: 'video', url: _media.url })
+                    }
+                    if (!_media?.remove && _media.type == 'image') {
+                        postMedia.push({ type: 'image', url: _media.url })
+                    }
+                    if (_media?.remove && _media.type == 'video') {
+                        removeMedia.videos.push(_media.url)
+                    }
+                    if (_media?.remove && _media.type == 'image') {
+                        removeMedia.images.push(_media.url)
+                    }
+                })
+
+                const postDetails = { media: postMedia, isUploaded: null }
+                await this.mediaService.storeMedia(new Types.ObjectId(targetId), media)
+                await this.mediaService.removeMedia(new Types.ObjectId(targetId), removeMedia)
+                await this.postsService.updatePost(postId, postDetails);
+                await this.chatGateway.uploadSuccess({
+                    isSuccess: true, target: {
+                        targetId,
+                        type,
+                        invalidate: "posts"
+                    }
+                })
+                return
+            }
+
+            const postDetails = { media: postMedia, isUploaded: null }
             await this.postsService.updatePost(postId, postDetails);
             await this.mediaService.storeMedia(targetId, media)
-            await this.chatGateway.uploadSuccess({ isSuccess: true, target: {
-                targetId,
-                type, 
-                invalidate: "posts"
-            } })
+            await this.chatGateway.uploadSuccess({
+                isSuccess: true, target: {
+                    targetId,
+                    type,
+                    invalidate: "posts"
+                }
+            })
         } catch (error) {
             console.error(`Error uploading media for post ${postId}:`, error);
-            await this.postsService.deletePost(postId);
+            if (uploadType !== 'update') {
+                await this.postsService.deletePost(postId);
+            }
+
             await this.chatGateway.uploadSuccess({ isSuccess: false })
         }
     }
@@ -79,7 +136,7 @@ export class UploadListener {
                 }
             }
 
-            if(type == 'group'){
+            if (type == 'group') {
                 await this.groupsService.updateGroup(targetId, { images: { ...images, ..._images }, isUploaded: null });
                 await this.chatGateway.uploadSuccess({
                     isSuccess: true, target: {
@@ -101,8 +158,8 @@ export class UploadListener {
             }
 
         } catch (error) {
-                console.error(`Error uploading media for page ${targetId}:`, error);
-                await this.chatGateway.uploadSuccess({ isSuccess: false })
+            console.error(`Error uploading media for page ${targetId}:`, error);
+            await this.chatGateway.uploadSuccess({ isSuccess: false })
         }
     }
 }

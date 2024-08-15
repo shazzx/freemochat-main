@@ -105,9 +105,32 @@ export const useCreatePost = (key: string, targetId?: string) => {
       queryClient.setQueryData([key, targetId], context.previousPosts)
     },
     onSettled: (data) => {
-      console.log(data)
-      if(data.isUploaded == true){
+      if(data.isUploaded == null){
         queryClient.invalidateQueries({ queryKey: [key, targetId] })
+        // queryClient.setQueryData([key, targetId], (pages: any) => {
+        //   const updatedPosts = produce(pages, (draft: any) => {
+  
+        //     if (draft?.pages && draft?.pages[0].posts) {
+        //       draft.pages[0].posts.unshift(data)
+        //       return draft
+        //     }
+  
+        //     if (!draft?.pages || !draft?.pages[0].posts) {
+        //       draft =
+        //       {
+        //         pages: [{
+        //           posts: [{data}],
+        //           nextCursor: null,
+        //         }]
+        //       }
+        //       return draft
+        //     }
+        //   })
+        //   return updatedPosts
+        // });
+  
+        toast.success("Post created")
+        return 
       }
     }
   })
@@ -135,10 +158,6 @@ export const useUpdatePost = (key, id: string) => {
       const previousPosts = queryClient.getQueryData([key, id])
       queryClient.setQueryData([key, id], (pages: any) => {
         const updatedPosts = produce(pages, (draft: any) => {
-          if(!pages){
-      toast.info("please post is being uploaded")
-return
-          }
           if (draft.pages[pageIndex] && draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId) {
             draft.pages[pageIndex].posts[postIndex].content = content
             let _media = media.map((media) => {
@@ -160,13 +179,18 @@ return
 
     onError: (err, newComment, context) => {
       console.log(err)
-      toast.error(err.message)
+      if(err["response"].status == 400){
+        toast.info(err["response"].data.message)
+        return 
+      }
+      toast.error("something went wrong")
       queryClient.setQueryData([key, id], context.previousPosts)
     },
     onSettled: (e) => {
       console.log(e)
       // uncommeting this will refetch the user posts again from the server to be in sync
-      queryClient.invalidateQueries({ queryKey: [key, id] })
+      // queryClient.invalidateQueries({ queryKey: [key, id] })
+      toast.success("Post updated")
     }
   })
 
