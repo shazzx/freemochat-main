@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
 import { Request } from 'types/global';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { CreateChatGroup, CreateChatGroupDTO, GetChatGroup, GetChatGroupDTO, UpdateChatGroup, UpdateChatGroupDTO } from 'src/schema/validation/chatagroup';
+import { CreateChatGroup, CreateChatGroupDTO, GetChatGroup, GetChatGroupDTO, UpdateChatGroup, UpdateChatGroupDTO } from 'src/schema/validation/chatgroup';
 
 @Controller('chatgroups')
 export class CGroupsController {

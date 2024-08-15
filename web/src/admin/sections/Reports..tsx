@@ -8,6 +8,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import debounce from 'lodash.debounce'
 import { format } from 'date-fns'
 import { useRemoveReport, useReports } from '@/hooks/Admin/useReports'
+import ReportModel from '../models/ReportModel'
 
 
 
@@ -57,6 +58,13 @@ function ReportsSection() {
             header: "Username",
             cell: ({ row }) => (
                 <div>@{row.original.reportedBy[0].username}</div>
+            ),
+        },
+
+        {
+            header: "Report Message",
+            cell: ({ row }) => (
+                <div>{row.original.reportMessage.slice(0, 24)}...</div>
             ),
         },
 
@@ -123,9 +131,13 @@ function ReportsSection() {
         queryClient.invalidateQueries({ queryKey: ["usersAdmin"] });
     }, [search])
 
+    const [reportModelState, setReportModelState] = useState(false)
+    const [reportIndex, setReportIndex] = useState(-1)
+
     return (
         <main className="w-full overflow-auto px-8 py-4">
-            <AdminDataTable title={"reports"} filter={true} columns={columns} data={isSuccess && data} handleSearchChange={handleSearchChange} fetchNextPage={_fetchNextPage} />
+            {reportModelState && reportIndex >= 0 && <ReportModel setReportModelState={setReportModelState} reportDetails={data[reportIndex]} />}
+            <AdminDataTable filterValue={"Username"} setModelState={setReportModelState} setItemIndex={setReportIndex} title={"reports"} filter={true} columns={columns} data={isSuccess && data} handleSearchChange={handleSearchChange} fetchNextPage={_fetchNextPage} />
         </main>
     )
 }

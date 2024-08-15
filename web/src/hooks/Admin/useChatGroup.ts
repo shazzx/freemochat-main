@@ -17,15 +17,14 @@ export function useChatGroups(search: any): any {
         getNextPageParam: (lastPage) => lastPage.nextCursor
 
     });
-
-    let posts = useMemo(
-        () => data?.pages.flatMap((page) => page.posts) ?? []
+    let chatgroups = useMemo(
+        () => data?.pages.flatMap((page) => page.chatgroups) ?? []
         ,
         [data]
     )
 
     return {
-        data: posts,
+        data: chatgroups,
         isLoading,
         isSuccess,
         isFetching,

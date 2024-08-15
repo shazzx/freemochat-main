@@ -29,6 +29,8 @@ export class CGroupService {
             }
         ])
 
+        console.log(groups, 'chat groups')
+
         const hasNextPage = groups.length > limit
         const _groups = hasNextPage ? groups.slice(0, -1) : groups
         const nextCursor = hasNextPage ? _groups[_groups.length - 1].createdAt.toISOString() : null

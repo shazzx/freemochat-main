@@ -119,42 +119,24 @@ function GroupsSection() {
         },
         {
             accessorKey: "name",
-            header: "User",
+            header: "Chat Group",
             cell: ({ row }) => (
-                <div className="capitalize">{row.original?.firstname + " " + row.original?.lastname}</div>
+                <div className="capitalize">{row.getValue("name")}</div>
             ),
         },
         {
             accessorKey: "username",
             header: "Username",
             cell: ({ row }) => (
-                <div>@{row.getValue("username")}</div>
+                <div>@{row.original.user[0].username}</div>
             ),
         },
-
-        {
-            accessorKey: "email",
-            header: "Email",
-            cell: ({ row }) => (
-                <div className="capitalize">{row.getValue("email")}</div>
-            ),
-        },
-        {
-            accessorKey: "isActive",
-            header: "Status",
-            cell: ({ row }) => {
-                return <div className="capitalize">nahi</div>
-            }
-
-        },
-
 
         {
             accessorKey: "createdAt",
             header: "Created At",
             cell: ({ row }) => (
-                // <div className="capitalize">{format(row.getValue("createdAt"), 'MMM d, yyy h:mm a')}</div>
-                <div></div>
+                <div className="capitalize">{format(row.getValue("createdAt"), 'MMM d, yyy h:mm a')}</div>
             ),
 
 

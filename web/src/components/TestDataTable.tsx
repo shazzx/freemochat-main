@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/table"
 import { useInView } from "react-intersection-observer"
 
-export function AdminDataTable({ columns, data , title, filter, reverse, setReverse, refetch, handleSearchChange, fetchNextPage, useGroups, search, isLoading }: any) {
+export function AdminDataTable({ columns, data , title, filter, reverse, setReverse, refetch, handleSearchChange, fetchNextPage, useGroups, search, isLoading, setModelState, setItemIndex, filterValue }: any) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -75,7 +75,7 @@ export function AdminDataTable({ columns, data , title, filter, reverse, setReve
           {filter && <div className="flex gap-2 items-center py-4">
             <Input
               placeholder={`Filter ${title}...`}
-              value={table.getColumn("name")?.getFilterValue() as string}
+              value={(table.getColumn(filterValue ? filterValue : "name")?.getFilterValue() as string)}
               onChange={handleSearchChange}
               // table.getColumn("name")?.setFilterValue(event.target.value)
               className="max-w-sm"
@@ -133,11 +133,17 @@ export function AdminDataTable({ columns, data , title, filter, reverse, setReve
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => {
+              table.getRowModel().rows.map((row, index) => {
 
                 return (<TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={() => {
+                    if(setModelState && setItemIndex){
+                      setModelState(true)
+                      setItemIndex(index)
+                    }
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => {
                     if (row.index, data?.length - 1) {

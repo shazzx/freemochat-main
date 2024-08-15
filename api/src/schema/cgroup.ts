@@ -1,22 +1,16 @@
 import { Schema, Prop, SchemaFactory } from "@nestjs/mongoose";
 import { ObjectId, Types } from 'mongoose'
 
-
-class Images {
-    @Prop()
-    profile: string;
-
-    @Prop()
-    cover: string
-}
-
-@Schema()
+@Schema({ timestamps: true })
 export class ChatGroup {
     @Prop()
     name: string;
 
     @Prop()
-    images: Images
+    profile: string
+
+    @Prop()
+    cover: string
 
     @Prop({ type: Types.ObjectId, ref: "User" })
     user: ObjectId

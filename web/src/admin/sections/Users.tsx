@@ -8,6 +8,7 @@ import { MoreHorizontal } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import debounce from 'lodash.debounce'
 import { format } from 'date-fns'
+import UserModel from '../models/UserModel'
 
 
 
@@ -149,9 +150,15 @@ function UsersSection() {
         queryClient.invalidateQueries({ queryKey: ["usersAdmin"] });
     }, [search])
 
+
+    const [userModelState, setUserModelState] = useState(false)
+    const [userIndex, setUserIndex] = useState(-1)
+
+
     return (
         <main className="w-full overflow-auto px-8 py-4">
-            <AdminDataTable title={"Users"} filter={true} columns={columns} data={isSuccess && data} handleSearchChange={handleSearchChange} fetchNextPage={_fetchNextPage} />
+            {userModelState && userIndex >= 0 && <UserModel user={data[userIndex]} setUserModelState={setUserModelState} />}
+            <AdminDataTable  filterValue={"username"} setModelState={setUserModelState} setItemIndex={setUserIndex} title={"Users"} filter={true} columns={columns} data={isSuccess && data} handleSearchChange={handleSearchChange} fetchNextPage={_fetchNextPage} />
         </main>
     )
 }

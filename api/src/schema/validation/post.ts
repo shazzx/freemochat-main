@@ -53,8 +53,7 @@ export const ReportPost = z.object({
     reportData: z.object({
         userId: ValidMongoId,
         reportMessage: z.string(),
-        type: z.string(),
-
+        type: z.string().optional(),
     }),
 })
 

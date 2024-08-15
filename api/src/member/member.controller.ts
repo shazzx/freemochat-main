@@ -4,7 +4,7 @@ import { Request, Response } from 'express';
 import { MemberService } from './member.service';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
 import { GetMembers, GetMembersDTO, ToggleAdmin, ToggleAdminDTO } from 'src/schema/validation/member';
-import { JoinGroup, JoinGroupDTO } from 'src/schema/validation/chatagroup';
+import { JoinGroup, JoinGroupDTO } from 'src/schema/validation/chatgroup';
 
 @Controller('members')
 export class MemberController {

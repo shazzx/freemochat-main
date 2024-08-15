@@ -6,15 +6,12 @@ export const GroupJoin = z.object({
     }),
 })
 
-
 export const CreateChatGroup = z.object({
     groupDetails: z.object({
         name: z.string(),
-        handle: z.string(),
         description: z.string()
     }),
 })
-
 
 export const UpdateChatGroup = z.object({
     groupDetails: z.object({
