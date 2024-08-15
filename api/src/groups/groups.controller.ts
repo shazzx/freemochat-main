@@ -41,6 +41,15 @@ export class GroupsController {
         res.json(await this.groupsService.toggleJoin(sub, groupDetails))
     }
 
+
+    @Get("handleExists")
+    async handleExists(@Query(new ZodValidationPipe(GroupExists)) query: GroupExistsDTO, @Req() req: Request, @Res() res: Response) {
+        const { handle } = query
+        console.log(handle)
+        res.json(await this.groupsService.handleExists(handle))
+    }
+
+
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
     async createGroup(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
@@ -56,45 +65,15 @@ export class GroupsController {
             
         })
 
-        // let media = {
-        //     images: [],
-        //     videos: []
-        // }
-
-        
-
-        // let images;
-        // for (let file of files) {
-        //     const fileType = getFileType(file.mimetype)
-        //     const filename = uuidv4()
-        //     console.log(file)
-        //     let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-        //     console.log(uploaded)
-        //     if (file.originalname == 'profile') {
-        //         images = { ...images, profile: uploaded }
-        //     }
-        //     if (file.originalname == 'cover') {
-        //         images = { ...images, cover: uploaded }
-        //     }
-        // }
-
-        // console.log(images)
         const { sub } = req.user 
         
         let group = await this.groupsService.createGroup(sub, { ...groupDetails})
 
-        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: group._id.toString(), images: {}, type: 'group' })
+        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: group._id.toString(), type: 'group' })
 
         res.json(group)
     }
 
-
-    @Get("handleExists")
-    async handleExists(@Query(new ZodValidationPipe(GroupExists)) query: GroupExistsDTO, @Req() req: Request, @Res() res: Response) {
-        const { handle } = query
-        console.log(handle)
-        res.json(await this.groupsService.handleExists(handle))
-    }
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("update")
@@ -102,7 +81,7 @@ export class GroupsController {
         @Body(new ZodValidationPipe(UpdateGroup, true, "groupData")) body: UpdateGroupDTO,
         resposne: Response) {
 
-        let { groupDetails, groupId, images } = body
+        let { groupDetails, groupId } = body
         let group = await this.groupsService.getRawGroup(groupId)
 
         if(!group || group.isUploaded == false){
@@ -116,7 +95,7 @@ export class GroupsController {
             return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, originalname)
         })
 
-        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: group._id.toString(), images })
+        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: group._id.toString(), type: "group" })
         res.json(await this.groupsService.updateGroup(groupId, { ...groupDetails, isUploaded: files.length > 0 ? false : null }))
     }
 

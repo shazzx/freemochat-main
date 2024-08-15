@@ -117,10 +117,9 @@ export class UploadListener {
     }
 
     @OnEvent("profiles.upload")
-    async handleProfilesUpload({ uploadPromise, targetId, images, type }: {
+    async handleProfilesUpload({ uploadPromise, targetId, type }: {
         uploadPromise: any,
         targetId: string,
-        images?: { profile?: string, cover?: string },
         type: string,
     }) {
         try {
@@ -149,7 +148,7 @@ export class UploadListener {
             }
 
             if (type == 'page') {
-                console.log(images, targetId, files, 'page', targetId)
+                console.log(targetId, files, 'page', targetId)
                 await this.pageService.updatePage(targetId, {  ..._images , isUploaded: null });
                 await this.chatGateway.uploadSuccess({
                     isSuccess: true, target: {

@@ -73,7 +73,7 @@ export class PageController {
     @Post("update")
     async updatePage(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
     @Body(new ZodValidationPipe(UpdatePage, true, "pageData")) body: UpdatePageDTO) {
-        let { pageDetails, pageId, images } = body
+        let { pageDetails, pageId } = body
 
         let page = await this.pageService.getRawPage(pageId)
 
@@ -88,22 +88,7 @@ export class PageController {
             return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, originalname)
         })
 
-
-        // let _images;
-        // for (let file of files) {
-        //     const fileType = getFileType(file.mimetype)
-        //     const filename = uuidv4()
-        //     console.log(file)
-        //     let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-        //     console.log(uploaded)
-        //     if (file.originalname == 'profile') {
-        //         _images = { ..._images, profile: uploaded }
-        //     }
-        //     if (file.originalname == 'cover') {
-        //         _images = { ..._images, cover: uploaded }
-        //     }
-        // }
-        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: page._id.toString(), images })
+        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: page._id.toString(), type: "page"})
         
         res.json(await this.pageService.updatePage(pageId, { ...pageDetails, isUploaded: files.length > 0 ? false : null }))
     }
