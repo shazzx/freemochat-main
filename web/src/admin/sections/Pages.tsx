@@ -72,23 +72,10 @@ function PagesSection() {
                 <div className="capitalize">{row.getValue("handle")}</div>
             ),
         },
-        {
-            accessorKey: "isActive",
-            header: "Status",
-            cell: ({ row }) => {
-                const isActive = row.getValue("isActive")
-                const isSuspended = row.original?.isSuspended
-
-                let status = isSuspended ? "suspended" : isActive ? 'Active' : 'Deactivated'
-                return <div className="capitalize">{status}</div>
-            }
-
-        },
-
 
         {
             accessorKey: "createdAt",
-            header: "Acount Creation Date",
+            header: "Created At",
             cell: ({ row }) => {
                 return <div className="capitalize">{row?.original?.createdAt ? format(row.original.createdAt, 'MMM d, yyy h:mm a') : null}</div>
             },

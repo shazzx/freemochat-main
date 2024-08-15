@@ -12,13 +12,21 @@ export class CGroupService {
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
 
         const query = search
-            ? { name: { $regex: search, $options: 'i' }, ..._cursor }
+            ? { handle: { $regex: search, $options: 'i' }, ..._cursor }
             : _cursor;
 
         const groups = await this.chatGroupModel.aggregate([
             { $match: query },
             { $sort: { createdAt: -1 } },
-            { $limit: limit }
+            { $limit: limit },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "user",
+                    foreignField: "_id",
+                    as: "user"
+                }
+            }
         ])
 
         const hasNextPage = groups.length > limit

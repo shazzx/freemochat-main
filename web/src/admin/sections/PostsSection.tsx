@@ -45,37 +45,21 @@ function PostsSection() {
             enableSorting: false,
             enableHiding: false,
         },
+
         {
-            accessorKey: "name",
-            header: "User",
+            accessorKey: "_id",
+            header: "Post",
             cell: ({ row }) => (
-                <div className="capitalize">{row.original?.firstname + " " + row.original?.lastname}</div>
-            ),
-        },
-        {
-            accessorKey: "username",
-            header: "Username",
-            cell: ({ row }) => (
-                <div>@{row.getValue("username")}</div>
+                <div className="capitalize">{row.getValue("_id")}</div>
             ),
         },
 
         {
-            accessorKey: "email",
-            header: "Email",
+            header: "Posted By",
             cell: ({ row }) => (
-                <div className="capitalize">{row.getValue("email")}</div>
+                <div>@{row.original.target[0]?.username || row.original.target[0]?.username}</div>
             ),
         },
-        {
-            accessorKey: "isActive",
-            header: "Status",
-            cell: ({ row }) => {
-                return <div className="capitalize">nahi</div>
-            }
-
-        },
-
 
         {
             accessorKey: "createdAt",
@@ -83,8 +67,6 @@ function PostsSection() {
             cell: ({ row }) => (
                 <div className="capitalize">{format(row.getValue("createdAt"), 'MMM d, yyy h:mm a')}</div>
             ),
-
-
         },
 
         {

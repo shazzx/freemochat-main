@@ -18,9 +18,16 @@ export class GroupService {
         const groups = await this.groupModel.aggregate([
             { $match: query },
             { $sort: { createdAt: -1 } },
-            { $limit: limit }
+            { $limit: limit },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "user",
+                    foreignField: "_id",
+                    as: "user"
+                }
+            }
         ])
-        console.log(groups, 'groups')
 
         const hasNextPage = groups.length > limit
         const _groups = hasNextPage ? groups.slice(0, -1) : groups

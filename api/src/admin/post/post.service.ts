@@ -26,12 +26,11 @@ export class PostService {
       { $sort: { createdAt: -1 } },
       { $limit: limit + 1 },
       {
-
         $lookup: {
           from: 'users',
-          localField: "user",
+          localField: "targetId",
           foreignField: "_id",
-          as: 'user',
+          as: 'target',
         },
       },
     ])
