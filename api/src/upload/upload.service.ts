@@ -77,7 +77,9 @@ export class UploadService {
             return {url: uploadResult, fileName, fileType: contentType};
         }
 
+        
         else {
+            console.log(contentType, 'contenttype')
             throw new Error('Unsupported file type');
         }
         console.log(moderationResult)

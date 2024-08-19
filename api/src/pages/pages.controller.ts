@@ -48,6 +48,7 @@ export class PageController {
     @Body(new ZodValidationPipe(CreatePage, true, "pageData")) body: CreatePageDTO) {
         console.log("files :", files, body)
         let { pageDetails } = body
+        console.log(pageDetails)
 
         const uploadPromise = files.map((file) => {
             const fileType = getFileType(file.mimetype)

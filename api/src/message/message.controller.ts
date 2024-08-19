@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Query, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Put, Query, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { MessageService } from './message.service';
 import { Response } from 'express';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
@@ -30,6 +30,10 @@ export class MessageController {
 
     const fileType = getFileType(file.mimetype)
     const filename = uuidv4()
+
+    if(fileType == 'unsupported'){
+      throw new BadRequestException("Unsupported file")
+    }
 
     console.log(fileType, filename, type, content, sender, recepient)
     let uploaded: { url: string, fileName: string, fileType: string } = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)

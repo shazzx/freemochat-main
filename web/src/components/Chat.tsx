@@ -255,7 +255,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
             setInputValue("");
             return
         }
-        socket.emit("chat", { senderDetails: { targetId: user?._id, username: user?.username }, body: inputValue, recepientDetails: { ...recepientDetails, groupName: recepientDetails.name, targetId: messageData.recepeint } });
+        socket.emit("chat", { senderDetails: { targetId: user?._id, username: user?.username}, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, groupName: recepientDetails.name, targetId: messageData.recepeint } });
         setInputValue("");
     };
 
@@ -705,8 +705,8 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                             createMessage.mutate({ messageData: { ...messageData, media: { type: "pdf", url: URL.createObjectURL(e.target.files[0]) } }, formData })
 
 
-                            let { data } = await axiosClient.post("messages/create", formData, { headers: { 'Content-Type': "multipart/form-data" } })
-                            console.log(data)
+                            // let { data } = await axiosClient.post("messages/create", formData, { headers: { 'Content-Type': "multipart/form-data" } })
+                            // console.log(data)
                             setFileSelectDropDownState(false)
                         }
                     }} />
@@ -721,8 +721,8 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
                             createMessage.mutate({ messageData: { ...messageData, media: { type: "image", url: URL.createObjectURL(e.target.files[0]) } }, formData })
 
-                            let { data } = await axiosClient.post("messages/create", formData, { headers: { 'Content-Type': "multipart/form-data" } })
-                            console.log(data)
+                            // let { data } = await axiosClient.post("messages/create", formData, { headers: { 'Content-Type': "multipart/form-data" } })
+                            // console.log(data)
                             setFileSelectDropDownState(false)
                         }
                     }} />
@@ -740,8 +740,8 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                             createMessage.mutate({ messageData: { ...messageData, media: { type: "video", url: URL.createObjectURL(e.target.files[0]) } }, formData })
 
 
-                            let { data } = await axiosClient.post("messages/create", formData, { headers: { 'Content-Type': "multipart/form-data" } })
-                            console.log(data)
+                            // let { data } = await axiosClient.post("messages/create", formData, { headers: { 'Content-Type': "multipart/form-data" } })
+                            // console.log(data)
                             setFileSelectDropDownState(false)
                         }
                     }} />

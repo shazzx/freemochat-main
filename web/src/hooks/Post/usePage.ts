@@ -37,7 +37,6 @@ export function usePages(): any {
     refetchOnReconnect: false,
   });
 
-
   return {
     data: data ?? [],
     isLoading,
