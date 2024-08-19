@@ -59,7 +59,7 @@ export const FriendGeneral = z.object({
 
 
 export const GetFriends = Cursor.extend({
-    groupId: ValidMongoId,
+    groupId: ValidMongoId.optional(),
     userId: ValidMongoId
 })
 

@@ -251,7 +251,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
 
         if(recepientDetails.type == "ChatGroup"){
-            socket.emit("groupchat", { senderDetails: { targetId: user?._id, username: user?.username }, body: inputValue, recepientDetails: { ...recepientDetails, targetId: messageData.recepeint } });
+            socket.emit("groupchat", { senderDetails: { targetId: user?._id, username: user?.username }, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, targetId: messageData.recepeint } });
             setInputValue("");
             return
         }

@@ -217,9 +217,8 @@ export class UserController {
         const query = getUserDTO
 
         const username = query.username || userPayload.username
-        const user = await this.userService.findUser(username)
-
-        res.json(user)
+        const user = await this.userService.getUser(username, null, req.user.sub)
+        res.json(user[0])
     }
 
     @Post("request")

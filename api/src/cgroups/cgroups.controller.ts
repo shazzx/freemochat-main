@@ -38,13 +38,13 @@ export class CGroupsController {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
             console.log(file)
-            let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-            console.log(uploaded)
+            let {url} = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+            console.log({url})
             if (file.originalname == 'profile') {
-                images = { ...images, profile: uploaded }
+                images = { ...images, profile: url }
             }
             if (file.originalname == 'cover') {
-                images = { ...images, cover: uploaded }
+                images = { ...images, cover: url }
             }
         }
 
@@ -52,7 +52,7 @@ export class CGroupsController {
 
         const { sub } = req.user 
 
-        res.json(await this.chatGroupService.createGroup(sub, { ...groupDetails, images }))
+        res.json(await this.chatGroupService.createGroup(sub, { ...groupDetails, ...images }))
     }
 
     @UseInterceptors(FilesInterceptor('files'))

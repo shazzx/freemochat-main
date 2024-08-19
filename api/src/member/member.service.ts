@@ -99,11 +99,9 @@ export class MemberService {
     }
 
     async toggleJoin(_userId, groupDetails) {
-        let userId = _userId
+        let userId = groupDetails?.userId || _userId 
 
-        if (groupDetails?.userId) {
-            userId = groupDetails.userId
-        }
+        console.log('yes yes', groupDetails)
         console.log('joiner', userId, 'user', _userId)
 
         const filter = {

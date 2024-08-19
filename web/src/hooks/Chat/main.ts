@@ -121,7 +121,7 @@ export const useChatGroup = (groupId: string) => {
 export const useCreateChatGroup = () => {
     const queryClient = useQueryClient()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-        mutationFn: (groupDetails: { groupDetails: { name: string, username: string, about: string }, images: { profile: string, cover: string }, formData: FormData }) => {
+        mutationFn: (groupDetails: { groupDetails: { name: string, description: string }, images: { profile: string, cover: string }, formData: FormData }) => {
             return createChatGroup(groupDetails.formData)
         },
 
@@ -167,7 +167,7 @@ export const useCreateChatGroup = () => {
 export const useUpdateChatGroup = () => {
     const queryClient = useQueryClient()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-        mutationFn: (groupDetails: { updatedGroupDetails: { name: string, username: string, about: string }, images: { profile: string, cover: string }, formData: FormData }) => {
+        mutationFn: (groupDetails: { updatedGroupDetails: { name: string, description: string }, images: { profile: string, cover: string }, formData: FormData }) => {
             return updateChatGroup(groupDetails.formData)
         },
 
