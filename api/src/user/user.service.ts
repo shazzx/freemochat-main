@@ -444,7 +444,8 @@ export class UserService {
                 $project: {
                     _id: 1,
                     username: 1,
-                    images: 1,
+                    profile: 1,
+                    cover: 1,
                     firstname: 1,
                     lastname: 1,
                     followersCount: { $ifNull: ['$followersCount.count', 0] },
