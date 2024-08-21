@@ -106,10 +106,10 @@ export class PageService {
                 }
             )
             await this.metricsAggregatorService.incrementCount(filter.targetId, "followers", "page")
-            return true
+            return {followStatus: true}
         }
         await this.metricsAggregatorService.decrementCount(filter.targetId, "followers", "page")
-        return false;
+        return {followStatus: false};
     }
 
     async getRawPage(pageId: string) {

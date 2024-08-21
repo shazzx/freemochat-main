@@ -5,8 +5,6 @@ import { useAppSelector } from "@/app/hooks"
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu"
 import { EllipsisVertical } from "lucide-react"
-import { RiUserUnfollowFill } from "react-icons/ri"
-import { MdRemove, MdRemoveCircle } from "react-icons/md"
 import { CiSquareRemove } from "react-icons/ci"
 
 function Stories() {

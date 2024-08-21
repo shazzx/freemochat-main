@@ -42,7 +42,7 @@ export const GetChatGroup = z.object({
 export const JoinGroup = z.object({
     groupDetails: z.object({
         groupId: z.string(),
-        userId: z.string(),
+        userId: z.string().optional(),
     }),
 })
 

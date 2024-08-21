@@ -1,53 +1,41 @@
-import { axiosClient } from "../axiosClient"
+import { axiosClient} from "@/api/axiosClient"
+import { HTTP_CONTENT_TYPES } from "@/utils/enums/global.c"
+import { PAGE_ROUTES } from "@/utils/enums/routes/page.routes.c"
+import { GenericFormData } from "axios"
 
-export const followPage = async (pageDetails) => {
-    console.log(pageDetails)
-    const { data } = await axiosClient.post("/page/follow", pageDetails)
-    console.log(data)
-}
-
-
-export const fetchPage = async (handle) => {
-    const { data } = await axiosClient.get('page?handle=' + handle)
-    console.log(data)
+export const fetchPage = async (handle: string) => {
+    const { data } = await axiosClient.get(PAGE_ROUTES.GET.replace(":handle", handle))
     return data
-}
-
-export const createPage = async (formData) => {
-    const { data } = await axiosClient.post("/page/create", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 20000 })
-    return data
-}
-
-
-export const updatePage = async (formData) => {
-    const { data } = await axiosClient.post("/page/update", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 20000 })
-    console.log(formData)
-}
-
-
-export const removePage = async (pageDetails) => {
-    console.log(pageDetails)
-    const { data } = await axiosClient.post("/page/delete", { pageDetails },)
 }
 
 export const fetchPages = async () => {
-    const { data } = await axiosClient.get('page/all')
-    return data?.map((page) => {
-        return {
-            _id: page._id,
-            name: page.name,
-            images: page.images,
-            handle: page?.handle,
-            about: page.about,
-        }
-    })
+    const { data } = await axiosClient.get(PAGE_ROUTES.ALL_PAGES)
+    return data
 }
 
-export const fetchPageFollowers = async (cursor, pageId) => {
-    console.log(pageId)
-    const { data } = await axiosClient.get('followers', {
+export const createPage = async (formData: GenericFormData) => {
+    const { data } = await axiosClient.post(PAGE_ROUTES.CREATE, formData, { headers: { 'Content-Type': HTTP_CONTENT_TYPES.MULTIPART_FORM_DATA } })
+    return data
+}
+
+export const updatePage = async (formData: GenericFormData) => {
+    const { data } = await axiosClient.post(PAGE_ROUTES.UPDATE, formData, { headers: { 'Content-Type': HTTP_CONTENT_TYPES.MULTIPART_FORM_DATA } })
+    return data
+}
+
+export const removePage = async (pageDetails: {pageId: string, images: string[]}) => {
+    const { data } = await axiosClient.post(PAGE_ROUTES.DELETE, { pageDetails })
+    return data
+}
+
+export const followPage = async (pageDetails: {pageId: string, authorId: string}) => {
+    const { data } = await axiosClient.post(PAGE_ROUTES.FOLLOW, {pageDetails})
+    return data
+}
+
+export const fetchPageFollowers = async (cursor: any, pageId: string) => {
+    const { data } = await axiosClient.get(PAGE_ROUTES.FOLLOWERS, {
         params: { cursor, targetId: pageId, type: 'page' }
     })
-    console.log(data)
     return data
 }

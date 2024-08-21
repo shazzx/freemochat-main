@@ -24,7 +24,6 @@ export class PageController {
     async getPage(@Query(new ZodValidationPipe(Handle)) handleDTO: HandleDTO, @Req() req: Request, @Res() res: Response) {
         const { handle } = handleDTO
         const { sub } = req.user
-
         const page = await this.pageService.getPage(handle, sub)
         res.json(page)
     }
@@ -33,7 +32,8 @@ export class PageController {
     async followPage(@Body(new ZodValidationPipe(PageFollow)) body: PageFollowDTO, @Req() req: Request, @Res() res: Response) {
         const { pageDetails} = body
         const { username, sub } = req.user
-        return await this.pageService.toggleFollow(sub, pageDetails)
+throw new BadRequestException('Not authorized')
+        res.json(await this.pageService.toggleFollow(sub, pageDetails))
     }
 
     @Get("all")
