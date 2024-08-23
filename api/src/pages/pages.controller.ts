@@ -31,8 +31,7 @@ export class PageController {
     @Post("follow")
     async followPage(@Body(new ZodValidationPipe(PageFollow)) body: PageFollowDTO, @Req() req: Request, @Res() res: Response) {
         const { pageDetails} = body
-        const { username, sub } = req.user
-throw new BadRequestException('Not authorized')
+        const { sub } = req.user
         res.json(await this.pageService.toggleFollow(sub, pageDetails))
     }
 

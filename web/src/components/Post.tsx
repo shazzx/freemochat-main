@@ -204,7 +204,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 </div>
                             </div>
                         </Link>
-                        <DropdownMenuMain deletePost={deletePost} setConfirmModelState={setConfirmModelState} setReportModelState={setReportModelState} reportModelState={reportModelState} postPromotion={postPromotion} setPostPromotion={setPostPromotion} setEditPostModelState={setEditPostModelState} postBy={postData?.targetId == user._id} />
+                        <DropdownMenuMain deletePost={deletePost} setConfirmModelState={setConfirmModelState} setReportModelState={setReportModelState} reportModelState={reportModelState} postPromotion={postPromotion} setPostPromotion={setPostPromotion} setEditPostModelState={setEditPostModelState} postBy={postData?.user == user._id} />
                     </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-2 text-2xl p-0 px-3 font-bold">

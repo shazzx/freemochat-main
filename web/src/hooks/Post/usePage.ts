@@ -1,6 +1,7 @@
 import { createPage, fetchPage, fetchPageFollowers, fetchPages, followPage, removePage, updatePage } from "@/api/Page/page.api"
 import { fetchPosts } from "@/api/Post/posts"
 import { useAppSelector } from "@/app/hooks"
+import { PageKeys } from "@/utils/enums/keys/main"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { produce } from "immer"
 import { toast } from "react-toastify"
@@ -8,13 +9,18 @@ import { toast } from "react-toastify"
 export function usePage(handle: string): any {
 
   const { data, isLoading, isFetching, fetchStatus, isSuccess, error } = useQuery({
-    queryKey: ['page'],
+    queryKey: [PageKeys.PAGE],
     queryFn: ({ pageParam, }) => fetchPage(handle),
     staleTime: 0,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchOnReconnect: false,
   });
+
+
+  if(error){
+    toast(error.message)
+  }
 
   return {
     data: data ?? [],
@@ -28,7 +34,7 @@ export function usePage(handle: string): any {
 export function usePages(): any {
 
   const { data, isLoading, isFetching, fetchStatus, isSuccess, error } = useQuery({
-    queryKey: ['pages'],
+    queryKey: [PageKeys.PAGES],
     queryFn: () => fetchPages(),
     refetchInterval: false,
     staleTime: 0,
@@ -36,6 +42,12 @@ export function usePages(): any {
     refetchOnMount: false,
     refetchOnReconnect: false,
   });
+
+
+
+  if(error){
+    toast(error.message)
+  }
 
   return {
     data: data ?? [],
@@ -56,14 +68,12 @@ export const useCreatePage = () => {
     },
 
     onMutate: async ({ pageDetails, images }) => {
-      await queryClient.cancelQueries({ queryKey: ['pages'] })
-      const previousPages = queryClient.getQueryData(['pages'])
+      await queryClient.cancelQueries({ queryKey: [PageKeys.PAGES] })
+      const previousPages = queryClient.getQueryData([PageKeys.PAGES])
 
-      queryClient.setQueryData(['pages'], (pages: any) => {
+      queryClient.setQueryData([PageKeys.PAGES], (pages: any) => {
         const updatedPages = produce(pages, (draft: any) => {
           return [{ ...pageDetails, images, followers: 0, totalPosts: 0 }, ...pages]
-
-          // throw new Error()
         })
         return updatedPages
       });
@@ -71,23 +81,25 @@ export const useCreatePage = () => {
       return { previousPages };
     },
 
-    onError: (err, newPage, context) => {
-      console.log(err)
-      toast.error("something went wrong")
-      const previousPages = queryClient.getQueryData(['pages'])
-
-      queryClient.setQueryData(['pages'], previousPages)
+    onError: (err: any, data, context) => {
+      const { response } = err
+      if (!response) {
+        toast.error(err.message)
+        return
+      }
+      const { data: {  message } } = response
+      toast.error(message)
+      queryClient.setQueryData([PageKeys.PAGES], context.previousPages)
     },
+
     onSettled: (data) => {
-      queryClient.setQueryData(['pages'], (pages: any) => {
+      queryClient.setQueryData([PageKeys.PAGES], (pages: any) => {
         const updatedPages = produce(pages, (draft: any) => {
           pages.splice(0, 1)
           return [{...data}, ...pages]
         })
         return updatedPages
       });
-      // uncommeting this will refetch the comments again from the server to be in sync
-      // queryClient.invalidateQueries({ queryKey: ["comments"] })
     }
   })
 
@@ -111,10 +123,10 @@ export const useUpdatePage = () => {
 
     onMutate: async ({ updatedPageDetails, images, pageDetails }) => {
       console.log(pageDetails, updatedPageDetails)
-      await queryClient.cancelQueries({ queryKey: ['pages'] })
-      const previousPages = queryClient.getQueryData(['pages'])
+      await queryClient.cancelQueries({ queryKey: [PageKeys.PAGES] })
+      const previousPages = queryClient.getQueryData([PageKeys.PAGES])
 
-      queryClient.setQueryData(['pages'], (pages: any) => {
+      queryClient.setQueryData([PageKeys.PAGES], (pages: any) => {
         const updatedPages = produce(pages, (draft: any) => {
           console.log(draft[pageDetails.index])
           draft[pageDetails.index] = { ...draft[pageDetails.index],  ...images , ...updatedPageDetails }
@@ -128,13 +140,18 @@ export const useUpdatePage = () => {
       return { previousPages };
     },
 
-    onError: (err, newPage, context) => {
-      console.log(err)
-      toast.error("something went wrong")
-      queryClient.setQueryData(['pages'], context.previousPages)
+    onError: (err: any, data, context) => {
+      const { response } = err
+      if (!response) {
+        toast.error(err.message)
+        return
+      }
+      const { data: {  message } } = response
+      toast.error(message)
+      queryClient.setQueryData([PageKeys.PAGES], context.previousPages)
     },
     onSettled: (data, err, context) => {
-      queryClient.invalidateQueries({ queryKey: ["pages"] })
+      queryClient.invalidateQueries({ queryKey: [PageKeys.PAGES] })
     }
   })
 
@@ -157,10 +174,10 @@ export const useRemovePage = () => {
     },
 
     onMutate: async ({ pageIndex, pageId }) => {
-      await queryClient.cancelQueries({ queryKey: ['pages'] })
-      const previousPages = queryClient.getQueryData(['pages'])
+      await queryClient.cancelQueries({ queryKey: [PageKeys.PAGES] })
+      const previousPages = queryClient.getQueryData([PageKeys.PAGES])
 
-      queryClient.setQueryData(['pages'], (pages: any) => {
+      queryClient.setQueryData([PageKeys.PAGES], (pages: any) => {
         const updatedPages = produce(pages, (draft: any) => {
 
           if (draft[pageIndex]?._id == pageId) {
@@ -179,14 +196,19 @@ export const useRemovePage = () => {
       return { previousPages };
     },
 
-    onError: (err, newPage, context) => {
-      console.log(err)
-      toast.error("something went wrong")
-      queryClient.setQueryData(['pages'], context.previousPages)
+    onError: (err: any, data, context) => {
+      const { response } = err
+      if (!response) {
+        toast.error(err.message)
+        return
+      }
+      const { data: {  message } } = response
+      toast.error(message)
+      queryClient.setQueryData([PageKeys.PAGES], context.previousPages)
     },
-    onSettled: (e) => {
-      // this will refetch the pages again from the server to be in sync
-      queryClient.invalidateQueries({ queryKey: ["pages"] })
+
+    onSettled: (data) => {
+      queryClient.invalidateQueries({ queryKey: [PageKeys.PAGES] })
     }
   })
 
@@ -203,7 +225,7 @@ export const useRemovePage = () => {
 export function usePageFollowers(pageId: string): any {
 
   const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
-    queryKey: ['pageFollowers'],
+    queryKey: [PageKeys.PAGE_FOLLOWERS],
     queryFn: ({ pageParam, }) => fetchPageFollowers(pageParam, pageId),
     enabled: !!pageId,
     refetchInterval: false,
@@ -213,6 +235,10 @@ export function usePageFollowers(pageId: string): any {
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor
   });
+
+  if(error){
+    toast(error.message)
+  }
 
   return {
     data: data?.pages ?? [],
@@ -233,15 +259,15 @@ export const useFollowPage = () => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
     mutationFn: (pageDetails: { pageId: string, authorId: string }) => {
-      return followPage({ pageDetails })
+      return followPage(pageDetails)
     },
 
 
-    onMutate: async ({ pageId }) => {
-      await queryClient.cancelQueries({ queryKey: ['page'] })
-      const previousPage = queryClient.getQueryData(['page'])
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: [PageKeys.PAGE] })
+      const previousPage = queryClient.getQueryData([PageKeys.PAGE])
 
-      queryClient.setQueryData(['page'], (page: any) => {
+      queryClient.setQueryData([PageKeys.PAGE], (page: any) => {
         const updatedPage = produce(page, (draft: any) => {
           if (draft.isFollower && draft.followersCount > 0) {
             draft.isFollower = false
@@ -262,14 +288,17 @@ export const useFollowPage = () => {
       return { previousPage };
     },
 
-    onError: (err, newComment, context) => {
-      console.log(err)
-      toast.error("something went wrong")
-      queryClient.setQueryData(['page'], context.previousPage)
+    onError: (err: any, data, context) => {
+      const { response } = err
+      if (!response) {
+        toast.error(err.message)
+        return
+      }
+      const { data: {  message } } = response
+      toast.error(message)
+      queryClient.setQueryData([PageKeys.PAGE], context.previousPage)
     },
-    onSettled: (e) => {
-      // uncommeting this will refetch the comments again from the server to be in sync
-      // queryClient.invalidateQueries({ queryKey: ["page"] })
+    onSettled: (data) => {
     }
   })
 

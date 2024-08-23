@@ -21,14 +21,11 @@ function PostPromotionModel({ postId, setPostPromotion }) {
         })
     }
 
-    let numberFieldRef = useRef<HTMLInputElement>()
-
-
 
     let postPromotion = async (target) => {
         let { data } = await axiosClient.post("posts/promotion", { postId, promotionDetails: { reachTarget: target.numberField } })
         console.log(data)
-        redirectToCheckout(data.sessionId)
+        redirectToCheckout(data.id)
     }
 
 

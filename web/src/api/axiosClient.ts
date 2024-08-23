@@ -1,5 +1,6 @@
 import { store } from '@/app/store';
 import axios from 'axios'
+import { toast } from 'react-toastify';
 
 
 // const baseURL = "https://ec2-54-164-199-173.compute-1.amazonaws.com:3001/api"
@@ -27,7 +28,6 @@ axiosClient.interceptors.request.use(
         return config
     },
     (error) => {
-        console.log(error)
         return Promise.reject(error)
     }
 )

@@ -350,7 +350,7 @@ export class PostsController {
         const { postId, promotionDetails } = promotePostDTO
         const { reachTarget } = promotionDetails
 
-        return { sessionId: await this.postService.postPromotion(postId, req.user.sub, { reachTarget }) }
+        return  await this.postService.postPromotion(postId, req.user.sub, { reachTarget }) 
     }
 
     @Get("promotedPosts")

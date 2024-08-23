@@ -3,19 +3,19 @@ import { ZodSchema } from "zod";
 
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
-    constructor(private schema: ZodSchema, private parse?:boolean, private field?: string) {}
+    constructor(private schema: ZodSchema, private parse?: boolean, private field?: string) { }
     transform(value: any, metadata: ArgumentMetadata) {
 
-        if(this.parse){
+        if (this.parse) {
             console.log(value)
             value = JSON.parse(value[this.field])
             console.log(value)
         }
-console.log(value)
+        console.log(value)
         const result = this.schema.safeParse(value)
-console.log(result.error)
+        console.log(result.error)
         if (!result.success) {
-            throw new BadRequestException(result.error)
+            throw new BadRequestException(result.error.message)
         }
         return result.data
     }
