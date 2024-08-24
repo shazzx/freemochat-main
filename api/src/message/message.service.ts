@@ -11,13 +11,20 @@ export class MessageService {
         private readonly chatlistService: UserChatListService,
     ) { }
 
-    async createMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number }, gateway?:boolean, isGroup?: boolean, removeUser?: boolean, removeChat?: boolean  }) {
+    async createMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number, isUploaded: boolean }, gateway?:boolean, isGroup?: boolean, removeUser?: boolean, removeChat?: boolean  }) {
         if(!messageDetails?.gateway){
             await this.chatlistService.createOrUpdateChatList(messageDetails.sender.toString(), messageDetails.recepient.toString(), messageDetails.type, { sender: messageDetails.sender, encryptedContent: messageDetails?.isGroup ? messageDetails.content: messageDetails.messageType }, messageDetails.messageType, messageDetails.removeUser, messageDetails.removeChat )
         }
         const message = await this.messageModel.create(messageDetails)
         return message
     }
+
+
+    async updateMessage(messageId: string, messageDetails: { type?: string, content?: string, messageType?: string,  media?: { url: string, type?: string, duration?: number, isUploaded: boolean }}) {
+      const message = await this.messageModel.findByIdAndUpdate(messageId, {$set: {...messageDetails }})
+      return message
+  }
+
 
     async getMessages(cursor: string, userId: string, recepientId: string, isChatGroup?: number) {
         const limit = 12

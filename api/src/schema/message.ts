@@ -7,6 +7,7 @@ class Media {
     url: String;
     type: String;
     duration: String;
+    isUploaded: String;
 }
 
 @Schema()

@@ -1,4 +1,4 @@
-import { ChevronLeft, EclipseIcon, EllipsisIcon, EllipsisVertical, File, Image, Video } from "lucide-react"
+import { ChevronLeft, EclipseIcon, EllipsisIcon, EllipsisVertical, File, Image, Loader, Video } from "lucide-react"
 import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import EmojiPicker, { Categories } from "emoji-picker-react";
 import { MdCancel } from "react-icons/md";
@@ -93,7 +93,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         };
     }, [emojiPickerState])
     // messages and groups
-    const messagesDetails = recepientDetails?.groupId ? {recepientId: recepientDetails?.groupId, isChatGroup: 1} : {recepientId: recepientDetails?.userId, isChatGroup: 0}
+    const messagesDetails = recepientDetails?.groupId ? { recepientId: recepientDetails?.groupId, isChatGroup: 1 } : { recepientId: recepientDetails?.userId, isChatGroup: 0 }
     const createMessage = useCreateMessage(recepientDetails?.userId || recepientDetails?.groupId)
     const userMessages = useMessages(messagesDetails)
     console.log(messagesDetails)
@@ -133,10 +133,10 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         })
 
 
-    socket.on("friendStatus", (data) => {
-        console.log(data, 'friend status')
-        setIsOnline(data.isOnline)
-      })
+        socket.on("friendStatus", (data) => {
+            console.log(data, 'friend status')
+            setIsOnline(data.isOnline)
+        })
 
 
         socket.on("initiate-call", (data) => {
@@ -157,11 +157,11 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         })
 
         socket.on("call-accept", (data) => {
-            if(data?.type == "AUDIO"){
+            if (data?.type == "AUDIO") {
                 setAudioCallState("ACCEPTED")
                 setCallDetails(data)
                 setAudioCallCallerState(false)
-            }else{
+            } else {
                 setVideoCallState("ACCEPTED")
                 setCallDetails(data)
                 setVideoCallCallerState(false)
@@ -175,7 +175,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
 
         socket.on("groupchat", (newMessage) => {
-            queryClient.invalidateQueries({queryKey: ["messages", recepientDetails.groupId] })
+            queryClient.invalidateQueries({ queryKey: ["messages", recepientDetails.groupId] })
 
         })
 
@@ -183,7 +183,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         // listen chat event messages
         // socket.on("chat", (newMessage) => {
         //     console.log(newMessage)
-            // queryClient.invalidateQueries({queryKey: ["messages", recepientDetails.userId]})
+        // queryClient.invalidateQueries({queryKey: ["messages", recepientDetails.userId]})
 
         // queryClient.setQueryData(["messages", recepientDetails.userId], (pages: any) => {
         //     const updatedMessages = produce(pages, (draft: any) => {
@@ -200,9 +200,9 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         //     })
         //     return updatedMessages
         // });
-            // setMessages((previousMessages) => [
-                // ...previousMessages,
-                // ]);
+        // setMessages((previousMessages) => [
+        // ...previousMessages,
+        // ]);
         // });
 
         // remove all event listeners
@@ -221,20 +221,20 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     }, [userMessages?.data])
 
     const handleSendMessage = (e?: KeyboardEvent) => {
-        if (inputValue.trim().length === 0 ){
+        if (inputValue.trim().length === 0) {
             return;
-        } 
+        }
 
-        queryClient.invalidateQueries({queryKey: ['chatlist']})
+        queryClient.invalidateQueries({ queryKey: ['chatlist'] })
 
-        if(e.type !== "click" && e.key  !== "Enter"){
+        if (e.type !== "click" && e.key !== "Enter") {
             return
         }
         console.log('message processing...')
 
         // send a message to the server
         // setMessages((previousMessages) => [...previousMessages, ]);
-        
+
         const messageData = { recepeint: recepientDetails.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, type: recepientDetails?.type, messageType: "Text" }
         console.log(messageData)
 
@@ -250,12 +250,12 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         });
 
 
-        if(recepientDetails.type == "ChatGroup"){
+        if (recepientDetails.type == "ChatGroup") {
             socket.emit("groupchat", { senderDetails: { targetId: user?._id, username: user?.username }, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, targetId: messageData.recepeint } });
             setInputValue("");
             return
         }
-        socket.emit("chat", { senderDetails: { targetId: user?._id, username: user?.username}, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, groupName: recepientDetails.name, targetId: messageData.recepeint } });
+        socket.emit("chat", { senderDetails: { targetId: user?._id, username: user?.username }, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, groupName: recepientDetails.name, targetId: messageData.recepeint } });
         setInputValue("");
     };
 
@@ -338,16 +338,16 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         setChatGroupInfo(false)
     }
 
-    let cancelCall = async(type) => {
+    let cancelCall = async (type) => {
         try {
-            if(type == "AUDIO"){
+            if (type == "AUDIO") {
                 console.log('audio call end')
 
                 setAudioCallCallerState(false)
                 setAudioCallState("NEUTRAL")
                 const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaStream.getTracks().forEach(track => track.stop())
-            }else{
+            } else {
                 console.log('video call end')
                 setVideoCallCallerState(false)
                 setVideoCallState("NEUTRAL")
@@ -402,7 +402,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
             {videoCallState == "ACCEPTED" && callDetails?.type == "VIDEO" && callDetails?.channel &&
                 <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} />
             }
-            
+
             <div className='flex items-center justify-between p-3 border border-muted'>
                 <div className='flex gap-2 items-center justify-center'>
                     <ChevronLeft cursor="pointer" onClick={() => setChatOpen(false)} />
@@ -422,7 +422,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                     </div>
                     <div className='flex flex-col gap-0'>
                         <h3 className='text-card-foreground text-sm'>{recepientDetails?.type == "User" ? recepientDetails?.fullname : recepientDetails?.name}</h3>
-                        <span className='text-muted-foreground text-xs'>{recepientDetails?.type == "ChatGroup" ? "no members" : isOnline == null ? recepientDetails.onlineStatus ? "online":"offline" : isOnline ? "online":"offline"}</span>
+                        <span className='text-muted-foreground text-xs'>{recepientDetails?.type == "ChatGroup" ? "no members" : isOnline == null ? recepientDetails.onlineStatus ? "online" : "offline" : isOnline ? "online" : "offline"}</span>
                     </div>
                 </div>
                 <div className="flex items-center justify-center gap-4 sm:mr-4">
@@ -474,7 +474,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                             }
                         }
 
-                        if(message?.messageType == 'Info'){
+                        if (message?.messageType == 'Info') {
                             return (
                                 <div className="flex gap-2 items-center justify-center w-full" key={message?._id}>
 
@@ -507,8 +507,23 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                                 <AudioPlayer src={message.media.url} duration={message.media.duration} />
                                             }
                                             {message?.media && message.media.type == "image" &&
-                                                <div className="aspect-auto max-w-64 sm:max-w-96">
+                                                <div className="relative aspect-auto max-w-64 sm:max-w-96">
                                                     <img src={message.media.url} alt="" />
+                                                    {message.media.isUploaded == false &&
+                                                        <div className='bg-card flex gap-4 p-2 w-full' >
+                                                            <svg className="text-gray-700 animate-spin" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
+                                                                width="20" height="20">
+                                                                <path
+                                                                    d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
+                                                                    stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                                <path
+                                                                    d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
+                                                                    stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" className="text-white">
+                                                                </path>
+                                                            </svg>
+                                                            Sending Image...
+                                                        </div>
+                                                    }
                                                 </div>
 
                                             }
@@ -571,10 +586,10 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                         <div className='max-w-10 max-h-10 bg-accent rounded-full overflow-hidden'>
                                             <Avatar className="h-9 w-9 flex items-center justify-center">
                                                 <AvatarImage src={message?.sender?.images?.profile || recepientDetails?.profile} alt="Avatar" />
-                                                <AvatarFallback>{message?.sender?.firstname ? message?.sender?.firstname[0]?.toUpperCase() + message?.sender?.lastname[0]?.toUpperCase()||recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase(): 
-                                                recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase()||recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase()
-                                                    
-                                                    }</AvatarFallback>
+                                                <AvatarFallback>{message?.sender?.firstname ? message?.sender?.firstname[0]?.toUpperCase() + message?.sender?.lastname[0]?.toUpperCase() || recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase() :
+                                                    recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase() || recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase()
+
+                                                }</AvatarFallback>
                                             </Avatar>
                                         </div>
                                         <div className="relative max-w-80 w-fit">
@@ -715,11 +730,12 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                         if (e.target.files && e.target.files.length > 0) {
                             console.log(e.target.files[0])
                             const formData = new FormData()
-                            const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, messageType: "Image", type: recepientDetails?.type, mediaDetails: { type: "image", } }
+                            const url = URL.createObjectURL(e.target.files[0])
+                            const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, localUrl: url, messageType: "Image", type: recepientDetails?.type, mediaDetails: { type: "image", } }
                             formData.append("messageData", JSON.stringify(messageData))
                             formData.append("file", e.target.files[0], 'image')
 
-                            createMessage.mutate({ messageData: { ...messageData, media: { type: "image", url: URL.createObjectURL(e.target.files[0]) } }, formData })
+                            createMessage.mutate({ messageData: { ...messageData, media: { type: "image", url } }, formData })
 
                             // let { data } = await axiosClient.post("messages/create", formData, { headers: { 'Content-Type': "multipart/form-data" } })
                             // console.log(data)

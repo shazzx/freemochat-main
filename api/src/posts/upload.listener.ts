@@ -7,6 +7,7 @@ import { ChatGateway } from "src/chat/chat.gateway";
 import { PageService } from "src/pages/pages.service";
 import { GroupsService } from "src/groups/groups.service";
 import { UploadService } from "src/upload/upload.service";
+import { MessageService } from "src/message/message.service";
 
 @Injectable()
 export class UploadListener {
@@ -17,6 +18,7 @@ export class UploadListener {
         private readonly mediaService: MediaService,
         private readonly chatGateway: ChatGateway,
         private readonly uploadService: UploadService,
+        private readonly messageService: MessageService,
     ) { }
     @OnEvent("files.uploaded")
     async handleFlesUploadedEvent({ uploadPromise, postId, targetId, type, uploadType, _postData }: {
@@ -149,7 +151,7 @@ export class UploadListener {
 
             if (type == 'page') {
                 console.log(targetId, files, 'page', targetId)
-                await this.pageService.updatePage(targetId, {  ..._images , isUploaded: null });
+                await this.pageService.updatePage(targetId, { ..._images, isUploaded: null });
                 await this.chatGateway.uploadSuccess({
                     isSuccess: true, target: {
                         type: "page",
@@ -161,6 +163,26 @@ export class UploadListener {
         } catch (error) {
             console.error(`Error uploading media for page ${targetId}:`, error);
             await this.chatGateway.uploadSuccess({ isSuccess: false })
+        }
+    }
+
+
+    @OnEvent("messageMedia.upload")
+    async handleMessageMediaUpload({ uploadPromise, messageId, messageDetails, userId}: {
+        uploadPromise: any,
+        messageId: string,
+        userId: string,
+        messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number} }
+    }) {
+        try {
+            const { url, fileType }: any = await Promise.all(uploadPromise)
+            this.messageService.updateMessage(messageId, { media: { url: url, type: fileType, isUploaded: true } })
+            await this.chatGateway.sendMessage(messageDetails)
+
+        } catch (error) {
+            console.error(`Error uploading media for page ${messageId}:`, error);
+            this.messageService.removeMessage(userId, messageId)
+
         }
     }
 }

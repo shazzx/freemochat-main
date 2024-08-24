@@ -10,11 +10,13 @@ import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
 import { CreateMessage, CreateMessageDTO, GetMessages, GetMessagesDTO, RemoveMessage, RemoveMessageDTO } from 'src/schema/validation/message';
 import { Request } from 'types/global';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Controller('messages')
 export class MessageController {
   constructor(
     private readonly messageService: MessageService, private readonly uploadService: UploadService,
+    private readonly eventEmiiter: EventEmitter2,
     private readonly notificationGateway: ChatGateway
   ) { }
 
@@ -25,7 +27,7 @@ export class MessageController {
     @Req() req: Request,
     @Res() res: Response,
     @UploadedFile() file: Express.Multer.File) {
-    let { type, content, sender, recepient, mediaDetails, messageType } = createMessageDTO
+    let { type, content, sender, recepient, mediaDetails, messageType, localUrl } = createMessageDTO
     console.log(createMessageDTO, 'call')
 
     const fileType = getFileType(file.mimetype)
@@ -35,14 +37,19 @@ export class MessageController {
       throw new BadRequestException("Unsupported file")
     }
 
+    const {sub} = req.user
+
+    const uploadPromise = this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+
     console.log(fileType, filename, type, content, sender, recepient)
+    
+    let message = await this.messageService.createMessage({ type, content, sender: new Types.ObjectId(sender), recepient: new Types.ObjectId(recepient), media: { url: localUrl, ...mediaDetails, isUploaded: false }, messageType })
+    
     let uploaded: { url: string, fileName: string, fileType: string } = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
     console.log(uploaded)
 
-    let message = await this.messageService.createMessage({ type, content, sender: new Types.ObjectId(sender), recepient: new Types.ObjectId(recepient), media: { url: uploaded.url, ...mediaDetails }, messageType })
-
-    this.notificationGateway.sendMessage({ type, content, sender: new Types.ObjectId(sender), recepient: new Types.ObjectId(recepient), media: { url: uploaded.url, ...mediaDetails }, messageType })
-
+    this.eventEmiiter.emit("messageMedia.upload", { uploadPromise, messagetId: message._id.toString(), userId: sub, messageDetails: { type, content, sender: new Types.ObjectId(sender), recepient: new Types.ObjectId(recepient), media: { url: uploaded.url, ...mediaDetails }, messageType }})
+ 
     res.json(message)
   }
 

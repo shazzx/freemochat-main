@@ -6,6 +6,7 @@ export const CreateMessage = z.object({
     recepient: ValidMongoId,
     content: z.string(),
     type: z.string(),
+    localUrl: z.string().optional(),
     messageType: z.string(),
     mediaDetails: z.object({
         type: z.string(),
