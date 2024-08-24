@@ -27,6 +27,7 @@ import CreateChatGroup from "@/models/CreateChatGroup";
 import { toast } from "react-toastify";
 import AudioCall from "./Call/Audio/AudioCall";
 import VideoCall from "./Call/Video/VideoCall";
+import { handleFile } from "@/lib/formatChec";
 
 function Chat({ user, recepientDetails, setChatOpen }) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
@@ -97,6 +98,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     const createMessage = useCreateMessage(recepientDetails?.userId || recepientDetails?.groupId)
     const userMessages = useMessages(messagesDetails)
     console.log(messagesDetails)
+
 
     // useEffect(() => {
     //     if (userMessages?.data?.nextCursor !== null) {
@@ -710,54 +712,56 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
                     <input className="hidden" type="file" accept='application/pdf' id='text-pdf' onChange={async (e) => {
                         if (e.target.files && e.target.files.length > 0) {
-                            console.log(e.target.files[0])
+                            let file = await handleFile(e.target.files[0])
+                            if(!file){
+                                return 
+                            }
                             const formData = new FormData()
                             const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, messageType: "PDF", type: recepientDetails?.type, mediaDetails: { type: "pdf", } }
                             formData.append("messageData", JSON.stringify(messageData))
-                            formData.append("file", e.target.files[0], 'pdf')
+                            formData.append("file", file, 'pdf')
                             console.log(messageData, recepientDetails)
 
-                            createMessage.mutate({ messageData: { ...messageData, media: { type: "pdf", url: URL.createObjectURL(e.target.files[0]) } }, formData })
-
-
-                            // let { data } = await axiosClient.post("messages/create", formData, { headers: { 'Content-Type': "multipart/form-data" } })
-                            // console.log(data)
+                            createMessage.mutate({ messageData: { ...messageData, media: { type: "pdf", url: URL.createObjectURL(file), isUploaded: false } }, formData })
+                            scrollToBottom()
                             setFileSelectDropDownState(false)
                         }
                     }} />
 
                     <input className="hidden" type="file" accept='image/*' id='text-image' onChange={async (e) => {
                         if (e.target.files && e.target.files.length > 0) {
-                            console.log(e.target.files[0])
+                            let file = await handleFile(e.target.files[0])
+                            if(!file){
+                                return 
+                            }
                             const formData = new FormData()
-                            const url = URL.createObjectURL(e.target.files[0])
+                            const url = URL.createObjectURL(file)
                             const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, localUrl: url, messageType: "Image", type: recepientDetails?.type, mediaDetails: { type: "image", } }
                             formData.append("messageData", JSON.stringify(messageData))
-                            formData.append("file", e.target.files[0], 'image')
+                            formData.append("file", file, 'image')
 
-                            createMessage.mutate({ messageData: { ...messageData, media: { type: "image", url } }, formData })
-
-                            // let { data } = await axiosClient.post("messages/create", formData, { headers: { 'Content-Type': "multipart/form-data" } })
-                            // console.log(data)
+                            createMessage.mutate({ messageData: { ...messageData, media: { type: "image", url, isUploaded: false} }, formData })
+                            scrollToBottom()
                             setFileSelectDropDownState(false)
                         }
                     }} />
 
                     <input className="hidden" type="file" accept='video/*' id='text-video' onChange={async (e) => {
                         if (e.target.files && e.target.files.length > 0) {
-                            console.log(e.target.files[0])
+                            let file = await handleFile(e.target.files[0])
+                            if(!file){
+                                return 
+                            }
                             const formData = new FormData()
                             const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, messageType: "Video", type: recepientDetails?.type, mediaDetails: { type: "video", } }
                             formData.append("messageData", JSON.stringify(messageData))
-                            formData.append("file", e.target.files[0], 'video')
+                            formData.append("file", file, 'video')
                             console.log(messageData, recepientDetails)
 
 
-                            createMessage.mutate({ messageData: { ...messageData, media: { type: "video", url: URL.createObjectURL(e.target.files[0]) } }, formData })
+                            createMessage.mutate({ messageData: { ...messageData, media: { type: "video", url: URL.createObjectURL(file), isUploaded: false } }, formData })
+                            scrollToBottom()
 
-
-                            // let { data } = await axiosClient.post("messages/create", formData, { headers: { 'Content-Type': "multipart/form-data" } })
-                            // console.log(data)
                             setFileSelectDropDownState(false)
                         }
                     }} />

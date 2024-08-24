@@ -166,7 +166,7 @@ export class UploadListener {
         }
     }
 
-
+    
     @OnEvent("messageMedia.upload")
     async handleMessageMediaUpload({ uploadPromise, messageId, messageDetails, userId}: {
         uploadPromise: any,
@@ -175,14 +175,23 @@ export class UploadListener {
         messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number} }
     }) {
         try {
-            const { url, fileType }: any = await Promise.all(uploadPromise)
-            this.messageService.updateMessage(messageId, { media: { url: url, type: fileType, isUploaded: true } })
-            await this.chatGateway.sendMessage(messageDetails)
-
+            const file = await Promise.all(uploadPromise)
+            console.log(file[0].url, file[0].fileType)
+            let messageUpdate = await this.messageService.updateMessage(messageId, { media: { url: file[0].url, type: file[0].fileType, isUploaded: true } })
+            console.log(messageUpdate)
+            await this.chatGateway.sendMessage({...messageDetails, media: {...messageDetails.media, url: file[0].url, isUploaded: true }})
+            console.log('success')
+            await this.chatGateway.uploadSuccess({
+                isSuccess: true, target: {
+                    targetId: messageDetails.recepient,
+                    type: "messages",
+                    invalidate: "messages",
+                    messageId
+                }
+            })
         } catch (error) {
-            console.error(`Error uploading media for page ${messageId}:`, error);
-            this.messageService.removeMessage(userId, messageId)
-
+            console.error(`Error uploading media for message ${messageId}:`, error);
+            await this.messageService.removeMessage(userId, messageId)
         }
     }
 }

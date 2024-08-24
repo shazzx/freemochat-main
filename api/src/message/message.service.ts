@@ -13,6 +13,7 @@ export class MessageService {
 
     async createMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number, isUploaded: boolean }, gateway?:boolean, isGroup?: boolean, removeUser?: boolean, removeChat?: boolean  }) {
         if(!messageDetails?.gateway){
+          console.log('gateway condition')
             await this.chatlistService.createOrUpdateChatList(messageDetails.sender.toString(), messageDetails.recepient.toString(), messageDetails.type, { sender: messageDetails.sender, encryptedContent: messageDetails?.isGroup ? messageDetails.content: messageDetails.messageType }, messageDetails.messageType, messageDetails.removeUser, messageDetails.removeChat )
         }
         const message = await this.messageModel.create(messageDetails)
@@ -21,7 +22,11 @@ export class MessageService {
 
 
     async updateMessage(messageId: string, messageDetails: { type?: string, content?: string, messageType?: string,  media?: { url: string, type?: string, duration?: number, isUploaded: boolean }}) {
-      const message = await this.messageModel.findByIdAndUpdate(messageId, {$set: {...messageDetails }})
+      console.log(messageDetails, messageId)
+      // let updatedUser = this.userModel.findByIdAndUpdate(userId, { $set: { ...updatedDetails } }, { returnOriginal: false })
+
+       console.log(await this.messageModel.findById(messageId))
+      const message = await this.messageModel.findByIdAndUpdate(messageId, {$set: {media: messageDetails.media }}, {new: true})
       return message
   }
 

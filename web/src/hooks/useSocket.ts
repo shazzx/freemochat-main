@@ -76,8 +76,9 @@ export const useSocket = (recepient? :string) => {
             }
 
             if(data.isSuccess && data.target?.invalidate == "posts"){
-              queryClient.invalidateQueries({ queryKey: [data.target.type+"Posts", data.target.targetId] })
-              queryClient.invalidateQueries({ queryKey: [data.target.type+"Media", data.target.targetId] })
+              const {targetId} = data?.target
+              queryClient.invalidateQueries({ queryKey: [data.target.type+"Posts", targetId] })
+              queryClient.invalidateQueries({ queryKey: [data.target.type+"Media", targetId] })
             }
 
             if(data.isSuccess && data.target.type == "page"){
@@ -86,6 +87,15 @@ export const useSocket = (recepient? :string) => {
               queryClient.invalidateQueries({ queryKey: ['pages'] })
               return
             }
+
+
+            if(data.isSuccess && data.target.type == "messages"){
+              const {targetId} = data.target
+              console.log('messages cond')
+              queryClient.invalidateQueries({ queryKey: ['messages', targetId] })
+              return
+            }
+            
             if(data.isSuccess && data.target.type == "group"){
               // const {targetId} = data.target
               queryClient.invalidateQueries({ queryKey: ['group'] })
