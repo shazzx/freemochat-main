@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit"
 
 const initialState = {
     onCall: false,
-    targtDetails: null,
+    targetDetails: null,
     callerState: null,
     recepientState: null,
     callDetails: null,
@@ -21,13 +21,12 @@ const callSlice = createSlice({
             state.onCall = true
             state.type = action.payload.type
             state.callerState = CallStates.CALLING
-            state.targtDetails = action.payload.targtDetails
+            state.targetDetails = action.payload.targetDetails
         },
 
 
         setAcceptedCallState(state, action) {
-            state.callerState = CallStates.ACCEPTED
-            state.callDetails = action.payload
+            // state.callDetails = action.payload
         },
 
 
@@ -36,19 +35,20 @@ const callSlice = createSlice({
             state.onCall = true
             state.type = action.payload.type
             state.recepientState = CallStates.CALLING
-            state.targtDetails = action.payload.targtDetails
+            state.callDetails = action.payload.callDetails
         },
 
         
         acceptCall(state, action) {
-            state.callDetails = action.payload
+            state.callDetails = action.payload.callDetails
+            state.callerState = CallStates.ACCEPTED
             state.recepientState = CallStates.ACCEPTED
         },
 
         // both
         endCall(state) {
             state.onCall= false
-            state.targtDetails= null
+            state.targetDetails= null
             state.callerState= null
             state.recepientState= null
             state.callDetails= null

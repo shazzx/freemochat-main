@@ -13,7 +13,7 @@ function AudioCallCaller({ recepientDetails, setAudioCallCaller }) {
     useEffect(() => {
 
         socket.on("call-decline", (data) => {
-            setAudioCallCaller(false)
+            dispatch(endCall())
         })
 
         return () => {

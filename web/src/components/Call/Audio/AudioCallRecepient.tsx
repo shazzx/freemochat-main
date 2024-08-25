@@ -1,22 +1,24 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import React, { useEffect } from 'react'
-import { useAppSelector } from '@/app/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { Socket } from 'socket.io-client'
 import { Button } from '@/components/ui/button'
 import { useSocket } from '@/hooks/useSocket'
 import { MdPhone } from 'react-icons/md'
+import { acceptCall, endCall } from '@/app/features/user/callSlice'
+import { CallStates, CallTypes } from '@/utils/enums/global.c'
 
-function AudioCallRecepient({ recepientDetails, setAudioCallRecepient }) {
+function AudioCallRecepient({ recepientDetails }) {
     const socket = useSocket()
+    const dispatch = useAppDispatch()
 
     useEffect(() => {
 
         socket.on("call-decline", (data) => {
-            setAudioCallRecepient(false)
+            dispatch(endCall())
         })
 
         return () => {
-            socket.off("connect");
             socket.off("call-decline");
         }
     }, [])
@@ -24,10 +26,15 @@ function AudioCallRecepient({ recepientDetails, setAudioCallRecepient }) {
 
     const callDecline = () => {
         socket.emit('call-decline', { recepientDetails })
-        setAudioCallRecepient(false)
+        dispatch(endCall())
     }
 
     const callAccept = () => {
+        // dispatch(acceptCall(
+        //     {
+        //       recepientState: CallStates.ACCEPTED,
+        //     }
+        //   ))
         socket.emit('call-accept', { type: "AUDIO", recepientDetails })
     }
 
@@ -41,11 +48,11 @@ function AudioCallRecepient({ recepientDetails, setAudioCallRecepient }) {
                     <div className='w-28 h-28 border-2 border-accent rounded-full flex items-center justify-center bg-accent overflow-hidden'>
                         <Avatar className="flex  items-center justify-center">
                             <AvatarImage src={recepientDetails?.profile} alt="Avatar" />
-                            <AvatarFallback className='text-4xl'>{recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase()}</AvatarFallback>
+                            <AvatarFallback className='text-4xl'>{recepientDetails?.fullname[0].toUpperCase()}</AvatarFallback>
                         </Avatar>
                     </div>
                     <div className='flex flex-col  items-center justify-center'>
-                        <span className='text-lg'>{recepientDetails?.firstname?.toUpperCase() + " " + recepientDetails?.lastname?.toUpperCase()}</span>
+                        <span className='text-lg'>{recepientDetails?.fullname}</span>
                         <span>@{recepientDetails?.username}</span>
                     </div>
                 </div>

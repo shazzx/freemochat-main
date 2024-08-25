@@ -87,11 +87,11 @@ const AudioCall = ({ channel, callDetails, cancelCall }) => {
               <div className='w-28 h-28 border-2 border-accent rounded-full flex items-center justify-center bg-accent overflow-hidden'>
                 <Avatar className="flex  items-center justify-center">
                   <AvatarImage src={callDetails?.recepientDetails?.profile} alt="Avatar" />
-                  <AvatarFallback className='text-4xl'>{callDetails?.recepientDetails?.firstname[0]?.toUpperCase() + callDetails?.recepientDetails?.lastname[0]?.toUpperCase()}</AvatarFallback>
+                  {/* <AvatarFallback className='text-4xl'>{callDetails?.recepientDetails?.firstname[0]?.toUpperCase() + callDetails?.recepientDetails?.lastname[0]?.toUpperCase()}</AvatarFallback> */}
                 </Avatar>
               </div>
               <div className='flex flex-col  items-center justify-center'>
-                <span className='text-lg'>{callDetails?.recepientDetails?.firstname?.toUpperCase() + " " + callDetails?.recepientDetails?.lastname?.toUpperCase()}</span>
+                {/* <span className='text-lg'>{callDetails?.recepientDetails?.firstname?.toUpperCase() + " " + callDetails?.recepientDetails?.lastname?.toUpperCase()}</span> */}
                 <span>@{callDetails?.recepientDetails?.username}</span>
               </div>
             </div>

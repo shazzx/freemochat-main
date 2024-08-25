@@ -1,4 +1,4 @@
-import { incomingCall, startCall } from "@/app/features/user/callSlice";
+import { acceptCall, incomingCall, startCall } from "@/app/features/user/callSlice";
 import { useAppSelector } from "@/app/hooks";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { socketConnect } from "@/websocket/socket.io";
@@ -153,14 +153,14 @@ export const useSocket = (recepient? :string, _isOnline?: Function) => {
       })
 
       socket.on("call-accept", (data) => {
+        console.log(data)
           if (data?.type == "AUDIO") {
-              setAudioCallState("ACCEPTED")
-              setCallDetails(data)
-              setAudioCallCallerState(false)
+            dispatch(acceptCall(
+              {
+                callDetails: data,
+              }
+            ))
           } else {
-              setVideoCallState("ACCEPTED")
-              setCallDetails(data)
-              setVideoCallCallerState(false)
           }
       })
       

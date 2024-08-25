@@ -21,9 +21,9 @@ import {
   Menu,
 } from "lucide-react"
 
-import { Link, NavLink, useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { ModeToggle } from "./Toggle"
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 
 import { domain } from "@/config/domain"
 import { Notifications } from "./Notifications"
@@ -31,87 +31,15 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks"
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 import FriendRequests from "@/models/FriendRequests"
 import profile from './../assets/logo.png'
-import { useQueryClient } from "@tanstack/react-query"
-import { socketConnect } from "@/websocket/socket.io"
-import { toast } from "react-toastify"
-import { useDispatch } from "react-redux"
-import { setSocket } from "@/app/features/user/socketSlice"
 import { useSocket } from "@/hooks/useSocket"
 import AudioCallRecepient from "./Call/Audio/AudioCallRecepient"
 import Agora from "./Call/agora/AgoraRTC"
 import { endCall } from "@/app/features/user/callSlice"
-
+import AudioCall from "./Call/Audio/AudioCall"
 
 const MainHome = ({ children }: any) => {
+  useSocket()
   const { user } = useAppSelector((state) => state.user)
-
-  // useEffect(() => {
-  //   socket.on("connect", () => { // fire when we have connection
-  //     console.log("Socket connected");
-  //     dispatch(setSocket(socket))
-  //   });
-
-    // socket.on("disconnect", () => { // fire when socked is disconnected
-    //   console.log("Socket disconnected");
-    // });
-
-    // socket.on("notification", (data) => {
-    //   console.log(data)
-    // })
-
-    // socket.on("users", (users) => {
-    //   console.log(users)
-    // })
-
-    // socket.on("getOnlineFriends", (onlineFriends) => {
-    //   console.log(onlineFriends)
-    // })
-
-    // socket.on("friendOnlineStatusChange", (statusChange) => {
-    //   console.log(statusChange)
-    // })
-    
-
-    // socket.on("friendStatus", (data) => {
-    //   console.log(data, 'friend status')
-    // })
-
-    // socket.on("upload-status", (data) => {
-    //   if(data.isSuccess && data.target.type == "page"){
-    //     // const {targetId} = data.target
-    //     queryClient.invalidateQueries({ queryKey: ['page'] })
-    //     queryClient.invalidateQueries({ queryKey: ['pages'] })
-    //   }
-    //   if(data.isSuccess){
-    //     console.log('upload-success')
-    //   }else{
-    //     toast.error("something went wrong try agan later")
-    //   }
-    //     queryClient.invalidateQueries({ queryKey: ['userPosts', user._id] })
-    //     queryClient.invalidateQueries({ queryKey: ['userMedia', user._id] })
-
-    // })
-
-    // socket.on("chatlist", (chatlists) => {
-    //   queryClient.invalidateQueries({ queryKey: ['chatlist'] })
-    //   // console.log(chatlists)
-    // })
-
-
-    // // listen chat event messages
-    // socket.on("chat", (newMessage) => {
-    //   console.log(newMessage)
-    // });
-
-    // // remove all event listeners
-    // return () => {
-    //   socket.off("connect");
-    //   socket.off("disconnect");
-    //   socket.off("chat");
-    // };
-  // }, []);
-  const socket = useSocket()
-
 
   const navigate = useNavigate()
   const [active, setActive] = useState(location.pathname)
@@ -120,9 +48,10 @@ const MainHome = ({ children }: any) => {
   const [searchQuery, setSearchQuery] = useState("")
   const dispatch = useAppDispatch()
   const {callDetails, callerState, onCall, recepientState, targetDetails, type} = useAppSelector((state) => state.call)
+  const data = useAppSelector((state) => state.call)
+  console.log(callDetails, callerState, onCall, recepientState, targetDetails, type)
 
   let cancelCall = async (type) => {
-
     try {
         if (type == "AUDIO") {
             console.log('audio call end')
@@ -146,27 +75,25 @@ const MainHome = ({ children }: any) => {
         location.reload()
     }
 }
-
-
   return (
 
     <div className="h-screen w-full flex flex-col overflow-hidden">
             {/* incoming call */}
-            {onCall && type == "Audio" && recepientState == "CALLING" && targetDetails &&
-              <AudioCallRecepient recepientDetails={targetDetails} />
+            {onCall && type == "Audio" && recepientState == "CALLING" && callDetails?.userDetails &&
+              <AudioCallRecepient recepientDetails={callDetails.userDetails} />
           }
 
 
           {/* accepted call */}
-          {onCall && recepientState == "ACCEPTED" && targetDetails &&  callDetails?.type == "AUDIO" && callDetails?.channel &&
+          {onCall && recepientState == "ACCEPTED" && callDetails?.type == "AUDIO" && callDetails?.channel &&
               <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={AudioCall} />
           }
 
 
           {/* accepted call */}
-          {videoCallState == "ACCEPTED" && callDetails?.type == "VIDEO" && callDetails?.channel &&
-              <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} />
-          }
+          {/* {videoCallState == "ACCEPTED" && callDetails?.type == "VIDEO" && callDetails?.channel && */}
+              {/* <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} /> */}
+          {/* } */}
 
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
