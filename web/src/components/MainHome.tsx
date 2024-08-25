@@ -37,6 +37,9 @@ import { toast } from "react-toastify"
 import { useDispatch } from "react-redux"
 import { setSocket } from "@/app/features/user/socketSlice"
 import { useSocket } from "@/hooks/useSocket"
+import AudioCallRecepient from "./Call/Audio/AudioCallRecepient"
+import Agora from "./Call/agora/AgoraRTC"
+import { endCall } from "@/app/features/user/callSlice"
 
 
 const MainHome = ({ children }: any) => {
@@ -115,9 +118,56 @@ const MainHome = ({ children }: any) => {
   const [notificationsState, setNotificationsState] = useState(false)
   const [friendRequestState, setFriendRequestState] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const dispatch = useAppDispatch()
+  const {callDetails, callerState, onCall, recepientState, targetDetails, type} = useAppSelector((state) => state.call)
+
+  let cancelCall = async (type) => {
+
+    try {
+        if (type == "AUDIO") {
+            console.log('audio call end')
+
+            // setAudioCallCallerState(false)
+            // setAudioCallState("NEUTRAL")
+            const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaStream.getTracks().forEach(track => track.stop())
+        } else {
+            console.log('video call end')
+            // setVideoCallCallerState(false)
+            // setVideoCallState("NEUTRAL")
+            const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+            mediaStream.getTracks().forEach(track => track.stop())
+        }
+        dispatch(endCall())
+        // setCallDetails(null)
+    } catch (error) {
+        console.log(error)
+        dispatch(endCall())
+        location.reload()
+    }
+}
+
 
   return (
+
     <div className="h-screen w-full flex flex-col overflow-hidden">
+            {/* incoming call */}
+            {onCall && type == "Audio" && recepientState == "CALLING" && targetDetails &&
+              <AudioCallRecepient recepientDetails={targetDetails} />
+          }
+
+
+          {/* accepted call */}
+          {onCall && recepientState == "ACCEPTED" && targetDetails &&  callDetails?.type == "AUDIO" && callDetails?.channel &&
+              <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={AudioCall} />
+          }
+
+
+          {/* accepted call */}
+          {videoCallState == "ACCEPTED" && callDetails?.type == "VIDEO" && callDetails?.channel &&
+              <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} />
+          }
+
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
           <Sheet>

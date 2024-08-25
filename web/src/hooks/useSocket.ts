@@ -1,8 +1,11 @@
+import { incomingCall, startCall } from "@/app/features/user/callSlice";
 import { useAppSelector } from "@/app/hooks";
+import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { socketConnect } from "@/websocket/socket.io";
 import { useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
 import { useEffect, useRef } from "react";
+import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
 export const useSocket = (recepient? :string, _isOnline?: Function) => {
@@ -10,9 +13,10 @@ export const useSocket = (recepient? :string, _isOnline?: Function) => {
     const {user} = useAppSelector(state => state.user)
     const socket = socketConnect(user && user.username)
     const socketRef = useRef(socket);
+    const dispatch = useDispatch();
 
     useEffect(() => {
-        const socket = socketRef.current;
+      const socket = socketRef.current;
 
         socket.on('chat', (message) => {
           console.log(message, 'new message')
@@ -122,12 +126,24 @@ export const useSocket = (recepient? :string, _isOnline?: Function) => {
       socket.on("initiate-call", (data) => {
           console.log(data)
           if (data.type == 'VIDEO') {
-              setVideoCallState("CALLING")
-              setCallDetails(data)
+            dispatch(incomingCall(
+              {
+                onCall: true,
+                type: CallTypes.VIDEO,
+                recepientState: CallStates.CALLING,
+                callDetails: data,
+              }
+            ))
           }
           if (data.type == 'AUDIO') {
-              setAudioCallState("CALLING")
-              setCallDetails(data)
+            dispatch(incomingCall(
+              {
+                onCall: true,
+                type: CallTypes.AUDIO,
+                recepientState: CallStates.CALLING,
+                callDetails: data,
+              }
+            ))
           }
       })
 

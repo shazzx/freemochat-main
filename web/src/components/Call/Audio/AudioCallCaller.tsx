@@ -3,9 +3,12 @@ import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useSocket } from '@/hooks/useSocket'
 import { MdPhone } from 'react-icons/md'
+import { useAppDispatch } from '@/app/hooks'
+import { endCall } from '@/app/features/user/callSlice'
 
 function AudioCallCaller({ recepientDetails, setAudioCallCaller }) {
     const socket = useSocket()
+    const dispatch = useAppDispatch()
 
     useEffect(() => {
 
@@ -21,7 +24,7 @@ function AudioCallCaller({ recepientDetails, setAudioCallCaller }) {
 
     const callDecline = () => {
         socket.emit('call-decline', { recepientDetails })
-        setAudioCallCaller(false)
+        dispatch(endCall())
     }
 
     return (

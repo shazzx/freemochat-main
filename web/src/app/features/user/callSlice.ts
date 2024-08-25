@@ -16,6 +16,7 @@ const callSlice = createSlice({
     name: "call",
     initialState,
     reducers: {
+        // caller
         startCall(state, action) {
             state.onCall = true
             state.type = action.payload.type
@@ -24,6 +25,13 @@ const callSlice = createSlice({
         },
 
 
+        setAcceptedCallState(state, action) {
+            state.callerState = CallStates.ACCEPTED
+            state.callDetails = action.payload
+        },
+
+
+        // recep
         incomingCall(state, action) {
             state.onCall = true
             state.type = action.payload.type
@@ -34,15 +42,20 @@ const callSlice = createSlice({
         
         acceptCall(state, action) {
             state.callDetails = action.payload
-            state.recepientState = action.payload.recepientState
+            state.recepientState = CallStates.ACCEPTED
         },
 
+        // both
         endCall(state) {
-            state.onCall = false
-            state.callDetails = null
+            state.onCall= false
+            state.targtDetails= null
+            state.callerState= null
+            state.recepientState= null
+            state.callDetails= null
+            state.type= null
         },
     }
 })
 
-export const { startCall, endCall } = callSlice.actions
+export const { startCall, incomingCall, acceptCall, endCall } = callSlice.actions
 export default callSlice.reducer

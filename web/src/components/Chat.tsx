@@ -4,7 +4,7 @@ import EmojiPicker, { Categories } from "emoji-picker-react";
 import { MdCancel } from "react-icons/md";
 import { axiosClient } from "@/api/axiosClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
-import { useAppSelector } from "@/app/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import EditChatGroup from "@/models/EditChatGroup";
 import { Socket } from "socket.io-client";
 import { Button } from "./ui/button";
@@ -29,8 +29,8 @@ import AudioCall from "./Call/Audio/AudioCall";
 import VideoCall from "./Call/Video/VideoCall";
 import { handleFile } from "@/lib/formatChec";
 import { startCall } from "@/app/features/user/callSlice";
-import { useDispatch } from "react-redux";
-import { CallStates } from "@/utils/enums/global.c";
+import { useDispatch, useSelector } from "react-redux";
+import { CallStates, CallTypes } from "@/utils/enums/global.c";
 
 function Chat({ user, recepientDetails, setChatOpen }) {
     const _isOnline = useCallback((online: boolean) => () => setIsOnline(online), [])
@@ -124,37 +124,37 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     // useEffect(() => {
 
 
-        // listen chat event messages
-        // socket.on("chat", (newMessage) => {
-        //     console.log(newMessage)
-        // queryClient.invalidateQueries({queryKey: ["messages", recepientDetails.userId]})
+    // listen chat event messages
+    // socket.on("chat", (newMessage) => {
+    //     console.log(newMessage)
+    // queryClient.invalidateQueries({queryKey: ["messages", recepientDetails.userId]})
 
-        // queryClient.setQueryData(["messages", recepientDetails.userId], (pages: any) => {
-        //     const updatedMessages = produce(pages, (draft: any) => {
-        //         if (draft.pages[draft.pages.length - 1].messages) {
-        //             draft.pages[draft.pages.length - 1].messages.push({
-        //                 recepient: newMessage?.recepientDetails?.userId,
-        //                 sender: newMessage?.senderDetails?.targetId,
-        //                 content: newMessage?.body,
-        //                 // type: newMessage?.type
-        //             })
-        //             return draft
-        //         }
-        //         throw new Error()
-        //     })
-        //     return updatedMessages
-        // });
-        // setMessages((previousMessages) => [
-        // ...previousMessages,
-        // ]);
-        // });
+    // queryClient.setQueryData(["messages", recepientDetails.userId], (pages: any) => {
+    //     const updatedMessages = produce(pages, (draft: any) => {
+    //         if (draft.pages[draft.pages.length - 1].messages) {
+    //             draft.pages[draft.pages.length - 1].messages.push({
+    //                 recepient: newMessage?.recepientDetails?.userId,
+    //                 sender: newMessage?.senderDetails?.targetId,
+    //                 content: newMessage?.body,
+    //                 // type: newMessage?.type
+    //             })
+    //             return draft
+    //         }
+    //         throw new Error()
+    //     })
+    //     return updatedMessages
+    // });
+    // setMessages((previousMessages) => [
+    // ...previousMessages,
+    // ]);
+    // });
 
-        // remove all event listeners
-        // return () => {
-            // socket.off("connect");
-            // socket.off("disconnect");
-            // socket.off("chat");
-        // };
+    // remove all event listeners
+    // return () => {
+    // socket.off("connect");
+    // socket.off("disconnect");
+    // socket.off("chat");
+    // };
     // }, []);
     const scrollToBottom = () => {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
@@ -203,19 +203,26 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         setInputValue("");
     };
 
-const dispatch= useDispatch()
+    const dispatch = useAppDispatch()
+    const callData = useAppSelector((state) => state.call)
 
     // audio / video calling
     const initiateAudioCall = useCallback(() => {
-        setAudioCallCallerState(true)
-        dispatch(startCall({caller: CallStates.NEUTRAL, }))
-        socket.emit("initiate-call", { type: 'AUDIO', userDetails: { userId: user?._id, username: user?.username, profile: user?.images?.profile }, recepientDetails })
+        dispatch(startCall(
+            {
+                onCall: true,
+                type: CallTypes.AUDIO,
+                callerState: CallStates.CALLING,
+                targtDetails: recepientDetails,
+            }
+        ))
+        socket.emit("initiate-call", { type: 'AUDIO', userDetails: { userId: user?._id, username: user?.username, fullname: user?.firstname + " "+ user?.lastname, profile: user?.profile  }, recepientDetails })
     }, [])
 
 
     const initiateVideoCall = useCallback(() => {
         setVideoCallCallerState(true)
-        socket.emit("initiate-call", { type: 'VIDEO', userDetails: { userId: user?._id, username: user?.username, profile: user?.images?.profile }, recepientDetails })
+        socket.emit("initiate-call", { type: 'VIDEO', userDetails: { userId: user?._id, username: user?.username, fullname: user?.firstname + " "+ user?.lastname, profile: user?.profile }, recepientDetails })
     }, [])
 
     // chat method
@@ -284,28 +291,6 @@ const dispatch= useDispatch()
         setChatGroupInfo(false)
     }
 
-    let cancelCall = async (type) => {
-        try {
-            if (type == "AUDIO") {
-                console.log('audio call end')
-
-                setAudioCallCallerState(false)
-                setAudioCallState("NEUTRAL")
-                const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaStream.getTracks().forEach(track => track.stop())
-            } else {
-                console.log('video call end')
-                setVideoCallCallerState(false)
-                setVideoCallState("NEUTRAL")
-                const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                mediaStream.getTracks().forEach(track => track.stop())
-            }
-            setCallDetails(null)
-        } catch (error) {
-            console.log(error)
-            // location.reload()
-        }
-    }
 
 
     return (
@@ -326,28 +311,10 @@ const dispatch= useDispatch()
             }
 
             {/* initiated call */}
-            {audioCallCallerState &&
-                <AudioCallCaller recepientDetails={recepientDetails} setAudioCallCaller={setAudioCallCallerState} />
+            {callData?.onCall && callData?.callerState && callData?.targtDetails &&
+                <AudioCallCaller recepientDetails={callData.targtDetails} setAudioCallCaller={setAudioCallCallerState} />
             }
 
-
-
-            {/* incoming call */}
-            {audioCallState == "CALLING" &&
-                <AudioCallRecepient recepientDetails={recepientDetails} setAudioCallRecepient={setAudioCallState} />
-            }
-
-
-            {/* accepted call */}
-            {audioCallState == "ACCEPTED" && callDetails?.type == "AUDIO" && callDetails?.channel &&
-                <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={AudioCall} />
-            }
-
-
-            {/* accepted call */}
-            {videoCallState == "ACCEPTED" && callDetails?.type == "VIDEO" && callDetails?.channel &&
-                <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} />
-            }
 
             <div className='flex items-center justify-between p-3 border border-muted'>
                 <div className='flex gap-2 items-center justify-center'>
@@ -657,8 +624,8 @@ const dispatch= useDispatch()
                     <input className="hidden" type="file" accept='application/pdf' id='text-pdf' onChange={async (e) => {
                         if (e.target.files && e.target.files.length > 0) {
                             let file = await handleFile(e.target.files[0])
-                            if(!file){
-                                return 
+                            if (!file) {
+                                return
                             }
                             const formData = new FormData()
                             const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, messageType: "PDF", type: recepientDetails?.type, mediaDetails: { type: "pdf", } }
@@ -675,8 +642,8 @@ const dispatch= useDispatch()
                     <input className="hidden" type="file" accept='image/*' id='text-image' onChange={async (e) => {
                         if (e.target.files && e.target.files.length > 0) {
                             let file = await handleFile(e.target.files[0])
-                            if(!file){
-                                return 
+                            if (!file) {
+                                return
                             }
                             const formData = new FormData()
                             const url = URL.createObjectURL(file)
@@ -684,7 +651,7 @@ const dispatch= useDispatch()
                             formData.append("messageData", JSON.stringify(messageData))
                             formData.append("file", file, 'image')
 
-                            createMessage.mutate({ messageData: { ...messageData, media: { type: "image", url, isUploaded: false} }, formData })
+                            createMessage.mutate({ messageData: { ...messageData, media: { type: "image", url, isUploaded: false } }, formData })
                             scrollToBottom()
                             setFileSelectDropDownState(false)
                         }
@@ -693,8 +660,8 @@ const dispatch= useDispatch()
                     <input className="hidden" type="file" accept='video/*' id='text-video' onChange={async (e) => {
                         if (e.target.files && e.target.files.length > 0) {
                             let file = await handleFile(e.target.files[0])
-                            if(!file){
-                                return 
+                            if (!file) {
+                                return
                             }
                             const formData = new FormData()
                             const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, messageType: "Video", type: recepientDetails?.type, mediaDetails: { type: "video", } }
