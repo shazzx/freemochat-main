@@ -5,7 +5,7 @@ import { produce } from "immer";
 import { useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 
-export const useSocket = (recepient? :string) => {
+export const useSocket = (recepient? :string, _isOnline?: Function) => {
     const queryClient = useQueryClient();
     const {user} = useAppSelector(state => state.user)
     const socket = socketConnect(user && user.username)
@@ -111,6 +111,42 @@ export const useSocket = (recepient? :string) => {
             queryClient.invalidateQueries({ queryKey: ['chatlist'] })
             // console.log(chatlists)
           })
+
+
+        socket.on("friendStatus", (data) => {
+          console.log(data, 'friend status')
+          _isOnline(data.isOnline)
+      })
+
+
+      socket.on("initiate-call", (data) => {
+          console.log(data)
+          if (data.type == 'VIDEO') {
+              setVideoCallState("CALLING")
+              setCallDetails(data)
+          }
+          if (data.type == 'AUDIO') {
+              setAudioCallState("CALLING")
+              setCallDetails(data)
+          }
+      })
+
+
+      socket.on("call-decline", (data) => {
+          console.log(data)
+      })
+
+      socket.on("call-accept", (data) => {
+          if (data?.type == "AUDIO") {
+              setAudioCallState("ACCEPTED")
+              setCallDetails(data)
+              setAudioCallCallerState(false)
+          } else {
+              setVideoCallState("ACCEPTED")
+              setCallDetails(data)
+              setVideoCallCallerState(false)
+          }
+      })
       
           // remove all event listeners
           return () => {

@@ -3,6 +3,7 @@ import authReducer from './features/user/authSlice'
 import userReducer from './features/user/userSlice'
 import searchReducer from './features/user/searchSlice'
 import socketReducer from './features/user/socketSlice'
+import callReducer from './features/user/callSlice'
 import adminAuthReducer from './features/admin/authSlice'
 import adminReducer from './features/admin/adminSlice'
 
@@ -13,6 +14,7 @@ export const store = configureStore({
         user: userReducer,
         auth: authReducer,
         search: searchReducer,
+        call: callReducer,
         socket: socketReducer,
     }
 })

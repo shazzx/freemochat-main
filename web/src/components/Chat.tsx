@@ -28,11 +28,15 @@ import { toast } from "react-toastify";
 import AudioCall from "./Call/Audio/AudioCall";
 import VideoCall from "./Call/Video/VideoCall";
 import { handleFile } from "@/lib/formatChec";
+import { startCall } from "@/app/features/user/callSlice";
+import { useDispatch } from "react-redux";
+import { CallStates } from "@/utils/enums/global.c";
 
 function Chat({ user, recepientDetails, setChatOpen }) {
+    const _isOnline = useCallback((online: boolean) => () => setIsOnline(online), [])
+
     const [emojiPickerState, setEmojiPickerState] = useState(false)
-    console.log(recepientDetails.userId)
-    const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId)
+    const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId, _isOnline)
     const [chatGroupInfo, setChatGroupInfo] = useState(false)
     const [inputValue, setInputValue] = useState("");
     const [groupData, setGroupData] = useState(null)
@@ -57,6 +61,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     const dropdownRef = useRef(null)
     const emojiPickerRef = useRef(null)
     const queryClient = useQueryClient()
+
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -116,70 +121,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
     const [isOnline, setIsOnline] = useState(null)
 
-    useEffect(() => {
-
-        socket.on("notification", (data) => {
-            console.log(data)
-        })
-
-        socket.on("joingroup", (data) => {
-            console.log(data)
-        })
-
-        socket.on("leavegroup", (data) => {
-            console.log(data)
-        })
-
-        socket.on("users", (users) => {
-            console.log(users)
-        })
-
-
-        socket.on("friendStatus", (data) => {
-            console.log(data, 'friend status')
-            setIsOnline(data.isOnline)
-        })
-
-
-        socket.on("initiate-call", (data) => {
-            console.log(data)
-            if (data.type == 'VIDEO') {
-                setVideoCallState("CALLING")
-                setCallDetails(data)
-            }
-            if (data.type == 'AUDIO') {
-                setAudioCallState("CALLING")
-                setCallDetails(data)
-            }
-        })
-
-
-        socket.on("call-decline", (data) => {
-            console.log(data)
-        })
-
-        socket.on("call-accept", (data) => {
-            if (data?.type == "AUDIO") {
-                setAudioCallState("ACCEPTED")
-                setCallDetails(data)
-                setAudioCallCallerState(false)
-            } else {
-                setVideoCallState("ACCEPTED")
-                setCallDetails(data)
-                setVideoCallCallerState(false)
-            }
-        })
-
-
-        // socket.on("call-end", (data) => {
-        //     console.log(data)
-        // })
-
-
-        socket.on("groupchat", (newMessage) => {
-            queryClient.invalidateQueries({ queryKey: ["messages", recepientDetails.groupId] })
-
-        })
+    // useEffect(() => {
 
 
         // listen chat event messages
@@ -208,12 +150,12 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         // });
 
         // remove all event listeners
-        return () => {
-            socket.off("connect");
-            socket.off("disconnect");
-            socket.off("chat");
-        };
-    }, []);
+        // return () => {
+            // socket.off("connect");
+            // socket.off("disconnect");
+            // socket.off("chat");
+        // };
+    // }, []);
     const scrollToBottom = () => {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
     }
@@ -261,10 +203,12 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         setInputValue("");
     };
 
+const dispatch= useDispatch()
 
     // audio / video calling
     const initiateAudioCall = useCallback(() => {
         setAudioCallCallerState(true)
+        dispatch(startCall({caller: CallStates.NEUTRAL, }))
         socket.emit("initiate-call", { type: 'AUDIO', userDetails: { userId: user?._id, username: user?.username, profile: user?.images?.profile }, recepientDetails })
     }, [])
 
