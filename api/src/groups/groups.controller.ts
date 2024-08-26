@@ -67,7 +67,8 @@ export class GroupsController {
 
         const { sub } = req.user 
         
-        let group = await this.groupsService.createGroup(sub, { ...groupDetails})
+        let group = files.length > 0 ? await this.groupsService.createGroup(sub, { ...groupDetails, isUploaded: false})
+        : await this.groupsService.createGroup(sub, { ...groupDetails})
 
         this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: group._id.toString(), type: 'group' })
 

@@ -104,7 +104,7 @@ export class GroupsService {
     }
 
     async getGroups(userId) {
-        const groups = await this.groupModal.find({ user: new Types.ObjectId(userId) })
+        const groups = await this.groupModal.find({$or: [{ user: new Types.ObjectId(userId)}, {admins: new Types.ObjectId(userId) }]})
         return groups
     }
 

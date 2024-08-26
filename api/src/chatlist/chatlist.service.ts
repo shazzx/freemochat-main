@@ -87,15 +87,22 @@ export class UserChatListService {
         return chatListUser
     }
 
+    // async removeChat(userId: string, recepientId: string) {
+    //     let removedChat = await this.userChatListModel.findOneAndUpdate(
+    //         { user: userId, recepient: recepientId },
+    //         { chatRemovedAt: Date.now() },
+    //         { new: true }
+    //     );
+    //     console.log(removedChat)
+    //     return removedChat
+    // }
+
     async removeChat(userId: string, recepientId: string) {
-        let removedChat = await this.userChatListModel.findOneAndUpdate(
-            { user: userId, recepient: recepientId },
-            { chatRemovedAt: Date.now() },
-            { new: true }
-        );
+        let removedChat = await this.userChatListModel.findOneAndDelete({ user: userId, recepient: recepientId });
         console.log(removedChat)
         return removedChat
     }
+
 
     async removeUser(userId, recepientId) {
         let removedUser = await this.userChatListModel.findOneAndUpdate(
@@ -109,6 +116,12 @@ export class UserChatListService {
 
     async removeChatRecord(userId, recepientId) {
 
+    }
+
+
+    async getChatList(userId: string, recepient: string) {
+        let chat = await this.userChatListModel.findOne({ user: userId, recepient });
+        return chat
     }
 
     async getChatLists(userId) {

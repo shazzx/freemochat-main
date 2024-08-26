@@ -54,11 +54,11 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
     const newChatRef = useRef(null)
     const socket = useSocket(user._id)
 
-    useEffect(() =>{ 
-        socket.on("getOnlineFriends", (data) => {
-            console.log(data)
-        })
-    },[]) 
+    // useEffect(() =>{ 
+    //     socket.on("getOnlineFriends", (data) => {
+    //         console.log(data)
+    //     })
+    // },[]) 
 
     // ChatGroup
     const { mutate } = useCreateChatGroup()
@@ -95,7 +95,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [chatOptions])
-
+    
     return (
         <div className={`min-w-[260px] sm:max-w-[460px] w-full flex h-full ${chatOpen && "hidden lg:flex"}`}>
             {groupModelState &&

@@ -29,23 +29,23 @@ export class ChatItem {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
     user: ObjectId
 
-    @Prop({ type: String, enum: ["User", "Page", "ChatGroup"], required: true })
-    type: string;
-
-    @Prop({type: String, enum: ["Text", "Voice", "File", "Image", "Video", "Audio Call", "Video Call", "Info"]})
-    messageType: string;
-
     @Prop({
         type: Types.ObjectId,
         refPath: 'type',
         required: true,
     })
-    recepient: ObjectId  
+    recepient: ObjectId
 
-    @Prop({type: Date, default: null})
+    @Prop({ type: String, enum: ["User", "Page", "ChatGroup"], required: true })
+    type: string;
+
+    @Prop({ type: String, enum: ["Text", "Voice", "File", "Image", "Video", "Audio Call", "Video Call", "Info"] })
+    messageType: string;
+
+    @Prop({ type: Date, default: null })
     removedAt: Date
 
-    @Prop({type: Date, default: null})
+    @Prop({ type: Date, default: null })
     chatRemovedAt: Date
 
     @Prop({ type: LastMessage, required: true })
@@ -53,6 +53,10 @@ export class ChatItem {
 
     @Prop({ type: Number, default: 0 })
     unreadCount: number;
+
+    @Prop({ type: Date, default: Date.now() })
+    createdAt: Date;
+
 }
 
 

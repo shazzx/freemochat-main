@@ -8,10 +8,16 @@ import { UploadService } from 'src/upload/upload.service';
 import { Request } from 'types/global';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
 import { CreateChatGroup, CreateChatGroupDTO, GetChatGroup, GetChatGroupDTO, UpdateChatGroup, UpdateChatGroupDTO } from 'src/schema/validation/chatgroup';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Controller('chatgroups')
 export class CGroupsController {
-    constructor(private chatGroupService: CGroupsService, private uploadService: UploadService) { }
+    constructor(
+        private chatGroupService: CGroupsService, 
+        private uploadService: UploadService,
+        private readonly eventEmiiter: EventEmitter2,
+
+    ) { }
 
     @Get()
     async getGroups(@Req() req: Request, @Res() res: Response) {
@@ -33,26 +39,38 @@ export class CGroupsController {
         console.log("files :", files, body)
         let { groupDetails } = body
 
-        let images;
-        for (let file of files) {
+        const uploadPromise = files.map((file) => {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
-            console.log(file)
-            let {url} = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-            console.log({url})
-            if (file.originalname == 'profile') {
-                images = { ...images, profile: url }
-            }
-            if (file.originalname == 'cover') {
-                images = { ...images, cover: url }
-            }
-        }
-
-        console.log(images)
-
+            const originalname = file.originalname
+            return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, originalname)
+            
+        })
         const { sub } = req.user 
 
-        res.json(await this.chatGroupService.createGroup(sub, { ...groupDetails, ...images }))
+
+        let group = files.length > 0 ? await this.chatGroupService.createGroup(sub, { ...groupDetails, isUploaded: false})
+        : await this.chatGroupService.createGroup(sub, { ...groupDetails})
+
+        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: group._id.toString(), type: 'chatgroup' })
+
+        res.json(group)
+        // let images;
+        // for (let file of files) {
+        //     const fileType = getFileType(file.mimetype)
+        //     const filename = uuidv4()
+        //     console.log(file)
+        //     let {url} = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+        //     console.log({url})
+        //     if (file.originalname == 'profile') {
+        //         images = { ...images, profile: url }
+        //     }
+        //     if (file.originalname == 'cover') {
+        //         images = { ...images, cover: url }
+        //     }
+        // }
+
+        // console.log(images)
     }
 
     @UseInterceptors(FilesInterceptor('files'))

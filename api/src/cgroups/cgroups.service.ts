@@ -16,9 +16,8 @@ export class CGroupsService {
 
     async getGroups(userId) {
         console.log(userId)
-        let groups = await this.chatGroupModel.find({ user: new Types.ObjectId(userId) })
-        console.log(await this.chatGroupModel.find())
-        console.log('founded groups', groups,)
+        let groups = await this.chatGroupModel.find({$or: [{ user: new Types.ObjectId(userId)}, {admins: new Types.ObjectId(userId) }]})
+        console.log('founded groups', groups)
         return groups
     }
 
@@ -75,6 +74,37 @@ export class CGroupsService {
                 },
             },
         ])
+        // {
+        //     $lookup: {
+        //         from: 'counters',
+        //         localField: "_id",
+        //         foreignField: "targetId",
+        //         as: 'membersCount'
+        //     }
+        // },
+        // {
+        //     $addFields: {
+        //         isMember: { $gt: [{ $size: '$memberStatus' }, 0] },
+        //         membersCount: {
+        //             $ifNull: [
+        //                 { $arrayElemAt: ["$membersCount.count", 0] },
+        //                 0
+        //             ]
+        //         },
+        //         populatedAdmins: {
+        //             $map: {
+        //               input: '$populatedAdmins',
+        //               as: 'admin',
+        //               in: {
+        //                 $mergeObjects: [
+        //                   '$$admin',
+        //                   { isAdmin: true }
+        //                 ]
+        //               }
+        //             }
+        //           }
+        //     },
+        // },
         const isSuperAdmin = group[0].user.toString() === userId;
         const isAdmin = group[0].admins.some(adminId => adminId.toString() === userId);
         console.log(group[0], isSuperAdmin, isAdmin)

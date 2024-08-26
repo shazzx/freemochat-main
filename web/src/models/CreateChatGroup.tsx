@@ -45,10 +45,10 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
 
     const userFriends = useUserFriends(user._id, groupDetails?.groupId)
     console.log(groupDetails)
-    const groupMemberToggle = useGroupMemberToggle(user._id, groupDetails?.groupId)
-
+    
     const [addMemberState, setAddMemberState] = useState(false)
     const { data, isLoading } = useGroupMembers(groupDetails?.groupId)
+    const groupMemberToggle = useGroupMemberToggle(user._id, groupDetails?.groupId)
     const groupAdminToggle = useToggleAdmin()
     const chatGroup = editState ? useChatGroup(groupDetails?.groupId) : {}
 
@@ -251,9 +251,9 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                                                 <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md' >
                                                     <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' onClick={() => {
                                                         console.log('admin remove')
-                                                        groupMemberToggle.mutate({userId: admin._id, type: "chatgroup"})
+                                                        groupMemberToggle.mutate({ userId: admin._id, type: "chatgroup" })
 
-                                                        }}>
+                                                    }}>
                                                         <RiUserUnfollowLine size={22} />
                                                         <span>Remove</span>
                                                     </DropdownMenuItem>
@@ -261,7 +261,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                                                     <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' onClick={() => {
 
                                                         groupAdminToggle.mutate({ user: admin, groupId: chatGroup.data?._id, isAdmin: true, index: i, isChatGroup: true })
-                                                        
+
                                                     }}>
                                                         <RiUserUnfollowLine size={22} />
                                                         <span>Remove as admin</span>
@@ -310,10 +310,10 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                                                     <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md'>
                                                         <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' >
                                                             <RiUserUnfollowLine size={22} onClick={() => {
-                                                        groupMemberToggle.mutate({ userId: memberData.user._id, pageIndex, userIndex, type: "chatgroup" })
-                                                        console.log('user remove')
+                                                                groupMemberToggle.mutate({ userId: memberData.user._id, pageIndex, userIndex, type: "chatgroup" })
+                                                                console.log('user remove')
 
-                                                            }}/>
+                                                            }} />
                                                             <span>Remove</span>
                                                         </DropdownMenuItem>
                                                         {chatGroup?.data?.isSuperAdmin
@@ -335,11 +335,12 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                         )}
 
                     </div>
-                    {/* <div> */}
-                        {/* <Button onClick={() => setAddMemberState(true)}> */}
-                            {/* Add Friends */}
-                        {/* </Button> */}
-                    {/* </div> */}
+                    {editState && <div>
+                        <Button onClick={() => setAddMemberState(true)}>
+                            Add Friends
+                        </Button>
+                    </div>
+                    }
 
                     {editState && addMemberState && <div className="absolute top-0 w-full h-full bg-background">
                         <div className="flex gap-2 p-2 py-4">
@@ -352,7 +353,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                                 return (
 
                                     <div className='flex flex-col gap-1 w-full bg-card'>
-                                        <div className='flex-responsive items-center p-2 gap-2 relative w-full '>
+                                        <div className='flex items-center p-2 gap-2 relative w-full '>
                                             <div className='flex w-full gap-2'>
                                                 <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                                     <Avatar >

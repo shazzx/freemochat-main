@@ -38,12 +38,17 @@ export class MessageService {
         let query;
         let messages;
         if(isChatGroup == 0){
-            query = { ..._cursor, $or: [{ sender: new Types.ObjectId(userId), recepient: new Types.ObjectId(recepientId) }, { sender: new Types.ObjectId(recepientId), recepient: new Types.ObjectId(userId) }] }
+          query = { ..._cursor, $or: [{ sender: new Types.ObjectId(userId), recepient: new Types.ObjectId(recepientId) }, { sender: new Types.ObjectId(recepientId), recepient: new Types.ObjectId(userId) }] }
+
+          let chatlist = await this.chatlistService.getChatList(userId, recepientId)
+          
             messages = await this.messageModel.aggregate([
-                { $match: query },
+                { $match: {...query, createdAt: {$gt: chatlist.createdAt}} },
                 { $sort: { createdAt: -1 } },
                 { $limit: limit + 1 },
             ]);
+
+
         }
         if(isChatGroup == 1){
             query = { ..._cursor, recepient: new Types.ObjectId(recepientId)  }

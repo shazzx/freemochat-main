@@ -1,4 +1,4 @@
-import { createChatGroup, createMessage, fetchChatlist, fetchMessages,  fetchChatGroup, updateChatGroup } from "@/api/Chat/chat.api"
+import { createChatGroup, createMessage, fetchChatlist, fetchMessages,  fetchChatGroup, updateChatGroup, fetchChatGroups } from "@/api/Chat/chat.api"
 import { toggleJoinGroup } from "@/api/Page/group.api"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { produce } from "immer"
@@ -32,31 +32,32 @@ export const useGroupMemberToggle = (_userId: string, groupId: string) => {
             return toggleJoinGroup({groupDetails: {userId: data.userId, groupId, type: data.type}})
         },
 
-        // onMutate: async ({userId, userIndex, pageIndex}) => {
-        //     console.log(userId)
-        //     await queryClient.cancelQueries({ queryKey: ['userFriends', _userId] })
-        //     const previousUser = queryClient.getQueryData(['userFriends', _userId])
+        onMutate: async ({userId, userIndex, pageIndex}) => {
+            console.log(userId)
+            await queryClient.cancelQueries({ queryKey: ['userFriends', _userId] })
+            const previousUser = queryClient.getQueryData(['userFriends', _userId])
 
-        //     queryClient.setQueryData(['userFriends', _userId], (data: any) => {
-        //         const updatedUser = produce(data, (draft: any) => {
-        //             console.log(data)
-        //             if (draft.pages[pageIndex].friends[userIndex].isGroupMember) {
-        //                 draft.pages[pageIndex].friends[userIndex].isGroupMember = false 
-        //                 toast.success('Member Removed')
-        //             }
+            queryClient.setQueryData(['userFriends', _userId], (data: any) => {
+                console.log(data)
+                const updatedUser = produce(data, (draft: any) => {
+                    console.log(data)
+                    if (draft.pages[pageIndex].friends[userIndex].isGroupMember) {
+                        draft.pages[pageIndex].friends[userIndex].isGroupMember = false 
+                        toast.success('Member Removed')
+                    }
                     
-        //             if (draft.pages[pageIndex].friends[userIndex].isGroupMember == false) {
-        //                 draft.pages[pageIndex].friends[userIndex].isGroupMember = true
-        //                 toast.success('Member Added')
-        //             }
-        //             return draft
+                    if (draft.pages[pageIndex].friends[userIndex].isGroupMember == false) {
+                        draft.pages[pageIndex].friends[userIndex].isGroupMember = true
+                        toast.success('Member Added')
+                    }
+                    return draft
                     
-        //         })
-        //         return updatedUser
-        //     });
+                })
+                return updatedUser
+            });
 
-        //     return { previousUser };
-        // },
+            return { previousUser };
+        },
 
         onError: (err, newComment, context) => {
             console.log(err, newComment)
@@ -84,7 +85,7 @@ export const useChatGroups = () => {
     const { data, isLoading, isError, isFetched, isSuccess } = useQuery({
         queryKey: ['chatgroups'],
         queryFn: () => {
-            return fetchChatlist()
+            return fetchChatGroups()
         },
 
     })

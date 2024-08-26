@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MdDelete, MdReport, MdUpgrade } from "react-icons/md"
 import { FC } from "react"
+import { AlertDialogC } from "../AlertDialog"
 
 export const DropdownUser: FC<any> = ({ deleteChat, blockUser, setReportModelState, reportModelState }) => {
     return (
@@ -37,8 +38,7 @@ export const DropdownUser: FC<any> = ({ deleteChat, blockUser, setReportModelSta
                     </DropdownMenuItem>
 
                     <DropdownMenuItem className="cursor-pointer" onClick={deleteChat}>
-                        <MdDelete className="mr-2 h-4 w-4" />
-                        <span>Delete Chat</span>
+                        <AlertDialogC action={deleteChat} button={<Button variant="outline"><MdDelete className="mr-2 h-4 w-4" /> Delete Chat</Button>} />
                     </DropdownMenuItem>
                 </DropdownMenuGroup>
             </DropdownMenuContent>

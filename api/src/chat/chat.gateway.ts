@@ -164,8 +164,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const uuid = '3u293urasdjkof'
 
 
-    // this.server.to(user?.socketId).emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.recepientDetails })
-    this.server.emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.userDetails })
+    this.server.to(user?.socketId).emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.recepientDetails })
+    this.server.to(recepient?.socketId).emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.userDetails })
   }
 
   @SubscribeMessage("call-end")
@@ -173,10 +173,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if(payload.recepientDetails && !payload.recepientDetails.userId){
       throw new BadRequestException('recepient id required')
     }
-    console.log(payload)
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
+    let user = JSON.parse(await this.cacheService.getOnlineUser(payload.userDetails.userId))
+    console.log(user, 'accepted')
+    const uuid = '3u293urasdjkof'
 
-    this.server.emit("call-end", { status: "END", payload })
+
+    this.server.to(user?.socketId).emit("call-end", { status: "END", })
+    this.server.to(recepient?.socketId).emit("call-end", { status: "END", })
   }
 
   async handleNotifications(event) {

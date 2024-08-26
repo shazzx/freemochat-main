@@ -8,6 +8,7 @@ import { PageService } from "src/pages/pages.service";
 import { GroupsService } from "src/groups/groups.service";
 import { UploadService } from "src/upload/upload.service";
 import { MessageService } from "src/message/message.service";
+import { CGroupsService } from "src/cgroups/cgroups.service";
 
 @Injectable()
 export class UploadListener {
@@ -15,6 +16,7 @@ export class UploadListener {
         private readonly postsService: PostsService,
         private readonly pageService: PageService,
         private readonly groupsService: GroupsService,
+        private readonly chatgroupsService: CGroupsService,
         private readonly mediaService: MediaService,
         private readonly chatGateway: ChatGateway,
         private readonly uploadService: UploadService,
@@ -141,6 +143,17 @@ export class UploadListener {
 
             if (type == 'group') {
                 await this.groupsService.updateGroup(targetId, { ..._images, isUploaded: null });
+                await this.chatGateway.uploadSuccess({
+                    isSuccess: true, target: {
+                        type: "group",
+                        targetId,
+                    }
+                })
+            }
+
+
+            if (type == 'chatgroup') {
+                await this.chatgroupsService.updateGroup(targetId, { ..._images, isUploaded: null });
                 await this.chatGateway.uploadSuccess({
                     isSuccess: true, target: {
                         type: "group",

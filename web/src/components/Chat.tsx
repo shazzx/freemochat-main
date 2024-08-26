@@ -15,7 +15,7 @@ import AudioCallRecepient from "./Call/Audio/AudioCallRecepient";
 // import { isMobile } from 'react-device-detect'
 import Agora from "./Call/agora/AgoraRTC";
 import { DropdownUser } from "./Dropdowns/DropdownUser";
-import { useCreateChatGroup, useCreateMessage, useMessages, useUpdateChatGroup } from "@/hooks/Chat/main";
+import { useChatGroup, useCreateChatGroup, useCreateMessage, useMessages, useUpdateChatGroup } from "@/hooks/Chat/main";
 import { useInView } from "react-intersection-observer";
 import AudioRecorder from "./MediaRecorder";
 import AudioPlayer from "@/AudioPlayer";
@@ -31,12 +31,14 @@ import { handleFile } from "@/lib/formatChec";
 import { startCall } from "@/app/features/user/callSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
+import { format } from "date-fns";
 
 function Chat({ user, recepientDetails, setChatOpen }) {
     const _isOnline = useCallback((online: boolean) => () => setIsOnline(online), [])
 
     const [emojiPickerState, setEmojiPickerState] = useState(false)
     const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId, _isOnline)
+    const group = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId):{}
     const [chatGroupInfo, setChatGroupInfo] = useState(false)
     const [inputValue, setInputValue] = useState("");
     const [groupData, setGroupData] = useState(null)
@@ -231,9 +233,9 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     }
 
     const deleteChat = async () => {
-        alert('under development')
-        // const {data} = await axiosClient.post("/message/chat/remove", {recepientId: recepientDetails?.type == "ChatGroup" ? recepientDetails?.groupId : recepientDetails?.userId, type: recepientDetails?.type})
-        // console.log(data)
+        const {data} = await axiosClient.post("/chatlist/remove", {recepientId: recepientDetails?.type == "ChatGroup" ? recepientDetails?.groupId : recepientDetails?.userId, type: recepientDetails?.type})
+        console.log(data)
+        setChatOpen(false)
     }
 
     const blockUser = async () => {
@@ -241,6 +243,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         // const {data} = await axiosClient.post("/user/block", {blockUserId: recepientDetails?.userId})
         // console.log(data)
     }
+    
     function emojiToImageUrl(emoji) {
         // Create a canvas element
         const canvas = document.createElement('canvas');
@@ -334,7 +337,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                     </div>
                     <div className='flex flex-col gap-0'>
                         <h3 className='text-card-foreground text-sm'>{recepientDetails?.type == "User" ? recepientDetails?.fullname : recepientDetails?.name}</h3>
-                        <span className='text-muted-foreground text-xs'>{recepientDetails?.type == "ChatGroup" ? "no members" : isOnline == null ? recepientDetails.onlineStatus ? "online" : "offline" : isOnline ? "online" : "offline"}</span>
+                        <span className='text-muted-foreground text-xs'>{recepientDetails?.type == "ChatGroup" ? group?.data?.membersCount > 0 ? "members " + group?.data?.membersCount  :"no members" : isOnline == null ? recepientDetails.onlineStatus ? "online" : "offline" : isOnline ? "online" : "offline"}</span>
                     </div>
                 </div>
                 <div className="flex items-center justify-center gap-4 sm:mr-4">
@@ -358,7 +361,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                 }
             }} ref={chatContainerRef}>
                 <div className="w-full text-center pb-4">
-                    <span>Today</span>
+                    {/* <span>Today</span> */}
                 </div>
                 {/* user */}
 
@@ -391,10 +394,10 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                 <div className="flex gap-2 items-center justify-center w-full" key={message?._id}>
 
                                     <div className="relative max-w-80 w-fit">
-
+                                    <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p>
                                         <div className="relative border border-muted
                                  text-sm bg-card p-1 text-foreground rounded-lg pr-3">
-                                            <p className="p-1 px-2" >{message?.content}</p>
+                                            <p className="p-1 px-2 text-center" >{message?.content}</p>
                                         </div>
                                     </div>
                                 </div>

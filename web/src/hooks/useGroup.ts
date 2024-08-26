@@ -1,6 +1,7 @@
 import { createGroup, fetchGroup, fetchGroupMembers, fetchGroups, joinGroup, removeGroup, toggleGroupAdmin, toggleJoinGroup, updateGroup } from "@/api/Page/group.api";
 import { useAppSelector } from "@/app/hooks";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { group } from "console";
 import { produce } from "immer";
 import { toast } from "react-toastify";
 
@@ -185,7 +186,7 @@ export const useRemoveGroup = () => {
 export function useGroupMembers(groupId: string): any {
 
   const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
-    queryKey: ['groupMembers'],
+    queryKey: ['groupMembers', groupId],
     queryFn: ({ pageParam, }) => fetchGroupMembers(pageParam, groupId),
     enabled: !!groupId,
     initialPageParam: null,
