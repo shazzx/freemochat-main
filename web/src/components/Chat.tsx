@@ -213,7 +213,6 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                 onCall: true,
                 type: CallTypes.AUDIO,
                 callerState: CallStates.CALLING,
-                targetDetails: recepientDetails,
             }
         ))
         socket.emit("initiate-call", { type: 'AUDIO', userDetails: { userId: user?._id, username: user?.username, fullname: user?.firstname + " "+ user?.lastname, profile: user?.profile  }, recepientDetails })
@@ -311,8 +310,8 @@ function Chat({ user, recepientDetails, setChatOpen }) {
             }
 
             {/* initiated call */}
-            {callData?.onCall && callData?.callerState && callData?.targetDetails &&
-                <AudioCallCaller recepientDetails={callData.targetDetails} setAudioCallCaller={setAudioCallCallerState} />
+            {callData?.onCall && callData?.callerState == "CALLING"  &&
+                <AudioCallCaller recepientDetails={recepientDetails} setAudioCallCaller={setAudioCallCallerState} />
             }
 
 

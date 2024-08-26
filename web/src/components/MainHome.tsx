@@ -85,7 +85,10 @@ const MainHome = ({ children }: any) => {
 
 
           {/* accepted call */}
-          {onCall && recepientState == "ACCEPTED" && callDetails?.type == "AUDIO" && callDetails?.channel &&
+          {onCall && (callerState == "ACCEPTED") && callDetails?.type == "AUDIO" && callDetails?.channel &&
+              <Agora callDetails={callDetails} type={'SELF'} channel={callDetails.channel} cancelCall={cancelCall} Call={AudioCall} />
+          }
+          {onCall && (recepientState == "ACCEPTED") && callDetails?.type == "AUDIO" && callDetails?.channel &&
               <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={AudioCall} />
           }
 

@@ -1,12 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
-import { Socket } from 'socket.io-client'
 import { Button } from '@/components/ui/button'
 import { useSocket } from '@/hooks/useSocket'
 import { MdPhone } from 'react-icons/md'
-import { acceptCall, endCall } from '@/app/features/user/callSlice'
-import { CallStates, CallTypes } from '@/utils/enums/global.c'
+import { endCall } from '@/app/features/user/callSlice'
 
 function AudioCallRecepient({ recepientDetails }) {
     const socket = useSocket()
@@ -23,6 +21,7 @@ function AudioCallRecepient({ recepientDetails }) {
         }
     }, [])
 
+    const { user } = useAppSelector((state) => state.user)
 
     const callDecline = () => {
         socket.emit('call-decline', { recepientDetails })
@@ -30,12 +29,7 @@ function AudioCallRecepient({ recepientDetails }) {
     }
 
     const callAccept = () => {
-        // dispatch(acceptCall(
-        //     {
-        //       recepientState: CallStates.ACCEPTED,
-        //     }
-        //   ))
-        socket.emit('call-accept', { type: "AUDIO", recepientDetails })
+        socket.emit('call-accept', { type: "AUDIO", recepientDetails, userDetails: user})
     }
 
     return (
@@ -60,7 +54,7 @@ function AudioCallRecepient({ recepientDetails }) {
                     <span>Calling...</span>
                 </div>
                 <div className="flex gap-12 absolute bottom-32">
-                    <Button type="button" className="rounded-full p-4 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={callDecline}>                
+                    <Button type="button" className="rounded-full p-4 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={callDecline}>
                         <MdPhone size={32} color="white" />
                     </Button>
 

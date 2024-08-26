@@ -159,11 +159,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       throw new BadRequestException('recepient id required')
     }
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
-    console.log(payload, 'accepted')
+    let user = JSON.parse(await this.cacheService.getOnlineUser(payload.userDetails.userId))
+    console.log(user, 'accepted')
     const uuid = '3u293urasdjkof'
 
 
-    this.server.emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.recepientDetails })
+    // this.server.to(user?.socketId).emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.recepientDetails })
+    this.server.emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.userDetails })
   }
 
   @SubscribeMessage("call-end")

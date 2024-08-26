@@ -154,14 +154,15 @@ export const useSocket = (recepient? :string, _isOnline?: Function) => {
 
       socket.on("call-accept", (data) => {
         console.log(data)
-          if (data?.type == "AUDIO") {
-            dispatch(acceptCall(
-              {
-                callDetails: data,
-              }
-            ))
-          } else {
-          }
+          // if (data?.type == "AUDIO" && data.userDetails.username != user.username ) {
+          //   dispatch(acceptCall(
+          //     {
+                
+          //       callDetails: data,
+          //     }
+          //   ))
+          // } else {
+          // }
       })
       
           // remove all event listeners
