@@ -72,7 +72,7 @@ const MainHome = ({ children }: any) => {
     } catch (error) {
         console.log(error)
         dispatch(endCall())
-        location.reload()
+        // location.reload()
     }
 }
   return (
@@ -85,10 +85,7 @@ const MainHome = ({ children }: any) => {
 
 
           {/* accepted call */}
-          {onCall && (callerState == "ACCEPTED") && callDetails?.type == "AUDIO" && callDetails?.channel &&
-              <Agora callDetails={callDetails} type={'SELF'} channel={callDetails.channel} cancelCall={cancelCall} Call={AudioCall} />
-          }
-          {onCall && (recepientState == "ACCEPTED") && callDetails?.type == "AUDIO" && callDetails?.channel &&
+          {onCall && (recepientState == "ACCEPTED" || callerState == "ACCEPTED" ) && callDetails?.type == "AUDIO" && callDetails?.channel &&
               <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={AudioCall} />
           }
 

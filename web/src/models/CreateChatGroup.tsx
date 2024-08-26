@@ -50,7 +50,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
     const [addMemberState, setAddMemberState] = useState(false)
     const { data, isLoading } = useGroupMembers(groupDetails?.groupId)
     const groupAdminToggle = useToggleAdmin()
-    const chatGroup = useChatGroup(groupDetails?.groupId)
+    const chatGroup = editState ? useChatGroup(groupDetails?.groupId) : {}
 
     return (
         <div className='absolute top-0 right-0 w-screen z-10 sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
@@ -191,7 +191,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
 
                     </form>
                     <div>
-                        {
+                        {editState &&
                             !chatGroup.isLoading && chatGroup?.data?.admins?.map((admin) => {
                                 console.log(admin._id, chatGroup.data.user)
                                 if (admin?._id == chatGroup.data.user) {
@@ -335,11 +335,11 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                         )}
 
                     </div>
-                    <div>
-                        <Button onClick={() => setAddMemberState(true)}>
-                            Add Friends
-                        </Button>
-                    </div>
+                    {/* <div> */}
+                        {/* <Button onClick={() => setAddMemberState(true)}> */}
+                            {/* Add Friends */}
+                        {/* </Button> */}
+                    {/* </div> */}
 
                     {editState && addMemberState && <div className="absolute top-0 w-full h-full bg-background">
                         <div className="flex gap-2 p-2 py-4">

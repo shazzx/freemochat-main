@@ -24,6 +24,7 @@ import { MdCancel, MdGroups, MdMessage } from "react-icons/md"
 import { BiSolidMessageSquareAdd } from "react-icons/bi";
 import { useSocket } from "@/hooks/useSocket"
 import { useAppSelector } from "@/app/hooks"
+import { format } from "date-fns"
 
 
 function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
@@ -57,8 +58,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
         socket.on("getOnlineFriends", (data) => {
             console.log(data)
         })
-    },[])
-
+    },[]) 
 
     // ChatGroup
     const { mutate } = useCreateChatGroup()
@@ -122,15 +122,15 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                                 {chatList?.users?.length > 0 ? chatList?.users?.map((chat) => (
                                     <div className="flex gap-4 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={() => {
                                         if (chat.type == "Page") {
-                                            setRecepientDetails({ userId: chat?.recepient?._id, username: chat?.recepient.handle, images: chat?.recepient?.images, name: chat?.recepient?.name, type: "Page", onlineStatus: chat.onlineStatus })
+                                            setRecepientDetails({ userId: chat?.recepient?._id, username: chat?.recepient.handle, images: {profile: chat?.recepient?.profile, cover: chat?.recepient?.cover}, name: chat?.recepient?.name, type: "Page", onlineStatus: chat.onlineStatus })
                                         } else {
-                                            setRecepientDetails({ userId: chat?.recepient?._id, username: chat?.recepient.username || chat?.recepient.handle, profile: chat?.recepient?.images?.profile, fullname: (chat?.recepient?.firstname + " " + chat?.recepient.lastname) || chat?.recepient?.name, firstname: chat?.recepient?.firstname || chat?.recepient?.name, lastname: chat?.recepient.lastname, type: "User", onlineStatus: chat.onlineStatus })
+                                            setRecepientDetails({ userId: chat?.recepient?._id, username: chat?.recepient.username || chat?.recepient.handle, profile: chat?.recepient?.profile, fullname: (chat?.recepient?.firstname + " " + chat?.recepient.lastname) || chat?.recepient?.name, firstname: chat?.recepient?.firstname || chat?.recepient?.name, lastname: chat?.recepient.lastname, type: "User", onlineStatus: chat.onlineStatus })
                                         }
                                         setChatOpen(true)
 
                                     }}>
                                         <Avatar className="hidden h-12 w-12 sm:flex">
-                                            <AvatarImage src={chat?.recepient?.images?.profile} alt="Avatar" />
+                                            <AvatarImage src={chat?.recepient?.profile} alt="Avatar" />
                                             <AvatarFallback>{chat?.recepient?.firstname && chat?.recepient?.firstname[0]?.toUpperCase() + chat?.recepient?.lastname && chat?.recepient?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col gap-2 justify-center">
@@ -141,7 +141,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                                                 {chat?.lastMessage?.encryptedContent}
                                             </p>
                                         </div>
-                                        <div className="ml-auto text-xs">Today</div>
+                                        <div className="ml-auto text-xs">{format(chat?.updatedAt ?? Date.now(), 'MMM d, yyy h:mm a')}</div>
                                     </div>
                                 ))
                                     :
@@ -165,13 +165,13 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                                 {chatList?.groups?.length > 0 ? chatList?.groups?.map((chat) => (
                                     <div className="flex gap-2 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={() => {
                                         console.log(chat?.recepient?.images)
-                                        setRecepientDetails({ userId: chat?.recepient?._id, groupId: chat?.recepient?._id, images: chat?.recepient?.images, name: chat?.recepient?.name, description: chat?.recepient?.description, type: "ChatGroup" })
+                                        setRecepientDetails({ userId: chat?.recepient?._id, groupId: chat?.recepient?._id, images: {profile: chat?.recepient?.profile, cover: chat?.recepient?.cover}, name: chat?.recepient?.name, description: chat?.recepient?.description, type: "ChatGroup" })
                                         setChatOpen(true)
                                     }}>
                                         <div>
                                         </div>
                                         <Avatar className="hidden h-12 w-12  sm:flex">
-                                            <AvatarImage src={chat?.recepient?.images?.profile} alt="Avatar" />
+                                            <AvatarImage src={chat?.recepient?.profile} alt="Avatar" />
                                             <AvatarFallback>{chat?.recepient?.name[0]?.toUpperCase() + chat?.recepient?.name[1]?.toUpperCase()}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col gap-2 justify-center">

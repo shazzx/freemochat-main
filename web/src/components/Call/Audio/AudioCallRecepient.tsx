@@ -29,7 +29,12 @@ function AudioCallRecepient({ recepientDetails }) {
     }
 
     const callAccept = () => {
-        socket.emit('call-accept', { type: "AUDIO", recepientDetails, userDetails: user})
+        socket.emit('call-accept', { type: "AUDIO", recepientDetails, userDetails: {
+            userId: user._id,
+            username: user.username,
+            fullname: user.firstname + " " + user?.lastname,
+            profile: user?.profile
+        }})
     }
 
     return (

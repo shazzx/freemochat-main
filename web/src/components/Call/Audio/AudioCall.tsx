@@ -14,12 +14,9 @@ import { Mic } from "lucide-react";
 import { MdPhone } from "react-icons/md";
 import CallSecondsCounter from "../CallSecondsCounter";
 import { useSocket } from "@/hooks/useSocket";
-import { useAppSelector } from "@/app/hooks";
 
-
-const AudioCall = ({ channel, callDetails, cancelCall, type }) => {
-  const { user } = useAppSelector(state => state.user)
-  const currentUser = type == "SELF" ? user : callDetails.recepientDetails 
+const AudioCall = ({ channel, callDetails, cancelCall}) => {
+  const recepient = callDetails.recepientDetails 
   const appId = 'f41145d4d6fa4a3caab3104ac89622ec'
   const socket = useSocket()
 
@@ -88,13 +85,13 @@ const AudioCall = ({ channel, callDetails, cancelCall, type }) => {
             <div className='flex flex-col gap-4 items-center justify-center'>
               <div className='w-28 h-28 border-2 border-accent rounded-full flex items-center justify-center bg-accent overflow-hidden'>
                 <Avatar className="flex  items-center justify-center">
-                  <AvatarImage src={currentUser?.profile} alt="Avatar" />
-                  {/* <AvatarFallback className='text-4xl'>{currentUser?.firstname[0]?.toUpperCase() + currentUser?.lastname[0]?.toUpperCase()}</AvatarFallback> */}
+                  <AvatarImage src={recepient?.profile} alt="Avatar" />
+                  <AvatarFallback className='text-4xl'>{recepient?.fullname[0]?.toUpperCase()}</AvatarFallback>
                 </Avatar>
               </div>
               <div className='flex flex-col  items-center justify-center'>
-                {/* <span className='text-lg'>{currentUser?.firstname?.toUpperCase() + " " + currentUser?.lastname?.toUpperCase()}</span> */}
-                <span>@{currentUser?.username}</span>
+                <span className='text-lg'>{recepient?.fullname}</span>
+                <span>@{recepient?.username}</span>
               </div>
             </div>
             <div >
