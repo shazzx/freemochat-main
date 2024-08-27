@@ -1200,11 +1200,15 @@ export const useLikeFeedPost = () => {
 
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
+            draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
+            
             return draft
           }
-
+          
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
+            draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
+
             return draft
           }
 

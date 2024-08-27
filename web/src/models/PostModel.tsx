@@ -101,7 +101,7 @@ function PostModel({ postIndex, pageIndex, setModelTrigger, postId, postData, us
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
                 setModelTrigger(false)
             }}></div>
-            <div ref={scrollRef} className='z-10 max-w-xl w-full bg-background relative rounded-lg h-fit max-h-full scroll-smooth overflow-auto border-2 border-accent shadow-md'>
+            <div ref={scrollRef} className='z-10 max-w-xl w-full h-full flex flex-col bg-background relative rounded-lg sm:h-fit max-h-full scroll-smooth overflow-auto border-2 border-accent shadow-md'>
                 {editCommentModelState &&
                     <div className='absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[1.5px] z-50 '>
                         <div className='absolute w-full h-full top-0 left-0 z-10' onClick={() => {
@@ -141,8 +141,12 @@ function PostModel({ postIndex, pageIndex, setModelTrigger, postId, postData, us
                     </div>
                 }
 
+                <div className='relative bg-card w-full flex p-2'>
+                    <ChevronLeft size={24} z={12} className='z-20' cursor="pointer" onClick={() => setModelTrigger(false)} /> <span className='w-full text-center text-lg relative right-[5%]'>Post</span>
+                </div>
+
                 <Post useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} model={true} postData={postData} username={user?.username} userId={user?._id} type={type} />
-                <div className='relative p-4 flex flex-col gap-2 '>
+                <div className='relative p-4 flex h-full flex-col gap-2 '>
                     {/* comment section */}
                     {/* {isLoading &&
                         // <ScreenLoader limit={1} />

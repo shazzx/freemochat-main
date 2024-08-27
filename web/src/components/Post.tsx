@@ -222,7 +222,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                     </div>
                     {
                         postData && postData.media &&
-                        <div className=' overflow-hidden aspect-auto max-w-xl  flex items-center justify-center bg-background' onClick={() => {
+                        <div className=' overflow-hidden aspect-auto max-w-xl flex items-center justify-center bg-background' onClick={() => {
                             if (!model) {
                                 setModelTrigger(true)
                             }
@@ -240,7 +240,15 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         </div>
                     }
                 </CardContent>
-                <CardFooter className='py-2 px-3 md:p-4 select-none'>
+                <CardFooter className='py-2 px-3 md:p-4 select-none flex flex-col'>
+                    <div className='hidden sm:flex gap-2 w-full flex-start'>
+                    <span className='text-sm'>
+                    {postData?.likesCount > 0 &&  "Likes " + postData?.likesCount  }
+                    </span>
+                    <span className='text-sm'>
+                    {postData?.commentsCount > 0 &&  "Comments " + postData?.commentsCount  }
+                    </span >
+                    </div>
                     <div className='flex  items-center justify-between w-full '>
 
                         <div className='flex gap-1 items-center cursor-pointer' onClick={async () => {

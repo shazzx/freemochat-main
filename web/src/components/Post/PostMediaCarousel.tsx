@@ -12,15 +12,15 @@ import {
 export function PostMediaCarousel({ media }) {
   console.log(media)
   return (
-    <Carousel className="relative aspect-auto object-contain max-w-[520px]  ">
+    <Carousel className="relative">
       <CarouselContent>
         {media?.length > 0 && media.map(({ type, url }, index) => (
           <CarouselItem key={index} className="flex justify-center items-center">
-            <div>
+            <div className="aspect-auto max-w-xl">
               {type == 'video' ?
-                <video className='w-full h-full' autoPlay={false} src={url} controls></video>
+                <video className='object-contain' autoPlay={false} src={url} controls></video>
                 :
-                <img className='object-contain' src={url} alt="" />
+                <img src={url} alt="" />
               }
             </div>
           </CarouselItem>
