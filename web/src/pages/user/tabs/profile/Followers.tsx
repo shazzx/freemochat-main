@@ -17,7 +17,7 @@ function Followers({ userFollowers, followUserToggle, media, recepientId, setMed
     },[inView])
 
     return (
-        <div className='flex-responsive w-full items-center md:items-start p-2 flex gap-2 border-muted'>
+        <div className='w-full items-center md:items-start p-2 flex gap-2 border-muted'>
             <div className='max-w-xl w-full flex flex-col gap-2 '>
                 {userFollowers.isSuccess && userFollowers.data.map((page, pageIndex) => {
                     return page.followers.map((follower, followerIndex) => {
@@ -25,7 +25,7 @@ function Followers({ userFollowers, followUserToggle, media, recepientId, setMed
                     if(pageIndex == userFollowers.length && followerIndex == userFollowers[pageIndex].friends.length - 3){
                         return (
                             <div className='flex flex-col gap-1 w-full bg-card' key={follower._id} ref={ref}>
-                                <div className='flex-responsive items-center p-2 gap-2 relative w-full '>
+                                <div className='flex items-center p-2 gap-2 relative w-full '>
                                     <div className='flex w-full gap-2'>
                                         <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                             <Avatar >
@@ -61,7 +61,7 @@ function Followers({ userFollowers, followUserToggle, media, recepientId, setMed
 
                         return (
                             <div className='flex flex-col gap-1 w-full bg-card'>
-                                <div className='flex-responsive items-center p-2 gap-2 relative w-full '>
+                                <div className='flex items-center p-2 gap-2 relative w-full '>
                                     <div className='flex w-full gap-2'>
                                         <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                             <Avatar >

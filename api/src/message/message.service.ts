@@ -6,148 +6,154 @@ import { Message } from 'src/schema/message';
 
 @Injectable()
 export class MessageService {
-    constructor(
-        @InjectModel(Message.name) private readonly messageModel: Model<Message>,
-        private readonly chatlistService: UserChatListService,
-    ) { }
+  constructor(
+    @InjectModel(Message.name) private readonly messageModel: Model<Message>,
+    private readonly chatlistService: UserChatListService,
+  ) { }
 
-    async createMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number, isUploaded: boolean }, gateway?:boolean, isGroup?: boolean, removeUser?: boolean, removeChat?: boolean  }) {
-        if(!messageDetails?.gateway){
-          console.log('gateway condition')
-            await this.chatlistService.createOrUpdateChatList(messageDetails.sender.toString(), messageDetails.recepient.toString(), messageDetails.type, { sender: messageDetails.sender, encryptedContent: messageDetails?.isGroup ? messageDetails.content: messageDetails.messageType }, messageDetails.messageType, messageDetails.removeUser, messageDetails.removeChat )
-        }
-        const message = await this.messageModel.create(messageDetails)
-        return message
+  async createMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number, isUploaded: boolean }, gateway?: boolean, isGroup?: boolean, removeUser?: boolean, removeChat?: boolean }) {
+    if (!messageDetails?.gateway) {
+      console.log('gateway condition')
+      await this.chatlistService.createOrUpdateChatList(messageDetails.sender.toString(), messageDetails.recepient.toString(), messageDetails.type, { sender: messageDetails.sender, encryptedContent: messageDetails?.isGroup ? messageDetails.content : messageDetails.messageType }, messageDetails.messageType, messageDetails.removeUser, messageDetails.removeChat)
     }
-
-
-    async updateMessage(messageId: string, messageDetails: { type?: string, content?: string, messageType?: string,  media?: { url: string, type?: string, duration?: number, isUploaded: boolean }}) {
-      console.log(messageDetails, messageId)
-      // let updatedUser = this.userModel.findByIdAndUpdate(userId, { $set: { ...updatedDetails } }, { returnOriginal: false })
-
-       console.log(await this.messageModel.findById(messageId))
-      const message = await this.messageModel.findByIdAndUpdate(messageId, {$set: {media: messageDetails.media }}, {new: true})
-      return message
+    const message = await this.messageModel.create(messageDetails)
+    return message
   }
 
 
-    async getMessages(cursor: string, userId: string, recepientId: string, isChatGroup?: number) {
-        const limit = 12
-        const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
-        // let query = { ..._cursor, $or: [{ sender: userId, recepient: recepientId }, { sender: recepientId, recepient: userId }] }
-        let query;
-        let messages;
-        if(isChatGroup == 0){
-          query = { ..._cursor, $or: [{ sender: new Types.ObjectId(userId), recepient: new Types.ObjectId(recepientId) }, { sender: new Types.ObjectId(recepientId), recepient: new Types.ObjectId(userId) }] }
+  async updateMessage(messageId: string, messageDetails: { type?: string, content?: string, messageType?: string, media?: { url: string, type?: string, duration?: number, isUploaded: boolean } }) {
+    console.log(messageDetails, messageId)
+    // let updatedUser = this.userModel.findByIdAndUpdate(userId, { $set: { ...updatedDetails } }, { returnOriginal: false })
 
-          let chatlist = await this.chatlistService.getChatList(userId, recepientId)
-          
-            messages = await this.messageModel.aggregate([
-                { $match: {...query, createdAt: {$gt: chatlist.createdAt}} },
-                { $sort: { createdAt: -1 } },
-                { $limit: limit + 1 },
-            ]);
+    console.log(await this.messageModel.findById(messageId))
+    const message = await this.messageModel.findByIdAndUpdate(messageId, { $set: { media: messageDetails.media } }, { new: true })
+    return message
+  }
 
 
-        }
-        if(isChatGroup == 1){
-            query = { ..._cursor, recepient: new Types.ObjectId(recepientId)  }
-            messages = await this.messageModel.aggregate([
-                { $match: query },
-                { $limit: limit + 1 },
-                {
-                    $addFields: {
-                      isCurrentUser: { $eq: ['$senderId', new Types.ObjectId(userId)] }
-                    }
-                  },
-                {
-                    $facet: {
-                      currentUserMessages: [
-                        { $match: { isCurrentUser: true } },
-                        {
-                          $addFields: {
-                            sender: {
-                              _id: '$senderId',
-                              // Add other fields you want to include, set to null
-                            }
-                          }
-                        }
-                      ],
-                      otherMessages: [
-                        { $match: { isCurrentUser: false } },
-                        {
-                          $lookup: {
-                            from: 'users',
-                            let: { senderId: '$sender' },
-                            pipeline: [
-                              {
-                                $match: {
-                                  $expr: { $eq: ['$_id', '$$senderId'] }
-                                }
-                              },
-                              {
-                                $project: {
-                                  _id: 1,
-                                  username: 1,
-                                  firstname: 1,
-                                  lastname: 1,
-                                  images: 1,
-                                  email: 1
-                                  // Add other fields you want to include
-                                }
-                              }
-                            ],
-                            as: 'senderData'
-                          }
-                        },
-                        {
-                          $addFields: {
-                            sender: { $arrayElemAt: ['$senderData', 0] }
-                          }
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    $project: {
-                      allMessages: {
-                        $concatArrays: ['$currentUserMessages', '$otherMessages']
+  async getMessages(cursor: string, userId: string, recepientId: string, isChatGroup?: number) {
+    const limit = 12
+    const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
+    // let query = { ..._cursor, $or: [{ sender: userId, recepient: recepientId }, { sender: recepientId, recepient: userId }] }
+    let query;
+    let messages;
+    let chatlist = await this.chatlistService.getChatList(userId, recepientId)
+
+    if (isChatGroup == 0) {
+      query = { ..._cursor, $or: [{ sender: new Types.ObjectId(userId), recepient: new Types.ObjectId(recepientId) }, { sender: new Types.ObjectId(recepientId), recepient: new Types.ObjectId(userId) }] }
+      if (!chatlist) {
+        return { messages: [], nextCursor: null };
+      }
+      console.log(chatlist.createdAt)
+      messages = await this.messageModel.aggregate([
+        { $match: { ...query, createdAt: { $gt: chatlist.createdAt } } },
+        { $sort: { createdAt: -1 } },
+        { $limit: limit + 1 },
+      ]);
+
+
+    }
+    if (isChatGroup == 1) {
+      query = { ..._cursor, recepient: new Types.ObjectId(recepientId) }
+      if (!chatlist) {
+        return { messages: [], nextCursor: null };
+      }
+      messages = await this.messageModel.aggregate([
+        { $match: { ...query, createdAt: { $gt: chatlist.createdAt } } },
+        { $limit: limit + 1 },
+        {
+          $addFields: {
+            isCurrentUser: { $eq: ['$senderId', new Types.ObjectId(userId)] }
+          }
+        },
+        {
+          $facet: {
+            currentUserMessages: [
+              { $match: { isCurrentUser: true } },
+              {
+                $addFields: {
+                  sender: {
+                    _id: '$senderId',
+                    // Add other fields you want to include, set to null
+                  }
+                }
+              }
+            ],
+            otherMessages: [
+              { $match: { isCurrentUser: false } },
+              {
+                $lookup: {
+                  from: 'users',
+                  let: { senderId: '$sender' },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: { $eq: ['$_id', '$$senderId'] }
+                      }
+                    },
+                    {
+                      $project: {
+                        _id: 1,
+                        username: 1,
+                        firstname: 1,
+                        lastname: 1,
+                        images: 1,
+                        email: 1
+                        // Add other fields you want to include
                       }
                     }
-                  },
-                  { $unwind: '$allMessages' },
-                  { $replaceRoot: { newRoot: '$allMessages' } },
-            ]).sort({ createdAt: -1 } );
-    
-        }
-
-        if(!messages){
-          throw new BadRequestException("Please provide proper details")
-        }
-
-        console.log(query)
-
-        const hasNextPage = messages.length > limit;
-        const _messages = hasNextPage ? messages.slice(0, -1).reverse() : messages.reverse();
-        const nextCursor = hasNextPage ? _messages[_messages.length - 1].createdAt.toISOString() : null;
-
-        const results = { messages: _messages, nextCursor };
-        return results
-
-        // const messages = await this.messageModel.find({ $or: [{ sender: userId, recepient: recepientId }, { sender: recepientId, recepient: userId }] }).sort({ createdAt: -1 })
-        // return messages
-    }
-
-    async deleteChat(userId, recepient) {
+                  ],
+                  as: 'senderData'
+                }
+              },
+              {
+                $addFields: {
+                  sender: { $arrayElemAt: ['$senderData', 0] }
+                }
+              }
+            ]
+          }
+        },
+        {
+          $project: {
+            allMessages: {
+              $concatArrays: ['$currentUserMessages', '$otherMessages']
+            }
+          }
+        },
+        { $unwind: '$allMessages' },
+        { $replaceRoot: { newRoot: '$allMessages' } },
+      ]).sort({ createdAt: -1 });
 
     }
 
-
-    async removeMessage(userId, messageId) {
-        const deletedMessage = await this.messageModel.updateOne(
-            { _id: messageId },
-            { $push: { deletedFor: { userId, deletedAt: Date.now() } } }
-        )
-        return deletedMessage
+    if (!messages) {
+      throw new BadRequestException("Please provide proper details")
     }
+
+    console.log(query)
+
+    const hasNextPage = messages.length > limit;
+    const _messages = hasNextPage ? messages.slice(0, -1).reverse() : messages.reverse();
+    const nextCursor = hasNextPage ? _messages[_messages.length - 1].createdAt.toISOString() : null;
+
+    const results = { messages: _messages, nextCursor };
+    return results
+
+    // const messages = await this.messageModel.find({ $or: [{ sender: userId, recepient: recepientId }, { sender: recepientId, recepient: userId }] }).sort({ createdAt: -1 })
+    // return messages
+  }
+
+  async deleteChat(userId, recepient) {
+
+  }
+
+
+  async removeMessage(userId, messageId) {
+    const deletedMessage = await this.messageModel.updateOne(
+      { _id: messageId },
+      { $push: { deletedFor: { userId, deletedAt: Date.now() } } }
+    )
+    return deletedMessage
+  }
 }

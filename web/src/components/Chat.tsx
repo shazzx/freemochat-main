@@ -38,7 +38,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
     const [emojiPickerState, setEmojiPickerState] = useState(false)
     const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId, _isOnline)
-    const group = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId):{}
+    const group = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId) : {}
     const [chatGroupInfo, setChatGroupInfo] = useState(false)
     const [inputValue, setInputValue] = useState("");
     const [groupData, setGroupData] = useState(null)
@@ -61,6 +61,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     const [fileSelectDropDownState, setFileSelectDropDownState] = useState(false)
     const [openPdf, setOpenPdf] = useState(false)
     const dropdownRef = useRef(null)
+    const textRef = useRef(null)
     const emojiPickerRef = useRef(null)
     const queryClient = useQueryClient()
 
@@ -165,6 +166,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     useEffect(() => {
         scrollToBottom()
     }, [userMessages?.data])
+    console.log(userMessages?.data)
 
     const handleSendMessage = (e?: KeyboardEvent) => {
         if (inputValue.trim().length === 0) {
@@ -182,10 +184,14 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         // setMessages((previousMessages) => [...previousMessages, ]);
 
         const messageData = { recepeint: recepientDetails.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, type: recepientDetails?.type, messageType: "Text" }
-        console.log(messageData)
 
         queryClient.setQueryData(["messages", recepientDetails.userId], (pages: any) => {
             const updatedMessages = produce(pages, (draft: any) => {
+                console.log(pages)
+                if (!pages) {
+                    draft = { pages: [{ messages: [messageData] }], nextCursor: null }
+                    return draft
+                }
                 if (draft.pages[draft.pages.length - 1].messages) {
                     draft.pages[draft.pages.length - 1].messages = [...draft.pages[draft.pages.length - 1].messages, messageData]
                     return draft
@@ -217,13 +223,13 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                 callerState: CallStates.CALLING,
             }
         ))
-        socket.emit("initiate-call", { type: 'AUDIO', userDetails: { userId: user?._id, username: user?.username, fullname: user?.firstname + " "+ user?.lastname, profile: user?.profile  }, recepientDetails })
+        socket.emit("initiate-call", { type: 'AUDIO', userDetails: { userId: user?._id, username: user?.username, fullname: user?.firstname + " " + user?.lastname, profile: user?.profile }, recepientDetails })
     }, [])
 
 
     const initiateVideoCall = useCallback(() => {
         setVideoCallCallerState(true)
-        socket.emit("initiate-call", { type: 'VIDEO', userDetails: { userId: user?._id, username: user?.username, fullname: user?.firstname + " "+ user?.lastname, profile: user?.profile }, recepientDetails })
+        socket.emit("initiate-call", { type: 'VIDEO', userDetails: { userId: user?._id, username: user?.username, fullname: user?.firstname + " " + user?.lastname, profile: user?.profile }, recepientDetails })
     }, [])
 
     // chat method
@@ -233,7 +239,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     }
 
     const deleteChat = async () => {
-        const {data} = await axiosClient.post("/chatlist/remove", {recepientId: recepientDetails?.type == "ChatGroup" ? recepientDetails?.groupId : recepientDetails?.userId, type: recepientDetails?.type})
+        const { data } = await axiosClient.post("/chatlist/remove", { recepientId: recepientDetails?.type == "ChatGroup" ? recepientDetails?.groupId : recepientDetails?.userId, type: recepientDetails?.type })
         console.log(data)
         setChatOpen(false)
     }
@@ -243,7 +249,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         // const {data} = await axiosClient.post("/user/block", {blockUserId: recepientDetails?.userId})
         // console.log(data)
     }
-    
+
     function emojiToImageUrl(emoji) {
         // Create a canvas element
         const canvas = document.createElement('canvas');
@@ -313,7 +319,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
             }
 
             {/* initiated call */}
-            {callData?.onCall && callData?.callerState == "CALLING"  &&
+            {callData?.onCall && callData?.callerState == "CALLING" &&
                 <AudioCallCaller recepientDetails={recepientDetails} setAudioCallCaller={setAudioCallCallerState} />
             }
 
@@ -337,7 +343,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                     </div>
                     <div className='flex flex-col gap-0'>
                         <h3 className='text-card-foreground text-sm'>{recepientDetails?.type == "User" ? recepientDetails?.fullname : recepientDetails?.name}</h3>
-                        <span className='text-muted-foreground text-xs'>{recepientDetails?.type == "ChatGroup" ? group?.data?.membersCount > 0 ? "members " + group?.data?.membersCount  :"no members" : isOnline == null ? recepientDetails.onlineStatus ? "online" : "offline" : isOnline ? "online" : "offline"}</span>
+                        <span className='text-muted-foreground text-xs'>{recepientDetails?.type == "ChatGroup" ? group?.data?.membersCount > 0 ? "members " + group?.data?.membersCount : "no members" : isOnline == null ? recepientDetails.onlineStatus ? "online" : "offline" : isOnline ? "online" : "offline"}</span>
                     </div>
                 </div>
                 <div className="flex items-center justify-center gap-4 sm:mr-4">
@@ -394,7 +400,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                 <div className="flex gap-2 items-center justify-center w-full" key={message?._id}>
 
                                     <div className="relative max-w-80 w-fit">
-                                    <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p>
+                                        <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p>
                                         <div className="relative border border-muted
                                  text-sm bg-card p-1 text-foreground rounded-lg pr-3">
                                             <p className="p-1 px-2 text-center" >{message?.content}</p>
@@ -680,6 +686,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                     }} />
 
                     <input
+                        ref={textRef}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e: any) => {
@@ -716,23 +723,41 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                             ]}
                                 customEmojis={[
                                     { id: '12rwtfadfasdf', names: ['freedom'], imgUrl: emojiToImageUrl('🪽') },
-                                    { id: '1adf2asfsdf4', names: ['freedom'], imgUrl: emojiToImageUrl('𓆩𓆪') },
+                                    // { id: '1adf2asfsdf4', names: ['freedom'], imgUrl: emojiToImageUrl('𓆩𓆪') },
                                     { id: '1asftujyyiz2623', names: ['freedom'], imgUrl: emojiToImageUrl('🕊️') }
-                                ]} open={emojiPickerState} onEmojiClick={(emoji) => {
-                                    setEmojiPickerState(false)
-                                    console.log(emoji)
-                                    // content.current.value = content.current.value + " " + emoji.emoji
+                                ]} open={emojiPickerState} onEmojiClick={({emoji, names}) => {
+                                    let selection = textRef.current.selectionStart
+                                    console.log(emoji )
+                                    let _emoji = emoji
+                                    if (emoji == "1asftujyyiz2623") {
+                                        _emoji = '🕊️'
+                                    }
+                                    if (emoji == "12rwtfadfasdf") {
+                                        _emoji = '🪽'
+                                    }
+                                    console.log(selection)
+
+
+                                    if (selection == 0 && inputValue.length == 0) {
+                                        setInputValue(_emoji)
+                                        return 
+                                    }
+                                    
+                                    if (selection) {
+                                        const textBefore = inputValue.substring(0, selection);
+                                        const textAfter =  inputValue.substring(selection);
+                                        setInputValue(textBefore + _emoji + textAfter)
+
+                                        const newCursorPos = selection + emoji.length;
+                                        console.log(newCursorPos)
+                                        textRef.current.setSelectionRange(newCursorPos, newCursorPos);
+
+                                    }
                                 }} />
                         </div>
                         }
                     </div>
                 </div>}
-                {/* <svg width="47" className="stroke-foreground dark:stroke-foreground" cursor="pointer" height="48" viewBox="0 0 47 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="1.5" y="1" width="44" height="46" rx="3" stroke="#A9A7FD" stroke-width="2" />
-                    <path d="M27.338 24.6263C27.338 25.7333 26.8955 26.7949 26.1078 27.5777C25.3202 28.3604 24.2519 28.8002 23.138 28.8002C22.0241 28.8002 20.9558 28.3604 20.1681 27.5777C19.3805 26.7949 18.938 25.7333 18.938 24.6263V18.7828C18.938 17.6758 19.3805 16.6141 20.1681 15.8314C20.9558 15.0486 22.0241 14.6089 23.138 14.6089C24.2519 14.6089 25.3202 15.0486 26.1078 15.8314C26.8955 16.6141 27.338 17.6758 27.338 18.7828V24.6263Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M31.538 25.4609C31.5402 26.4482 31.3462 27.4261 30.9672 28.3386C30.588 29.2512 30.0312 30.0803 29.3287 30.7783C28.6262 31.4764 27.792 32.0298 26.8737 32.4065C25.9555 32.7833 24.9715 32.9761 23.978 32.974H22.298C21.3046 32.9761 20.3206 32.7833 19.4024 32.4065C18.4841 32.0298 17.6498 31.4764 16.9474 30.7783C16.2449 30.0803 15.6882 29.2512 15.309 28.3386C14.9299 27.4261 14.7358 26.4482 14.7381 25.4609" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M23.1379 32.9741V36.3132" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg> */}
                 <AudioRecorder setIsRecordingMain={setIsRecording} onRecordingComplete={async (audioBlob, uploadState, recordingTime) => {
                     console.log(audioBlob, uploadState, recordingTime)
                     if (uploadState) {
@@ -761,4 +786,4 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     )
 }
 
-export default React.memo(Chat)
+export default Chat

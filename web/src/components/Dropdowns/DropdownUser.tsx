@@ -37,8 +37,8 @@ export const DropdownUser: FC<any> = ({ deleteChat, blockUser, setReportModelSta
                         <span>Report</span>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem className="cursor-pointer" onClick={deleteChat}>
-                        <AlertDialogC action={deleteChat} button={<Button variant="outline"><MdDelete className="mr-2 h-4 w-4" /> Delete Chat</Button>} />
+                    <DropdownMenuItem className="cursor-pointer">
+                        <AlertDialogC action={deleteChat} button={<Button><MdDelete className="mr-2 h-4 w-4" /> Delete Chat</Button>} />
                     </DropdownMenuItem>
                 </DropdownMenuGroup>
             </DropdownMenuContent>

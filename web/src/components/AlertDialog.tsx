@@ -10,7 +10,7 @@ import {
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
 
-  export function AlertDialogC({button, action}) {
+  export function AlertDialogC({button, action, dialogState}) {
     return (
       <AlertDialog>
         <AlertDialogTrigger asChild>

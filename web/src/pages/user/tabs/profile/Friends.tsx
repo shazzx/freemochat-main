@@ -16,7 +16,7 @@ function Friends({userFriends, removeFriend, media, setMediaModelDetails, setMed
     },[inView])
 
     return (
-    <div className='flex-responsive w-full items-center md:items-start p-2 flex gap-2 border-muted'>
+    <div className='w-full items-center md:items-start p-2 flex gap-2 border-muted'>
     <div className='max-w-xl w-full flex flex-col gap-2 '>
         <div className='flex w-full items-center  flex-col gap-2 '>
             {userFriends.isSuccess && userFriends.data?.map((page, pageIndex) => {
@@ -25,7 +25,7 @@ function Friends({userFriends, removeFriend, media, setMediaModelDetails, setMed
 
                     if(pageIndex == userFriends.length && friendIndex == userFriends[pageIndex].friends.length - 3){
                         <div className='flex flex-col gap-1 w-full bg-card' key={friend._id} ref={ref}>
-                            <div className='flex-responsive items-center p-2 gap-2 relative w-full '>
+                            <div className='flex items-center p-2 gap-2 relative w-full '>
                                 <Link to={domain + "/user/" + friend?.username} className='cursor-pointer flex w-full gap-2'>
                                     <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                         <Avatar >
@@ -58,7 +58,7 @@ function Friends({userFriends, removeFriend, media, setMediaModelDetails, setMed
                     return (
 
                         <div className='flex flex-col gap-1 w-full bg-card' key={friend._id}>
-                            <div className='flex-responsive items-center p-2 gap-2 relative w-full '>
+                            <div className='flex items-center p-2 gap-2 relative w-full '>
                                 <Link to={domain + "/user/" + friend?.username} className='cursor-pointer flex w-full gap-2'>
                                     <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                         <Avatar >

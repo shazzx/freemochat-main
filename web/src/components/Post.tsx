@@ -15,6 +15,7 @@ import CPostModal from '@/models/CPostModal'
 import { domain } from '@/config/domain'
 import { toast } from 'react-toastify'
 import { useAppSelector } from '@/app/hooks'
+import { PostMediaCarousel } from './Post/PostMediaCarousel'
 
 interface PostProps {
     postData: any,
@@ -40,7 +41,7 @@ interface PostProps {
     scrollRef?: any
 }
 
-const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useLikePost, useBookmarkPost, type, fetchNextPage, self, profile, isAdmin, isSearch, query, scrollRef}) => {
+const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useLikePost, useBookmarkPost, type, fetchNextPage, self, profile, isAdmin, isSearch, query, scrollRef }) => {
     const [shareState, setShareState] = useState(false)
     const [ref, inView] = useInView()
     const [date, setDate] = useState("")
@@ -69,7 +70,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
     const _updatePost = async ({ content, selectedMedia, formData, media, setModelTrigger }) => {
         let _media = media.filter((media) => {
-            if(!media?.file){
+            if (!media?.file) {
                 return media
             }
         })
@@ -146,6 +147,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             </div>
         )
     }
+    console.log(postData?.media?.length)
 
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} onClick={() => {
@@ -220,15 +222,19 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                     </div>
                     {
                         postData && postData.media &&
-                        <div className=' overflow-hidden aspect-auto max-h-[600px]  flex items-center justify-center bg-background' onClick={() => {
+                        <div className=' overflow-hidden aspect-auto max-w-xl  flex items-center justify-center bg-background' onClick={() => {
                             if (!model) {
                                 setModelTrigger(true)
                             }
                         }}>
-                            {postData.media[0]?.type == 'video' ?
-                                <video className='w-full h-full' autoPlay={false} src={postData?.media && postData?.media[0]?.url} controls></video>
+                            {model ?
+                                <PostMediaCarousel media={postData?.media} />
                                 :
-                                <img className='object-contain' src={postData?.media[0]?.url} alt="" />
+                                postData.media[0]?.type == 'video' ?
+                                    <video className='w-full h-full' autoPlay={false} src={postData?.media && postData?.media[0]?.url} controls></video>
+                                    :
+                                    <img className='object-contain' src={postData?.media[0]?.url} alt="" />
+
 
                             }
                         </div>
