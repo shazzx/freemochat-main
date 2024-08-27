@@ -23,9 +23,10 @@ export async function fetchPosts(pageParam, type, targetId?) {
   });
   return response.data;
 }
-export async function fetchPost(postId: string) {
-  const response = await axiosClient.get("post", {
-    params: { postId }
+export async function fetchPost(postId: string, type: string) {
+  console.log(postId, type, 'yesss')
+  const response = await axiosClient.get("posts/post", {
+    params: { postId, type }
   });
   return response.data;
 }

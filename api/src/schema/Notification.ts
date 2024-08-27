@@ -10,6 +10,10 @@ export class Notification {
     @Prop()
     type: String;
 
+    // type can be user/page/group
+    @Prop()
+    targetType: String;
+
     @Prop({ type: Types.ObjectId, ref: "User" })
     user: ObjectId
 

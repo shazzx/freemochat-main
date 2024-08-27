@@ -200,7 +200,7 @@ export class PostsService {
     async getPost(userId: string, postId: string, type: string) {
         let model = type + 's'
         const limit = 5
-        let query =  {  _id: new Types.ObjectId(postId) }
+        let query = { _id: new Types.ObjectId(postId) }
         const post = await this.postModel.aggregate([
             { $match: query },
             { $sort: { createdAt: -1 } },
@@ -1104,7 +1104,7 @@ export class PostsService {
     }
 
     async _getPost(postId) {
-        const post = await this.postModel.findById( postId)
+        const post = await this.postModel.findById(postId)
         // .populate([
         //     {
         //         path: "comments.user",
@@ -1307,11 +1307,13 @@ export class PostsService {
 
                 }
             },
-            {$addFields: {
-                "post.likesCount": { $ifNull: ['$likesCount.count', 0] },
-                "post.commentsCount": { $ifNull: ['$commentsCount.count', 0] },
-                "post.bookmarksCount": { $ifNull: ['$bookmarksCount.count', 0] },
-            }},
+            {
+                $addFields: {
+                    "post.likesCount": { $ifNull: ['$likesCount.count', 0] },
+                    "post.commentsCount": { $ifNull: ['$commentsCount.count', 0] },
+                    "post.bookmarksCount": { $ifNull: ['$bookmarksCount.count', 0] },
+                }
+            },
             {
                 $project: {
                     post: 1,
@@ -1355,15 +1357,19 @@ export class PostsService {
 
         if (deleteResult.deletedCount === 0) {
             await this.likeModel.create(filter);
-            await this.notificationService.createNotification(
-                {
-                    from: new Types.ObjectId(userId),
-                    user: new Types.ObjectId(authorId),
-                    targetId: new Types.ObjectId(targetId),
-                    type,
-                    value: type == "post" ? "liked your post" : type == "comment" ? "liked your commnet" : "liked your reply"
-                }
-            )
+            if (userId != authorId) {
+                await this.notificationService.createNotification(
+                    {
+                        from: new Types.ObjectId(userId),
+                        user: new Types.ObjectId(authorId),
+                        targetId: new Types.ObjectId(targetId),
+                        type,
+                        targetType,
+                        value: type == "post" ? "liked your post" : type == "comment" ? "liked your commnet" : "liked your reply"
+                    }
+                )
+            }
+
             await this.metricsAggregatorService.incrementCount(filter.targetId, type, "likes")
 
             if (targetType == 'user' || targetType == "page") {
@@ -1407,7 +1413,7 @@ export class PostsService {
         return user[0].bookmarkedPosts
     }
 
-    async reportPost(postId: string, {userId, type, reportMessage}) {
+    async reportPost(postId: string, { userId, type, reportMessage }) {
         const report = await this.reportModel.create({ reportedBy: new Types.ObjectId(userId), type, postId: new Types.ObjectId(postId), reportMessage })
         return report
     }

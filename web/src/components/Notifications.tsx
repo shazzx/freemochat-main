@@ -83,7 +83,7 @@ export function Notifications({ setNotificationsState }) {
                                                     <span className="text-sm">({notification?.sender?.username})</span>
                                                 </p>
                                             </Link>
-                                            <Link onClick={() => setNotificationsState(false)} to={domain + "/"+notification?.type+ "/" +notification?.targetId}>
+                                            <Link onClick={() => setNotificationsState(false)} to={`${domain}/post/${notification?.targetId}?type=${notification.targetType}`}>
 
                                             <p className="text-sm text-muted-foreground">
                                                 {notification?.value}

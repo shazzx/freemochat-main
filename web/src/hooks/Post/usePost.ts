@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useAppSelector } from '@/app/hooks';
 import { toast } from 'react-toastify';
 import { produce } from 'immer'
-import { bookmarkPost, createPost, fetchFeed, fetchPosts, likePost, removePost, updatePost } from '@/api/Post/posts';
+import { bookmarkPost, createPost, fetchFeed, fetchPost, fetchPosts, likePost, removePost, updatePost } from '@/api/Post/posts';
 import { UrlObject } from 'url';
 import { axiosClient } from '@/api/axiosClient';
 import { useEffect } from 'react';
@@ -33,11 +33,11 @@ export function useFeed(): any {
   };
 }
 
-export function usePost(postId): any {
+export function usePost(postId: string, type: string): any {
 
   const { data, isLoading, isFetching, isSuccess, error } = useQuery({
-    queryKey: ['post', postId],
-    queryFn: ({ pageParam }) => fetchPost(pageParam),
+    queryKey: ['post'],
+    queryFn: () => fetchPost(postId, type),
     staleTime: 0,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
@@ -429,6 +429,110 @@ export const useLikePageFeedPost = () => {
       console.log(e)
       // uncommeting this will refetch the comments again from the server to be in sync
       // queryClient.invalidateQueries({ queryKey: ["comments"] })
+    }
+  })
+
+  return {
+    data,
+    isPending,
+    isSuccess,
+    mutateAsync,
+    mutate
+  }
+}
+
+
+export const useLikeSinglePost = (postId: string) => {
+  const queryClient = useQueryClient()
+  const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+    mutationFn: (postDetails: { postId: string, authorId: string, type?: string, targetId?: string }) => {
+      return likePost({ postId: postDetails.postId, authorId: postDetails.authorId, type: postDetails?.type, targetId: postDetails?.targetId })
+    },
+
+
+    onMutate: async ({ postId }) => {
+      await queryClient.cancelQueries({ queryKey: ['post'] })
+
+      queryClient.setQueryData(['post'], (pages: any) => {
+        const updatedPost = produce(pages, (draft: any) => {
+          if (draft[0] && draft[0]._id == postId && draft[0].isLikedByUser) {
+            draft[0].isLikedByUser = false
+            draft[0].likesCount = draft[0].likesCount - 1
+            return draft
+          }
+
+          if (draft[0] && draft[0]._id == postId && !draft[0].isLikedByUser) {
+            draft[0].isLikedByUser = true
+            draft[0].likesCount = draft[0].likesCount + 1
+            return draft
+          }
+
+          throw new Error()
+        })
+        return updatedPost
+      });
+    },
+
+    onError: (err, newComment, context) => {
+      console.log(err)
+      toast.error("something went wrong")
+    },
+    onSettled: (e) => {
+      console.log(e)
+      // uncommeting this will refetch the comments again from the server to be in sync
+      // queryClient.invalidateQueries({ queryKey: ["comments"] })
+    }
+  })
+
+  return {
+    data,
+    isPending,
+    isSuccess,
+    mutateAsync,
+    mutate
+  }
+}
+
+
+export const useBookmarkSinglePost = () => {
+  const { user } = useAppSelector((state) => state.user)
+  const queryClient = useQueryClient()
+  const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+    mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, targetId: string, type: string }) => {
+      return bookmarkPost({ postId: postDetails.postId, targetId: postDetails.targetId, type: postDetails.type })
+    },
+
+
+    onMutate: async ({ postId, postIndex, pageIndex, }) => {
+      await queryClient.cancelQueries({ queryKey: ['post'] })
+
+      queryClient.setQueryData(['post'], (pages: any) => {
+        const updatedPost = produce(pages, (draft: any) => {
+          if (draft[0] && draft[0]._id == postId && draft[0].isBookmarkedByUser) {
+            draft[0].isBookmarkedByUser = false
+            draft[0].bookmarksCount = draft[0].bookmarksCount - 1
+            return draft
+          }
+
+          if (draft[0] && draft[0]._id == postId && !draft[0].isBookmarkedByUser) {
+            draft[0].isBookmarkedByUser = true
+            draft[0].bookmarksCount = draft[0].bookmarksCount + 1
+            return draft
+          }
+
+          throw new Error()
+        })
+        return updatedPost
+      });
+    },
+
+    onError: (err, newComment, context) => {
+      console.log(err)
+      toast.error("something went wrong")
+    },
+    onSettled: (e) => {
+      // uncommeting this will refetch the comments again from the server to be in sync
+      // queryClient.invalidateQueries({ queryKey: ["feed"] })
     }
   })
 

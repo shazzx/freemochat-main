@@ -12,9 +12,11 @@ export class NotificationService {
     private readonly notificationGateway: ChatGateway
   ) { }
 
-  async createNotification(data: { from: Types.ObjectId, user: Types.ObjectId, targetId: Types.ObjectId, type: string, value: string }) {
-    const notifications = await this.notificationModel.find({ user: data.user, type: data.type, from: data.from, targetId: data.targetId })
-    if (notifications == null) {
+  async createNotification(data: { from: Types.ObjectId, user: Types.ObjectId, targetId: Types.ObjectId, type: string, targetType?: string,  value: string }) {
+    console.log(data)
+    const notifications = await this.notificationModel.findOne({ user: data.user, type: data.type, from: data.from, targetId: data.targetId, targetType: data.targetType })
+    if (notifications) {
+      console.log('notfcaton exsts')
       return null
     }
     const notification = await this.notificationModel.create(data);
@@ -58,6 +60,7 @@ export class NotificationService {
           user: 1,
           value: 1,
           type: 1,
+          targetType: 1,
           targetId: 1,
           sender: 1,
           updatedAt: 1,

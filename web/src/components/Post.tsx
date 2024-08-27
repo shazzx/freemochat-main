@@ -16,6 +16,7 @@ import { domain } from '@/config/domain'
 import { toast } from 'react-toastify'
 import { useAppSelector } from '@/app/hooks'
 import { PostMediaCarousel } from './Post/PostMediaCarousel'
+import { Copy } from 'lucide-react'
 
 interface PostProps {
     postData: any,
@@ -301,12 +302,17 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                             <span className='text-sm hidden sm:block' >Share</span>
                             {shareState &&
-                                <div className='border-accent border absolute flex items-center justify-center top-10 -left-5 drop-shadow-xl z-10 bg-card rounded-md p-2' ref={shareRef}>
+                                <div className='border-accent border absolute flex flex-col gap-4 items-center justify-center top-10 -left-5 drop-shadow-xl z-10 bg-card rounded-md p-2' ref={shareRef}>
                                     <WhatsappShareButton url={'localhost:5173'} >
                                         <div className='flex gap-1 items-center justify-center'>
                                             <WhatsappIcon borderRadius={60} size={24} /> <span>Whatsapp</span>
                                         </div>
                                     </WhatsappShareButton>
+                                        <div className='flex gap-1 items-center justify-center' onClick={() => {
+                                            navigator.clipboard.writeText(`${domain}/post/${postData._id}?type=${postData.type}`);
+                                        }}>
+                                            <Copy size={24} /> <span>Copy URL</span>
+                                        </div>
                                 </div>}
                             {/* <span className='text-sm sm:hidden'>25</span> */}
                         </div>

@@ -141,8 +141,9 @@ export const useCreateComment = () => {
       toast.error("something went wrong")
       queryClient.setQueryData(["comments"], context.previousComments)
     },
-    onSettled: () => {
-      // queryClient.invalidateQueries({ queryKey: ["comments"] })
+    onSettled: (data) => {
+      console.log(data)
+      queryClient.invalidateQueries({ queryKey: ["comments"] })
     }
   })
 
@@ -287,8 +288,8 @@ export const useReplyOnComment = () => {
       toast.error("something went wrong")
       queryClient.setQueryData(["replies", newReply.commentId], context.previousReplies)
     },
-    onSettled: () => {
-      // queryClient.invalidateQueries({ queryKey: ["replies"] })
+    onSettled: (data, reply, {commentId}) => {
+      queryClient.invalidateQueries({ queryKey: ["replies", commentId] })
     }
   })
 

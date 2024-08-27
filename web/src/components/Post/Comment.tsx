@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
 import { EllipsisVertical } from 'lucide-react'
 import AudioPlayer from '@/AudioPlayer'
+import { toast } from 'react-toastify'
 
 const Comment: FC<any> = ({ reply, comment, pageIndex, commentIndex, userId, ref, editCommentModelState, setEditCommentModelState, setCommentDetails, isParent }) => {
     const { mutate } = useLikeComment()
@@ -47,6 +48,11 @@ const Comment: FC<any> = ({ reply, comment, pageIndex, commentIndex, userId, ref
                                     if (isParent) {
                                         setLikeParentComment(!likeParentComment)
                                     }
+                                    if (!comment?._id) {
+                                        toast.info("please wait...")
+                                        return
+                                    }
+
                                     const commentData = { userId: userId, commentId: comment?._id, pageIndex, commentIndex }
                                     mutate(commentData)
                                 }}>Like {comment?.likedBy?.length}</span>
@@ -89,6 +95,10 @@ const Comment: FC<any> = ({ reply, comment, pageIndex, commentIndex, userId, ref
                             </div>
                             <div className='flex px-2 gap-4 text-xs'>
                                 <span className={`cursor-pointer ${comment?.isLikedByUser && "text-primary"}`} onClick={async () => {
+                                    if (!comment?._id) {
+                                        toast.info("please wait...")
+                                        return
+                                    }
                                     const commentData = { userId: userId, commentId: comment?._id, pageIndex, commentIndex }
                                     mutate(commentData)
                                 }}>Like {comment?.likedBy?.length}</span>
