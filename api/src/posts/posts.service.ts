@@ -1125,7 +1125,7 @@ export class PostsService {
             {
                 $lookup: {
                     from: 'counters',
-                    let: { postId: '$_id' },
+                    let: { postId: '$postId' },
                     pipeline: [
                         {
                             $match: {
@@ -1154,19 +1154,19 @@ export class PostsService {
                             default: null
                         }
                     },
-                    "post.likesCount": {
+                    "likesCount": {
                         $ifNull: [
                             { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
                             0
                         ]
                     },
-                    "post.commentsCount": {
+                    "commentsCount": {
                         $ifNull: [
                             { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
                             0
                         ]
                     },
-                    "post.bookmarksCount": {
+                    "bookmarksCount": {
                         $ifNull: [
                             { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
                             0
@@ -1177,7 +1177,11 @@ export class PostsService {
 
                 }
             },
-
+            {$addFields: {
+                "post.likesCount": { $ifNull: ['$likesCount.count', 0] },
+                "post.commentsCount": { $ifNull: ['$commentsCount.count', 0] },
+                "post.bookmarksCount": { $ifNull: ['$bookmarksCount.count', 0] },
+            }},
             {
                 $project: {
                     post: 1,

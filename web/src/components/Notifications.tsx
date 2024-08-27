@@ -44,17 +44,17 @@ export function Notifications({ setNotificationsState }) {
         getNotifications()
     }, [])
     return (
-        <div className="absolute top-0 right-0 h-screen w-screen z-40">
-            <div className="absolute top-0 right-0 h-screen w-screen z-10" onClick={() => {
+        <div className="absolute top-0 right-0 h-full w-screen z-40">
+            <div className="absolute top-0 right-0 h-full w-screen z-10" onClick={() => {
                 setNotificationsState(false)
             }}></div>
-            <Card className=" p-1 w-[320px] h-[400px] absolute top-9 z-40 right-28 overflow-y-auto">
+            <Card className=" p-1 w-full h-full md:w-[360px] bg-background md:h-[400px] absolute top-14 md:top-9 z-50 md:right-36 border-2 border-accent overflow-auto">
                 <CardHeader className="p-4">
                     <div className="flex gap-2 items-center">
                         <CardTitle>Notifications </CardTitle>
                         <BellRing size={26} />
                     </div>
-                    <CardDescription>You have 3 unread messages.</CardDescription>
+                    {/* <CardDescription>{notifications?.length > 0 ? "You have " + notifications?.length + " unread messages." : " You have no notifications"} </CardDescription> */}
                 </CardHeader>
                 <CardContent className="grid gap-4 p-1 ">
                     <div>
@@ -68,7 +68,7 @@ export function Notifications({ setNotificationsState }) {
                                     >
                                         <div className='w-10 h-10 flex flex-col items-center justify-center rounded-lg border-primary border-2 bg-card overflow-hidden'>
                                             <Avatar>
-                                                <AvatarImage src={notification?.sender?.images?.profile} alt="Avatar" />
+                                                <AvatarImage src={notification?.sender?.profile} alt="Avatar" />
                                                 <AvatarFallback className='text-xl'>{notification?.sender?.firstname[0]?.toUpperCase() + notification?.sender?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                         </div>

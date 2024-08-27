@@ -49,11 +49,15 @@ export const useLikeBookmarkedPost = () => {
 
                     if (draft.pages[pageIndex].bookmarks[postIndex].post && draft.pages[pageIndex].bookmarks[postIndex].post._id == postId && draft.pages[pageIndex].bookmarks[postIndex].post.isLikedByUser) {
                         draft.pages[pageIndex].bookmarks[postIndex].post.isLikedByUser = false
+                        draft.pages[pageIndex].bookmarks[postIndex].post.likesCount = draft.pages[pageIndex].bookmarks[postIndex].post.likesCount - 1
+
                         return draft
                     }
 
                     if (draft.pages[pageIndex].bookmarks[postIndex].post && draft.pages[pageIndex].bookmarks[postIndex].post._id == postId && !draft.pages[pageIndex].bookmarks[postIndex].post.isLikedByUser) {
                         draft.pages[pageIndex].bookmarks[postIndex].post.isLikedByUser = true
+                        draft.pages[pageIndex].bookmarks[postIndex].post.likesCount = draft.pages[pageIndex].bookmarks[postIndex].post.likesCount + 1
+
                         return draft
                     }
 

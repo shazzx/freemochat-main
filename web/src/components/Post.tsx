@@ -147,7 +147,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             </div>
         )
     }
-    console.log(postData?.media?.length)
+    console.log(postData)
 
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} onClick={() => {
