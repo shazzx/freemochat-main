@@ -197,6 +197,136 @@ export class PostsService {
     }
 
 
+    async getPost(userId: string, postId: string, type: string) {
+        let model = type + 's'
+        const limit = 5
+        let query =  {  _id: new Types.ObjectId(postId) }
+        const post = await this.postModel.aggregate([
+            { $match: query },
+            { $sort: { createdAt: -1 } },
+            { $limit: limit + 1 },
+            {
+                $lookup: {
+                    from: model,
+                    localField: "targetId",
+                    foreignField: "_id",
+                    as: "target"
+                }
+            },
+            {
+                $unwind: "$target"
+            },
+            {
+
+                $lookup: {
+                    from: 'likes',
+                    let: { postId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$postId'] },
+                                        { $eq: ['$userId', new Types.ObjectId(userId)] },
+                                        { $eq: ['$type', "post"] },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                    as: 'userLike',
+                },
+            },
+            {
+
+                $lookup: {
+                    from: 'bookmarks',
+                    let: { postId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$postId', '$$postId'] },
+                                        { $eq: ['$userId', new Types.ObjectId(userId)] },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                    as: 'userBookmark',
+                },
+            },
+            {
+                $lookup: {
+                    from: 'counters',
+                    let: { postId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$postId'] },
+                                        { $eq: ['$name', 'post'] },
+                                        { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'counters'
+                }
+            },
+            {
+                $addFields: {
+                    isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
+                    isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
+                    likesCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
+                            { count: 0 }
+                        ]
+                    },
+                    commentsCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
+                            { count: 0 }
+                        ]
+                    },
+                    bookmarksCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
+                            { count: 0 }
+                        ]
+                    }
+                },
+            },
+            {
+                $project: {
+                    _id: 1,
+                    content: 1,
+                    media: 1,
+                    user: 1,
+                    target: 1,
+                    likesCount: { $ifNull: ['$likesCount.count', 0] },
+                    commentsCount: { $ifNull: ['$commentsCount.count', 0] },
+                    bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
+                    isLikedByUser: 1,
+                    targetId: 1,
+                    type: 1,
+                    isBookmarkedByUser: 1,
+                    updatedAt: 1,
+                    createdAt: 1,
+                },
+            },
+        ]);
+
+
+
+        return post
+    }
+
+
     async feed(userId, cursor) {
         console.log(userId, cursor)
         const limit = 5
@@ -973,7 +1103,7 @@ export class PostsService {
         return promotion
     }
 
-    async getPost(postId) {
+    async _getPost(postId) {
         const post = await this.postModel.findById( postId)
         // .populate([
         //     {

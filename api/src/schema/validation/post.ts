@@ -28,6 +28,7 @@ export const DeletePost = z.object({
 
 export const GetPost = z.object({
     postId: z.string(),
+    type: z.string(),
 })
 
 export const LikePost = z.object({
@@ -60,7 +61,6 @@ export const ReportPost = z.object({
 export const GetPromotions = Cursor.extend({
     reverse: z.string(),
 })
-
 
 export const PromotePost = z.object({
     postId: ValidMongoId,

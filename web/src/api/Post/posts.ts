@@ -23,6 +23,12 @@ export async function fetchPosts(pageParam, type, targetId?) {
   });
   return response.data;
 }
+export async function fetchPost(postId: string) {
+  const response = await axiosClient.get("post", {
+    params: { postId }
+  });
+  return response.data;
+}
 
 
 export async function createPost(formData: FormData) {

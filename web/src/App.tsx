@@ -28,6 +28,7 @@ import { AdminLogin } from './admin/pages/Login'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
 import CampaignSection from './sections/CampaignSection'
 import AuthVerificationForm from './components/Auth/AuthVerificationForm'
+import PostSection from './sections/PostSection'
 
 function App() {
 
@@ -77,6 +78,15 @@ function App() {
                 <MainHome children={<FeedSection />} />
               </ProtectedRoute>
             } />
+
+
+          <Route path='/post/:post'
+            element={
+              <ProtectedRoute>
+                <MainHome children={<PostSection />} />
+              </ProtectedRoute>
+            } />
+
 
           <Route path="/messages" element={
             <ProtectedRoute>

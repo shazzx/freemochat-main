@@ -33,6 +33,27 @@ export function useFeed(): any {
   };
 }
 
+export function usePost(postId): any {
+
+  const { data, isLoading, isFetching, isSuccess, error } = useQuery({
+    queryKey: ['post', postId],
+    queryFn: ({ pageParam }) => fetchPost(pageParam),
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchOnReconnect: false,
+  });
+
+  return {
+    data: data ?? {},
+    isLoading,
+    isSuccess,
+    isFetching,
+    error,
+  };
+}
+
+
 export function useUserPosts(type: string, targetId: string): any {
   
   const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({

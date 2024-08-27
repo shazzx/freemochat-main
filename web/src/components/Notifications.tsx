@@ -66,21 +66,30 @@ export function Notifications({ setNotificationsState }) {
                                         key={index}
                                         className="flex gap-2 p-2 hover:bg-accent rounded-md cursor-pointer active:bg-muted"
                                     >
-                                        <div className='w-10 h-10 flex flex-col items-center justify-center rounded-lg border-primary border-2 bg-card overflow-hidden'>
-                                            <Avatar>
-                                                <AvatarImage src={notification?.sender?.profile} alt="Avatar" />
-                                                <AvatarFallback className='text-xl'>{notification?.sender?.firstname[0]?.toUpperCase() + notification?.sender?.lastname[0]?.toUpperCase()}</AvatarFallback>
-                                            </Avatar>
+                                        <div className='w-14 h-14 flex flex-col items-center justify-center rounded-lg border-primary border-2 bg-card overflow-hidden'>
+                                            <Link onClick={() => setNotificationsState(false)} to={domain + "/user/" + notification?.sender?.username}>
+
+                                                <Avatar>
+                                                    <AvatarImage src={notification?.sender?.profile} alt="Avatar" />
+                                                    <AvatarFallback className='text-xl'>{notification?.sender?.firstname[0]?.toUpperCase()}</AvatarFallback>
+                                                </Avatar>
+                                            </Link>
+
                                         </div>
-                                        <div className="space-y-1">
-                                            <Link to={domain + "/user/" + notification?.sender?.username}>
-                                                <p className="text-sm font-medium leading-none">
-                                                    {notification?.sender?.username}
+                                        <div className="space-y-1 flex  justify-center flex-col">
+                                            <Link onClick={() => setNotificationsState(false)} to={domain + "/user/" + notification?.sender?.username}>
+                                                <p className="text-md flex gap-2 font-medium leading-none">
+                                                    {notification?.sender?.firstname + " " + notification?.sender?.lastname}
+                                                    <span className="text-sm">({notification?.sender?.username})</span>
                                                 </p>
                                             </Link>
+                                            <Link onClick={() => setNotificationsState(false)} to={domain + "/"+notification?.type+ "/" +notification?.targetId}>
+
                                             <p className="text-sm text-muted-foreground">
                                                 {notification?.value}
                                             </p>
+                                            </Link>
+
                                         </div>
                                     </div>)
                             }

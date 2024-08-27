@@ -19,7 +19,7 @@ import { OnQueueEvent } from '@nestjs/bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, CreatePost, CreatePostDTO, DeletePost, DeletePostDTO, GetPost, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, CreatePost, CreatePostDTO, DeletePost, DeletePostDTO, GetPost, GetPostDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import { z } from 'zod';
@@ -104,6 +104,13 @@ export class PostsController {
         const { type, cursor, targetId } = req.query
         console.log(targetId, 'targetid')
         response.json(await this.postService.getPosts(cursor, sub, targetId, type))
+    }
+
+    @Get("post")
+    async getPost(@Query(new ZodValidationPipe(GetPost)) query: GetPostDTO, @Req() req: Request, @Res() response: Response) {
+        const { sub } = req.user
+        const { type, postId } = query
+        response.json(await this.postService.getPost(sub, postId, type))
     }
 
     @Get('feed')
@@ -212,7 +219,7 @@ export class PostsController {
         // console.log(postMedia, media, removeMedia)
         // this.chatGateway.uploadSuccess({isSuccess: true})
 
-        const post = await this.postService.getPost(_postData.postId)
+        const post = await this.postService._getPost(_postData.postId)
 
         if (!post || post.isUploaded == false) {
             throw new BadRequestException("please wait previous post update is in process...")
@@ -281,11 +288,11 @@ export class PostsController {
         res.json(await this.postService.deletePost(postDetails.postId))
     }
 
-    @Post("post")
-    async getPost(@Body(new ZodValidationPipe(GetPost)) @Req() req: Request, @Res() res: Response) {
-        const { postId } = req.body
-        res.json(await this.postService.getPost(postId))
-    }
+    // @Post("post")
+    // async getPost(@Body(new ZodValidationPipe(GetPost)) @Req() req: Request, @Res() res: Response) {
+    //     const { postId } = req.body
+    //     res.json(await this.postService.getPost(postId))
+    // }
 
     @Post("like")
     async like(@Body(new ZodValidationPipe(LikePost)) body: LikePostDTO, @Req() req: Request, @Res() res: Response) {
