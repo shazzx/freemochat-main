@@ -12,7 +12,7 @@ import { ChevronLeft } from 'lucide-react'
 import React, { FormEvent, useEffect, useRef, useState } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { useUpdateReply } from '../hooks/Post/useComments'
-import {v4 as uuidv4} from 'uuid'
+import { v4 as uuidv4 } from 'uuid'
 
 function PostModel({ postIndex, pageIndex, setModelTrigger, postId, postData, useLikePost, useBookmarkPost, type }) {
     const { user } = useAppSelector((data) => data.user)
@@ -121,7 +121,7 @@ function PostModel({ postIndex, pageIndex, setModelTrigger, postId, postData, us
                                     const commentData = { ...commentDetails, commentDetails: { content: updateCommentRef.current.value } }
                                     let formData = new FormData()
                                     formData.append('commentData', JSON.stringify(commentData))
-                                    updateComment.mutate({...commentData, formData})
+                                    updateComment.mutate({ ...commentData, formData })
 
                                 } else {
                                     let replyDetails = { ...commentDetails, replyDetails: { content: updateCommentRef.current.value } }
@@ -253,47 +253,47 @@ function PostModel({ postIndex, pageIndex, setModelTrigger, postId, postData, us
                     }
 
                 </div>
-{!replyState && !replyState?.content && 
-                <div className="flex gap-2 items-center justify-center p-2 sticky bottom-0 bg-card w-full">
-                    {!isRecording && <div className="flex items-center justify-center border border-primary h-11 rounded-md p-2 w-full">
-                        {/* <svg width="25" className="fill-white dark:fill-white" cursor="pointer" height="22" viewBox="0 0 25 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {!replyState && !replyState?.content &&
+                    <div className="flex gap-2 items-center justify-center p-2 sticky bottom-0 bg-card w-full">
+                        {!isRecording && <div className="flex items-center justify-center border border-primary h-11 rounded-md p-2 w-full">
+                            {/* <svg width="25" className="fill-white dark:fill-white" cursor="pointer" height="22" viewBox="0 0 25 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <rect x="0.5" width="24" height="22" rx="4" fill="#433FFA" />
                             <path d="M11.4545 16.3068V5.05682H13.3636V16.3068H11.4545ZM6.78409 11.6364V9.72727H18.0341V11.6364H6.78409Z" />
                         </svg> */}
-                        <input
-                            ref={commentRef}
-                            type="search"
-                            placeholder="Write your comment..."
-                            className="w-full appearance-none bg-card pl-2 shadow-none border-none focus:outline-none"
-                        />
-                        <svg width="29" className="stroke-foreground dark:stroke-foreground" cursor="pointer" height="28" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M11 16.3334C11.2115 16.8844 11.5581 17.3734 12.008 17.7556C13.4387 18.9564 15.5207 18.9716 16.9687 17.7917C17.4247 17.4164 17.7793 16.9326 18 16.3847" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M22.6666 14.0002C22.6666 18.5105 19.0102 22.1668 14.4999 22.1668C9.98959 22.1668 6.33325 18.5105 6.33325 14.0002C6.33325 9.48984 9.98959 5.8335 14.4999 5.8335C16.6659 5.8335 18.7431 6.69391 20.2746 8.22546C21.8062 9.757 22.6666 11.8342 22.6666 14.0002Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M10.9998 12.8337V11.667" stroke-width="1.5" stroke-linecap="round" />
-                            <path d="M17.9998 12.8337V11.667" stroke-width="1.5" stroke-linecap="round" />
-                        </svg>
-                    </div>}
-                    <AudioRecorder setIsRecordingMain={setIsRecording} onRecordingComplete={(audioBlob, uploadState, recordingTime) => {
-                        if (!replyState) {
+                            <input
+                                ref={commentRef}
+                                type="search"
+                                placeholder="Write your comment..."
+                                className="w-full appearance-none bg-card pl-2 shadow-none border-none focus:outline-none"
+                            />
+                            <svg width="29" className="stroke-foreground dark:stroke-foreground" cursor="pointer" height="28" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M11 16.3334C11.2115 16.8844 11.5581 17.3734 12.008 17.7556C13.4387 18.9564 15.5207 18.9716 16.9687 17.7917C17.4247 17.4164 17.7793 16.9326 18 16.3847" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M22.6666 14.0002C22.6666 18.5105 19.0102 22.1668 14.4999 22.1668C9.98959 22.1668 6.33325 18.5105 6.33325 14.0002C6.33325 9.48984 9.98959 5.8335 14.4999 5.8335C16.6659 5.8335 18.7431 6.69391 20.2746 8.22546C21.8062 9.757 22.6666 11.8342 22.6666 14.0002Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M10.9998 12.8337V11.667" stroke-width="1.5" stroke-linecap="round" />
+                                <path d="M17.9998 12.8337V11.667" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </div>}
+                        <AudioRecorder setIsRecordingMain={setIsRecording} onRecordingComplete={(audioBlob, uploadState, recordingTime) => {
+                            if (!replyState) {
 
-                            console.log(audioBlob, uploadState, recordingTime, 'on recording complete')
-                            const url = URL.createObjectURL(audioBlob)
-                            setRecordingUrl(url)
-                            if (uploadState) {
-                                commentOnPost(audioBlob, recordingTime)
+                                console.log(audioBlob, uploadState, recordingTime, 'on recording complete')
+                                const url = URL.createObjectURL(audioBlob)
+                                setRecordingUrl(url)
+                                if (uploadState) {
+                                    commentOnPost(audioBlob, recordingTime)
+                                }
                             }
-                        }
 
-                    }} />
-                    {!isRecording && <svg width="47" className="stroke-white dark:stroke-white" onClick={() => {
-                        commentOnPost()
-                    }} height="50" viewBox="0 0 47 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="0.5" y="1" width="46" height="48" rx="4" fill="#433FFA" />
-                        <rect x="0.5" y="1" width="46" height="48" rx="4" stroke="#433FFA" stroke-linejoin="bevel" />
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M30.8815 24.0836L15.7861 17.1726C15.3917 16.963 14.909 16.3339431 14.4953 17.1194C14.0816 17.2957 13.7898 17.6456 13.715 18.0552C13.7201 18.1913 13.7562 18.3249 13.821 18.4477L16.6951 24.7566C16.8393 25.1756 16.9179 25.6109 16.9283 26.0497C16.9179 26.4886 16.8394 26.9239 16.6951 27.3428L13.821 33.6518C13.7562 33.7746 13.7201 33.9082 13.715 34.0443C13.7903 34.4533 14.082 34.8025 14.4953 34.9785C14.9086 35.1545 15.3906 35.1347 15.7848 34.9256L30.8815 28.0147C31.7234 27.6594 32.262 26.8926 32.262 26.0491C32.262 25.2057 31.7234 24.4389 30.8815 24.0836V24.0836Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    }
-                </div>}
+                        }} />
+                        {!isRecording && <svg width="47" className="stroke-white dark:stroke-white" onClick={() => {
+                            commentOnPost()
+                        }} height="50" viewBox="0 0 47 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="0.5" y="1" width="46" height="48" rx="4" fill="#433FFA" />
+                            <rect x="0.5" y="1" width="46" height="48" rx="4" stroke="#433FFA" stroke-linejoin="bevel" />
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M30.8815 24.0836L15.7861 17.1726C15.3917 16.963 14.909 16.3339431 14.4953 17.1194C14.0816 17.2957 13.7898 17.6456 13.715 18.0552C13.7201 18.1913 13.7562 18.3249 13.821 18.4477L16.6951 24.7566C16.8393 25.1756 16.9179 25.6109 16.9283 26.0497C16.9179 26.4886 16.8394 26.9239 16.6951 27.3428L13.821 33.6518C13.7562 33.7746 13.7201 33.9082 13.715 34.0443C13.7903 34.4533 14.082 34.8025 14.4953 34.9785C14.9086 35.1545 15.3906 35.1347 15.7848 34.9256L30.8815 28.0147C31.7234 27.6594 32.262 26.8926 32.262 26.0491C32.262 25.2057 31.7234 24.4389 30.8815 24.0836V24.0836Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        }
+                    </div>}
             </div>
 
         </div >

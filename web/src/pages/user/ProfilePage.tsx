@@ -286,6 +286,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                     </div>
                                 </div>
                                 <ProfileMedia media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                
                             </div>
                             }
                         </TabsContent>

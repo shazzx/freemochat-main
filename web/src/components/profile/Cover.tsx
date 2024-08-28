@@ -5,6 +5,7 @@ interface CoverProps {
 }
 
 const Cover: FC<CoverProps> = ({ cover, upload }) => {
+  console.log(cover)
   return (
     <div className='relative group w-full aspect-[3/1] bg-profile roundd-md  overflow-hidden'>
       {cover ?

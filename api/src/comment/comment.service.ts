@@ -48,7 +48,7 @@ export class CommentService {
                     let: { userId: '$user' },
                     pipeline: [
                         { $match: { $expr: { $eq: ['$_id', '$$userId'] } } },
-                        { $project: { _id: 1, username: 1, images: 1, firstname: 1, lastname: 1 } } // Only fetch necessary user fields
+                        { $project: { _id: 1, username: 1, profile: 1, firstname: 1, lastname: 1 } } // Only fetch necessary user fields
                     ],
                     as: 'user'
                 }

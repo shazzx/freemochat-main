@@ -310,6 +310,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                     </WhatsappShareButton>
                                         <div className='flex gap-1 items-center justify-center' onClick={() => {
                                             navigator.clipboard.writeText(`${domain}/post/${postData._id}?type=${postData.type}`);
+                                            toast.info("URL Copied")
                                         }}>
                                             <Copy size={24} /> <span>Copy URL</span>
                                         </div>

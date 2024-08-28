@@ -271,9 +271,9 @@ const MainHome = ({ children }: any) => {
             {notificationsState && <Notifications setNotificationsState={setNotificationsState} />}
             <ModeToggle />
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger asChild className="hidden sm:flex">
                 <Button variant="secondary" size="icon" className="rounded-full">
-                  <div className='w-9 h-9 flex items-center justify-center  rounded-full overflow-hidden'>
+                  <div className='flex w-9 h-9 items-center justify-center  rounded-full overflow-hidden'>
                     <Avatar className="sm:flex">
                       <AvatarImage src={user?.profile} alt="Avatar" />
                       <AvatarFallback>{user?.firstname[0]?.toUpperCase() + user?.lastname[0]?.toUpperCase()}</AvatarFallback>

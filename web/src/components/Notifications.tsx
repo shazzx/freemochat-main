@@ -45,7 +45,7 @@ export function Notifications({ setNotificationsState }) {
     }, [])
     return (
         <div className="absolute top-0 right-0 h-full w-screen z-40">
-            <div className="absolute top-0 right-0 h-full w-screen z-10" onClick={() => {
+            <div className="absolute top-0 right-0 h-screen w-screen z-10" onClick={() => {
                 setNotificationsState(false)
             }}></div>
             <Card className=" p-1 w-full h-full md:w-[360px] bg-background md:h-[400px] absolute top-14 md:top-9 z-50 md:right-36 border-2 border-accent overflow-auto">

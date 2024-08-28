@@ -5,6 +5,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { EllipsisVertical } from 'lucide-react'
 import AudioPlayer from '@/AudioPlayer'
 import { toast } from 'react-toastify'
+import { Link } from 'react-router-dom'
+import { domain } from '@/config/domain'
 
 const Comment: FC<any> = ({ reply, comment, pageIndex, commentIndex, userId, ref, editCommentModelState, setEditCommentModelState, setCommentDetails, isParent }) => {
     const { mutate } = useLikeComment()
@@ -19,16 +21,16 @@ const Comment: FC<any> = ({ reply, comment, pageIndex, commentIndex, userId, ref
 
                     <div className="flex gap-2 select-none" key={comment._id} ref={ref}>
 
-                        <div className='max-w-10 max-h-10 rounded-full overflow-hidden'>
+                        <Link to={`${domain}/user/${comment.user.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
-                                <AvatarImage src={comment?.user?.images?.profile} alt="Avatar" />
-                                <AvatarFallback>{(comment?.user?.firstname[0]?.toUpperCase()) + (comment?.user?.lastname[0]?.toUpperCase())}</AvatarFallback>
+                                <AvatarImage src={comment.user?.profile} alt="Avatar" />
+                                <AvatarFallback>{comment.user.firstname[0]?.toUpperCase()}</AvatarFallback>
                             </Avatar>
-                        </div>
+                        </Link>
                         <div className='flex flex-col'>
-                            <div className='flex px-2 gap-4 text-xs'>
+                            <Link to={`${domain}/user/${comment.user.username}`} className='flex px-2 gap-4 text-xs'>
                                 <span className="font-medium">{comment?.user?.firstname} {comment?.user?.lastname}</span>
-                            </div>
+                            </Link>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-muted text-sm rounded-lg ">
                                 <AudioPlayer src={comment.audio.src} duration={comment.audio.duration} />
 
@@ -65,16 +67,16 @@ const Comment: FC<any> = ({ reply, comment, pageIndex, commentIndex, userId, ref
                     </div> :
                     <div className="flex gap-2 select-none" key={comment._id} ref={ref}>
 
-                        <div className='max-w-10 max-h-10 rounded-full overflow-hidden'>
+                        <Link to={`${domain}/user/${comment.user.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
-                                <AvatarImage src={comment?.user?.images?.profile} alt="Avatar" />
-                                <AvatarFallback>{(comment?.user?.firstname[0]?.toUpperCase()) + (comment?.user?.lastname[0]?.toUpperCase())}</AvatarFallback>
+                                <AvatarImage src={comment?.user?.profile} alt="Avatar" />
+                                <AvatarFallback>{comment?.user?.firstname[0]?.toUpperCase()}</AvatarFallback>
                             </Avatar>
-                        </div>
+                        </Link>
                         <div className='flex flex-col '>
-                            <div className='flex px-2 gap-4 text-xs'>
+                            <Link to={`${domain}/user/${comment.user.username}`} className='flex px-2 gap-4 text-xs'>
                                 <span className="font-medium">{comment?.user?.firstname} {comment?.user?.lastname}</span>
-                            </div>
+                            </Link>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-accent bg-card dark:bg-transparent text-sm rounded-lg ">
                                 <p >{comment?.content}</p>
 

@@ -1,6 +1,3 @@
-import * as React from "react"
-
-import { Card, CardContent } from "@/components/ui/card"
 import {
   Carousel,
   CarouselContent,
@@ -27,8 +24,12 @@ export function PostMediaCarousel({ media }) {
         ))}
       </CarouselContent>
       {/* hidden hover:flex */}
-      <CarouselNext  className=" absolute right-1 top-2/4"/>
-      <CarouselPrevious className=" absolute left-1 top-2/4" />
+      {media.length > 1 &&
+        <>
+          <CarouselNext className=" absolute right-1 top-2/4" />
+          <CarouselPrevious className=" absolute left-1 top-2/4" />
+        </>
+      }
     </Carousel>
   )
 }
