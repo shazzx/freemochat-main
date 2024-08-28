@@ -4,6 +4,7 @@ import { Connection, Model, Types } from 'mongoose'
 import { UserChatListService } from 'src/chatlist/chatlist.service';
 import { MessageService } from 'src/message/message.service';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
+import { NotificationService } from 'src/notification/notification.service';
 import { ChatGroup } from 'src/schema/cgroup';
 import { Group } from 'src/schema/group';
 import { Member } from 'src/schema/members';
@@ -14,7 +15,7 @@ export class MemberService {
         @InjectModel(Member.name) private readonly memberModel: Model<Member>,
         private readonly metricsAggregatorService: MetricsAggregatorService,
         private readonly messageService: MessageService,
-        private readonly chatListService: UserChatListService,
+        // private readonly notificationService: NotificationService,
         @InjectModel(Group.name) private groupModel: Model<Group>,
         @InjectModel(ChatGroup.name) private chatGroupModel: Model<ChatGroup>,
         @InjectConnection() private connection: Connection
@@ -124,12 +125,24 @@ export class MemberService {
 
         if (deleteResult.deletedCount === 0) {
             await this.memberModel.create({...filter, type: groupDetails.type});
-            let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.groupId, recepient: filter.member, content: "added in group", messageType: "Info", isGroup: true })
+            let message = await this.messageService.createMessage({ type: 'Group', sender: filter.groupId, recepient: filter.member, content: "added in group", messageType: "Info", isGroup: true })
+            // await this.notificationService.createNotification(
+            //     {
+            //         from: new Types.ObjectId(userId),
+            //         user: new Types.ObjectId(authorId),
+            //         targetId: new Types.ObjectId(targetId),
+            //         type,
+            //         targetType,
+            //         value: type == "post" ? "liked your post" : type == "comment" ? "liked your commnet" : "liked your reply"
+            //     }
+            // )
+
             await this.metricsAggregatorService.incrementCount(filter.groupId, "members", "group")
+            
             return true;
         }
 
-        let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.groupId, recepient: filter.member, content: "removed from group", messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
+        let message = await this.messageService.createMessage({ type: 'Group', sender: filter.groupId, recepient: filter.member, content: "removed from group", messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
         console.log(message)
         await this.metricsAggregatorService.decrementCount(filter.groupId, "members", "group")
         return false;

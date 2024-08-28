@@ -54,8 +54,8 @@ export function LoginForm() {
         dispatchUser()
         navigate("/")
     }
+    console.log('yes')
     const [signupButtonState, setSignupButtonState] = useState(false)
-
 
     return (
         <div className="flex items-center justify-center w-screen h-screen">

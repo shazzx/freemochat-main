@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
 })
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-    <BrowserRouter>
+    // <BrowserRouter>
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <GoogleOAuthProvider clientId='58656245774-9rsnoa29otlo6nkt86rcshqiihd1shoj.apps.googleusercontent.com'>
@@ -26,5 +26,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         </GoogleOAuthProvider>
       </QueryClientProvider>
     </Provider>
-    </BrowserRouter>
+    // </BrowserRouter>
 )

@@ -40,8 +40,8 @@ import AudioCall from "./Call/Audio/AudioCall"
 const MainHome = ({ children }: any) => {
   useSocket()
   const { user } = useAppSelector((state) => state.user)
-
   const navigate = useNavigate()
+
   const [active, setActive] = useState(location.pathname)
   const [notificationsState, setNotificationsState] = useState(false)
   const [friendRequestState, setFriendRequestState] = useState(false)

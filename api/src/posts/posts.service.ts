@@ -1384,7 +1384,6 @@ export class PostsService {
                     { $inc: { interactionScore: 1 } }
                 )
                 console.log(updatedInteraction)
-
             }
             return true;
         }

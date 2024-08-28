@@ -28,23 +28,8 @@ import { format } from "date-fns"
 
 
 function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
-    const [friendListState, setFriendListState] = useState(false)
     const userFriends = useUserFriends()
-
-    // useEffect(() => {
-
-    //     const getGroups = async () => {
-    //         const { data } = await axiosClient.get('chatgroups')
-    //         setGroups(data)
-    //     }
-    //     getGroups()
-
-    // }, [])
-
     const { data } = useChatGroups()
-    console.log(data)
-
-    console.log(chatList?.users)
     const {user} = useAppSelector(state => state.user)
 
     const [chatOptions, setChatOptions] = useState(false)
@@ -53,14 +38,6 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
     const [currentTab, setCurrentTab] = useState("general")
     const newChatRef = useRef(null)
     const socket = useSocket(user._id)
-
-    // useEffect(() =>{ 
-    //     socket.on("getOnlineFriends", (data) => {
-    //         console.log(data)
-    //     })
-    // },[]) 
-
-    // ChatGroup
     const { mutate } = useCreateChatGroup()
 
     const createGroup = async (groupDetails, imageUpload, coverImageUpload) => {

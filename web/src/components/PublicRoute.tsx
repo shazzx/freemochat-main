@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import React, { useEffect, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 
-function ProtectedRoute({ children }) {
+function PublicRoute({ children }) {
     const dispatch = useAppDispatch()
     const [isFetched, setIsFetched] = useState(false)
     const { user } = useAppSelector((state) => state.user)
@@ -24,21 +24,12 @@ function ProtectedRoute({ children }) {
 
                 let response = await axiosClient.get("user")
                 if (response.status == 200) {
-                    // setTimeout(() => {
-                    dispatch(setUser(response.data))
                     console.log('timout')
                     setIsFetched(true)
-                    // }, 5000);
-                    if (location.pathname == "/login") {
-                        return navigate("/")
-                    }
+                    navigate('/')
                 } else {
-                    // setTimeout(() => {
                     setIsFetched(true)
                     dispatch(logout())
-                    // }, 5000);
-                    return navigate('/login')
-
                 }
 
 
@@ -68,10 +59,10 @@ function ProtectedRoute({ children }) {
             </div>)
     }
 
-    if (isFetched && user) {
+    if (isFetched && !user) {
         return <Outlet />
     }
 
 }
 
-export default React.memo(ProtectedRoute)
+export default React.memo(PublicRoute)

@@ -2,7 +2,8 @@ import {z} from 'zod'
 
 export const PageFollow = z.object({
     pageDetails: z.object({
-        pageId: z.string()
+        pageId: z.string(),
+        authorId: z.string()
     }),
 })
 

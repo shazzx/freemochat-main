@@ -103,8 +103,8 @@ export class GroupsService {
         return await this.groupModal.findById(groupId)
     }
 
-    async getGroups(userId) {
-        const groups = await this.groupModal.find({$or: [{ user: new Types.ObjectId(userId)}, {admins: new Types.ObjectId(userId) }]})
+    async getGroups(userId: string) {
+        const groups = await this.groupModal.find({$or: [{ user: new Types.ObjectId(userId)}, {user: new Types.ObjectId(userId) }]})
         return groups
     }
 
@@ -118,6 +118,7 @@ export class GroupsService {
     }
 
     async toggleJoin(userId, groupDetails) {
+        console.log('grou service join method')
         const filter = {
             member: new Types.ObjectId(userId),
             groupId: new Types.ObjectId(groupDetails.groupId),

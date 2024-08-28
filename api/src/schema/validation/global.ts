@@ -15,6 +15,7 @@ export const Cursor = z.object({
 
 export const Handle = z.object({
   handle: z.string().min(6, {message: "handle minimum length is 6 characters"})
+  
 })
 
 export const ValidMongoId = z.string().refine(

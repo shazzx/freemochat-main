@@ -1,21 +1,16 @@
-import { ChevronLeft, EclipseIcon, EllipsisIcon, EllipsisVertical, File, Image, Loader, Video } from "lucide-react"
-import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { ChevronLeft, EllipsisIcon, File, Image, Video } from "lucide-react"
+import  { useCallback, useEffect, useRef, useState } from "react";
 import EmojiPicker, { Categories } from "emoji-picker-react";
 import { MdCancel } from "react-icons/md";
 import { axiosClient } from "@/api/axiosClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import EditChatGroup from "@/models/EditChatGroup";
-import { Socket } from "socket.io-client";
 import { Button } from "./ui/button";
 import VideoCallRecepient from "./Call/Video/VideoCallRecepient";
 import VideoCallCaller from "./Call/Video/VideoCallCaller";
 import AudioCallCaller from "./Call/Audio/AudioCallCaller";
-import AudioCallRecepient from "./Call/Audio/AudioCallRecepient";
-// import { isMobile } from 'react-device-detect'
-import Agora from "./Call/agora/AgoraRTC";
 import { DropdownUser } from "./Dropdowns/DropdownUser";
-import { useChatGroup, useCreateChatGroup, useCreateMessage, useMessages, useUpdateChatGroup } from "@/hooks/Chat/main";
+import { useChatGroup, useCreateMessage, useMessages, useUpdateChatGroup } from "@/hooks/Chat/main";
 import { useInView } from "react-intersection-observer";
 import AudioRecorder from "./MediaRecorder";
 import AudioPlayer from "@/AudioPlayer";
@@ -25,11 +20,8 @@ import { produce } from "immer";
 import { useSocket } from "@/hooks/useSocket";
 import CreateChatGroup from "@/models/CreateChatGroup";
 import { toast } from "react-toastify";
-import AudioCall from "./Call/Audio/AudioCall";
-import VideoCall from "./Call/Video/VideoCall";
 import { handleFile } from "@/lib/formatChec";
 import { startCall } from "@/app/features/user/callSlice";
-import { useDispatch, useSelector } from "react-redux";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { format } from "date-fns";
 
@@ -323,21 +315,20 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                 <AudioCallCaller recepientDetails={recepientDetails} setAudioCallCaller={setAudioCallCallerState} />
             }
 
-
             <div className='flex items-center justify-between p-3 border border-muted'>
                 <div className='flex gap-2 items-center justify-center'>
                     <ChevronLeft cursor="pointer" onClick={() => setChatOpen(false)} />
                     <div className='w-10 h-10 rounded-full flex items-center justify-center bg-accent overflow-hidden'>
                         {recepientDetails?.type == "User" ? <Avatar className="h-10 w-10 flex items-center justify-center">
                             <AvatarImage src={recepientDetails?.profile} alt="Avatar" />
-                            <AvatarFallback>{recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase()}</AvatarFallback>
+                            <AvatarFallback>{recepientDetails?.firstname[0]?.toUpperCase()}</AvatarFallback>
                         </Avatar>
                             :
                             <Avatar className="h-10 w-10 flex items-center justify-center" onClick={() => {
                                 setChatGroupInfo(true)
                             }}>
                                 <AvatarImage src={recepientDetails?.images?.profile} alt="Avatar" />
-                                <AvatarFallback>{recepientDetails?.name[0]?.toUpperCase() + recepientDetails?.name[1]?.toUpperCase()}</AvatarFallback>
+                                <AvatarFallback>{recepientDetails?.name[0]?.toUpperCase()}</AvatarFallback>
                             </Avatar>
                         }
                     </div>
@@ -506,9 +497,13 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                     <div className="flex gap-2">
                                         <div className='max-w-10 max-h-10 bg-accent rounded-full overflow-hidden'>
                                             <Avatar className="h-9 w-9 flex items-center justify-center">
-                                                <AvatarImage src={message?.sender?.images?.profile || recepientDetails?.profile} alt="Avatar" />
-                                                <AvatarFallback>{message?.sender?.firstname ? message?.sender?.firstname[0]?.toUpperCase() + message?.sender?.lastname[0]?.toUpperCase() || recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase() :
-                                                    recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase() || recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase()
+                                                <AvatarImage src={message?.sender?.profile || recepientDetails?.profile} alt="Avatar" />
+                                                <AvatarFallback>
+                                                    {message?.sender?.firstname ? message?.sender?.firstname[0]?.toUpperCase()
+                                                 ||
+                                                  recepientDetails?.firstname[0]?.toUpperCase()
+                                                   :
+                                                    recepientDetails?.firstname[0]?.toUpperCase() || recepientDetails?.firstname[0]?.toUpperCase()
 
                                                 }</AvatarFallback>
                                             </Avatar>

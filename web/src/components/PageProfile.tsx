@@ -119,7 +119,8 @@ function PageProfile() {
 
 
     const followPage = async () => {
-        mutate({ pageId: _pageData?.data?._id, authorId: _pageData?.data?.user })
+        console.log(_pageData.data.user)
+        mutate({ pageId: _pageData?.data?._id, authorId: _pageData.data.user })
     }
 
     const [mediaOpenModel, setMediaOpenModel] = useState(false)

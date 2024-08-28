@@ -29,6 +29,7 @@ export const removePage = async (pageDetails: {pageId: string, images: string[]}
 }
 
 export const followPage = async (pageDetails: {pageId: string, authorId: string}) => {
+    console.log(pageDetails)
     const { data } = await axiosClient.post(PAGE_ROUTES.FOLLOW, {pageDetails})
     return data
 }

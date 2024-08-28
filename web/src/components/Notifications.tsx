@@ -34,6 +34,24 @@ const notifications = [
     },
 ]
 
+const getTarget = (targetType, targetId, handle, type) => {
+    if (targetType == 'page') {
+
+        let url = `${domain}/page/${handle}`
+        return url
+    }
+    if (targetType == "group") {
+        let url = `${domain}/group/${handle}`
+        return url
+    }
+
+    if(type == 'post' || type == 'comment' || type == 'reply'){
+        let url =  `${domain}/post/${targetId}?type=${targetType}`
+        return url
+    }
+}
+
+
 export function Notifications({ setNotificationsState }) {
     const [notifications, setNotifications] = useState([])
     useEffect(() => {
@@ -83,7 +101,7 @@ export function Notifications({ setNotificationsState }) {
                                                     <span className="text-sm">({notification?.sender?.username})</span>
                                                 </p>
                                             </Link>
-                                            <Link onClick={() => setNotificationsState(false)} to={`${domain}/post/${notification?.targetId}?type=${notification.targetType}`}>
+                                            <Link onClick={() => setNotificationsState(false)} to={getTarget(notification.targetType, notification.targetId,  notification?.handle, notification.type)}>
 
                                             <p className="text-sm text-muted-foreground">
                                                 {notification?.value}

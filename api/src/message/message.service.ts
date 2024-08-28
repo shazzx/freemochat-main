@@ -97,7 +97,7 @@ export class MessageService {
                         username: 1,
                         firstname: 1,
                         lastname: 1,
-                        images: 1,
+                        profile: 1,
                         email: 1
                         // Add other fields you want to include
                       }

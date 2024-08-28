@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Page } from 'src/schema/pages';
@@ -66,6 +66,7 @@ export class PageService {
                     name: 1,
                     handle: 1,
                     profile: 1,
+                    user: 1,
                     cover: 1,
                     followersCount: 1,
                     admins: 1,
@@ -92,6 +93,11 @@ export class PageService {
             type: "page"
         };
 
+        console.log(pageDetails)
+        const page = await this.pageModal.findById(pageDetails.pageId)
+        if(!page){
+            throw new  BadRequestException()
+        }
         const deleteResult = await this.followerModel.deleteOne(filter);
 
         if (deleteResult.deletedCount === 0) {
@@ -101,7 +107,9 @@ export class PageService {
                     from: new Types.ObjectId(userId),
                     user: new Types.ObjectId(pageDetails.authorId),
                     targetId: new Types.ObjectId(pageDetails.pageId),
-                    type: "page",
+                    targetType: "page",
+                    handle: String(page.handle), 
+                    type: "follow",
                     value: "has followed your page"
                 }
             )
