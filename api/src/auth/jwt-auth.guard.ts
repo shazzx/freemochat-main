@@ -28,7 +28,6 @@ export class JwtAuthGuard implements CanActivate {
         }
 
         const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [context.getHandler(), context.getClass()])
-        console.log(isPublic)
 
         if (isPublic) {
             return true
@@ -48,7 +47,6 @@ export class JwtAuthGuard implements CanActivate {
             );
 
             let accountStatus = await this.accountManagementService.getAccountStatus(payload.sub)
-            console.log(accountStatus)
 
             if (accountStatus.isSuspended) {
                 throw new UnauthorizedException("Your account is suspended please contact customer support")

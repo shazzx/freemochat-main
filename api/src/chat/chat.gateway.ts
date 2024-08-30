@@ -131,6 +131,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // calling logic
   @SubscribeMessage("initiate-call")
   async handleCallInitiation(@MessageBody() payload) {
+    console.log(payload)
     if(payload.recepientDetails && !payload.recepientDetails.userId){
       throw new BadRequestException('recepient id required')
     }

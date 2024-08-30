@@ -18,6 +18,7 @@ import { axiosClient } from "@/api/axiosClient"
 import { Link } from "react-router-dom"
 import { domain } from "@/config/domain"
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
+import { useAppSelector } from "@/app/hooks"
 
 const notifications = [
     {
@@ -51,16 +52,17 @@ const getTarget = (targetType, targetId, handle, type) => {
     }
 }
 
-
 export function Notifications({ setNotificationsState }) {
     const [notifications, setNotifications] = useState([])
+    const {notification} = useAppSelector((state) => state.notification)
+
     useEffect(() => {
         const getNotifications = async () => {
             const { data } = await axiosClient.get("notification")
             setNotifications(data?.notifications)
         }
         getNotifications()
-    }, [])
+    }, [notification])
     return (
         <div className="absolute top-0 right-0 h-full w-screen z-40">
             <div className="absolute top-0 right-0 h-screen w-screen z-10" onClick={() => {

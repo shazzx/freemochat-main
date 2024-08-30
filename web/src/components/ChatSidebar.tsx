@@ -159,7 +159,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                                                 {chat?.lastMessage?.encryptedContent}...
                                             </p>
                                         </div>
-                                        <div className="ml-auto text-xs">Today</div>
+                                        <div className="ml-auto text-xs">{format(chat?.updatedAt ?? Date.now(), 'MMM d, yyy h:mm a')}</div>
                                     </div>
                                 ))
                                     :

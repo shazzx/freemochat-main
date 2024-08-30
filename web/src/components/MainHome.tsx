@@ -49,6 +49,7 @@ const MainHome = ({ children }: any) => {
   const dispatch = useAppDispatch()
   const {callDetails, callerState, onCall, recepientState, targetDetails, type} = useAppSelector((state) => state.call)
   const data = useAppSelector((state) => state.call)
+  const {notification} = useAppSelector((state) => state.notification)
   console.log(callDetails, callerState, onCall, recepientState, targetDetails, type)
 
   let cancelCall = async (type) => {
@@ -264,9 +265,12 @@ const MainHome = ({ children }: any) => {
             {friendRequestState &&
               <FriendRequests setFriendRequestState={setFriendRequestState} />
             }
+            <div className="relative">
             <MdNotifications onClick={() => {
               setNotificationsState(true)
             }} size="24px" cursor="pointer" />
+            {notification && <span className="absolute top-0 right-1 w-2 h-2 rounded-full bg-red-500"></span>}
+            </div>
 
             {notificationsState && <Notifications setNotificationsState={setNotificationsState} />}
             <ModeToggle />
@@ -423,4 +427,4 @@ const MainHome = ({ children }: any) => {
   )
 }
 
-export default React.memo(MainHome)
+export default MainHome

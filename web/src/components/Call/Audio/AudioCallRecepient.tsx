@@ -11,7 +11,6 @@ function AudioCallRecepient({ recepientDetails }) {
     const dispatch = useAppDispatch()
 
     useEffect(() => {
-
         socket.on("call-decline", (data) => {
             dispatch(endCall())
         })

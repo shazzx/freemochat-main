@@ -12,6 +12,8 @@ import { UploadModule } from 'src/upload/upload.module';
 import { MetricsAggregatorModule } from 'src/metrics-aggregator/metrics-aggregator.module';
 import { OtpModule } from 'src/otp/otp.module';
 import { CryptoModule } from 'src/crypto/crypto.module';
+import { Countries, CountriesSchema } from 'src/schema/countries';
+import { Cities, CitiesSchema } from 'src/schema/cities';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { CryptoModule } from 'src/crypto/crypto.module';
       { name: FriendRequest.name, schema: FriendRequestsSchema },
       { name: Friend.name, schema: FriendSchema },
       { name: Follower.name, schema: FollowerSchema },
+      { name: Countries.name, schema: CountriesSchema },
+      { name: Cities.name, schema: CitiesSchema },
     ])],
   exports: [UserService],
   providers: [UserService],

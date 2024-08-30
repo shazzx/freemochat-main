@@ -60,24 +60,8 @@ export class User {
         videos: string[];
     };
 
-    // auth related
-    @Prop({type: String, required: true})
-    emailSecret: string;
-
-    @Prop({type: String, required: true})
-    phoneSecret: string;
-
     @Prop({type: String, default: null})
-    tempSecret: string
-
-    @Prop({type: Boolean, default: false})
-    isEmailVerified: boolean;
-
-    @Prop({type: Boolean, default: false})
-    isPhoneVerified: boolean;
-
-    @Prop({ default: false })
-    isActive: boolean
+    refreshToken: string
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

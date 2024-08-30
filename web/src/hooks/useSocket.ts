@@ -1,4 +1,5 @@
 import { acceptCall, incomingCall, startCall } from "@/app/features/user/callSlice";
+import { setNewNotification } from "@/app/features/user/notificationSlice";
 import { useAppSelector } from "@/app/hooks";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { socketConnect } from "@/websocket/socket.io";
@@ -121,6 +122,11 @@ export const useSocket = (recepient? :string, _isOnline?: Function) => {
           console.log(data, 'friend status')
           _isOnline(data.isOnline)
       })
+
+      socket.on("notification", (data) => {
+        console.log(data)
+        dispatch(setNewNotification())
+    })
 
 
       socket.on("initiate-call", (data) => {

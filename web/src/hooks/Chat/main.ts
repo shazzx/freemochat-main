@@ -222,8 +222,14 @@ console.log(recepientId, isChatGroup, 'recepient id')
         refetchOnMount: true,
         refetchOnReconnect: false,
         initialPageParam: null,
-        getNextPageParam: (lastPage) => lastPage.nextCursor
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+        getPreviousPageParam: (firstpage) => {
+            console.log(firstpage)
+            return firstpage.nextCursor
+        },
+
     });
+    console.log(data)
 
     return {
         data: data?.pages ?? [],

@@ -32,32 +32,28 @@ export class MessageService {
 
 
   async getMessages(cursor: string, userId: string, recepientId: string, isChatGroup?: number) {
-    const limit = 12
-    const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
+    const limit = 15
+    let chatlist = await this.chatlistService.getChatList(userId, recepientId)
+    if (!chatlist) {
+      return { messages: [], nextCursor: null };
+    }
+    const _cursor = cursor ? { createdAt: { $lt: new Date(cursor), $gt: chatlist.createdAt } } : {};
     // let query = { ..._cursor, $or: [{ sender: userId, recepient: recepientId }, { sender: recepientId, recepient: userId }] }
     let query;
     let messages;
-    let chatlist = await this.chatlistService.getChatList(userId, recepientId)
-
+    console.log(cursor)
     if (isChatGroup == 0) {
       query = { ..._cursor, $or: [{ sender: new Types.ObjectId(userId), recepient: new Types.ObjectId(recepientId) }, { sender: new Types.ObjectId(recepientId), recepient: new Types.ObjectId(userId) }] }
-      if (!chatlist) {
-        return { messages: [], nextCursor: null };
-      }
-      console.log(chatlist.createdAt)
       messages = await this.messageModel.aggregate([
-        { $match: { ...query, createdAt: { $gt: chatlist.createdAt } } },
+        { $match: { ...query, } },
         { $sort: { createdAt: -1 } },
         { $limit: limit + 1 },
       ]);
 
-
     }
     if (isChatGroup == 1) {
       query = { ..._cursor, recepient: new Types.ObjectId(recepientId) }
-      if (!chatlist) {
-        return { messages: [], nextCursor: null };
-      }
+      
       messages = await this.messageModel.aggregate([
         { $match: { ...query, createdAt: { $gt: chatlist.createdAt } } },
         { $limit: limit + 1 },
@@ -131,11 +127,11 @@ export class MessageService {
       throw new BadRequestException("Please provide proper details")
     }
 
-    console.log(query)
-
+    
     const hasNextPage = messages.length > limit;
     const _messages = hasNextPage ? messages.slice(0, -1).reverse() : messages.reverse();
-    const nextCursor = hasNextPage ? _messages[_messages.length - 1].createdAt.toISOString() : null;
+    const nextCursor = hasNextPage ? _messages[0].createdAt.toISOString() : null;
+    console.log(_messages[0])
 
     const results = { messages: _messages, nextCursor };
     return results

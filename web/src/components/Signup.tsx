@@ -35,6 +35,7 @@ export function Signup() {
     const navigate = useNavigate()
     const dispatch = useAppDispatch()
     const [country, setCountry] = useState(null)
+    const [cities, setCities] = useState(null)
     const [city, setCity] = useState(null)
 
 
@@ -43,7 +44,7 @@ export function Signup() {
     }, [errors])
 
     const signupUser = async (_data) => {
-        const { data } = await axiosClient.post("/user/create", _data, {timeout: 30000})
+        const { data } = await axiosClient.post("/user/create", _data, { timeout: 30000 })
         return data
     }
 
@@ -67,8 +68,21 @@ export function Signup() {
     if (isSuccess) {
         showToast("signed up successfully", "success")
         // dispatchData(data)
-        navigate("/auth/"+data?.username+"?auth_id="+data?.tempSecret)
+        navigate("/auth/" + data?.username + "?auth_id=" + data?.tempSecret)
     }
+
+    useEffect(() => {
+        if (country !== null) {
+            console.log(country)
+            const fetchCities = async () => {
+                const {data} = await axiosClient.get('/user/cities', { params: { country } })
+                console.log(data, 'cities')
+                setCities(data)
+            }
+
+            fetchCities()
+        }
+    }, [country])
 
     const onSubmit = (_data) => {
         if (!country || !city) {
@@ -153,9 +167,11 @@ export function Signup() {
                                     <div className="flex gap-2 ">
                                         <SelectScrollable placeholder={"Select country"} selectData={
                                             [
-                                                { name: "Pakistan", "phone_code": "92", cities: ["Karachi", "Islamabad"] },
-                                                { name: "Australia", "phone_code": "92", cities: ["Karachi", "Islamabad"] },
-                                                { name: "India", "phone_code": "92", cities: ["Karachi", "Islamabad"] }
+                                                { name: 'Pakistan', code: 92 },
+                                                { name: 'United States America', code: 68 },
+                                                // { name: "Pakistan", "phone_code": "92", cities: ["Karachi", "Islamabad"] },
+                                                // { name: "Australia", "phone_code": "92", cities: ["Karachi", "Islamabad"] },
+                                                // { name: "India", "phone_code": "92", cities: ["Karachi", "Islamabad"] }
                                             ]
                                         } setCity={setCity} setCountry={setCountry} />
                                     </div>
@@ -165,10 +181,13 @@ export function Signup() {
                                     <Label >
                                         City
                                     </Label>
-                                    <SelectScrollable placeholder={"Select city"} selectData={[
-                                        { name: "Karachi" }, { name: "Islamabad" }, { name: "Delhi" }
-                                    ]} setCity={setCity} setCountry={setCountry} areCities={true} countryName={country} />
-
+                                    <SelectScrollable
+                                        placeholder={"Select city"}
+                                        selectData={cities}
+                                        setCity={setCity}
+                                        setCountry={setCountry}
+                                        areCities={true}
+                                        countryName={country} />
                                     {/* <Input
                                         name="city"
                                         placeholder="Enter your city name"

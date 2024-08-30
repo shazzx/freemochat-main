@@ -118,7 +118,6 @@ export class UserChatListService {
 
     }
 
-
     async getChatList(userId: string, recepient: string) {
         let chat = await this.userChatListModel.findOne({ user: userId, recepient });
         return chat

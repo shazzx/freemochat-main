@@ -23,7 +23,7 @@ function PublicRoute({ children }) {
                 dispatch(setAccessToken(data?.accessToken))
 
                 let response = await axiosClient.get("user")
-                if (response.status == 200) {
+                if (response.status == 202) {
                     console.log('timout')
                     setIsFetched(true)
                     navigate('/')

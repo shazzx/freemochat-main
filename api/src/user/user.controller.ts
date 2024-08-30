@@ -22,8 +22,24 @@ export class UserController {
         private userService: UserService,
         private readonly uploadService: UploadService,
         private readonly otpService: OtpService,
-        private readonly cryptoService: CryptoService
     ) { }
+
+    @Public()
+    @Get('countries')
+    async seedCountries(@Res() res: Response){
+        res.json(await this.userService.seedCountries())
+
+    }
+
+
+    @Public()
+    @Get('cities')
+    async getCities(@Query() query, @Res() res: Response){
+        const {country} = query
+        console.log(country, 'country', query)
+        res.json(await this.userService.getCities(country))
+
+    }
 
     @Public()
     @Post("create")
@@ -34,6 +50,8 @@ export class UserController {
 
         try {
             const { firstname, lastname, username, email, password, confirmPassword, address, phone } = createUserDTO
+
+            await this.userService.isValidAddress({country: address.country, city: address.city})
 
             const emailSecret = this.otpService.generateSecret()
             const phoneSecret = this.otpService.generateSecret()

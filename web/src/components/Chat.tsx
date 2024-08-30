@@ -1,7 +1,7 @@
-import { ChevronLeft, EllipsisIcon, File, Image, Video } from "lucide-react"
-import  { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronLeft, Copy, Delete, DeleteIcon, EllipsisIcon, File, Image, Video } from "lucide-react"
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import EmojiPicker, { Categories } from "emoji-picker-react";
-import { MdCancel } from "react-icons/md";
+import { MdCancel, MdDelete } from "react-icons/md";
 import { axiosClient } from "@/api/axiosClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
@@ -24,6 +24,7 @@ import { handleFile } from "@/lib/formatChec";
 import { startCall } from "@/app/features/user/callSlice";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { format } from "date-fns";
+import { AlertDialogC } from "./AlertDialog";
 
 function Chat({ user, recepientDetails, setChatOpen }) {
     const _isOnline = useCallback((online: boolean) => () => setIsOnline(online), [])
@@ -58,23 +59,23 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     const queryClient = useQueryClient()
 
 
-    useEffect(() => {
-        function handleClickOutside(event) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setFileSelectDropDownState(false);
-            }
-        }
+    // useEffect(() => {
+    //     function handleClickOutside(event) {
+    //         if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    //             setFileSelectDropDownState(false);
+    //         }
+    //     }
 
-        // Add event listener when dropdown is open
-        if (fileSelectDropDownState) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
+    //     // Add event listener when dropdown is open
+    //     if (fileSelectDropDownState) {
+    //         document.addEventListener('mousedown', handleClickOutside);
+    //     }
 
-        // Clean up the event listener
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [fileSelectDropDownState])
+    //     // Clean up the event listener
+    //     return () => {
+    //         document.removeEventListener('mousedown', handleClickOutside);
+    //     };
+    // }, [fileSelectDropDownState])
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -97,14 +98,8 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     const messagesDetails = recepientDetails?.groupId ? { recepientId: recepientDetails?.groupId, isChatGroup: 1 } : { recepientId: recepientDetails?.userId, isChatGroup: 0 }
     const createMessage = useCreateMessage(recepientDetails?.userId || recepientDetails?.groupId)
     const userMessages = useMessages(messagesDetails)
-    console.log(messagesDetails)
 
 
-    // useEffect(() => {
-    //     if (userMessages?.data?.nextCursor !== null) {
-    //         userMessages.fetchNextPage()
-    //     }
-    // }, [inView])
 
     const joinGroup = async () => {
         socket.emit("joingroup", { userId: user?._id, groupId: recepientDetails?.groupId })
@@ -151,14 +146,55 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     // socket.off("chat");
     // };
     // }, []);
+
+
+
+    // useEffect(() => {
+    //     console.log('inview')
+    //     if (userMessages?.data[0]?.nextCursor !== null ) {
+    //         console.log('true fetching...')
+    //         console.log(userMessages.data.nextCursor)
+    //         userMessages.fetchPreviousPage()
+    //     }
+    // }, [inView])
+
     const scrollToBottom = () => {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+        console.log(userMessages.data.length, 'length')
+        if (userMessages.data.length == 1) {
+            console.log('scrolling...')
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+        }
     }
 
     useEffect(() => {
         scrollToBottom()
-    }, [userMessages?.data])
-    console.log(userMessages?.data)
+    }, [userMessages.data])
+
+
+    const [selectedMessageId, setSelectedMessageId] = useState(null);
+    const longPressTimer = useRef(null);
+    const longPressDuration = 500; // milliseconds
+
+    const handleTouchStart = useCallback((id) => {
+        longPressTimer.current = setTimeout(() => {
+            setSelectedMessageId(id);
+        }, longPressDuration);
+    }, []);
+
+    const handleTouchEnd = useCallback(() => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+        }
+    }, []);
+
+    const deleteSelectedMessage = () => {
+        if (selectedMessageId !== null) {
+            deleteMessage(selectedMessageId)
+            setSelectedMessageId(null);
+        }
+    };
+
 
     const handleSendMessage = (e?: KeyboardEvent) => {
         if (inputValue.trim().length === 0) {
@@ -170,11 +206,6 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         if (e.type !== "click" && e.key !== "Enter") {
             return
         }
-        console.log('message processing...')
-
-        // send a message to the server
-        // setMessages((previousMessages) => [...previousMessages, ]);
-
         const messageData = { recepeint: recepientDetails.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, type: recepientDetails?.type, messageType: "Text" }
 
         queryClient.setQueryData(["messages", recepientDetails.userId], (pages: any) => {
@@ -291,7 +322,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         setChatGroupInfo(false)
     }
 
-
+    const [alertDialog, setAlertDialog] = useState(false)
 
     return (
         <div className='flex flex-col min-w-[380px] h-full w-full' >
@@ -314,6 +345,8 @@ function Chat({ user, recepientDetails, setChatOpen }) {
             {callData?.onCall && callData?.callerState == "CALLING" &&
                 <AudioCallCaller recepientDetails={recepientDetails} setAudioCallCaller={setAudioCallCallerState} />
             }
+
+            <AlertDialogC action={deleteChat} alertDialog={alertDialog} setAlertDialog={setAlertDialog} />
 
             <div className='flex items-center justify-between p-3 border border-muted'>
                 <div className='flex gap-2 items-center justify-center'>
@@ -349,17 +382,23 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                             <path d="M24.64 3.43994L19 5.93994V2.93994C19 2.4095 18.7892 1.9008 18.4142 1.52572C18.0391 1.15066 17.5304 0.939941 17 0.939941H1.99997C1.46953 0.939941 0.960829 1.15066 0.585755 1.52572C0.210683 1.9008 -3.05176e-05 2.4095 -3.05176e-05 2.93994V16.9399C-3.05176e-05 17.4703 0.210683 17.9791 0.585755 18.3541C0.960829 18.7291 1.46953 18.9399 1.99997 18.9399H17C17.5304 18.9399 18.0391 18.7291 18.4142 18.3541C18.7892 17.9791 19 17.4703 19 16.9399V13.9399L24.64 16.4399C24.792 16.4985 24.9562 16.5193 25.118 16.4999C25.2798 16.4807 25.4346 16.4223 25.5686 16.3295C25.7026 16.2369 25.812 16.1129 25.8872 15.9683C25.9624 15.8237 26.0012 15.6629 26 15.4999V4.37994C26.0012 4.21696 25.9624 4.05616 25.8872 3.91156C25.812 3.76696 25.7026 3.64292 25.5686 3.55026C25.4346 3.45758 25.2798 3.3991 25.118 3.37986C24.9562 3.36064 24.792 3.38126 24.64 3.43994Z" fill="#433FFA" />
                         </svg>
                     </div>}
-                    <DropdownUser deleteChat={deleteChat} blockUser={blockUser} />
+                    <DropdownUser setAlertDialog={setAlertDialog} deleteChat={deleteChat} blockUser={blockUser} />
                 </div>
             </div>
-            <div className="h-full p-4 flex flex-col gap-4  overflow-y-scroll" onClick={() => {
+
+            <div className="h-full px-4 flex flex-col gap-4  overflow-y-scroll" onClick={() => {
+
                 if (openedDropDownMessageId !== null) {
                     setOpenedDropDownMessageId(null)
                 }
             }} ref={chatContainerRef}>
-                <div className="w-full text-center pb-4">
-                    {/* <span>Today</span> */}
-                </div>
+                {!userMessages.isLoading && userMessages.data[0].nextCursor !== null && <Button className="relative m-1 w-fit bg-card text-xs mx-auto" ref={ref} onClick={() => {
+                    userMessages.fetchPreviousPage()
+                }}>Load More</Button>}
+                {/* <div className="w-full text-center pb-4">
+                    <span>Today</span>
+                </div> */}
+
                 {/* user */}
 
                 {!userMessages.isLoading && userMessages.data?.map((page, pageIndex) => {
@@ -403,18 +442,24 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                         return (
                             (message?.sender == user._id || message?.sender?._id == user._id) ?
                                 <div className="flex gap-2 justify-end" key={message?._id}>
-                                    {userMessages.data.length - 1 == pageIndex && userMessages.data[userMessages.data.length - 1].messages.length - 1 == messageIndex && <div ref={ref}></div>}
+                                    {/* {userMessages.data.length - 1 == pageIndex && (pageIndex == 0 && messageIndex == 0) && <div ref={ref}></div>} */}
                                     <div className="relative max-w-80 w-fit">
-                                        <div className={`relative ${!message?.media ? "p-2 pr-3 bg-primary" : "p-0"} border border-muted text-sm  text-primary-foreground rounded-lg `}
-                                            onMouseEnter={() => {
-                                                setDropDownMessageIndex(messageIndex)
-                                                setDropDownMessagePageIndex(pageIndex)
-                                                setDropDownMessageId(message?._id || null)
-                                            }} onMouseLeave={() => {
-                                                setDropDownMessageIndex(null)
-                                                setDropDownMessagePageIndex(null)
-                                                setDropDownMessageId(null)
-                                            }}>
+                                        <div className={`relative ${!message?.media ? selectedMessageId == message._id ? "bg-card p-2 pr-3" : "p-2 pr-3 bg-primary" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
+                                            onTouchStart={() => handleTouchStart(message._id)}
+                                            onTouchEnd={handleTouchEnd}
+                                            onMouseDown={() => handleTouchStart(message._id)}
+                                            onMouseUp={handleTouchEnd}
+                                            onMouseLeave={handleTouchEnd}
+                                        // onMouseEnter={() => {
+                                        // setDropDownMessageIndex(messageIndex)
+                                        // setDropDownMessagePageIndex(pageIndex)
+                                        // setDropDownMessageId(message?._id || null)
+                                        // }} onMouseLeave={() => {
+                                        // setDropDownMessageIndex(null)
+                                        // setDropDownMessagePageIndex(null)
+                                        // setDropDownMessageId(null)
+                                        // }}
+                                        >
                                             {message?.media && message.media.type == "audio" &&
                                                 <AudioPlayer src={message.media.url} duration={message.media.duration} />
                                             }
@@ -466,7 +511,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                                 </div>
                                             }
                                             <p className="" >{message?.content}</p>
-                                            {
+                                             {/* {
                                                 (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) &&
                                                 <div className="cursor-pointer absolute top-0 -right-2" onClick={() => {
                                                     setOpenedDropDownMessageId(message?._id)
@@ -474,16 +519,16 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                                     <EllipsisIcon />
                                                 </div>
 
-                                            }
+                                            } */}
                                             {
-                                                dropDownMessagePageIndex == pageIndex && dropDownMessageIndex && message?._id && message?._id == openedDropDownMessageId &&
+                                                 message?._id == selectedMessageId &&
                                                 <div className="absolute top-10 right-0 z-20">
-                                                    <Button onClick={() => {
+                                                    <Button className="bg-card border border-accent" onClick={() => {
                                                         message?.deletedFor.push({ userId: user?._id })
-                                                        deleteMessage(message?._id)
-                                                    }}>Delete</Button>
+                                                        deleteSelectedMessage()
+                                                    }}><MdDelete size={20} className="mr-2"/> Delete</Button>
                                                 </div>
-                                            }
+                                            } 
                                         </div>
                                     </div>
                                     <div className='max-w-10 max-h-10 rounded-full overflow-hidden'>
@@ -493,19 +538,19 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                 :
 
                                 <div className="flex" key={message?._id}>
-                                    {userMessages.data.length - 1 == pageIndex && userMessages.data[userMessages.data.length - 1].messages.length - 1 == messageIndex && <div ref={ref}></div>}
+                                    {/* {userMessages.data.length - 1 == pageIndex && userMessages.data[userMessages.data.length - 1].messages.length - 1 == messageIndex && <div ref={ref}></div>} */}
                                     <div className="flex gap-2">
                                         <div className='max-w-10 max-h-10 bg-accent rounded-full overflow-hidden'>
                                             <Avatar className="h-9 w-9 flex items-center justify-center">
                                                 <AvatarImage src={message?.sender?.profile || recepientDetails?.profile} alt="Avatar" />
                                                 <AvatarFallback>
                                                     {message?.sender?.firstname ? message?.sender?.firstname[0]?.toUpperCase()
-                                                 ||
-                                                  recepientDetails?.firstname[0]?.toUpperCase()
-                                                   :
-                                                    recepientDetails?.firstname[0]?.toUpperCase() || recepientDetails?.firstname[0]?.toUpperCase()
+                                                        ||
+                                                        recepientDetails?.firstname[0]?.toUpperCase()
+                                                        :
+                                                        recepientDetails?.firstname[0]?.toUpperCase() || recepientDetails?.firstname[0]?.toUpperCase()
 
-                                                }</AvatarFallback>
+                                                    }</AvatarFallback>
                                             </Avatar>
                                         </div>
                                         <div className="relative max-w-80 w-fit">
@@ -720,9 +765,9 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                     { id: '12rwtfadfasdf', names: ['freedom'], imgUrl: emojiToImageUrl('🪽') },
                                     // { id: '1adf2asfsdf4', names: ['freedom'], imgUrl: emojiToImageUrl('𓆩𓆪') },
                                     { id: '1asftujyyiz2623', names: ['freedom'], imgUrl: emojiToImageUrl('🕊️') }
-                                ]} open={emojiPickerState} onEmojiClick={({emoji, names}) => {
+                                ]} open={emojiPickerState} onEmojiClick={({ emoji, names }) => {
                                     let selection = textRef.current.selectionStart
-                                    console.log(emoji )
+                                    console.log(emoji)
                                     let _emoji = emoji
                                     if (emoji == "1asftujyyiz2623") {
                                         _emoji = '🕊️'
@@ -735,12 +780,12 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
                                     if (selection == 0 && inputValue.length == 0) {
                                         setInputValue(_emoji)
-                                        return 
+                                        return
                                     }
-                                    
+
                                     if (selection) {
                                         const textBefore = inputValue.substring(0, selection);
-                                        const textAfter =  inputValue.substring(selection);
+                                        const textAfter = inputValue.substring(selection);
                                         setInputValue(textBefore + _emoji + textAfter)
 
                                         const newCursorPos = selection + emoji.length;
@@ -781,4 +826,4 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     )
 }
 
-export default Chat
+export default memo(Chat)

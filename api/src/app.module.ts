@@ -39,6 +39,7 @@ import { ChatGateway } from './chat/chat.gateway';
 import { ChatModule } from './chat/chat.module';
 import { EncryptionModule } from './encryption/encryption.module';
 import { CryptoModule } from './crypto/crypto.module';
+import { TwilioModule } from './twilio/twilio.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -83,6 +84,7 @@ import { CryptoModule } from './crypto/crypto.module';
     ChatModule,
     EncryptionModule,
     CryptoModule,
+    TwilioModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: "APP_GUARD", useClass: JwtAuthGuard }, UploadListener],

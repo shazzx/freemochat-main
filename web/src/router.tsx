@@ -19,20 +19,6 @@ import { Signup } from "./components/Signup";
 
 export const router = createBrowserRouter([
     {
-        // path: "/",
-        // element: <PublicRoute />,
-        // children: [
-        //     {
-        //         path: "/login",
-        //         element: <LoginForm/>,
-        //         index: true
-        //     },
-        //     {
-        //         path: "/signup",
-        //         element: <Signup/>,
-        //     },
-        // ],
-
         path: "/",
         element: <ProtectedRoute />,
         children: [
@@ -102,5 +88,21 @@ export const router = createBrowserRouter([
                 element: <MainHome children={<PostSection />} />,
             },
         ] 
+    },
+    {
+                path: "/",
+        element: <PublicRoute />,
+        children: [
+            {
+                path: "/login",
+                element: <LoginForm/>,
+                index: true
+            },
+            {
+                path: "/signup",
+                element: <Signup/>,
+            },
+        ],
+
     }
 ])

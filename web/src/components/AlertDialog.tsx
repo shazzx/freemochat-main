@@ -10,12 +10,9 @@ import {
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
 
-  export function AlertDialogC({button, action, dialogState}) {
+  export function AlertDialogC({action, alertDialog, setAlertDialog}) {
     return (
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          {button}
-        </AlertDialogTrigger>
+      <AlertDialog open={alertDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -26,7 +23,10 @@ import {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={action}>Continue</AlertDialogAction>
+            <AlertDialogAction onClick={() => {
+              action()
+              setAlertDialog(false)
+            }}>Continue</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
