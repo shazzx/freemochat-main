@@ -20,47 +20,10 @@ export class UserService {
         @InjectModel(FriendRequest.name) private readonly friendRequestModel: Model<FriendRequest>,
         @InjectModel(Friend.name) private readonly friendModel: Model<Friend>,
         @InjectModel(Follower.name) private readonly followerModel: Model<Follower>,
-        @InjectModel(Countries.name) private readonly countriesModel: Model<Countries>,
-        @InjectModel(Cities.name) private readonly citiesModel: Model<Cities>,
         private readonly metricsAggregatorService: MetricsAggregatorService,
         private readonly cryptoService: CryptoService
     ) {
 
-    }
-
-    async isValidAddress({country, city}: {country: string, city: string}) {
-        const isValidCountry = await this.countriesModel.findOne({name: country})
-        const isValidCity = await this.citiesModel.findOne({name: city})
-        if(!isValidCountry || isValidCity){
-            throw new BadRequestException("Invalid Address")
-        }
-
-        return true
-    }
-
-    async getCities(country: string) {
-        const cities = await this.citiesModel.find({country}).sort({ name: 1 }).collation({ locale: "en", caseLevel: true })
-        return cities
-    }
-
-
-    async getCountries() {
-        const countries = await this.countriesModel.find().sort({ name: 1 }).collation({ locale: "en", caseLevel: true })
-        return countries
-    }
-
-    async seedCountries() {
-        //  await this.countriesModel.create([
-        //     {name: 'Pakistan', code: 92, shortName: "PK" },
-        //     {name: 'United States America', code: 68, shortName: "USA" }
-        //  ])
-         
-         await this.citiesModel.create([
-            {name: "Karachi", country: "Pakistan"}, 
-            {name: "Islamabad", country: "Pakistan"}, 
-            {name: "Washington", country: "United States America"}
-        ])
-        return true
     }
 
     async createUser(user: { firstname: string, lastname: string, username: string, email: string, password: string, confirmPassword: string, address: { country?: string, city?: string, area?: string, }, phone: string, phoneSecret: string, emailSecret: string, tempSecret: string }): Promise<any> {

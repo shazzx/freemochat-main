@@ -9,8 +9,12 @@ export class Location {
 
     @Prop()
     type: String
-    // type can be country, city, area
+
+    @Prop({type: String, default: null})
+    country: String
+
+    @Prop({type: String, default: null})
+    city: String
 }
 
 export const LocationSchema = SchemaFactory.createForClass(Location)
-// FriendSchema.index({ user: 1, friend: 1 }, { unique: true })

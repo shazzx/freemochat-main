@@ -40,6 +40,7 @@ import { ChatModule } from './chat/chat.module';
 import { EncryptionModule } from './encryption/encryption.module';
 import { CryptoModule } from './crypto/crypto.module';
 import { TwilioModule } from './twilio/twilio.module';
+import { LocationModule } from './location/location.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -85,6 +86,7 @@ import { TwilioModule } from './twilio/twilio.module';
     EncryptionModule,
     CryptoModule,
     TwilioModule,
+    LocationModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: "APP_GUARD", useClass: JwtAuthGuard }, UploadListener],

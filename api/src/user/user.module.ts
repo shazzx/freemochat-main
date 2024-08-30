@@ -14,6 +14,7 @@ import { OtpModule } from 'src/otp/otp.module';
 import { CryptoModule } from 'src/crypto/crypto.module';
 import { Countries, CountriesSchema } from 'src/schema/countries';
 import { Cities, CitiesSchema } from 'src/schema/cities';
+import { LocationModule } from 'src/location/location.module';
 
 @Module({
   imports: [
@@ -22,14 +23,13 @@ import { Cities, CitiesSchema } from 'src/schema/cities';
     OtpModule,
     CryptoModule,
     MetricsAggregatorModule,
+    LocationModule,
     forwardRef(() => UploadModule),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: FriendRequest.name, schema: FriendRequestsSchema },
       { name: Friend.name, schema: FriendSchema },
       { name: Follower.name, schema: FollowerSchema },
-      { name: Countries.name, schema: CountriesSchema },
-      { name: Cities.name, schema: CitiesSchema },
     ])],
   exports: [UserService],
   providers: [UserService],
