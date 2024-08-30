@@ -25,7 +25,7 @@ export class UserController {
     ) { }
 
     @Public()
-    @Get('countries')
+    @Get('seed')
     async seedCountries(@Res() res: Response){
         res.json(await this.userService.seedCountries())
 
@@ -39,6 +39,13 @@ export class UserController {
         console.log(country, 'country', query)
         res.json(await this.userService.getCities(country))
 
+    }
+
+
+    @Public()
+    @Get('countries')
+    async getCountries(@Res() res: Response){
+        res.json(await this.userService.getCountries())
     }
 
     @Public()

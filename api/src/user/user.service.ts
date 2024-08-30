@@ -39,15 +39,21 @@ export class UserService {
     }
 
     async getCities(country: string) {
-        const cities = await this.citiesModel.find({country})
+        const cities = await this.citiesModel.find({country}).sort({ name: 1 }).collation({ locale: "en", caseLevel: true })
         return cities
     }
 
+
+    async getCountries() {
+        const countries = await this.countriesModel.find().sort({ name: 1 }).collation({ locale: "en", caseLevel: true })
+        return countries
+    }
+
     async seedCountries() {
-         await this.countriesModel.create([
-            {name: 'Pakistan', code: 92, shortName: "PK" },
-            {name: 'United States America', code: 68, shortName: "USA" }
-         ])
+        //  await this.countriesModel.create([
+        //     {name: 'Pakistan', code: 92, shortName: "PK" },
+        //     {name: 'United States America', code: 68, shortName: "USA" }
+        //  ])
          
          await this.citiesModel.create([
             {name: "Karachi", country: "Pakistan"}, 

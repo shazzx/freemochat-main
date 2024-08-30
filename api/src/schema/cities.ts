@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 
 @Schema({timestamps: true})
 export class Cities {
-    @Prop({type: String, unique: true})
+    @Prop({type: String})
     name: string
 
     @Prop({type: String})

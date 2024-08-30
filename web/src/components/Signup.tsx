@@ -36,6 +36,7 @@ export function Signup() {
     const dispatch = useAppDispatch()
     const [country, setCountry] = useState(null)
     const [cities, setCities] = useState(null)
+    const [countries, setCountries] = useState(null)
     const [city, setCity] = useState(null)
 
 
@@ -72,6 +73,15 @@ export function Signup() {
     }
 
     useEffect(() => {
+        const fetchCountries = async() => {
+            const {data} = await axiosClient.get('/user/countries')
+            setCountries(data)
+        }
+        fetchCountries()
+    },[])
+
+    useEffect(() => {
+
         if (country !== null) {
             console.log(country)
             const fetchCities = async () => {
@@ -165,15 +175,7 @@ export function Signup() {
                                     />
                                     {errors.address?.country && <p>{errors.address.country.message}</p>} */}
                                     <div className="flex gap-2 ">
-                                        <SelectScrollable placeholder={"Select country"} selectData={
-                                            [
-                                                { name: 'Pakistan', code: 92 },
-                                                { name: 'United States America', code: 68 },
-                                                // { name: "Pakistan", "phone_code": "92", cities: ["Karachi", "Islamabad"] },
-                                                // { name: "Australia", "phone_code": "92", cities: ["Karachi", "Islamabad"] },
-                                                // { name: "India", "phone_code": "92", cities: ["Karachi", "Islamabad"] }
-                                            ]
-                                        } setCity={setCity} setCountry={setCountry} />
+                                    <SelectScrollable placeholder={"Select country"} selectData={countries} setCity={setCity} setCountry={setCountry} />
                                     </div>
 
                                 </div>
