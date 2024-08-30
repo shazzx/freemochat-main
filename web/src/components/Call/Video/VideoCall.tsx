@@ -14,9 +14,13 @@ import {
 import { useSocket } from "@/hooks/useSocket";
 import { Mic } from "lucide-react";
 import { MdPhone } from "react-icons/md";
+import { useAppSelector } from "@/app/hooks";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 
 
-const VideoCall = ({ channel, callDetails, cancelCall }) => {
+const VideoCall = ({ channel, _callDetails, cancelCall }) => {
+  const { callDetails, callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
+
     console.log(callDetails)
     const socket = useSocket()
 
@@ -48,7 +52,7 @@ const VideoCall = ({ channel, callDetails, cancelCall }) => {
     useJoin(
         {
             appid: appId,
-            channel: channel!,
+            channel: 'test',
             token: null,
         },
         activeConnection,
@@ -59,7 +63,6 @@ const VideoCall = ({ channel, callDetails, cancelCall }) => {
     //remote users
     const remoteUsers = useRemoteUsers();
     const { audioTracks } = useRemoteAudioTracks(remoteUsers);
-
     // play the remote user audio tracks
     audioTracks.forEach((track) => track.play());
 
@@ -94,6 +97,21 @@ const VideoCall = ({ channel, callDetails, cancelCall }) => {
                         )
                     }
                     )
+
+                }
+                {remoteUsers.length  == 0 && 
+                <div className='flex flex-col gap-4 items-center justify-center'>
+                <div className='w-28 h-28 border-2 border-accent rounded-full flex items-center justify-center bg-accent overflow-hidden'>
+                  <Avatar className="flex  items-center justify-center">
+                    <AvatarImage src={callDetails?.userDetails?.profile || targetDetails?.profile} alt="Avatar" />
+                    <AvatarFallback className='text-4xl'>{callDetails?.userDetails?.fullname[0]?.toUpperCase() || targetDetails?.fullname[0]?.toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className='flex flex-col  items-center justify-center'>
+                  <span className='text-lg'>{callDetails?.userDetails?.fullname || targetDetails?.fullname}</span>
+                  <span>@{callDetails?.userDetails?.username || targetDetails?.username}</span>
+                </div>
+              </div>
                 }
             </div>
             <div id='localVideo'>

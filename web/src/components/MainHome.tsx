@@ -36,6 +36,7 @@ import AudioCallRecepient from "./Call/Audio/AudioCallRecepient"
 import Agora from "./Call/agora/AgoraRTC"
 import { endCall } from "@/app/features/user/callSlice"
 import AudioCall from "./Call/Audio/AudioCall"
+import VideoCall from "./Call/Video/VideoCall"
 
 const MainHome = ({ children }: any) => {
   useSocket()
@@ -47,54 +48,55 @@ const MainHome = ({ children }: any) => {
   const [friendRequestState, setFriendRequestState] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const dispatch = useAppDispatch()
-  const {callDetails, callerState, onCall, recepientState, targetDetails, type} = useAppSelector((state) => state.call)
+  const { callDetails, callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
   const data = useAppSelector((state) => state.call)
-  const {notification} = useAppSelector((state) => state.notification)
+  const { notification } = useAppSelector((state) => state.notification)
   console.log(callDetails, callerState, onCall, recepientState, targetDetails, type)
 
   let cancelCall = async (type) => {
     try {
-        if (type == "AUDIO") {
-            console.log('audio call end')
+      if (type == "AUDIO") {
+        console.log('audio call end')
 
-            // setAudioCallCallerState(false)
-            // setAudioCallState("NEUTRAL")
-            const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaStream.getTracks().forEach(track => track.stop())
-        } else {
-            console.log('video call end')
-            // setVideoCallCallerState(false)
-            // setVideoCallState("NEUTRAL")
-            const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-            mediaStream.getTracks().forEach(track => track.stop())
-        }
-        dispatch(endCall())
-        // setCallDetails(null)
+        // setAudioCallCallerState(false)
+        // setAudioCallState("NEUTRAL")
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaStream.getTracks().forEach(track => track.stop())
+      } else {
+        console.log('video call end')
+        // setVideoCallCallerState(false)
+        // setVideoCallState("NEUTRAL")
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        mediaStream.getTracks().forEach(track => track.stop())
+      }
+      dispatch(endCall())
+      // setCallDetails(null)
     } catch (error) {
-        console.log(error)
-        dispatch(endCall())
-        // location.reload()
+      console.log(error)
+      dispatch(endCall())
+      // location.reload()
     }
-}
+  }
   return (
 
     <div className="h-screen w-full flex flex-col overflow-hidden">
-            {/* incoming call */}
-            {onCall && type == "Audio" && recepientState == "CALLING" && callDetails?.userDetails &&
-              <AudioCallRecepient recepientDetails={callDetails.userDetails} />
-          }
+      {/* incoming call */}
+      {onCall && type == "Audio" && recepientState == "CALLING" && callDetails?.userDetails &&
+        <AudioCallRecepient recepientDetails={callDetails.userDetails} />
+      }
 
 
-          {/* accepted call */}
-          {onCall && (recepientState == "ACCEPTED" || callerState == "ACCEPTED" ) && callDetails?.type == "AUDIO" && callDetails?.channel &&
-              <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={AudioCall} />
-          }
+      {/* accepted call */}
+      {onCall && (recepientState == "ACCEPTED" || callerState == "ACCEPTED") && callDetails?.type == "AUDIO" && callDetails?.channel &&
+        <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={AudioCall} />
+      }
 
-
-          {/* accepted call */}
-          {/* {videoCallState == "ACCEPTED" && callDetails?.type == "VIDEO" && callDetails?.channel && */}
-              {/* <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} /> */}
-          {/* } */}
+      {onCall && type == "Video" &&
+        <Agora callDetails={callDetails} channel={''} Call={VideoCall} />
+      }
+      {/* {onCall && (recepientState == "ACCEPTED" || (callerState == "ACCEPTED" || callerState == "CALLING")) && callDetails?.type == "VIDEO" && callDetails?.channel &&
+        <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} />
+      } */}
 
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
@@ -266,10 +268,10 @@ const MainHome = ({ children }: any) => {
               <FriendRequests setFriendRequestState={setFriendRequestState} />
             }
             <div className="relative">
-            <MdNotifications onClick={() => {
-              setNotificationsState(true)
-            }} size="24px" cursor="pointer" />
-            {notification && <span className="absolute top-0 right-1 w-2 h-2 rounded-full bg-red-500"></span>}
+              <MdNotifications onClick={() => {
+                setNotificationsState(true)
+              }} size="24px" cursor="pointer" />
+              {notification && <span className="absolute top-0 right-1 w-2 h-2 rounded-full bg-red-500"></span>}
             </div>
 
             {notificationsState && <Notifications setNotificationsState={setNotificationsState} />}

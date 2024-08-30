@@ -25,6 +25,8 @@ import { startCall } from "@/app/features/user/callSlice";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { format } from "date-fns";
 import { AlertDialogC } from "./AlertDialog";
+import Agora from "./Call/agora/AgoraRTC";
+import VideoCall from "./Call/Video/VideoCall";
 
 function Chat({ user, recepientDetails, setChatOpen }) {
     const _isOnline = useCallback((online: boolean) => () => setIsOnline(online), [])
@@ -251,7 +253,14 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
 
     const initiateVideoCall = useCallback(() => {
-        setVideoCallCallerState(true)
+        dispatch(startCall(
+            {
+                onCall: true,
+                type: CallTypes.VIDEO,
+                callerState: CallStates.CALLING,
+                targetDetails: recepientDetails,
+            }
+        ))
         socket.emit("initiate-call", { type: 'VIDEO', userDetails: { userId: user?._id, username: user?.username, fullname: user?.firstname + " " + user?.lastname, profile: user?.profile }, recepientDetails })
     }, [])
 
@@ -274,23 +283,18 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     }
 
     function emojiToImageUrl(emoji) {
-        // Create a canvas element
         const canvas = document.createElement('canvas');
-        canvas.width = 32;  // Set width and height as needed
+        canvas.width = 32;  
         canvas.height = 32;
 
-        // Get the 2D drawing context
         const ctx = canvas.getContext('2d');
 
-        // Set font and text baseline
-        ctx.font = '24px Arial';  // Adjust font size and family as needed
+        ctx.font = '24px Arial';  
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'center';
 
-        // Draw the emoji on the canvas
         ctx.fillText(emoji, canvas.width / 2, canvas.height / 2);
 
-        // Convert canvas to data URL
         return canvas.toDataURL();
     }
 
@@ -322,7 +326,8 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         setChatGroupInfo(false)
     }
 
-    const [alertDialog, setAlertDialog] = useState(false)
+  const { callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
+  const [alertDialog, setAlertDialog] = useState(false)
 
     return (
         <div className='flex flex-col min-w-[380px] h-full w-full' >
@@ -331,18 +336,20 @@ function Chat({ user, recepientDetails, setChatOpen }) {
             }
 
             {/* initiated call */}
-            {videoCallCallerState &&
+            {/* {videoCallCallerState &&
                 <VideoCallCaller recepientDetails={recepientDetails} setVideoCallCallerState={setVideoCallCallerState} />
-            }
+            } */}
+
+
 
             {/* incoming call */}
-            {videoCallState == "CALLING"
+            {/* {videoCallState == "CALLING"
                 &&
                 <VideoCallRecepient recepientDetails={recepientDetails} setVideoCallState={setVideoCallState} />
-            }
+            } */}
 
             {/* initiated call */}
-            {callData?.onCall && callData?.callerState == "CALLING" &&
+            {callData?.onCall && callData?.type == "Audio" && callData?.callerState == "CALLING" &&
                 <AudioCallCaller recepientDetails={recepientDetails} setAudioCallCaller={setAudioCallCallerState} />
             }
 

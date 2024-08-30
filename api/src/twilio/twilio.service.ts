@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import twilio from 'twilio';
+import SendGrid from '@sendgrid/mail';
 import { MessageInstance } from 'twilio/lib/rest/api/v2010/account/message';
 
 @Injectable()
@@ -8,6 +9,7 @@ export class TwilioService {
   private client: twilio.Twilio;
 
   constructor(private configService: ConfigService) {
+    SendGrid.setApiKey(this.configService.get<string>('SENDGRID_API_KEY'));
     const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
     
@@ -37,5 +39,11 @@ export class TwilioService {
       console.error('Failed to send SMS:', error);
       throw error;
     }
+  }
+  async sendEmail(mail: SendGrid.MailDataRequired) {
+    console.log(mail)
+    const transport = await SendGrid.send(mail);
+    console.log(`Email successfully dispatched to ${mail.to}`);
+    return transport;
   }
 }
