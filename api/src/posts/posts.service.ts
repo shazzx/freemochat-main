@@ -497,8 +497,6 @@ export class PostsService {
         const nextCursor = hasNextPage ? _posts[_posts.length - 1].createdAt.toISOString() : null;
 
         const results = { posts: _posts, nextCursor };
-        // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
-
         return results
     }
 
@@ -514,21 +512,39 @@ export class PostsService {
         }
 
         if (type == 'normal') {
-            const viewedPost = await this.viewPostsModel.create({ type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) })
+            const viewedPost = await this.viewPostsModel.updateOne(
+                { type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) },
+                { $setOnInsert: { type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) } },
+                { upsert: true }
+            )
             return viewedPost
         }
 
-        if(type !== 'promotion'){
+        if (type !== 'promotion') {
             throw new BadRequestException()
         }
 
+
+        const viewedPost = await this.viewPostsModel.updateOne(
+            { type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) },
+            { $setOnInsert: { type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) } },
+            { upsert: true }
+        )
+
         const _promotedPost = await this.promotionModel.findOne({ postId: new Types.ObjectId(postId), active: 1 })
-        if ((Number(_promotedPost.reach) + 1) == Number(_promotedPost.reachTarget)) {
-            _promotedPost.updateOne({ postId: new Types.ObjectId(postId), active: 1, reachStatus: ReachStatus.COMPLETED }, { $inc: { reach: 1 } })
+        console.log((Number(_promotedPost.reach) + 1), Number(_promotedPost.reachTarget) )
+        if ((Number(_promotedPost.reach) + 1) >= Number(_promotedPost.reachTarget) && _promotedPost.reachStatus !== ReachStatus.COMPLETED) {
+            console.log('completed')
+            _promotedPost.reachStatus = ReachStatus.COMPLETED
+            _promotedPost.active = 0
+            _promotedPost.reach = Number(_promotedPost.reach) + 1
+            _promotedPost.save()
+            return viewedPost
         }
 
-        const viewedPost = await this.viewPostsModel.create({ type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) })
-        const promotedPost = await this.promotionModel.findOneAndUpdate({ postId: new Types.ObjectId(postId), active: 1 }, { $inc: { reach: 1 } })
+        if(viewedPost.upsertedCount > 0 && (Number(_promotedPost.reach) + 1) < Number(_promotedPost.reachTarget)){
+            await this.promotionModel.findOneAndUpdate({ postId: new Types.ObjectId(postId), active: 1 }, { $inc: { reach: 1 } })
+        }
         return viewedPost
     }
 

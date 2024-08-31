@@ -24,8 +24,8 @@ export class Promotion {
     @Prop({ type: Types.ObjectId, ref: "User" })
     user: ObjectId
 
-    @Prop({enum : ReachStatus})
-    reachStatus: ReachStatus
+    @Prop({type: String, enum : ReachStatus})
+    reachStatus: String
 
     @Prop()
     reachTarget: Number
