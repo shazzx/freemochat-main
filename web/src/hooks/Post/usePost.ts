@@ -2,10 +2,11 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useAppSelector } from '@/app/hooks';
 import { toast } from 'react-toastify';
 import { produce } from 'immer'
-import { bookmarkPost, createPost, fetchFeed, fetchPost, fetchPosts, likePost, removePost, updatePost } from '@/api/Post/posts';
+import { bookmarkPost, createPost, fetchFeed, fetchPost, fetchPosts, likePost, promotePost, removePost, updatePost } from '@/api/Post/posts';
 import { UrlObject } from 'url';
 import { axiosClient } from '@/api/axiosClient';
 import { useEffect } from 'react';
+import { redirectToCheckout } from '@/utils/redirectToCheckout';
 
 export function useFeed(): any {
 
@@ -155,6 +156,39 @@ export const useCreatePost = (key: string, targetId?: string) => {
       }
     }
   })
+
+  return {
+    data,
+    isPending,
+    isSuccess,
+    mutateAsync,
+    mutate
+  }
+}
+
+export const usePromotePost = () => {
+  const { user } = useAppSelector((state) => state.user)
+  const queryClient = useQueryClient()
+  const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+    mutationFn: ({postId, promotionDetails}: any) => {
+      return promotePost(postId, promotionDetails)
+    },
+
+    onError: (err: any, data, context) => {
+      const { response } = err
+      if (!response) {
+        toast.error(err.message)
+        return
+      }
+      const { data: {  message } } = response
+      toast.error(message)
+    },
+    onSettled: (data) => {
+      if(data){
+        redirectToCheckout(data)
+        toast.success("Post created")
+      }
+  }})
 
   return {
     data,

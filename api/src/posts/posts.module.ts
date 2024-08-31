@@ -21,6 +21,8 @@ import { BullModule } from '@nestjs/bullmq';
 import { UploadListener } from './upload.listener';
 import FollowerSchema, { Follower } from 'src/schema/followers';
 import MemberSchema, { Member } from 'src/schema/members';
+import { PaymentModule } from 'src/payment/payment.module';
+import { LocationModule } from 'src/location/location.module';
 
 @Module({
   imports: [UserModule, JwtModule,
@@ -40,6 +42,8 @@ import MemberSchema, { Member } from 'src/schema/members';
       name: "media-upload"
     }),
     MediaModule,
+    PaymentModule,
+    LocationModule,
     MetricsAggregatorModule,
     CacheModule,
     NotificationModule,

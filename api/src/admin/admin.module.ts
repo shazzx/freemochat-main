@@ -17,6 +17,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
 import { UploadModule } from 'src/upload/upload.module';
 import { AccountManagementModule } from 'src/account-management/account-management.module';
+import { PaymentModule } from 'src/payment/payment.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AccountManagementModule } from 'src/account-management/account-manageme
     PostModule,
     GroupModule,
     PageModule,
+    PaymentModule,
     CGroupModule,
     AuthModule,
     JwtModule,

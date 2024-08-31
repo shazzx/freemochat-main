@@ -15,6 +15,10 @@ export async function fetchFeed(pageParam) {
   });
   return response.data;
 }
+export async function promotePost(postId, promotionDetails){
+  let { data } = await axiosClient.post("posts/promotion", { postId, promotionDetails, isApp: '0' })
+return data
+}
 
 export async function fetchPosts(pageParam, type, targetId?) {
   console.log(type, targetId)

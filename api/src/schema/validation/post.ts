@@ -64,8 +64,14 @@ export const GetPromotions = Cursor.extend({
 
 export const PromotePost = z.object({
     postId: ValidMongoId,
+    isApp: z.string(),
     promotionDetails: z.object({
         reachTarget: z.number(),
+        targetAddress: z.object({
+            country: z.string(),
+            city: z.string().nullable().optional(),
+            area: z.string().nullable().optional()
+        })
     }),
 })
 

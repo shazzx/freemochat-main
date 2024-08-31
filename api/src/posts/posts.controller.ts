@@ -9,20 +9,15 @@ import { v4 as uuidv4 } from 'uuid'
 import { getFileType } from 'src/utils/getFileType';
 import { MediaService } from 'src/media/media.service';
 import { Public } from 'src/auth/public.decorator';
-import Stripe from 'stripe';
-import stripe from 'src/utils/stripe.session';
-import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Job, Queue } from 'bullmq';
-import { Process } from '@nestjs/bull';
-
-import { OnQueueEvent } from '@nestjs/bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
 import { BookmarkPost, BookmarkPostDTO, CreatePost, CreatePostDTO, DeletePost, DeletePostDTO, GetPost, GetPostDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
-import { z } from 'zod';
+import Stripe from 'stripe';
 
 // @Processor('media-upload')
 // export class MediaUploadConsumer extends WorkerHost {
@@ -84,7 +79,6 @@ import { z } from 'zod';
 
 @Controller('posts')
 export class PostsController {
-    private readonly stripe: Stripe
     constructor(
         private userService: UserService,
         private postService: PostsService,
@@ -94,9 +88,7 @@ export class PostsController {
         private readonly chatGateway: ChatGateway,
         @InjectQueue("media-upload") private readonly mediaUploadQueue: Queue,
 
-    ) {
-        this.stripe = stripe
-    }
+    ) {}
 
     @Get()
     async getPosts(@Req() req: Request, @Res() response: Response) {
@@ -354,10 +346,8 @@ export class PostsController {
 
     @Post("promotion")
     async promotePost(@Body(new ZodValidationPipe(PromotePost)) promotePostDTO: PromotePostDTO, @Req() req, @Res() res: Response) {
-        const { postId, promotionDetails } = promotePostDTO
-        const { reachTarget } = promotionDetails
-
-        return  await this.postService.postPromotion(postId, req.user.sub, { reachTarget }) 
+        const { postId, promotionDetails, isApp } = promotePostDTO
+        res.json(await this.postService.postPromotion({postId, userId: req.user.sub, promotionDetails, isApp}))
     }
 
     @Get("promotedPosts")

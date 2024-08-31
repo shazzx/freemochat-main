@@ -11,7 +11,7 @@ export class PaymentService {
         this.stripe = new Stripe(this.configService.get<string>('STRIPE_API_KEY'))
     }
 
-    async stripeCheckout(productDetails: any, userId: string, promotionId: string, totalAmount: number, isMobile: string) {
+    async stripeCheckout(productDetails: any, userId: string, promotionId: string, totalAmount: number, isApp: string) {
         const session = await this.stripe.checkout.sessions.create({
             payment_method_types: [PAYMENT_METHOD_TYPES.CARD],
             line_items: productDetails,
@@ -27,7 +27,7 @@ export class PaymentService {
             }
         })
 
-        if (isMobile) {
+        if (Number(isApp) === 1) {
             await this.stripe.paymentIntents.create({
                 amount: session.amount_total,
                 currency: session.currency,
@@ -41,4 +41,18 @@ export class PaymentService {
         }
         return session.id
     }
+
+        async partialRefund(paymentIntentId: string, amount: number): Promise<Stripe.Refund> {
+        try {
+            const refund = await this.stripe.refunds.create({
+                payment_intent: paymentIntentId,
+                amount: amount,
+            });
+            return refund;
+        } catch (error) {
+            // Handle any errors
+            throw new Error(`Error processing refund: ${error.message}`);
+        }
+    }
+
 }

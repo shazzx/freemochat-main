@@ -5,20 +5,13 @@ import { AuthService } from './auth/auth.service';
 import { IsAdminRoute } from './utils/isAdminRoute.decorator';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import stripe from 'src/utils/stripe.session';
-import Stripe from 'stripe';
-import { Public } from 'src/auth/public.decorator';
-import { AccountManagementService } from 'src/account-management/account-management.service';
 
 @Controller('admin')
 export class AdminController {
-    private readonly stripe
     constructor(
         private readonly adminService: AdminService, 
         private readonly authService: AuthService,
-    ) {
-        this.stripe = stripe
-     }
+    ) {}
 
     @IsAdminRoute()
     @Post('login')

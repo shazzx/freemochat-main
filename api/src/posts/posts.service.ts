@@ -1,14 +1,10 @@
-import { InjectQueue } from '@nestjs/bullmq';
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Queue } from 'bullmq';
-import { Model, PopulateOptions, Schema, startSession, Types } from 'mongoose';
-import { CacheService } from 'src/cache/cache.service';
-import { ChatGateway } from 'src/chat/chat.gateway';
+import { Model, Types } from 'mongoose';
 import { LocationService } from 'src/location/location.service';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
-import { NotificationProducer } from 'src/notification/kafka/notification.producer';
 import { NotificationService } from 'src/notification/notification.service';
+import { PaymentService } from 'src/payment/payment.service';
 import { Bookmark } from 'src/schema/bookmark';
 import { Comment } from 'src/schema/comment';
 import { Follower } from 'src/schema/followers';
@@ -19,11 +15,8 @@ import { Promotion } from 'src/schema/promotion';
 import { Report } from 'src/schema/report';
 import { ViewedPosts } from 'src/schema/viewedPosts';
 import { UserService } from 'src/user/user.service';
-import { CURRENCIES } from 'src/utils/enums/global.c';
-import { getTime } from 'src/utils/getTime';
-import { stripeCheckout } from 'src/utils/stripe.session';
-import { v4 as uuidv4 } from 'uuid'
-import { string } from 'zod';
+import { CURRENCIES, PAYMENT_PROVIDERS, PAYMENT_STATES } from 'src/utils/enums/global.c';
+import { SPostPromotion } from 'src/utils/types/service/posts';
 
 
 @Injectable()
@@ -43,6 +36,7 @@ export class PostsService {
         private readonly metricsAggregatorService: MetricsAggregatorService,
         private readonly userService: UserService,
         private readonly locationService: LocationService,
+        private readonly paymentService: PaymentService,
     ) { }
 
     async getPosts(cursor, userId, targetId, type) {
@@ -1075,9 +1069,9 @@ export class PostsService {
         return { promotions, promotionsData: promotionsData[0] }
     }
 
-    async postPromotion(postId, userId, promotionDetails) {
+    async postPromotion({postId, userId, promotionDetails, isApp}: SPostPromotion) {
 
-        const promotion = await this.promotionModel.findOne({ postId, user: userId })
+        const promotion = await this.promotionModel.findOne({ postId: new Types.ObjectId(postId), user: userId })
         if (promotion && promotion.active == 1) {
             throw new BadRequestException()
         }
@@ -1086,12 +1080,12 @@ export class PostsService {
 
         const totalAmount = (promotionDetails.reachTarget / 1000) * 0.5
 
-        const _promotion = await this.promotionModel.create({ user: userId, active: 1, postId: new Types.ObjectId(postId), reachTarget: promotionDetails.reachTarget, paymentDetails: { totalAmount, status: 'PENDING' }, targetAdress: promotionDetails.targetAddress })
+        const _promotion = await this.promotionModel.create({ user: userId, active: 0, postId: new Types.ObjectId(postId), reachTarget: promotionDetails.reachTarget, paymentDetails: { totalAmount, status: PAYMENT_STATES.PENDING }, targetAdress: promotionDetails.targetAddress })
         console.log(_promotion)
 
         let productDetails = [{ price_data: { unit_amount: promotionDetails.reachTarget * 0.05, currency: CURRENCIES.USD, product_data: { name: "post promotion", description: "post promotion" } }, quantity: 1 }]
 
-        const sessionId = await stripeCheckout(productDetails, userId, _promotion._id.toString(), totalAmount)
+        const sessionId = await this.paymentService.stripeCheckout(productDetails, userId, _promotion._id.toString(), totalAmount, isApp)
         return sessionId
     }
 
@@ -1099,7 +1093,7 @@ export class PostsService {
 
     async promotionPaymentSuccess(promotionId: string, totalAmount: string, paymentIntentId: string) {
         console.log(paymentIntentId, 'paymentintent id')
-        const promotion = await this.promotionModel.findByIdAndUpdate(promotionId, { $set: { paymentDetails: { totalAmount, status: "PAID", paymentProvider: "Stripe", paymentIntentId } } })
+        const promotion = await this.promotionModel.findByIdAndUpdate(promotionId, { $set: {active: 1, paymentDetails: { totalAmount, status: PAYMENT_STATES.PAID, paymentProvider: PAYMENT_PROVIDERS.STRIPE, paymentIntentId } } })
         return promotion
     }
 

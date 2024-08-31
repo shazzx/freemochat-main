@@ -9,8 +9,7 @@ import { hash } from 'bcrypt';
 import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
-import stripe from 'src/utils/stripe.session';
-import Stripe from 'stripe';
+import { PaymentService } from 'src/payment/payment.service';
 
 @Injectable()
 export class AdminService {
@@ -19,7 +18,8 @@ export class AdminService {
         @InjectModel(Report.name) private readonly reportModel: Model<Report>,
         @InjectModel(Promotion.name) private readonly campaignModel: Model<Promotion>,
         @InjectModel(Counter.name) private readonly counterModel: Model<Counter>,
-        private readonly uploadService: UploadService
+        private readonly uploadService: UploadService,
+        private readonly paymentService: PaymentService
     ) { }
 
     async getAdmin(username: string) {
@@ -102,25 +102,12 @@ export class AdminService {
             let paymentIntentId = campaign.paymentDetails.paymentIntentId
             let refundAmount = Number(campaign.paymentDetails.totalAmount) - (Number(campaign.reach) / 1000)
             console.log(refundAmount)
-            let refund = await this._partialRefund(paymentIntentId, refundAmount)
+            let refund = await this.paymentService.partialRefund(paymentIntentId, refundAmount)
             return refund
         }
-
         throw new InternalServerErrorException()
     }
 
-    private async _partialRefund(paymentIntentId: string, amount: number): Promise<Stripe.Refund> {
-        try {
-            const refund = await stripe.refunds.create({
-                payment_intent: paymentIntentId,
-                amount: amount,
-            });
-            return refund;
-        } catch (error) {
-            // Handle any errors
-            throw new Error(`Error processing refund: ${error.message}`);
-        }
-    }
 
 
     async reportPost(postId, reportData) {
