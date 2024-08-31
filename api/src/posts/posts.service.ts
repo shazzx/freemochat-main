@@ -5,6 +5,7 @@ import { Queue } from 'bullmq';
 import { Model, PopulateOptions, Schema, startSession, Types } from 'mongoose';
 import { CacheService } from 'src/cache/cache.service';
 import { ChatGateway } from 'src/chat/chat.gateway';
+import { LocationService } from 'src/location/location.service';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 import { NotificationProducer } from 'src/notification/kafka/notification.producer';
 import { NotificationService } from 'src/notification/notification.service';
@@ -18,6 +19,7 @@ import { Promotion } from 'src/schema/promotion';
 import { Report } from 'src/schema/report';
 import { ViewedPosts } from 'src/schema/viewedPosts';
 import { UserService } from 'src/user/user.service';
+import { CURRENCIES } from 'src/utils/enums/global.c';
 import { getTime } from 'src/utils/getTime';
 import { stripeCheckout } from 'src/utils/stripe.session';
 import { v4 as uuidv4 } from 'uuid'
@@ -39,7 +41,9 @@ export class PostsService {
         @InjectModel(Member.name) private readonly memberModel: Model<Member>,
         private readonly notificationService: NotificationService,
         private readonly metricsAggregatorService: MetricsAggregatorService,
-        private readonly userService: UserService) { }
+        private readonly userService: UserService,
+        private readonly locationService: LocationService,
+    ) { }
 
     async getPosts(cursor, userId, targetId, type) {
         let model = type + 's'
@@ -1078,12 +1082,14 @@ export class PostsService {
             throw new BadRequestException()
         }
 
+        await this.locationService.isValidRegisteredAddress(promotionDetails.targetAddress)
+
         const totalAmount = (promotionDetails.reachTarget / 1000) * 0.5
 
-        const _promotion = await this.promotionModel.create({ user: userId, active: 1, postId: new Types.ObjectId(postId), reachTarget: promotionDetails.reachTarget, paymentDetails: { totalAmount, status: 'PENDING' }, targetAdress: { country: "pakistan", city: "karachi", area: "pipri" } })
+        const _promotion = await this.promotionModel.create({ user: userId, active: 1, postId: new Types.ObjectId(postId), reachTarget: promotionDetails.reachTarget, paymentDetails: { totalAmount, status: 'PENDING' }, targetAdress: promotionDetails.targetAddress })
         console.log(_promotion)
 
-        let productDetails = [{ price_data: { unit_amount: promotionDetails.reachTarget * 0.05, currency: "usd", product_data: { name: "post promotion", description: "post promotion" } }, quantity: 1 }]
+        let productDetails = [{ price_data: { unit_amount: promotionDetails.reachTarget * 0.05, currency: CURRENCIES.USD, product_data: { name: "post promotion", description: "post promotion" } }, quantity: 1 }]
 
         const sessionId = await stripeCheckout(productDetails, userId, _promotion._id.toString(), totalAmount)
         return sessionId

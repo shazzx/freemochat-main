@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { Cities } from 'src/schema/cities';
 import { Countries } from 'src/schema/countries';
 import { Location } from 'src/schema/locations';
+import { Address, AddressTypes, LANGUAGES } from 'src/utils/enums/global.c';
 
 @Injectable()
 export class LocationService {
@@ -17,21 +18,21 @@ export class LocationService {
     const docs = [
       {
         updateOne: {
-          filter: { name: country, type: 'country' },
+          filter: { name: country, type: AddressTypes.COUNTRY },
           update: { $setOnInsert: { name: country, type: "country" } },
           upsert: true
         }
       },
       {
         updateOne: {
-          filter: { name: city, type: 'city' },
+          filter: { name: city, type: AddressTypes.CITY },
           update: { $setOnInsert: { name: city, country, type: "city" } },
           upsert: true
         }
       },
       {
         updateOne: {
-          filter: { name: area, type: 'area' },
+          filter: { name: area, type: AddressTypes.AREA },
           update: { $setOnInsert: { name: area, city, country, type: "area" } },
           upsert: true
         }
@@ -40,19 +41,19 @@ export class LocationService {
 
     return await this.locationModel.bulkWrite(docs)
     // await this.locationModel.findOneAndUpdate(
-    //     { name: country, type: 'country' },
+    //     { name: country, type: AddressTypes.COUNTRY },
     //     {
     //         $setOnInsert: { name: city, type: city },
     //     },
     //     { upsert: true })
     // await this.locationModel.findOneAndUpdate(
-    //     { name: city, country, type: 'city' },
+    //     { name: city, country, type: AddressTypes.CITY },
     //     {
     //         $setOnInsert: { name: city, type: city },
     //     },
     //     { upsert: true })
     // await this.locationModel.findOneAndUpdate(
-    //     { name: city, country, type: 'city' },
+    //     { name: city, country, type: AddressTypes.CITY },
     //     {
     //         $setOnInsert: { name: city, type: city },
     //     },
@@ -63,48 +64,69 @@ export class LocationService {
     const isValidCountry = await this.countriesModel.findOne({ name: country })
     const isValidCity = await this.citiesModel.findOne({ name: city })
     if (!isValidCountry || !isValidCity) {
-      throw new BadRequestException("Invalid Address")
+      throw new BadRequestException(Address.INVALID)
     }
     return true
   }
 
+
+  async isValidRegisteredAddress({ country, city, area }: { country?: string, city?: string, area?: string }) {
+    const isValidCountry = await this.locationModel.findOne({ name: country, type: AddressTypes.COUNTRY })
+
+    if(!isValidCountry){
+      throw new BadRequestException(Address.INVALID)
+    }
+
+    if(city){
+      const isValidCity = await this.locationModel.findOne({ name: city, country, type: AddressTypes.CITY })
+
+      if(!isValidCity){
+        throw new BadRequestException(Address.INVALID)
+      }
+    }
+
+    if(area){
+      const isValidArea = await this.locationModel.findOne({ name: area, city, type: AddressTypes.AREA })
+      if (!isValidArea) {
+        throw new BadRequestException(Address.INVALID)
+      }
+    }
+    return true
+  }
+
+
   async getCities(country: string) {
-    const cities = await this.citiesModel.find({ country }).sort({ name: 1 }).collation({ locale: "en", caseLevel: true })
+    const cities = await this.citiesModel.find({ country }).sort({ name: 1 }).collation({ locale: LANGUAGES.ENGLISH, caseLevel: true })
     return cities
   }
 
   async getCountries() {
-    const countries = await this.countriesModel.find().sort({ name: 1 }).collation({ locale: "en", caseLevel: true })
+    const countries = await this.countriesModel.find().sort({ name: 1 }).collation({ locale: LANGUAGES.ENGLISH, caseLevel: true })
     return countries
   }
 
   async getRegisteredCountries() {
-    const countries = await this.locationModel.find({ type: 'country' }).sort({ name: 1 }).collation({ locale: "en", caseLevel: true })
+    const countries = await this.locationModel.find({ type: AddressTypes.COUNTRY }).sort({ name: 1 }).collation({ locale: LANGUAGES.ENGLISH, caseLevel: true })
     return countries
   }
 
   async getRegisteredCountryCities(country: string) {
-    const cities = await this.locationModel.find({ type: 'city', country }).sort({ name: 1 }).collation({ locale: "en", caseLevel: true })
+    const cities = await this.locationModel.find({ type: AddressTypes.CITY, country }).sort({ name: 1 }).collation({ locale: LANGUAGES.ENGLISH, caseLevel: true })
     return cities
   }
 
   async getRegisteredCityAreas(city: string) {
-    const areas = await this.locationModel.find({ type: 'area', city }).sort({ name: 1 }).collation({ locale: "en", caseLevel: true })
+    const areas = await this.locationModel.find({ type: AddressTypes.AREA, city }).sort({ name: 1 }).collation({ locale: LANGUAGES.ENGLISH, caseLevel: true })
     return areas
   }
 
-  async seedCountries() {
-    //  await this.countriesModel.create([
-    //     {name: 'Pakistan', code: 92, shortName: "PK" },
-    //     {name: 'United States America', code: 68, shortName: "USA" }
-    //  ])
-
-    await this.citiesModel.create([
-      { name: "Karachi", country: "Pakistan" },
-      { name: "Islamabad", country: "Pakistan" },
-      { name: "Washington", country: "United States America" }
-    ])
-    return true
-  }
+  // async seedCountries() {
+  //   await this.citiesModel.create([
+  //     { name: "Karachi", country: "Pakistan" },
+  //     { name: "Islamabad", country: "Pakistan" },
+  //     { name: "Washington", country: "United States America" }
+  //   ])
+  //   return true
+  // }
 
 }

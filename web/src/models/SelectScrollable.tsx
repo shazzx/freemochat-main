@@ -6,7 +6,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-export function SelectScrollable({ placeholder, selectData, setCity, setCountry, areCities, countryName, cityName, areAreas }: any) {
+export function SelectScrollable({ placeholder, selectData, setCity, setCountry, areCities, countryName, cityName, areAreas, setArea }: any) {
     let disable= true
     if(areCities && !countryName){
         disable = true
@@ -21,7 +21,7 @@ export function SelectScrollable({ placeholder, selectData, setCity, setCountry,
             if (areCities) {
                 setCity(value)
             } else if(areAreas) {
-                setCountry(value)
+                setArea(value)
             }else{
                 setCountry(value)
             }

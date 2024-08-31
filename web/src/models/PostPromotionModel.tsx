@@ -21,7 +21,6 @@ function PostPromotionModel({ postId, setPostPromotion }) {
         })
     }
 
-
     let postPromotion = async (target) => {
         let { data } = await axiosClient.post("posts/promotion", { postId, promotionDetails: { reachTarget: target.numberField } })
         console.log(data)
@@ -42,11 +41,48 @@ function PostPromotionModel({ postId, setPostPromotion }) {
         }
     }, [handleWatch, setValue]);
     const [country, setCountry] = useState(null)
+    const [countries, setCountries] = useState(null)
+    const [cities, setCities] = useState(null)
+    const [areas, setAreas] = useState(null)
     const [city, setCity] = useState(null)
     const [area, setArea] = useState(null)
     const [signupButtonState, setSignupButtonState] = useState(false)
 
+    useEffect(() => {
+        const fetchCountries = async() => {
+            const {data} = await axiosClient.get('/location/registered/countries')
+            setCountries(data)
+        }
+        fetchCountries()
+    },[])
 
+
+    useEffect(() => {
+
+        if (country !== null) {
+            console.log(country)
+            const fetchCities = async () => {
+                const {data} = await axiosClient.get('/location/registered/country/cities', { params: { country } })
+                console.log(data, 'cities')
+                setCities(data)
+            }
+
+            fetchCities()
+        }
+    }, [country])
+
+
+    useEffect(() => {
+
+        if (city !== null) {
+            const fetchAreas = async () => {
+                const {data} = await axiosClient.get('/location/registered/city/areas', { params: { city } })
+                console.log(data, 'areas')
+                setAreas(data)
+            }
+            fetchAreas()
+        }
+    }, [city])
     return (
         <div className='fixed inset-0 z-50 w-screen  overflow-hidden h-screen flex items-center justify-center'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
@@ -64,31 +100,21 @@ function PostPromotionModel({ postId, setPostPromotion }) {
                             <span className="text-xs">Select all to target all available countries in our database!</span>
                         </div>
                         <div className="flex gap-2 ">
-                                        <SelectScrollable placeholder={"Select country"} selectData={
-                                            [
-                                                { name: "Pakistan", "phone_code": "92", cities: ["Karachi", "Islamabad"] },
-                                                { name: "Australia", "phone_code": "92", cities: ["Karachi", "Islamabad"] },
-                                                { name: "India", "phone_code": "92", cities: ["Karachi", "Islamabad"] }
-                                            ]
-                                        } setCity={setCity} setCountry={setCountry} />
+                                        <SelectScrollable placeholder={"Select country"} selectData={countries} setCity={setCity} setCountry={setCountry} />
                                     </div>
 
                     </div>
                     <div className='flex flex-col w-full max-w-[280px]'>
 
                         <label htmlFor="">Target City <span className='text-xs'>(optional)</span></label>
-                        <SelectScrollable placeholder={"Select city"} selectData={[
-                                        { name: "Karachi" }, { name: "Islamabad" }
-                                    ]} setCity={setCity} setCountry={setCountry} areCities={true} countryName={country} />
+                        <SelectScrollable placeholder={"Select city"} selectData={cities} setCity={setCity} setCountry={setCountry} areCities={true} countryName={country} />
 
                     </div>
 
                     <div className='flex flex-col w-full max-w-[280px]'>
 
                         <label htmlFor="">Target Area <span className='text-xs'>(optional)</span></label>
-                        <SelectScrollable placeholder={"Select city"} selectData={[
-                                        { name: "Gulshan-e-iqbal" }, { name: "Sadar" }
-                                    ]} cityName={city} setCountry={setCountry} setArea={setArea} areAreas={true} countryName={country} />
+                        <SelectScrollable placeholder={"Select area"} selectData={areas} cityName={city} setCountry={setCountry} setArea={setArea} areAreas={true} countryName={country} />
                     </div>
 
                     <div className='flex flex-col gap-1 max-w-[280px]'>

@@ -41,6 +41,7 @@ import { EncryptionModule } from './encryption/encryption.module';
 import { CryptoModule } from './crypto/crypto.module';
 import { TwilioModule } from './twilio/twilio.module';
 import { LocationModule } from './location/location.module';
+import { PaymentModule } from './payment/payment.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -87,6 +88,7 @@ import { LocationModule } from './location/location.module';
     CryptoModule,
     TwilioModule,
     LocationModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: "APP_GUARD", useClass: JwtAuthGuard }, UploadListener],
