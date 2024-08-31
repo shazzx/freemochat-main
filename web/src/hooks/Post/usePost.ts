@@ -169,7 +169,7 @@ export const useCreatePost = (key: string, targetId?: string) => {
 export const usePromotePost = () => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
-  const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+  const { data, isSuccess, error, isPending, mutate, mutateAsync } = useMutation({
     mutationFn: ({postId, promotionDetails}: any) => {
       return promotePost(postId, promotionDetails)
     },
@@ -178,15 +178,14 @@ export const usePromotePost = () => {
       const { response } = err
       if (!response) {
         toast.error(err.message)
-        return
+        return false
       }
       const { data: {  message } } = response
-      toast.error(message)
+      toast.info(message)
     },
     onSettled: (data) => {
       if(data){
         redirectToCheckout(data)
-        toast.success("Post created")
       }
   }})
 
@@ -195,6 +194,7 @@ export const usePromotePost = () => {
     isPending,
     isSuccess,
     mutateAsync,
+    error,
     mutate
   }
 }

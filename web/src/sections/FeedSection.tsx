@@ -42,6 +42,8 @@ function FeedSection() {
         setPostModal(false)
     }
 
+    console.log(data)
+
     useEffect(() => {
         console.log('fetching next posts...')
         fetchNextPage()

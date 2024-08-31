@@ -71,9 +71,13 @@ function PostPromotionModel({ postId, setPostPromotion }) {
     }, [city])
     
     const promotePost = usePromotePost()
+    useEffect(() => {
+        if(promotePost.error){
+            setSignupButtonState(false)
+        }
+    },[promotePost.error])
     let postPromotion = async (target) => {
         promotePost.mutate({ postId, promotionDetails: { reachTarget: target.numberField, targetAddress: {country, city, area} } })
-        redirectToCheckout(data)
     }
 
     return (

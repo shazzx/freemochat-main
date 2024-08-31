@@ -15,7 +15,7 @@ import { Promotion } from 'src/schema/promotion';
 import { Report } from 'src/schema/report';
 import { ViewedPosts } from 'src/schema/viewedPosts';
 import { UserService } from 'src/user/user.service';
-import { CURRENCIES, PAYMENT_PROVIDERS, PAYMENT_STATES } from 'src/utils/enums/global.c';
+import { CURRENCIES, PAYMENT_PROVIDERS, PAYMENT_STATES, POST_PROMOTION } from 'src/utils/enums/global.c';
 import { SPostPromotion } from 'src/utils/types/service/posts';
 
 
@@ -329,127 +329,6 @@ export class PostsService {
         console.log(userId, cursor)
         const limit = 5
         const query = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
-        // const posts = await this.postModel.aggregate([
-        //     { $match: query },
-        //     { $sort: { createdAt: -1 } },
-        //     { $limit: limit + 1 },
-        //     {
-        //         $lookup: {
-        //             from: 'users',
-        //             localField: "targetId",
-        //             foreignField: "_id",
-        //             as: "target"
-        //         }
-        //     },
-        //     {
-        //         $unwind: "$target"
-        //     },
-        //     {
-
-        //         $lookup: {
-        //             from: 'likes',
-        //             let: { postId: '$_id' },
-        //             pipeline: [
-        //                 {
-        //                     $match: {
-        //                         $expr: {
-        //                             $and: [
-        //                                 { $eq: ['$targetId', '$$postId'] },
-        //                                 { $eq: ['$userId', new Types.ObjectId(userId)] },
-        //                                 { $eq: ['$type', 'post'] },
-        //                             ],
-        //                         },
-        //                     },
-        //                 },
-        //             ],
-        //             as: 'userLike',
-        //         },
-        //     },
-        //     {
-        //         $lookup: {
-        //             from: 'counters',
-        //             let: { postId: '$_id' },
-        //             pipeline: [
-        //                 {
-        //                     $match: {
-        //                         $expr: {
-        //                             $and: [
-        //                                 { $eq: ['$targetId', '$$postId'] },
-        //                                 { $eq: ['$name', 'post'] },
-        //                                 { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
-        //                             ]
-        //                         }
-        //                     }
-        //                 }
-        //             ],
-        //             as: 'counters'
-        //         }
-        //     },
-
-        //     {
-
-        //         $lookup: {
-        //             from: 'bookmarks',
-        //             let: { postId: '$_id' },
-        //             pipeline: [
-        //                 {
-        //                     $match: {
-        //                         $expr: {
-        //                             $and: [
-        //                                 { $eq: ['$postId', '$$postId'] },
-        //                                 { $eq: ['$userId', new Types.ObjectId(userId)] },
-        //                             ],
-        //                         },
-        //                     },
-        //                 },
-        //             ],
-        //             as: 'userBookmark',
-        //         },
-        //     },
-        //     {
-        //         $addFields: {
-        //             isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
-        //             isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
-        //             likesCount: {
-        //                 $ifNull: [
-        //                     { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
-        //                     { count: 0 }
-        //                 ]
-        //             },
-        //             commentsCount: {
-        //                 $ifNull: [
-        //                     { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
-        //                     { count: 0 }
-        //                 ]
-        //             },
-        //             bookmarksCount: {
-        //                 $ifNull: [
-        //                     { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
-        //                     { count: 0 }
-        //                 ]
-        //             }
-        //         },
-        //     },
-        //     {
-        //         $project: {
-        //             _id: 1,
-        //             content: 1,
-        //             media: 1,
-        //             createdAt: 1,
-        //             updatedAt: 1,
-        //             likesCount: { $ifNull: ['$likesCount.count', 0] },
-        //             commentsCount: { $ifNull: ['$commentsCount.count', 0] },
-        //             bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
-        //             user: 1,
-        //             type: 1,
-        //             target: 1,
-        //             targetId: 1,
-        //             isLikedByUser: 1,
-        //             isBookmarkedByUser: 1,
-        //         },
-        //     },
-        // ]);
-
 
         const posts = await this.postModel.aggregate([
             { $match: query },
@@ -478,6 +357,15 @@ export class PostsService {
                     localField: 'targetId',
                     foreignField: '_id',
                     as: 'pageTarget'
+                }
+            },
+
+            {
+                $lookup: {
+                    from: 'promotions',
+                    localField: '_id',
+                    foreignField: 'postId',
+                    as: 'promotion'
                 }
             },
 
@@ -574,6 +462,7 @@ export class PostsService {
                             0
                         ]
                     },
+                    promotion: '$promotion',
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                 }
@@ -585,6 +474,7 @@ export class PostsService {
                     content: 1,
                     media: 1,
                     user: 1,
+                    promotion: 1,
                     target: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
@@ -610,6 +500,16 @@ export class PostsService {
     }
 
     async viewPost(userId, postId, type) {
+        console.log(type)
+        const post = await this.postModel.findById(postId)
+        if(!post){
+            throw new BadRequestException()
+        }
+
+        if(post.user == userId){
+            return null
+        }
+
         const viewedPost = await this.viewPostsModel.create({ type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) })
         const promotedPost = await this.promotionModel.findOneAndUpdate({ postId: new Types.ObjectId(postId), active: 1 }, { $inc: { reach: 1 } })
         return viewedPost
@@ -1037,7 +937,7 @@ export class PostsService {
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
         const query = { ..._cursor, user: userId }
         const promotions = await this.promotionModel.aggregate([
-            { $match: query },
+            { $match: query},
             { $sort: _reverse },
             { $limit: limit + 1 },
             // {
@@ -1073,7 +973,7 @@ export class PostsService {
 
         const promotion = await this.promotionModel.findOne({ postId: new Types.ObjectId(postId), user: userId })
         if (promotion && promotion.active == 1) {
-            throw new BadRequestException()
+            throw new BadRequestException(POST_PROMOTION.ALREADY_ACTIVE)
         }
 
         await this.locationService.isValidRegisteredAddress(promotionDetails.targetAddress)
