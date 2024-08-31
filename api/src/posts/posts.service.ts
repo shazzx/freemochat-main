@@ -15,8 +15,8 @@ import { Promotion } from 'src/schema/promotion';
 import { Report } from 'src/schema/report';
 import { ViewedPosts } from 'src/schema/viewedPosts';
 import { UserService } from 'src/user/user.service';
-import { CURRENCIES, PAYMENT_PROVIDERS, PAYMENT_STATES, POST_PROMOTION } from 'src/utils/enums/global.c';
-import { SPostPromotion } from 'src/utils/types/service/posts';
+import { CURRENCIES, PAYMENT_PROVIDERS, PAYMENT_STATES, POST_PROMOTION, ReachStatus } from 'src/utils/enums/global.c';
+import { SPostPromotion, SViewPost } from 'src/utils/types/service/posts';
 
 
 @Injectable()
@@ -365,6 +365,9 @@ export class PostsService {
                     from: 'promotions',
                     localField: '_id',
                     foreignField: 'postId',
+                    pipeline: [
+                        { $match: { active: 1 } }  // Only include active promotions
+                    ],
                     as: 'promotion'
                 }
             },
@@ -499,15 +502,29 @@ export class PostsService {
         return results
     }
 
-    async viewPost(userId, postId, type) {
+    async viewPost({ userId, postId, type }: SViewPost) {
         console.log(type)
         const post = await this.postModel.findById(postId)
-        if(!post){
+        if (!post) {
             throw new BadRequestException()
         }
 
-        if(post.user == userId){
+        if (String(post.user) == userId) {
             return null
+        }
+
+        if (type == 'normal') {
+            const viewedPost = await this.viewPostsModel.create({ type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) })
+            return viewedPost
+        }
+
+        if(type !== 'promotion'){
+            throw new BadRequestException()
+        }
+
+        const _promotedPost = await this.promotionModel.findOne({ postId: new Types.ObjectId(postId), active: 1 })
+        if ((Number(_promotedPost.reach) + 1) == Number(_promotedPost.reachTarget)) {
+            _promotedPost.updateOne({ postId: new Types.ObjectId(postId), active: 1, reachStatus: ReachStatus.COMPLETED }, { $inc: { reach: 1 } })
         }
 
         const viewedPost = await this.viewPostsModel.create({ type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) })
@@ -937,7 +954,7 @@ export class PostsService {
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
         const query = { ..._cursor, user: userId }
         const promotions = await this.promotionModel.aggregate([
-            { $match: query},
+            { $match: query },
             { $sort: _reverse },
             { $limit: limit + 1 },
             // {
@@ -969,10 +986,11 @@ export class PostsService {
         return { promotions, promotionsData: promotionsData[0] }
     }
 
-    async postPromotion({postId, userId, promotionDetails, isApp}: SPostPromotion) {
+    async postPromotion({ postId, userId, promotionDetails, isApp }: SPostPromotion) {
 
-        const promotion = await this.promotionModel.findOne({ postId: new Types.ObjectId(postId), user: userId })
-        if (promotion && promotion.active == 1) {
+        const promotion = await this.promotionModel.findOne({ postId: new Types.ObjectId(postId), user: userId, active: 1 })
+
+        if (promotion) {
             throw new BadRequestException(POST_PROMOTION.ALREADY_ACTIVE)
         }
 
@@ -993,7 +1011,7 @@ export class PostsService {
 
     async promotionPaymentSuccess(promotionId: string, totalAmount: string, paymentIntentId: string) {
         console.log(paymentIntentId, 'paymentintent id')
-        const promotion = await this.promotionModel.findByIdAndUpdate(promotionId, { $set: {active: 1, paymentDetails: { totalAmount, status: PAYMENT_STATES.PAID, paymentProvider: PAYMENT_PROVIDERS.STRIPE, paymentIntentId } } })
+        const promotion = await this.promotionModel.findByIdAndUpdate(promotionId, { $set: { active: 1, paymentDetails: { totalAmount, status: PAYMENT_STATES.PAID, paymentProvider: PAYMENT_PROVIDERS.STRIPE, paymentIntentId }, reachStatus: ReachStatus.IN_PROGRESS } })
         return promotion
     }
 

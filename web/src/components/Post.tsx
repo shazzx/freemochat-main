@@ -95,7 +95,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             console.log('fetching')
             fetchNextPage()
         }
-        if (inView && postData?.promotion?.active == 1) {
+        if (inView && postData?.promotion?.length > 0 && postData?.promotion[0]?.active == 1) {
             console.log("promoted post view")
             viewPost()
         }
@@ -203,7 +203,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 </div>
                                 <div className='flex flex-col gap-1'>
                                     <h3 className='text-card-foreground flex gap-2 text-sm'>{postData?.target?.username || postData?.target?.name}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
-                                    <span className='text-muted-foreground text-xs'>{postData?.promotion ? "sponsored" : date}</span>
+                                    <span className='text-muted-foreground text-xs'>{postData?.promotion?.length > 0 ? "sponsored" : date}</span>
                                 </div>
                             </div>
                         </Link>

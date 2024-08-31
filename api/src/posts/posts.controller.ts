@@ -360,8 +360,8 @@ export class PostsController {
     async viewPost(@Body(new ZodValidationPipe(ViewPost)) viewPostDTO: ViewPostDTO, @Req() req, @Res() res: Response) {
         const { postId, type } = viewPostDTO
         const { sub } = req.user
-        console.log('viewPost')
-        res.json(await this.postService.viewPost(sub, postId, type))
+        console.log('viewPost......', postId, type)
+        res.json(await this.postService.viewPost({userId: sub, postId, type}))
     }
 
     // @Public()

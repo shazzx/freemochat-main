@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose"
 import { ObjectId, Types } from "mongoose"
+import { ReachStatus } from "src/utils/enums/global.c"
 
 class TargetAddress {
     country: string
@@ -23,8 +24,11 @@ export class Promotion {
     @Prop({ type: Types.ObjectId, ref: "User" })
     user: ObjectId
 
+    @Prop({enum : ReachStatus})
+    reachStatus: ReachStatus
+
     @Prop()
-    reachTarget: String
+    reachTarget: Number
 
     @Prop()
     targetAdress: TargetAddress

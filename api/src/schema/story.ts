@@ -9,8 +9,8 @@ export class Story {
     @Prop({ type: Types.ObjectId, ref: "User" })
     user: ObjectId;
 
-    @Prop({ default: Date.now, expires: '24h' })
-    date: Date
+    @Prop({ default: Date.now(), expires: '24h' })
+    createdAt: Date
 }
 
 export const StorySchema = SchemaFactory.createForClass(Story)

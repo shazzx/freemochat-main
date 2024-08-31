@@ -87,8 +87,8 @@ export class SearchService {
         //         return pattern.test(group?.user?.username)
         //     }
         // })
-
-        const _groups = await this.groupModel.find({ handle: { $regex: new RegExp(`^${query}`, 'i') } })
+        const _query = { handle: { $regex: new RegExp(`^${query}`, 'i') } }
+        const _groups = await this.groupModel.find(_query)
 
 
         return _groups

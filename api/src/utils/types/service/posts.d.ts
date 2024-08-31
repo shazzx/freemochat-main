@@ -12,3 +12,9 @@ export type SPostPromotion = {
     }
 
 }
+
+export type SViewPost = {
+    userId: string,
+    postId: string,
+    type: string,
+}
