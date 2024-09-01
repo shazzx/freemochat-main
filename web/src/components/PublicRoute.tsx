@@ -3,23 +3,31 @@ import { logout, setAccessToken } from '@/app/features/user/authSlice'
 import { setUser } from '@/app/features/user/userSlice'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import React, { useEffect, useState } from 'react'
-import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Navigate, Outlet, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 function PublicRoute() {
     const dispatch = useAppDispatch()
     const [isFetched, setIsFetched] = useState(false)
     const { user } = useAppSelector((state) => state.user)
     const navigate = useNavigate()
-    const location = useLocation()
-    // console.log(location.pathname == '/login')
-
-
+    const params = useParams()
+    const [searchParams] = useSearchParams()
+    const authId = searchParams.get("auth_id")
 
     useEffect(() => {
         const getUser = async () => {
-            console.log('callme')
+            const authData = {
+                authId,
+                username: params.username
+            }
             try {
-                const { data } = await axiosClient.post("/user/refresh-token")
+                console.log(authData)
+                const isUserVerified = await axiosClient.post("user/verification-status", {
+                    authId,
+                    username: params.username
+                })
+                console.log(isUserVerified)
+                const { data } = await axiosClient.post("user/refresh-token")
                 dispatch(setAccessToken(data?.accessToken))
 
                 let response = await axiosClient.get("user")
@@ -36,7 +44,7 @@ function PublicRoute() {
             } catch (error) {
                 console.log(error)
                 setIsFetched(true)
-                return navigate('/login')
+                // return navigate('/login')
             }
         }
         getUser()

@@ -39,11 +39,6 @@ export function Signup() {
     const [countries, setCountries] = useState(null)
     const [city, setCity] = useState(null)
 
-
-    useEffect(() => {
-        console.log(errors)
-    }, [errors])
-
     const signupUser = async (_data) => {
         const { data } = await axiosClient.post("/user/create", _data, { timeout: 30000 })
         return data
@@ -54,8 +49,13 @@ export function Signup() {
             const response = await signupUser(data)
             return response
         },
-        onError: () => {
-            showToast("something went wrong please try again", "error")
+        onError: (e) => {
+            if (e.response.data.message.startsWith('E11000')) {
+                showToast("Account Already Exists", "info")
+                setSignupButtonState(false)
+                return
+            }
+            showToast(e.message, "error")
             setSignupButtonState(false)
         }
     })
@@ -73,19 +73,19 @@ export function Signup() {
     }
 
     useEffect(() => {
-        const fetchCountries = async() => {
-            const {data} = await axiosClient.get('/user/countries')
+        const fetchCountries = async () => {
+            const { data } = await axiosClient.get('/location/countries')
             setCountries(data)
         }
         fetchCountries()
-    },[])
+    }, [])
 
     useEffect(() => {
 
         if (country !== null) {
             console.log(country)
             const fetchCities = async () => {
-                const {data} = await axiosClient.get('/user/cities', { params: { country } })
+                const { data } = await axiosClient.get('/location/cities', { params: { country } })
                 console.log(data, 'cities')
                 setCities(data)
             }
@@ -175,7 +175,7 @@ export function Signup() {
                                     />
                                     {errors.address?.country && <p>{errors.address.country.message}</p>} */}
                                     <div className="flex gap-2 ">
-                                    <SelectScrollable placeholder={"Select country"} selectData={countries} setCity={setCity} setCountry={setCountry} />
+                                        <SelectScrollable placeholder={"Select country"} selectData={countries} setCity={setCity} setCountry={setCountry} />
                                     </div>
 
                                 </div>

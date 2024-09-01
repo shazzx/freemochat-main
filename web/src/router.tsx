@@ -52,10 +52,6 @@ export const router = createBrowserRouter([
                 element: <MainHome children={<CampaignSection/>} />,
             },
             {
-                path: "/auth/:username",
-                element: <AuthVerificationForm />,
-            },
-            {
                 path: "/profile",
                 element: <MainHome children={<ProfilePage role={"self"} />} />,
             },
@@ -97,6 +93,10 @@ export const router = createBrowserRouter([
                 path: "/login",
                 element: <LoginForm/>,
                 index: true
+            },
+            {
+                path: "/auth/:username",
+                element: <AuthVerificationForm />,
             },
             {
                 path: "/signup",

@@ -88,6 +88,17 @@ export const resendOTP = z.object({
 })
 
 
+export const verificationStatus = z.object({
+    username: z.string().min(5),
+    authId: z.string().refine(
+        (val) => isUUID(val),
+        {
+            message: 'Invalid UUID',
+        }
+    )
+})
+
+
 export type CreateUserDTO = z.infer<typeof CreateUser>
 export type UpdateUserDTO = z.infer<typeof UpdateUser>
 export type LoginUserDTO = z.infer<typeof LoginUser>
@@ -96,3 +107,4 @@ export type FriendGeneralDTO = z.infer<typeof FriendGeneral>
 export type GetFriendsDTO = z.infer<typeof GetFriends>
 export type VerifyOTPDTO = z.infer<typeof VerifyOTP>
 export type resendOTPDTO = z.infer<typeof resendOTP>
+export type verificationStatusDTO = z.infer<typeof verificationStatus>

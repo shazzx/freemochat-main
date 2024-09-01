@@ -28,6 +28,8 @@ function AuthVerificationForm() {
     const params = useParams()
     const [searchParams] = useSearchParams()
     const authId = searchParams.get("auth_id")
+    const [emailVerificationStatus, setEmailVerificationStatus] = useState(false)
+    const [phoneVerificationStatus, setPhoneVerificationStatus] = useState(false)
     const username  = params.username
     if(!authId || !username){
         navigate("/login")
@@ -36,6 +38,7 @@ function AuthVerificationForm() {
     const dispatch = useAppDispatch()
 
     const verifyOTP = async (data: any) => {
+        
         const response = await axiosClient.post("/user/verify-otp", data, {timeout: 20000})
         console.log(response.data)
         // return response.data

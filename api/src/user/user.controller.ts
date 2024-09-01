@@ -8,7 +8,7 @@ import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
 import { Public } from 'src/auth/public.decorator';
-import { CreateUser, CreateUserDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, resendOTP, resendOTPDTO, UpdateUser, UpdateUserDTO, VerifyOTP, VerifyOTPDTO } from 'src/schema/validation/user';
+import { CreateUser, CreateUserDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, resendOTP, resendOTPDTO, UpdateUser, UpdateUserDTO, verificationStatus, verificationStatusDTO, VerifyOTP, VerifyOTPDTO } from 'src/schema/validation/user';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import { OtpService } from 'src/otp/otp.service';
@@ -37,7 +37,7 @@ export class UserController {
         try {
             const { firstname, lastname, username, email, password, confirmPassword, address, phone } = createUserDTO
 
-            await this.locationService.isValidAddress({country: address.country, city: address.city})
+            await this.locationService.isValidAddress({ country: address.country, city: address.city })
 
             const emailSecret = this.otpService.generateSecret()
             const phoneSecret = this.otpService.generateSecret()
@@ -79,7 +79,7 @@ export class UserController {
     async veriyfOTP(
         @Body(new ZodValidationPipe(VerifyOTP)) verifyOTP: VerifyOTPDTO,
         @Req() req: Request,
-        @Res({ passthrough: true }) res: Response) {
+        @Res() res: Response) {
         const { username, authId, otp, type } = verifyOTP
         try {
             const user = await this.userService.findUser(username)
@@ -104,32 +104,55 @@ export class UserController {
                 throw new BadRequestException("OTP is not valid")
             }
 
-            if(type == 'email' && isValidEmailSecret && user.isPhoneVerified){
+            if (type == 'email' && isValidEmailSecret && user.isPhoneVerified) {
 
                 await this.userService.updateUser(user._id, { tempSecret: null, isEmailVerified: true })
-                return res.json({success: true, email: true, phone: true})
+                return res.json({ success: true, email: true, phone: true })
             }
 
-            if(type == 'phone' && isValidPhoneSecret && user.isEmailVerified){
+            if (type == 'phone' && isValidPhoneSecret && user.isEmailVerified) {
                 await this.userService.updateUser(user._id, { tempSecret: null, isPhoneVerified: true })
-                return res.json({success: true, email: true, phone: true})
+                return res.json({ success: true, email: true, phone: true })
             }
 
-            if(type == 'email' && isValidEmailSecret){
+            if (type == 'email' && isValidEmailSecret) {
                 await this.userService.updateUser(user._id, { isEmailVerified: true })
-                return res.json({success: true, email: true})
+                return res.json({ success: true, email: true })
             }
 
-            if(type == 'phone' && isValidPhoneSecret){
+            if (type == 'phone' && isValidPhoneSecret) {
                 await this.userService.updateUser(user._id, { isPhoneVerified: true })
-                return res.json({success: true, phone: true})
+                return res.json({ success: true, phone: true })
             }
 
             throw new BadRequestException()
 
         } catch (error) {
-            res.status(400).json({success: false, error: {message: error.message}})
+            res.status(400).json({ success: false, error: { message: error.message } })
         }
+    }
+
+    @Public()
+    @Post('verification-status')
+    async checkVerificationStatus(
+        @Body(new ZodValidationPipe(verificationStatus)) verificationStatusDTO: verificationStatusDTO,
+        @Req() req: Request,
+        @Res() res: Response) {
+        const { username, authId } = verificationStatusDTO
+        const user = await this.userService.findUser(username)
+        if (!user) {
+            throw new BadRequestException()
+        }
+
+        if (!user.tempSecret || user.tempSecret !== authId) {
+            console.log('bad request')
+            throw new BadRequestException()
+        }
+
+        const isPhoneVerified = user.isPhoneVerified
+        const isEmailVerified = user.isEmailVerified
+
+        return res.json({ isPhoneVerified, isEmailVerified })
     }
 
 
@@ -155,23 +178,23 @@ export class UserController {
             const emailSecret = user.emailSecret
             console.log(phoneSecret, ' phone secret', "email secret ", emailSecret)
 
-            if(type == 'email'){
+            if (type == 'email') {
                 // let secret = this.otpService.generateSecret()
                 let emailOTP = this.otpService.generateOtp(emailSecret)
                 console.log(emailOTP, 'email')
-                return res.json({success: true, message: "otp has been sent to your email"})
+                return res.json({ success: true, message: "otp has been sent to your email" })
             }
 
 
-            if(type == 'phone'){
+            if (type == 'phone') {
                 let phoneOTP = this.otpService.generateOtp(phoneSecret)
                 console.log(phoneOTP, 'phone')
-                return res.json({success: true, message: "otp has been sent to your phone"})
+                return res.json({ success: true, message: "otp has been sent to your phone" })
             }
 
             throw new BadRequestException()
-        }catch(err){
-            res.status(err.statusCode || 500).json({success: false, message: err.message})
+        } catch (err) {
+            res.status(err.statusCode || 500).json({ success: false, message: err.message })
         }
     }
 
@@ -315,7 +338,7 @@ export class UserController {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
 
-            let {url} = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+            let { url } = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
 
             if (file.originalname == 'profile') {
                 images = { profile: url }
@@ -328,7 +351,7 @@ export class UserController {
         console.log(updateUserDTO, images)
 
         let user = await this.userService.updateUser(sub, { ...updateUserDTO, ...images })
-        res.json({user})
+        res.json({ user })
     }
 
     @Post("delete")
