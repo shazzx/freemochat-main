@@ -14,7 +14,7 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, CreatePost, CreatePostDTO, DeletePost, DeletePostDTO, GetPost, GetPostDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, DeletePost, DeletePostDTO, GetPost, GetPostDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import Stripe from 'stripe';
@@ -362,6 +362,15 @@ export class PostsController {
         const { sub } = req.user
         console.log('viewPost......', postId, type)
         res.json(await this.postService.viewPost({userId: sub, postId, type}))
+    }
+
+
+    @Post("view/bulk")
+    async bulkViewPost(@Body(new ZodValidationPipe(BulkViewPost)) viewPostDTO: BulkViewPostDTO, @Req() req, @Res() res: Response) {
+        const { viewedPosts} = viewPostDTO
+        const { sub } = req.user
+        console.log('viewPost......', viewedPosts)
+        res.json(await this.postService.bulkViewPosts({userId: sub, postIds: viewedPosts}))
     }
 
     // @Public()

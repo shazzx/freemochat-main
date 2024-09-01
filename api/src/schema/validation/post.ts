@@ -81,6 +81,11 @@ export const ViewPost = z.object({
 })
 
 
+export const BulkViewPost = z.object({
+    viewedPosts: z.array(z.string()),
+})
+
+
 export const PromotionActivation = z.object({
     postId: ValidMongoId,
 })
@@ -98,4 +103,5 @@ export type GetPromotionsDTO = z.infer<typeof GetPromotions>
 export type ReportPostDTO = z.infer<typeof ReportPost>
 export type PromotePostDTO = z.infer<typeof PromotePost>
 export type ViewPostDTO = z.infer<typeof ViewPost>
+export type BulkViewPostDTO = z.infer<typeof BulkViewPost>
 export type PromotionActivationDTO = z.infer<typeof PromotionActivation>

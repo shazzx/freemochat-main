@@ -15,4 +15,4 @@ export class ViewedPosts {
 }
 
 export const ViewedPostsSchema = SchemaFactory.createForClass(ViewedPosts)
-ViewedPostsSchema.index({ userId: 1, postId: 1 }, { unique: true })
+ViewedPostsSchema.index({ userId: 1, postId: 1, type: 1 }, { unique: true })
