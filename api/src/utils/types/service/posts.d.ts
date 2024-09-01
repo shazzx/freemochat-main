@@ -18,3 +18,10 @@ export type SViewPost = {
     postId: string,
     type: string,
 }
+
+
+export type SBulkViewPost = {
+    userId: string,
+    postIds: string[],
+    type: string,
+}

@@ -177,7 +177,6 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                         </div>}
                     </div>
                     <div className='flex justify-end px-24 gap-2'>
-                        {console.log(isSelf, isOwn, friendRequest, friendRequest?.isRecievedByUser, areFriends)}
                         {!isSelf && !isOwn && friendRequest && !friendRequest.isRecievedByUser && !areFriends &&
                             <div>
                                 <Button onClick={() => {

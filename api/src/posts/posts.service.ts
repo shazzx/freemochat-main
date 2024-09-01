@@ -16,7 +16,7 @@ import { Report } from 'src/schema/report';
 import { ViewedPosts } from 'src/schema/viewedPosts';
 import { UserService } from 'src/user/user.service';
 import { CURRENCIES, PAYMENT_PROVIDERS, PAYMENT_STATES, POST_PROMOTION, ReachStatus } from 'src/utils/enums/global.c';
-import { SPostPromotion, SViewPost } from 'src/utils/types/service/posts';
+import { SBulkViewPost, SPostPromotion, SViewPost } from 'src/utils/types/service/posts';
 
 
 @Injectable()
@@ -532,7 +532,7 @@ export class PostsService {
         )
 
         const _promotedPost = await this.promotionModel.findOne({ postId: new Types.ObjectId(postId), active: 1 })
-        console.log((Number(_promotedPost.reach) + 1), Number(_promotedPost.reachTarget) )
+        console.log((Number(_promotedPost.reach) + 1), Number(_promotedPost.reachTarget))
         if ((Number(_promotedPost.reach) + 1) >= Number(_promotedPost.reachTarget) && _promotedPost.reachStatus !== ReachStatus.COMPLETED) {
             console.log('completed')
             _promotedPost.reachStatus = ReachStatus.COMPLETED
@@ -542,10 +542,39 @@ export class PostsService {
             return viewedPost
         }
 
-        if(viewedPost.upsertedCount > 0 && (Number(_promotedPost.reach) + 1) < Number(_promotedPost.reachTarget)){
+        if (viewedPost.upsertedCount > 0 && (Number(_promotedPost.reach) + 1) < Number(_promotedPost.reachTarget)) {
             await this.promotionModel.findOneAndUpdate({ postId: new Types.ObjectId(postId), active: 1 }, { $inc: { reach: 1 } })
         }
         return viewedPost
+    }
+
+    async bulkViewPosts({ userId, postIds, type }: SBulkViewPost) {
+        console.log(type)
+        let docs = []
+        postIds.forEach(async (postId) => {
+            const post = await this.postModel.findById(postId)
+            if (!post) {
+                throw new BadRequestException()
+            }
+            if (String(post.user) == userId) {
+                return null
+            }
+            docs.push({
+                updateOne: {
+                    filter: { type: "normal", userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) },
+                    update: { $setOnInsert: { type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) } },
+                    upsert: true
+                }
+            })
+        })
+
+        console.log(docs)
+        if (docs.length > 0) {
+            const viewedPosts = await this.viewPostsModel.bulkWrite(docs)
+            console.log(viewedPosts)
+            return viewedPosts
+        }
+        return []
     }
 
     async testingPromotedPosts(address) {

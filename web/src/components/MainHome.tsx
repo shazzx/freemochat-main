@@ -23,7 +23,7 @@ import {
 
 import { Link, useNavigate } from "react-router-dom"
 import { ModeToggle } from "./Toggle"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 
 import { domain } from "@/config/domain"
 import { Notifications } from "./Notifications"
@@ -37,6 +37,7 @@ import Agora from "./Call/agora/AgoraRTC"
 import { endCall } from "@/app/features/user/callSlice"
 import AudioCall from "./Call/Audio/AudioCall"
 import VideoCall from "./Call/Video/VideoCall"
+import { axiosClient } from "@/api/axiosClient"
 
 const MainHome = ({ children }: any) => {
   useSocket()
@@ -77,6 +78,20 @@ const MainHome = ({ children }: any) => {
       // location.reload()
     }
   }
+  const {viewedPosts} = useAppSelector((state) => state.viewedPosts)
+
+  useEffect(() => {
+    if(viewedPosts.length > 0){
+      let viewPost = async () => {
+        const { data } = await axiosClient.post("/posts/view/bulk", {viewedPosts})
+    }
+      let timeout = setTimeout(() => {
+        viewPost()
+      }, 10000)
+      return () => clearInterval(timeout)
+    }
+    
+  },[viewedPosts])
   return (
 
     <div className="h-screen w-full flex flex-col overflow-hidden">

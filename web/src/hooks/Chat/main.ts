@@ -248,7 +248,7 @@ console.log(recepientId, isChatGroup, 'recepient id')
 export const useCreateMessage = (recepientId: string) => {
     const queryClient = useQueryClient()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-        mutationFn: (messageDetails: { messageData: { recepient: string, content?: string, sender: string, type: string, media?: { url: string, type: string, duration?: string, isUploaded: boolean } }, formData: FormData }) => {
+        mutationFn: (messageDetails: { messageData: { recepient: string, content?: string, sender: string, type: string, media?: { url: string, type: string, duration?: string, isUploaded?: boolean } }, formData: FormData }) => {
             return createMessage(messageDetails.formData)
         },
 
@@ -272,7 +272,7 @@ export const useCreateMessage = (recepientId: string) => {
             return { previousPosts };
         },
 
-        onError: (err, newComment, context) => {
+        onError: (err: any, newComment, context) => {
             queryClient.setQueryData(["messages", recepientId], context.previousPosts)
             if(err.response.status){
                 toast.error('Format not supported')

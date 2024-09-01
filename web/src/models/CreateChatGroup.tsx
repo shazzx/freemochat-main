@@ -50,7 +50,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
     const { data, isLoading } = useGroupMembers(groupDetails?.groupId)
     const groupMemberToggle = useGroupMemberToggle(user._id, groupDetails?.groupId)
     const groupAdminToggle = useToggleAdmin()
-    const chatGroup = editState ? useChatGroup(groupDetails?.groupId) : {}
+    const chatGroup: any = editState ? useChatGroup(groupDetails?.groupId) : {}
 
     return (
         <div className='absolute top-0 right-0 w-screen z-10 sm:p-8 overflow-hidden h-screen flex items-center justify-center'>

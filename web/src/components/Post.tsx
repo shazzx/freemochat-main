@@ -17,6 +17,8 @@ import { toast } from 'react-toastify'
 import { useAppSelector } from '@/app/hooks'
 import { PostMediaCarousel } from './Post/PostMediaCarousel'
 import { Copy } from 'lucide-react'
+import { useDispatch } from 'react-redux'
+import { insertViewedPost } from '@/app/features/user/viewPostSlice'
 
 interface PostProps {
     postData: any,
@@ -82,6 +84,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         setModelTrigger(false)
     }
 
+    const dispatch = useDispatch()
+
     const [postPromotion, setPostPromotion] = useState(false)
     useEffect(() => {
         let viewPost = async () => {
@@ -95,9 +99,11 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             console.log('fetching')
             fetchNextPage()
         }
-        if (inView && postData?.promotion?.length > 0 && postData?.promotion[0]?.active == 1) {
+        if (inView) {
+            // if (inView && postData?.promotion?.length > 0 && postData?.promotion[0]?.active == 1) {
             console.log("promoted post view")
-            viewPost()
+            dispatch(insertViewedPost(postData._id))
+            // viewPost()
         }
     }, [inView])
 

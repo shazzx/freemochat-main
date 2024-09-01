@@ -4,6 +4,7 @@ import userReducer from './features/user/userSlice'
 import searchReducer from './features/user/searchSlice'
 import socketReducer from './features/user/socketSlice'
 import callReducer from './features/user/callSlice'
+import viewedPostsReducer from './features/user/viewPostSlice'
 import notificationReducer from './features/user/notificationSlice'
 import adminAuthReducer from './features/admin/authSlice'
 import adminReducer from './features/admin/adminSlice'
@@ -17,6 +18,7 @@ export const store = configureStore({
         notification: notificationReducer,
         search: searchReducer,
         call: callReducer,
+        viewedPosts: viewedPostsReducer,
         socket: socketReducer,
     }
 })

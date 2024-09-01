@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import React, { useEffect, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute() {
     const dispatch = useAppDispatch()
     const [isFetched, setIsFetched] = useState(false)
     const { user } = useAppSelector((state) => state.user)

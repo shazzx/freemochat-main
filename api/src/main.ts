@@ -8,6 +8,12 @@ declare const module: any
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // app.enableCors({
+  //   origin: 'http://freedombook.s3-website-us-east-1.amazonaws.com',
+  //   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  //   allowedHeaders: ['Content-Type', 'Authorization'],
+  //   credentials: true,
+  // });
   app.enableCors({ origin: "http://localhost:5173", credentials: true })
   app.use(cookieParser())
   app.useGlobalFilters(new AllExceptionsFilter())

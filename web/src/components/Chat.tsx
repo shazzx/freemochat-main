@@ -33,7 +33,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
     const [emojiPickerState, setEmojiPickerState] = useState(false)
     const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId, _isOnline)
-    const group = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId) : {}
+    const group: any = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId) : {}
     const [chatGroupInfo, setChatGroupInfo] = useState(false)
     const [inputValue, setInputValue] = useState("");
     const [groupData, setGroupData] = useState(null)
