@@ -6,6 +6,7 @@ import socketReducer from './features/user/socketSlice'
 import callReducer from './features/user/callSlice'
 import viewedPostsReducer from './features/user/viewPostSlice'
 import notificationReducer from './features/user/notificationSlice'
+import verificationStatusReducer from './features/user/verificationStatusSlice'
 import adminAuthReducer from './features/admin/authSlice'
 import adminReducer from './features/admin/adminSlice'
 
@@ -18,6 +19,7 @@ export const store = configureStore({
         notification: notificationReducer,
         search: searchReducer,
         call: callReducer,
+        verificationStatus: verificationStatusReducer,
         viewedPosts: viewedPostsReducer,
         socket: socketReducer,
     }

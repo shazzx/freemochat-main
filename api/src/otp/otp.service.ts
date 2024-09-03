@@ -1,76 +1,82 @@
-import { SendEmailCommand, SESClient } from '@aws-sdk/client-ses';
-import { Injectable } from '@nestjs/common';
-import { SnsService } from 'src/sns/sns.service';
-import speakeasy, { GeneratedSecret } from 'speakeasy'
+import { Inject, Injectable } from '@nestjs/common';
+import Redis from 'ioredis';
+import { randomInt } from 'crypto';
 @Injectable()
 export class OtpService {
-  private readonly sesClient: SESClient
-  private readonly otpSecret = process.env.OTP_SECRET || 'shazzx';
 
-  constructor(private readonly snsService: SnsService) {
-    this.sesClient = new SESClient({
-      region: process.env.AWS_S3_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      },
-    });
+  constructor(@Inject("REDIS_CLIENT") private readonly redis: Redis) {}
 
-  }
-
-  generateSecret(): GeneratedSecret {
-    return speakeasy.generateSecret({length: 20});
-  }
-
-  generateOtp(secret: GeneratedSecret): string {
-    return speakeasy.totp({
-      secret: secret.base32,
-      encoding: 'base32',
-      algorithm: "sha256",
-    });
-  }
-
-  verifyOtp(token: string, secret: string): boolean {
-    return speakeasy.totp.verify({token, secret, algorithm: 'sha256', encoding: 'base32', window: 10});
-  }
-
-  async sendOTPEmail(to: string, otp: string) {
-    const params = {
-      Source: 'thanosgaming121@gmail.com',
-      Destination: {
-        ToAddresses: [to],
-      },
-      Message: {
-        Subject: {
-          Data: 'Your OTP',
-        },
-        Body: {
-          Text: {
-            Data: `Your OTP is: ${otp}`,
-          },
-        },
-      },
-    };
-
-    try {
-      console.log('sending otp email...')
-      await this.sesClient.send(new SendEmailCommand(params));
-    } catch (error) {
-      console.error('Error sending email:', error);
-      throw error;
-    }
-  }
-
-  async sendOTPPhone(phoneNumber: string, otp: string): Promise<string> {
-    const message = `Your OTP is: ${otp}`;
-    try {
-      console.log("sending otp sms..")
-      await this.snsService.sendSMS(phoneNumber, message);
-    } catch (error) {
-      console.error(error)      
-    }
-
-
+  async generateOtp(userId: string, type: string): Promise<string> {
+    const otp = randomInt(100000, 999999).toString();
+    await this.redis.set(`otp:${type}:${userId}`, otp, 'EX', 300); // 5 minutes expiration
     return otp;
   }
+
+  async verifyOtp(userId: string, otp: string, type: string): Promise<boolean> {
+    const storedOtp = await this.redis.get(`otp:${type}:${userId}`);
+    console.log(storedOtp)
+    if (storedOtp === otp) {
+      await this.redis.del(`otp:${type}:${userId}`);
+      return true;
+    }
+    return false;
+  }
+
+  // deprecated
+
+  // generateSecret(): GeneratedSecret {
+  //   return speakeasy.generateSecret({length: 20});
+  // }
+
+  // generateOtp(secret: GeneratedSecret): string {
+  //   return speakeasy.totp({
+  //     secret: secret.base32,
+  //     encoding: 'base32',
+  //     algorithm: "sha256",
+  //   });
+  // }
+
+  // verifyOtp(token: string, secret: string): boolean {
+  //   return speakeasy.totp.verify({token, secret, algorithm: 'sha256', encoding: 'base32', window: 10});
+  // }
+
+  // async sendOTPEmail(to: string, otp: string) {
+  //   const params = {
+  //     Source: 'thanosgaming121@gmail.com',
+  //     Destination: {
+  //       ToAddresses: [to],
+  //     },
+  //     Message: {
+  //       Subject: {
+  //         Data: 'Your OTP',
+  //       },
+  //       Body: {
+  //         Text: {
+  //           Data: `Your OTP is: ${otp}`,
+  //         },
+  //       },
+  //     },
+  //   };
+
+  //   try {
+  //     console.log('sending otp email...')
+  //     await this.sesClient.send(new SendEmailCommand(params));
+  //   } catch (error) {
+  //     console.error('Error sending email:', error);
+  //     throw error;
+  //   }
+  // }
+
+  // async sendOTPPhone(phoneNumber: string, otp: string): Promise<string> {
+  //   const message = `Your OTP is: ${otp}`;
+  //   try {
+  //     console.log("sending otp sms..")
+  //     await this.snsService.sendSMS(phoneNumber, message);
+  //   } catch (error) {
+  //     console.error(error)      
+  //   }
+
+
+  //   return otp;
+  // }
 }

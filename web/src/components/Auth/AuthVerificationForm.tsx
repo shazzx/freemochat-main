@@ -15,12 +15,14 @@ import { useForm } from "react-hook-form"
 import { axiosClient } from "@/api/axiosClient"
 import { useMutation } from "@tanstack/react-query"
 import { setAccessToken } from "@/app/features/user/authSlice"
-import { useAppDispatch } from "@/app/hooks"
+import { useAppDispatch, useAppSelector } from "@/app/hooks"
 import { store } from "@/app/store"
 import { setUser } from "@/app/features/user/userSlice"
 import { useState } from "react"
 import { InputOTPForm } from "./OTPInput"
 import { toast } from "react-toastify"
+import { FaCheckCircle } from "react-icons/fa"
+import { setVerificationStatus } from "@/app/features/user/verificationStatusSlice"
 
 function AuthVerificationForm() {
     const { register, handleSubmit } = useForm({ resolver: zodResolver(LoginUserSchema) })
@@ -28,24 +30,44 @@ function AuthVerificationForm() {
     const params = useParams()
     const [searchParams] = useSearchParams()
     const authId = searchParams.get("auth_id")
-    const [emailVerificationStatus, setEmailVerificationStatus] = useState(false)
-    const [phoneVerificationStatus, setPhoneVerificationStatus] = useState(false)
-    const username  = params.username
-    if(!authId || !username){
+    const username = params.username
+    if (!authId || !username) {
+        navigate("/login")
+    }
+
+    const { verificationStatus } = useAppSelector((state) => state.verificationStatus)
+    if(!verificationStatus.success){
         navigate("/login")
     }
 
     const dispatch = useAppDispatch()
 
     const verifyOTP = async (data: any) => {
-        
-        const response = await axiosClient.post("/user/verify-otp", data, {timeout: 20000})
-        console.log(response.data)
+try {
+    
+    const response = await axiosClient.post("/user/verify-otp", data, { timeout: 20000 })
+    console.log(response.data)
+    if(response.data.email && !response.data.phone){
+        dispatch(setVerificationStatus({isEmailVerified: true}))
+        toast.success('Email Verified')
+    }
+    if(!response.data.email && response.data.phone){
+        dispatch(setVerificationStatus({isPhoneVerified: true}))
+        toast.success('Phone Verified')
+    }
+    console.log(response.data)
+    if(response.data.email && response.data.phone){
+        dispatch(setVerificationStatus({isPhoneVerified: true, isEmailVerified: true}))
+        navigate("/login")
+    }
+} catch (error) {
+    toast.info(error.message)
+}
         // return response.data
     }
     // 139578 emailOTP:  653196
     const mutation = useMutation({
-        mutationFn: async (data: {pin: string, type: string}): Promise<any> => {
+        mutationFn: async (data: { pin: string, type: string }): Promise<any> => {
             let _data = {
                 otp: data.pin,
                 type: data.type,
@@ -55,7 +77,7 @@ function AuthVerificationForm() {
             return await verifyOTP(_data)
         },
         onError: (e: any) => {
-            if(e.response.data.error.message){
+            if (e.response.data.error.message) {
                 toast.info("Wrong or expired OTP")
             }
         },
@@ -64,13 +86,13 @@ function AuthVerificationForm() {
         }
     })
 
-    const otpResend  = async(type: string) => {
-        const {data} = await axiosClient.post("/user/resend-otp", {type, authId, username})
+    const otpResend = async (type: string) => {
+        const { data } = await axiosClient.post("/user/resend-otp", { type, authId, username })
         console.log(data)
-        if(data.success){
+        if (data.success) {
             toast.success(data.message)
         }
-      }
+    }
 
     const dispatchUser = async () => {
         dispatch(setAccessToken(mutation.data.access_token))
@@ -87,8 +109,6 @@ function AuthVerificationForm() {
         // dispatchUser()
         // navigate("/")
     }
-    const [signupButtonState, setSignupButtonState] = useState(false)
-
 
     return (
         <div className="flex items-center justify-center w-screen h-screen">
@@ -97,8 +117,25 @@ function AuthVerificationForm() {
                     <CardTitle className="text-2xl">Verification</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-12 max-w-96 p-4">
-                    <InputOTPForm otpResend={otpResend} onSubmit={onSubmit} type="email" label="Email Verification" description="Please enter the one-time password sent to your email."/>
-                    <InputOTPForm otpResend={otpResend} onSubmit={onSubmit} type="phone" label="Phone Verification" description="Please enter the one-time password sent to your phone."  />
+                    {verificationStatus.isEmailVerified ?
+                        <div className="flex gap-2 items-center justify-center">
+                            <FaCheckCircle className="text-green-500 text-3xl" />
+                            <span>EmailIsVerified</span>
+                        </div>
+
+                        :
+                        <InputOTPForm otpResend={otpResend} onSubmit={onSubmit} type="email" label="Email Verification" description="Please enter the one-time password sent to your email." />
+
+                    }
+                    {verificationStatus.isPhoneVerified ?
+                        <div className="flex gap-2 items-center justify-center">
+                            <FaCheckCircle className="text-green-500 text-3xl" />
+                            <span>Phone Is Verified</span>
+                        </div>
+                        :
+                        <InputOTPForm otpResend={otpResend} onSubmit={onSubmit} type="phone" label="Phone Verification" description="Please enter the one-time password sent to your phone." />
+
+                    }
                 </CardContent>
             </Card>
         </div>

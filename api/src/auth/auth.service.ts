@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { compare } from 'bcrypt'
@@ -6,6 +6,8 @@ import { jwtConstants } from './constants';
 import { InjectModel } from '@nestjs/mongoose';
 import { OTP } from 'src/schema/otp';
 import { Model } from 'mongoose';
+import { v4 as uuidv4 } from 'uuid'
+import { USER } from 'src/utils/enums/user.c';
 
 @Injectable()
 export class AuthService {
@@ -18,18 +20,18 @@ export class AuthService {
     async validateUser(username: string, password: string): Promise<any> {
         let user = await this.userService.findUser(username)
         if (!user) {
-            throw new UnauthorizedException()
+            throw new UnauthorizedException(USER.WRONG_DATA)
         }
 
         let isValidPassword = await compare(password, user.password)
 
         if (!isValidPassword) {
-            throw new UnauthorizedException()
+            throw new HttpException({message: USER.WRONG_DATA, type: 'invalid credentials'}, HttpStatus.BAD_REQUEST)
         }
 
         let verification = {
-            email: true,
-            phone: true
+            email: false,
+            phone: false
         }
 
         if(user.isEmailVerified){
@@ -43,8 +45,13 @@ export class AuthService {
         if(verification.email && verification.phone){
             return user
         }
+        if(!user.tempSecret){
+            let tempSecret = uuidv4()
+            await this.userService.updateUser(user._id,{tempSecret: tempSecret})
+            throw new HttpException({message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: {username, auth_id: user.tempSecret}}, HttpStatus.BAD_REQUEST)
+        }
+        throw new HttpException({message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: {username, auth_id: user.tempSecret}}, HttpStatus.BAD_REQUEST)
 
-        return {success: false, verification}
     }
 
     async login(user: any) {

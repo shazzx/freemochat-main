@@ -14,6 +14,7 @@ import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import { OtpService } from 'src/otp/otp.service';
 import { CryptoService } from 'src/crypto/crypto.service';
 import { LocationService } from 'src/location/location.service';
+import { USER } from 'src/utils/enums/user.c';
 
 @Controller('user')
 export class UserController {
@@ -39,19 +40,17 @@ export class UserController {
 
             await this.locationService.isValidAddress({ country: address.country, city: address.city })
 
-            const emailSecret = this.otpService.generateSecret()
-            const phoneSecret = this.otpService.generateSecret()
             const tempSecret = uuidv4()
 
-            let user = await this.userService.createUser({ firstname, lastname, username, email, password, confirmPassword, address, phone, emailSecret: emailSecret.base32, phoneSecret: phoneSecret.base32, tempSecret })
+            let user = await this.userService.createUser({ firstname, lastname, username, email, password, confirmPassword, address, phone, tempSecret })
 
             await this.locationService.checkAddressRegisteration(address)
 
             console.log("user created")
-            const phoneOTP = this.otpService.generateOtp(phoneSecret)
-            const emailOTP = this.otpService.generateOtp(emailSecret)
+            const phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
+            const emailOTP = await this.otpService.generateOtp(user._id, 'email')
 
-            console.log('phoneOTP: ', phoneOTP, "emailOTP: ", emailOTP, "tempSecret: ", tempSecret, "phone secret: ", phoneSecret, "email secret: ", emailSecret,)
+            console.log('phoneOTP: ', phoneOTP, "emailOTP: ", emailOTP, "tempSecret: ", tempSecret, "phone secret: ")
 
             // await this.otpService.sendOTPEmail("thanosgaming121@gmail.com", phoneOTP)
             // await this.otpService.sendOTPPhone("923122734021", phoneOTP)
@@ -92,13 +91,10 @@ export class UserController {
                 throw new BadRequestException()
             }
 
-            const phoneSecret = user.phoneSecret
-            const emailSecret = user.emailSecret
-            console.log(phoneSecret, ' phone secret', "email secret ", emailSecret)
 
-            let isValidPhoneSecret = this.otpService.verifyOtp(otp, phoneSecret)
-            let isValidEmailSecret = this.otpService.verifyOtp(otp, emailSecret)
-            console.log(isValidEmailSecret, isValidPhoneSecret)
+            let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
+            let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
+            console.log(isValidEmailSecret, 'email', isValidPhoneSecret, 'phone')
 
             if (!isValidEmailSecret && !isValidPhoneSecret) {
                 throw new BadRequestException("OTP is not valid")
@@ -106,12 +102,12 @@ export class UserController {
 
             if (type == 'email' && isValidEmailSecret && user.isPhoneVerified) {
 
-                await this.userService.updateUser(user._id, { tempSecret: null, isEmailVerified: true })
+                await this.userService.updateUser(user._id, { tempSecret: null, isEmailVerified: true,  active: true })
                 return res.json({ success: true, email: true, phone: true })
             }
 
             if (type == 'phone' && isValidPhoneSecret && user.isEmailVerified) {
-                await this.userService.updateUser(user._id, { tempSecret: null, isPhoneVerified: true })
+                await this.userService.updateUser(user._id, { tempSecret: null, isPhoneVerified: true, active: true })
                 return res.json({ success: true, email: true, phone: true })
             }
 
@@ -141,12 +137,11 @@ export class UserController {
         const { username, authId } = verificationStatusDTO
         const user = await this.userService.findUser(username)
         if (!user) {
-            throw new BadRequestException()
+            throw new BadRequestException(USER.NOT_EXIST)
         }
 
         if (!user.tempSecret || user.tempSecret !== authId) {
-            console.log('bad request')
-            throw new BadRequestException()
+            throw new BadRequestException(USER.ALREADY_VERIFIED)
         }
 
         const isPhoneVerified = user.isPhoneVerified
@@ -174,20 +169,16 @@ export class UserController {
                 throw new BadRequestException()
             }
 
-            const phoneSecret = user.phoneSecret
-            const emailSecret = user.emailSecret
-            console.log(phoneSecret, ' phone secret', "email secret ", emailSecret)
-
             if (type == 'email') {
                 // let secret = this.otpService.generateSecret()
-                let emailOTP = this.otpService.generateOtp(emailSecret)
+                let emailOTP = await this.otpService.generateOtp(user._id, 'email')
                 console.log(emailOTP, 'email')
                 return res.json({ success: true, message: "otp has been sent to your email" })
             }
 
 
             if (type == 'phone') {
-                let phoneOTP = this.otpService.generateOtp(phoneSecret)
+                let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
                 console.log(phoneOTP, 'phone')
                 return res.json({ success: true, message: "otp has been sent to your phone" })
             }

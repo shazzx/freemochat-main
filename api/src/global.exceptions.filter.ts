@@ -13,12 +13,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let status: HttpStatus;
     let message: string;
     let errorCode: string;
+    let data: {type: string, };
 
     // Handle HttpException
     if (exception instanceof HttpException) {
       status = exception.getStatus();
-      message = exception.message;
-      errorCode = `${status}`;
+      const exceptionResponse: any = exception.getResponse();
+      
+      if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+        message = (exceptionResponse as any).message || message;
+        data = { ...(exceptionResponse ) };
+      } else {
+        message = exceptionResponse as string;
+      }
     }
     // Handle MongoDB errors
     else if (exception instanceof MongoError || exception instanceof MongooseError) {
@@ -46,6 +53,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
       message,
+      ...data,
       errorCode,
     });
   }

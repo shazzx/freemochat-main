@@ -19,6 +19,7 @@ import { useAppDispatch } from "@/app/hooks"
 import { store } from "@/app/store"
 import { setUser } from "@/app/features/user/userSlice"
 import { useState } from "react"
+import { toast } from "react-toastify"
 
 export function LoginForm() {
     const { register, handleSubmit } = useForm({ resolver: zodResolver(LoginUserSchema) })
@@ -35,7 +36,10 @@ export function LoginForm() {
         mutationFn: async (data): Promise<any> => {
             return await loginUser(data)
         },
-        onError: () => {
+        onError: (error: any) => {
+            console.log(error.response)
+            toast.error(error.response.data.message)
+            setLoginButtonState(false)
         }
     })
 
@@ -46,6 +50,7 @@ export function LoginForm() {
     }
 
     const onSubmit = async (data) => {
+        setLoginButtonState(true)
         mutation.mutate(data)
         console.log(data)
 
@@ -55,7 +60,7 @@ export function LoginForm() {
         navigate("/")
     }
     console.log('yes')
-    const [signupButtonState, setSignupButtonState] = useState(false)
+    const [loginButtonState, setLoginButtonState] = useState(false)
 
     return (
         <div className="flex items-center justify-center w-screen h-screen">
@@ -88,8 +93,8 @@ export function LoginForm() {
                                 </div>
                                 <Input id="password" type="password" {...register("password")} required />
                             </div>
-                            <Button disabled={signupButtonState}type="submit" className="w-full">
-                            {signupButtonState ?
+                            <Button disabled={loginButtonState} type="submit" className="w-full">
+                                {loginButtonState ?
                                     <svg className="text-gray-700 animate-spin" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
                                         width="24" height="24">
                                         <path

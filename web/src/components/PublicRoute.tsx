@@ -1,9 +1,11 @@
 import { axiosClient } from '@/api/axiosClient'
 import { logout, setAccessToken } from '@/app/features/user/authSlice'
 import { setUser } from '@/app/features/user/userSlice'
+import { setVerificationStatus } from '@/app/features/user/verificationStatusSlice'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import React, { useEffect, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 function PublicRoute() {
     const dispatch = useAppDispatch()
@@ -13,6 +15,7 @@ function PublicRoute() {
     const params = useParams()
     const [searchParams] = useSearchParams()
     const authId = searchParams.get("auth_id")
+    console.log(location.pathname,)
 
     useEffect(() => {
         const getUser = async () => {
@@ -21,18 +24,18 @@ function PublicRoute() {
                 username: params.username
             }
             try {
-                console.log(authData)
-                const isUserVerified = await axiosClient.post("user/verification-status", {
-                    authId,
-                    username: params.username
-                })
-                console.log(isUserVerified)
+                if(location.pathname.startsWith("/auth")){
+                    const {data: {isPhoneVerified, isEmailVerified}} = await axiosClient.post("user/verification-status", {
+                        authId,
+                        username: params.username,
+                    })
+                    dispatch(setVerificationStatus({isPhoneVerified, isEmailVerified, success: true}))
+                }
                 const { data } = await axiosClient.post("user/refresh-token")
                 dispatch(setAccessToken(data?.accessToken))
 
                 let response = await axiosClient.get("user")
                 if (response.status == 202) {
-                    console.log('timout')
                     setIsFetched(true)
                     navigate('/')
                 } else {
@@ -42,9 +45,24 @@ function PublicRoute() {
 
 
             } catch (error) {
-                console.log(error)
                 setIsFetched(true)
-                // return navigate('/login')
+                console.log(error)
+                
+                if(error.response.data.message.startsWith('already verified')){
+                    toast.error(error.response.data.message)
+                    dispatch(setVerificationStatus({isPhoneVerified: false, isEmailVerified: false, success: false}))
+                    navigate('/login')
+                    return 
+                }
+                // if(!location.pathname.startsWith("/auth") && !error.response.data.message.startsWith('Your Account')){
+                //     toast.error(error.response.data.message)
+                //     dispatch(setVerificationStatus({isPhoneVerified: false, isEmailVerified: false, success: false}))
+                //     navigate('/login')
+                //     return
+                // }
+                if(error.response.data.message.startsWith('Your Account')){
+                    return 
+                }
             }
         }
         getUser()
