@@ -31,14 +31,14 @@ function AuthVerificationForm() {
     const [searchParams] = useSearchParams()
     const authId = searchParams.get("auth_id")
     const username = params.username
-    if (!authId || !username) {
+    if (!authId && !username) {
         navigate("/login")
     }
 
     const { verificationStatus } = useAppSelector((state) => state.verificationStatus)
-    if(!verificationStatus.success){
-        navigate("/login")
-    }
+    // if(!verificationStatus.success){
+    //     navigate("/login")
+    // }
 
     const dispatch = useAppDispatch()
 

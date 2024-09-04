@@ -12,6 +12,9 @@ import { Label } from "@radix-ui/react-dropdown-menu"
 import { FC, FormEvent, useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
+import { SelectScrollable } from "./SelectScrollable"
+import { axiosClient } from "@/api/axiosClient"
+import ChangeCountryModel from "./ChangeCountryModel"
 
 const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
@@ -111,6 +114,8 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     //     }
     // })
 
+    const [changeCountryModel, setChangeCountryModel]  = useState(false)
+
     const navigate = useNavigate()
 
     return (
@@ -118,6 +123,10 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
             <div className='absolute top-0 right-0 opacity-15  bg-black w-full h-full' onClick={() => {
                 navigate(-1)
             }}></div>
+            {
+                changeCountryModel && 
+                <ChangeCountryModel setModelTrigger={setChangeCountryModel} />
+            }
             {
                 profileForCrop && cropperModel &&
                 <ImageCropper image={profileForCrop} aspect={4 / 4} setCropperModel={setCropperModel} _onCropComplete={(croppedImage) => {
@@ -274,6 +283,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                                 Country
                                             </Label>
                                             <Input
+                                            disabled
                                                 name="country"
                                                 placeholder="Enter your country name"
                                                 ref={countryRef}
@@ -289,6 +299,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                                 City
                                             </Label>
                                             <Input
+                                            disabled
                                                 name="city"
                                                 placeholder="Enter your city name"
                                                 ref={cityRef}
@@ -306,6 +317,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                                 Area
                                             </Label>
                                             <Input
+                                            disabled
                                                 name="area"
                                                 placeholder="Enter your area name"
                                                 ref={areaRef}
@@ -317,6 +329,11 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                             {errors.address?.area && <p>{errors.address.area.message}</p>}
                                         </div>
                                     </div>
+                                    <Button 
+                                    className="max-w-40 p-0 my-4 border border-accent" 
+                                    onClick={() => {setChangeCountryModel(true)}}
+                                    type="button"
+                                    >Change Address</Button>
                                 </div>
 
                                 <div className="flex gap-4 w-full">
@@ -340,6 +357,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                             Phone
                                         </Label>
                                         <Input
+                                        disabled
                                             name="phone"
                                             ref={phoneRef}
                                             placeholder="Enter your phone number"

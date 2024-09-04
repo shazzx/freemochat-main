@@ -31,7 +31,7 @@ export class Post {
     @Prop({type: String, required: true})
     type: String;
 
-    @Prop({type: String, required: true})
+    @Prop({type: String})
     content: String;
     
     @Prop({type: String})
@@ -40,7 +40,7 @@ export class Post {
     @Prop({type: Array<Media>})
     media: Media[]
 
-    @Prop({type: Date, default: Date.now()})
+    @Prop()
     createdAt: Date
 }
 

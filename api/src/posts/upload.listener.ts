@@ -190,7 +190,7 @@ export class UploadListener {
         try {
             const file = await Promise.all(uploadPromise)
             console.log(file[0].url, file[0].fileType)
-            let messageUpdate = await this.messageService.updateMessage(messageId, { media: { url: file[0].url, type: file[0].fileType, isUploaded: true } })
+            let messageUpdate = await this.messageService.updateMessage(messageId, { media: {...messageDetails.media, url: file[0].url, type: file[0].fileType, isUploaded: true } })
             console.log(messageUpdate)
             await this.chatGateway.sendMessage({...messageDetails, media: {...messageDetails.media, url: file[0].url, isUploaded: true }})
             console.log('success')

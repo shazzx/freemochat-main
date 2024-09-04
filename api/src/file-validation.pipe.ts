@@ -5,6 +5,11 @@ const supportedVideoFormats = [
   'video/quicktime',
 ];
 
+
+const supportedAudioFormats = [
+  'audio/webm',
+];
+
 const supportedImageFormats = [
   'image/jpeg',
   'image/png',
@@ -15,7 +20,8 @@ const supportedDocumentFormats = [
 ];
 
 const supportedFormats = [
-  ...supportedVideoFormats, 
+  ...supportedVideoFormats,
+  ...supportedAudioFormats, 
   ...supportedImageFormats, 
   ...supportedDocumentFormats
 ];
@@ -23,6 +29,9 @@ const supportedFormats = [
 @Injectable()
 export class FileValidatorPipe implements PipeTransform {
   transform(value: Express.Multer.File) {
+    if(value.mimetype == 'audio/webm' && value.originalname !== 'voice'){
+      throw new UnprocessableEntityException('Unsupported file format. Please upload a JPEG, PNG, MP4, MOV, or PDF file.');
+    }
     if (!supportedFormats.includes(value.mimetype)) {
       throw new UnprocessableEntityException('Unsupported file format. Please upload a JPEG, PNG, MP4, MOV, or PDF file.');
     }

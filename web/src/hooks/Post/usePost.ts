@@ -260,6 +260,7 @@ export const useUpdatePost = (key, id: string) => {
 
 
 export const useRemovePost = (key, id) => {
+  const {user} = useAppSelector(state => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
     mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, media: { type: string, url: string }[] }) => {
@@ -294,6 +295,8 @@ export const useRemovePost = (key, id) => {
       queryClient.setQueryData([key, id], context.previousPosts)
     },
     onSettled: (e) => {
+      queryClient.invalidateQueries({ queryKey: ["userMedia", user._id] })
+
       // uncommeting this will refetch the comments again from the server to be in sync
       // queryClient.invalidateQueries({ queryKey: ["comments"] })
     }

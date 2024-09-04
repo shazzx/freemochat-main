@@ -20,6 +20,7 @@ import { store } from "@/app/store"
 import { setUser } from "@/app/features/user/userSlice"
 import { useState } from "react"
 import { toast } from "react-toastify"
+import { setVerificationStatus } from "@/app/features/user/verificationStatusSlice"
 
 export function LoginForm() {
     const { register, handleSubmit } = useForm({ resolver: zodResolver(LoginUserSchema) })
@@ -37,7 +38,10 @@ export function LoginForm() {
             return await loginUser(data)
         },
         onError: (error: any) => {
-            console.log(error.response)
+            if (error.response.data.type == 'not verified') {
+                dispatch(setVerificationStatus(error.response.data.verification))
+                navigate("/auth/" + error.response.data.user.username + "?auth_id=" + error.response.data.user.auth_id)
+            }
             toast.error(error.response.data.message)
             setLoginButtonState(false)
         }

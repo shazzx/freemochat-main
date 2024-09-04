@@ -190,8 +190,6 @@ export class PostsService {
         // let promotedPosts = await this.getPromotedPosts(userId, { country: string, city: string, area: string })
         // const results = { posts: [..._posts, ...promotedPosts], nextCursor };
         // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
-
-        return results
     }
 
 
@@ -750,35 +748,29 @@ export class PostsService {
     }
 
     async bulkViewPosts({ userId, postIds }: SBulkViewPost) {
-        let viewPosts = postIds.map(async (postId) => {
-            try {
+
+        try {
+            let viewPosts = postIds.map(async (postId) => {
                 const post = await this.postModel.findById(postId)
                 if (!post) {
                     throw new BadRequestException()
                 }
                 // if (String(post.user) != userId) {
-                    let viewedPost = await this.viewPostsModel.updateOne(
-                        { type: "normal", userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) },
-                        { $setOnInsert: { type: 'normal', userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) } },
-                        { upsert: true }
-                    )
-                    console.log(viewedPost)
+                await this.viewPostsModel.updateOne(
+                    { type: "normal", userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) },
+                    { $setOnInsert: { type: 'normal', userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) } },
+                    { upsert: true }
+                )
                 // }
-                // docs.push({
-                //     updateOne: {
-                //         filter: { type: "normal", userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) },
-                //         update: { $setOnInsert: { type: 'normal', userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) } },
-                //         upsert: true
-                //     }
-                // })
+            })
 
-            } catch (error) {
-                console.log(error)
+            if (Promise.all(viewPosts)) {
+                return true
             }
-        })
-        if (Promise.all(viewPosts)) {
-            return true
+        } catch (error) {
+            return false
         }
+
     }
 
     async testingPromotedPosts(address) {

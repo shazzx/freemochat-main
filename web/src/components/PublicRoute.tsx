@@ -24,12 +24,12 @@ function PublicRoute() {
                 username: params.username
             }
             try {
-                if(location.pathname.startsWith("/auth")){
-                    const {data: {isPhoneVerified, isEmailVerified}} = await axiosClient.post("user/verification-status", {
+                if (location.pathname.startsWith("/auth")) {
+                    const { data: { isPhoneVerified, isEmailVerified } } = await axiosClient.post("user/verification-status", {
                         authId,
                         username: params.username,
                     })
-                    dispatch(setVerificationStatus({isPhoneVerified, isEmailVerified, success: true}))
+                    dispatch(setVerificationStatus({ isPhoneVerified, isEmailVerified, success: true }))
                 }
                 const { data } = await axiosClient.post("user/refresh-token")
                 dispatch(setAccessToken(data?.accessToken))
@@ -46,22 +46,23 @@ function PublicRoute() {
 
             } catch (error) {
                 setIsFetched(true)
-                console.log(error)
+                console.log(error.response.data)
                 
-                if(error.response.data.message.startsWith('already verified')){
-                    toast.error(error.response.data.message)
-                    dispatch(setVerificationStatus({isPhoneVerified: false, isEmailVerified: false, success: false}))
-                    navigate('/login')
-                    return 
-                }
+
+                // if (error.response.data.message.startsWith('already verified')) {
+                //     toast.error(error.response.data.message)
+                //     dispatch(setVerificationStatus({ isPhoneVerified: false, isEmailVerified: false, success: false }))
+                //     navigate('/login')
+                //     return
+                // }
                 // if(!location.pathname.startsWith("/auth") && !error.response.data.message.startsWith('Your Account')){
                 //     toast.error(error.response.data.message)
                 //     dispatch(setVerificationStatus({isPhoneVerified: false, isEmailVerified: false, success: false}))
                 //     navigate('/login')
                 //     return
                 // }
-                if(error.response.data.message.startsWith('Your Account')){
-                    return 
+                if (error.response.data.message.startsWith('Your Account')) {
+                    return
                 }
             }
         }

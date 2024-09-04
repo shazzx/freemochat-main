@@ -82,6 +82,7 @@ export class UserController {
         const { username, authId, otp, type } = verifyOTP
         try {
             const user = await this.userService.findUser(username)
+            console.log(user, authId)
             if (!user) {
                 throw new BadRequestException()
             }

@@ -88,7 +88,7 @@ export class PostsController {
         private readonly chatGateway: ChatGateway,
         @InjectQueue("media-upload") private readonly mediaUploadQueue: Queue,
 
-    ) {}
+    ) { }
 
     @Get()
     async getPosts(@Req() req: Request, @Res() response: Response) {
@@ -125,7 +125,7 @@ export class PostsController {
 
         const { sub } = req.user
         let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId)
-
+        console.log(Date.now().toLocaleString())
         let uploadedPost = await this.postService.createPost(
             {
                 ...createPostDTO,
@@ -275,8 +275,6 @@ export class PostsController {
             await this.mediaService.removeMedia(new Types.ObjectId(sub), media)
         }
 
-        this.chatGateway.uploadSuccess({ isSuccess: true })
-
         res.json(await this.postService.deletePost(postDetails.postId))
     }
 
@@ -347,7 +345,7 @@ export class PostsController {
     @Post("promotion")
     async promotePost(@Body(new ZodValidationPipe(PromotePost)) promotePostDTO: PromotePostDTO, @Req() req, @Res() res: Response) {
         const { postId, promotionDetails, isApp } = promotePostDTO
-        res.json(await this.postService.postPromotion({postId, userId: req.user.sub, promotionDetails, isApp}))
+        res.json(await this.postService.postPromotion({ postId, userId: req.user.sub, promotionDetails, isApp }))
     }
 
     @Get("promotedPosts")
@@ -361,16 +359,16 @@ export class PostsController {
         const { postId, type } = viewPostDTO
         const { sub } = req.user
         console.log('viewPost......', postId, type)
-        res.json(await this.postService.viewPost({userId: sub, postId, type}))
+        res.json(await this.postService.viewPost({ userId: sub, postId, type }))
     }
 
 
     @Post("view/bulk")
     async bulkViewPost(@Body(new ZodValidationPipe(BulkViewPost)) viewPostDTO: BulkViewPostDTO, @Req() req, @Res() res: Response) {
-        const { viewedPosts} = viewPostDTO
+        const { viewedPosts } = viewPostDTO
         const { sub } = req.user
         console.log('viewPost......', viewedPosts)
-        res.json(await this.postService.bulkViewPosts({userId: sub, postIds: viewedPosts}))
+        res.json(await this.postService.bulkViewPosts({ userId: sub, postIds: viewedPosts }))
     }
 
     // @Public()

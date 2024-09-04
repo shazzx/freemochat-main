@@ -78,20 +78,20 @@ const MainHome = ({ children }: any) => {
       // location.reload()
     }
   }
-  const {viewedPosts} = useAppSelector((state) => state.viewedPosts)
+  // const {viewedPosts} = useAppSelector((state) => state.viewedPosts)
 
-  useEffect(() => {
-    if(viewedPosts.length > 0){
-      let viewPost = async () => {
-        const { data } = await axiosClient.post("/posts/view/bulk", {viewedPosts})
-    }
-      let timeout = setTimeout(() => {
-        viewPost()
-      }, 10000)
-      return () => clearInterval(timeout)
-    }
+  // useEffect(() => {
+  //   if(viewedPosts.length > 0){
+  //     let viewPost = async () => {
+  //       const { data } = await axiosClient.post("/posts/view/bulk", {viewedPosts})
+  //   }
+  //     let timeout = setTimeout(() => {
+  //       viewPost()
+  //     }, 10000)
+  //     return () => clearInterval(timeout)
+  //   }
     
-  },[viewedPosts])
+  // },[viewedPosts])
   return (
 
     <div className="h-screen w-full flex flex-col overflow-hidden">

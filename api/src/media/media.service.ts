@@ -45,7 +45,7 @@ export class MediaService {
   }
 
   async getMedia(targetId: string) {
-    const media = await this.mediaModel.findOne({ targetId: new Types.ObjectId(targetId) })
+    const media = await this.mediaModel.findOne({ targetId: new Types.ObjectId(targetId) }).sort({createdAt: -1})
     console.log(media)
     return media
   }

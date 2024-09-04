@@ -6,6 +6,7 @@ import { MdCancel } from "react-icons/md"
 import PostCarousel from "@/components/Carousel"
 import { Combobox } from "@/components/Comboxbox"
 import { Loader } from "lucide-react"
+import { toast } from "react-toastify"
 
 const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetails, updatePost }) => {
     const [selectedMedia, setSelectedMedia] = useState([])
@@ -83,7 +84,10 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
                         if (content.current.value.length > 12 || selectedMedia.length > 0 && editPost) {
                             updatePost({ content: content.current.value, formData, selectedMedia, media: postMedia, setModelTrigger })
                             setUploading(true)
+                            return
                         }
+
+                        toast.info("Content must be atleats of 12 characters")
                     }}>
                         <div>
                             <h3>{editPost ? "Update Post" : "Create Post"}</h3>

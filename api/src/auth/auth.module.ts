@@ -11,6 +11,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { Mongoose } from 'mongoose';
 import { MongooseModule } from '@nestjs/mongoose';
 import { OTP, OTPSchema } from 'src/schema/otp';
+import { OtpModule } from 'src/otp/otp.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { OTP, OTPSchema } from 'src/schema/otp';
     PassportModule,
     MongooseModule.forFeature([{name: OTP.name, schema: OTPSchema}]),
     AccountManagementModule,
+    OtpModule,
     JwtModule.register({
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '1200m' }
