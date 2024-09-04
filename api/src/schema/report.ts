@@ -17,3 +17,4 @@ export class Report {
 }
 
 export const ReportSchema = SchemaFactory.createForClass(Report)
+ReportSchema.index({ reportedBy: 1, postId: 1 }, { unique: true })

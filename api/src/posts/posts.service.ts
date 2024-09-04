@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { LocationService } from 'src/location/location.service';
@@ -1574,6 +1574,12 @@ export class PostsService {
     }
 
     async reportPost(postId: string, { userId, type, reportMessage }) {
+        const alreadyReported = await  this.reportModel.findOne({ reportedBy: new Types.ObjectId(userId), type, postId: new Types.ObjectId(postId)})
+
+        if (alreadyReported ) {
+            throw new BadRequestException("Already Reported")
+        }
+
         const report = await this.reportModel.create({ reportedBy: new Types.ObjectId(userId), type, postId: new Types.ObjectId(postId), reportMessage })
         return report
     }

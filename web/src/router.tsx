@@ -16,6 +16,8 @@ import PostSection from "./sections/PostSection";
 import { LoginForm } from "./components/Login";
 import PublicRoute from "./components/PublicRoute";
 import { Signup } from "./components/Signup";
+import ManagePages from "./sections/ManagePages";
+import SearchSection from "./sections/SearchSection";
 
 export const router = createBrowserRouter([
     {
@@ -73,15 +75,16 @@ export const router = createBrowserRouter([
             },
             {
                 path: "/manage/pages",
-                element: <MainHome children={<ManageGroups />} />,
+                element: <MainHome children={<ManagePages />} />,
             },
             {
                 path: "/post/:post",
                 element: <MainHome children={<PostSection />} />,
             },
+
             {
-                path: "/post/:post",
-                element: <MainHome children={<PostSection />} />,
+                path: "/search",
+                element: <MainHome children={<SearchSection />} />,
             },
         ] 
     },

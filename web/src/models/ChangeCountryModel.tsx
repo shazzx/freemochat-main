@@ -14,8 +14,8 @@ function ChangeCountryModel({ setModelTrigger }) {
     const [city, setCity] = useState(null)
     const [_phone, setPhone] = useState(null)
 
-    const valdatePhone = (phone, country) => {
-        phone(phone, { country:  country || "PK" })
+    const valdatePhone = (_phone, country) => {
+        return phone(_phone, { country: country || "PK" })
     }
 
     useEffect(() => {
@@ -40,7 +40,7 @@ function ChangeCountryModel({ setModelTrigger }) {
         }
     }, [country])
 
-    useEffect(()  => {
+    useEffect(() => {
         console.log(_phone)
     }, [_phone])
 
@@ -50,11 +50,13 @@ function ChangeCountryModel({ setModelTrigger }) {
                 setModelTrigger(false)
             }}></div>
             <Card className='z-10 p-6 border border-accent'>
-                <form action="" onSubmit={()=>{
-                    valdatePhone(_phone, "PK")
-                } }>
+                <form action="" onSubmit={(e) => {
+                    e.preventDefault()
+                    let valid = valdatePhone(_phone, "PK")
+                    console.log(valid)
+                }}>
 
-                    <div className="flex gap-4 w-full">
+                    <div className="flex flex-col gap-4 w-full">
                         <div className="w-full">
                             <Label >
                                 Country
@@ -89,8 +91,8 @@ function ChangeCountryModel({ setModelTrigger }) {
                                 Phone
                             </Label>
                             <Input
-                            onChange={(e) => setPhone(e.target.value)}
-                            disabled={!country || !city ? true : false}
+                                onChange={(e) => setPhone(e.target.value)}
+                                disabled={!country || !city ? true : false}
                                 name="phone"
                                 type='number'
                                 // ref={phoneRef}
@@ -102,8 +104,27 @@ function ChangeCountryModel({ setModelTrigger }) {
                             />
                             {/* {errors.phone && <p>{errors.phone.message}</p>} */}
                         </div>
+                        <div className="w-full">
+                            <div className="w-full">
+                                <Label >
+                                    Area
+                                </Label>
+                                <Input
+                                disabled={!country || !city ? true : false}
+
+                                    name="area"
+                                    placeholder="Enter your area name"
+                                    // ref={areaRef}
+                                    id="area"
+                                    // defaultValue={address?.area}
+                                    className="max-w-96 w-full"
+                                // {...register("address.area")}
+                                />
+                                {/* {errors.address?.area && <p>{errors.address.area.message}</p>} */}
+                            </div>
+                        </div>
                     </div>
-                    <Button disabled={!country || !city ||  !_phone? true : false} >Change</Button>
+                    <Button disabled={!country || !city || !_phone ? true : false} >Change</Button>
                 </form>
             </Card>
         </div>

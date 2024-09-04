@@ -49,13 +49,17 @@ export class AuthService {
         }
         if(!user.tempSecret){
             let tempSecret = uuidv4()
+            let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+            let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
+            console.log(emailOTP, phoneOTP)
+        
             await this.userService.updateUser(user._id,{tempSecret: tempSecret})
             throw new HttpException({message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: {username, auth_id: user.tempSecret} , verification}, HttpStatus.BAD_REQUEST)
         }
         let emailOTP = await this.otpService.generateOtp(user._id, 'email')
         let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
         console.log(emailOTP, phoneOTP)
-
+    
         throw new HttpException({message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: {username, auth_id: user.tempSecret}, verification}, HttpStatus.BAD_REQUEST)
 
     }

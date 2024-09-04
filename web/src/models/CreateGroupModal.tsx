@@ -81,8 +81,8 @@ const CreateGroupModel: FC<any> = ({ setModelTrigger, createGroup, editGroup, ed
                                             <img className='w-full' onClick={() => {
                                             }} src={coverImage} alt="" />
                                             :
-                                            editState && groupDetails?.images?.cover ? <img className='w-full' onClick={() => {
-                                            }} src={groupDetails?.images?.cover} alt="" />
+                                            editState && groupDetails?.cover ? <img className='w-full' onClick={() => {
+                                            }} src={groupDetails?.cover} alt="" />
 
                                                 :
                                                 <Camera size={42} />
@@ -116,8 +116,8 @@ const CreateGroupModel: FC<any> = ({ setModelTrigger, createGroup, editGroup, ed
                                             <img className='w-full' onClick={() => {
                                             }} src={imageSrc} alt="" />
                                             :
-                                            editState && groupDetails?.images?.profile ? <img className='w-full' onClick={() => {
-                                            }} src={groupDetails?.images?.profile} alt="" />
+                                            editState && groupDetails?.profile ? <img className='w-full' onClick={() => {
+                                            }} src={groupDetails?.profile} alt="" />
 
                                                 :
                                                 <Camera size={42} />

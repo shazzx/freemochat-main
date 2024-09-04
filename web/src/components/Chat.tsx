@@ -538,7 +538,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                                 </div>
 
                                             } */}
-                                            {
+                                            {/* {
                                                  message?._id == selectedMessageId &&
                                                 <div className="absolute top-10 right-0 z-20">
                                                     <Button className="bg-card border border-accent" onClick={() => {
@@ -546,7 +546,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                                         deleteSelectedMessage()
                                                     }}><MdDelete size={20} className="mr-2"/> Delete</Button>
                                                 </div>
-                                            } 
+                                            }  */}
                                         </div>
                                     </div>
                                     <div className='max-w-10 max-h-10 rounded-full overflow-hidden'>
@@ -629,7 +629,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                                     </div>
 
                                                 }
-                                                {
+                                                {/* {
                                                     dropDownMessagePageIndex == pageIndex && dropDownMessageIndex && message?._id && message?._id == openedDropDownMessageId &&
                                                     <div className="absolute top-10 right-0 z-20">
                                                         <Button onClick={() => {
@@ -637,7 +637,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                                             deleteMessage(message?._id)
                                                         }}>Delete</Button>
                                                     </div>
-                                                }
+                                                } */}
                                             </div>
                                         </div>
                                     </div>

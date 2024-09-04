@@ -8,7 +8,6 @@ export const joinGroup = async (groupData: {groupDetails: {groupId: string, user
 
 
 export const toggleJoinGroup = async (groupData: {groupDetails: {groupId: string, userId?: string, type: string}}) => {
-    console.log(groupData)
     const { data } = await axiosClient.post("/members/join", groupData)
     console.log(data)
 }
@@ -27,17 +26,8 @@ export const fetchGroup = async (handle) => {
 
 
 export const fetchGroups = async () => {
-    const { data } = await axiosClient.get('groups/all')
-    console.log(data)
-    return data?.map((group) => {
-        return {
-            _id: group._id,
-            name: group.name,
-            images: group.images,
-            handle: group?.handle,
-            description: group.description,
-        }
-    })
+const { data } = await axiosClient.get('groups/all')
+return data
 }
 
 

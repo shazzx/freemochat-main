@@ -26,7 +26,8 @@ function Followers({ userFollowers, followUserToggle, media, recepientId, setMed
                         return (
                             <div className='flex flex-col gap-1 w-full bg-card' key={follower._id} ref={ref}>
                                 <div className='flex items-center p-2 gap-2 relative w-full '>
-                                    <div className='flex w-full gap-2'>
+                                    <Link to={domain + "/user/" + follower?.username} className='cursor-pointer flex w-full gap-2'>
+                                        
                                         <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                             <Avatar >
                                                 <AvatarImage src={follower?.images?.profile} alt="Avatar" />
@@ -38,7 +39,7 @@ function Followers({ userFollowers, followUserToggle, media, recepientId, setMed
                                             <div className='text-gray-400 text-sm'>@{follower?.username}</div>
 
                                         </div>
-                                    </div>
+                                    </Link>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" className="h-8 w-8 bg-card p-2 rounded-md">
@@ -62,7 +63,8 @@ function Followers({ userFollowers, followUserToggle, media, recepientId, setMed
                         return (
                             <div className='flex flex-col gap-1 w-full bg-card'>
                                 <div className='flex items-center p-2 gap-2 relative w-full '>
-                                    <div className='flex w-full gap-2'>
+                                    <Link to={domain + "/user/" + follower?.username} className='cursor-pointer flex w-full gap-2'>
+
                                         <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                             <Avatar >
                                                 <AvatarImage src={follower?.images?.profile} alt="Avatar" />
@@ -74,7 +76,7 @@ function Followers({ userFollowers, followUserToggle, media, recepientId, setMed
                                             <div className='text-gray-400 text-sm'>@{follower?.username}</div>
 
                                         </div>
-                                    </div>
+                                    </Link>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" className="h-8 w-8 bg-card p-2 rounded-md">

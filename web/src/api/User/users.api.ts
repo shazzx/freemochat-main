@@ -3,8 +3,8 @@ import { axiosClient } from "../axiosClient"
 export const fetchUser = async (username) => {
     console.log(username, 'username')
     const { data } = await axiosClient.get(`/user?username=${username}`)
-    console.log(data)
     return data
+    // return data
 }
 
 

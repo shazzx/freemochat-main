@@ -3,6 +3,7 @@ import { useAppSelector } from "@/app/hooks"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useRef, useState } from "react"
+import { toast } from "react-toastify"
 
 function ReportModel({ setModelTrigger, postId }) {
 
@@ -40,9 +41,17 @@ function ReportModel({ setModelTrigger, postId }) {
                 <Button onClick={async () => {
                     console.log('hello', selectedReportIndex)
                     if (typeof selectedReportIndex == "number") {
-                        console.log('hello')
-                        const { data } = await axiosClient.post("posts/report", { reportData: { reportMessage: reportMessage.current.value, type: reportTypes[selectedReportIndex], userId: user?._id }, postId })
-                        console.log(data)
+                        try {
+                            console.log('hello')
+                            const { data } = await axiosClient.post("posts/report", { reportData: { reportMessage: reportMessage.current.value, type: reportTypes[selectedReportIndex], userId: user?._id }, postId })
+                            toast.success("Report has been submitted")
+                            setModelTrigger(false)
+                        } catch (error) {
+                            console.log('hello')
+                            const { data } = await axiosClient.post("posts/report", { reportData: { reportMessage: reportMessage.current.value, type: reportTypes[selectedReportIndex], userId: user?._id }, postId })
+                            toast.info("You've already reported the post")
+                            setModelTrigger(false)
+                        }
                     }
                 }}>Submit</Button>
             </div>

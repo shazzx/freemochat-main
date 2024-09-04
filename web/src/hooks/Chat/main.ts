@@ -28,26 +28,42 @@ export const useGroupMemberToggle = (_userId: string, groupId: string) => {
     console.log(groupId, 'groupid')
     const queryClient = useQueryClient()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-        mutationFn: (data: { userId: string, userIndex?: number, pageIndex?: number, type: string }) => {
+        mutationFn: (data: { userId: string, userIndex?: number, pageIndex?: number, type: string, toggleState?: string }) => {
             return toggleJoinGroup({groupDetails: {userId: data.userId, groupId, type: data.type}})
         },
 
-        onMutate: async ({userId, userIndex, pageIndex}) => {
-            console.log(userId)
-            await queryClient.cancelQueries({ queryKey: ['userFriends', _userId] })
-            const previousUser = queryClient.getQueryData(['userFriends', _userId])
+        onMutate: async ({userId, userIndex, pageIndex, toggleState}) => {
+            
 
-            queryClient.setQueryData(['userFriends', _userId], (data: any) => {
-                console.log(data)
+            await queryClient.cancelQueries({ queryKey: [ 'chatgroup', groupId] })
+            const previousGroup = queryClient.getQueryData([ 'chatgroup', groupId])
+            queryClient.setQueryData([ 'chatgroup', groupId], (data: any) => {
                 const updatedUser = produce(data, (draft: any) => {
                     console.log(data)
-                    if (draft.pages[pageIndex].friends[userIndex].isGroupMember) {
-                        draft.pages[pageIndex].friends[userIndex].isGroupMember = false 
+                    if (toggleState == 'add') {
+                        draft.membersCount = draft.membersCount + 1
+                    }
+
+                    if (toggleState == 'remove') {
+                        draft.membersCount = draft.membersCount - 1
+                    }
+                })
+                return updatedUser
+            });
+
+
+            await queryClient.cancelQueries({ queryKey: ['userFriends', _userId] })
+            const previousUser = queryClient.getQueryData(['userFriends', _userId])
+            queryClient.setQueryData(['userFriends', _userId], (data: any) => {
+                const updatedUser = produce(data, (draft: any) => {
+                    console.log(data)
+                    if (draft.pages[pageIndex].friends[userIndex].friend.isGroupMember) {
+                        draft.pages[pageIndex].friends[userIndex].friend.isGroupMember = false 
                         toast.success('Member Removed')
                     }
                     
-                    if (draft.pages[pageIndex].friends[userIndex].isGroupMember == false) {
-                        draft.pages[pageIndex].friends[userIndex].isGroupMember = true
+                    if (draft.pages[pageIndex].friends[userIndex].friend.isGroupMember == false) {
+                        draft.pages[pageIndex].friends[userIndex].friend.isGroupMember = true
                         toast.success('Member Added')
                     }
                     return draft
@@ -102,13 +118,12 @@ export const useChatGroups = () => {
 
 export const useChatGroup = (groupId: string) => {
     const { data, isLoading, isError, isFetched, isSuccess } = useQuery({
-        queryKey: ['chatgroup'],
+        queryKey: ['chatgroup', groupId],
         queryFn: () => {
             return fetchChatGroup(groupId)
         },
 
     })
-    console.log(data)
 
     return {
         data,

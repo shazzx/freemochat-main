@@ -221,7 +221,7 @@ export function ManageGroups() {
         let formData = new FormData()
         imageUpload && formData.append("files", imageUpload, 'profile')
         coverImageUpload && formData.append("files", coverImageUpload, 'cover')
-        const _groupDetails = { groupDetails: { ...groupData }, groupId: editGroupDetails._id, images: editGroupDetails.images }
+        const _groupDetails = { groupDetails: { ...groupData }, groupId: editGroupDetails._id, images: {profile: editGroupDetails.profile, cover: editGroupDetails.cover} }
         formData.append("groupData", JSON.stringify(_groupDetails))
         const updatedGroupDetails = { updatedGroupDetails: groupData, ...images, formData, groupDetails: { index: editGroupIndex } }
         console.log(_groupDetails, updatedGroupDetails)

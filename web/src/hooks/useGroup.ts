@@ -100,7 +100,7 @@ export const useUpdateGroup = () => {
 
       queryClient.setQueryData(['groups'], (groups: any) => {
         const updatedGroups = produce(groups, (draft: any) => {
-          draft[groupDetails.index] = { ...draft[groupDetails.index],  ...images , ...updatedGroupDetails }
+          draft[groupDetails.index] = { ...draft[groupDetails.index],  ...images , isUploaded : false, ...updatedGroupDetails }
           console.log(draft[groupDetails.index])
 
           return draft

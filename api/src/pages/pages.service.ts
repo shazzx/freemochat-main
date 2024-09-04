@@ -65,6 +65,7 @@ export class PageService {
                     _id: 1,
                     name: 1,
                     handle: 1,
+                    isUploaded: 1,
                     profile: 1,
                     user: 1,
                     cover: 1,

@@ -49,9 +49,9 @@ export function useUserFollowers(userId?: string): any {
     };
 }
 
-// groupId can be of community group or chat group id. it's an optional id when provided an extra field will returned with user object which isGroupMember.
+// groupId can be of community group or chat group id. it's an optional id when provided an extra field will be returned with user object which is isGroupMember.
 export function useUserFriends(userId?: string, groupId?: string): any {
-console.log(userId, groupId, 'fetchn friend')
+    console.log(userId, groupId, 'fetchn friend')
     const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
         queryKey: ['userFriends', userId],
         queryFn: ({ pageParam, }) => userFriends(pageParam, userId, groupId),
@@ -186,62 +186,39 @@ export const useAcceptFriendRequest = () => {
             return acceptFriendRequest(userDetails.recepientId)
         },
 
-        onMutate: async ({ recepientId, pageIndex, requestIndex, username }) => {
-            await queryClient.cancelQueries({ queryKey: ['user', username] })
-            const previousUser = queryClient.getQueryData(['user', username])
-            console.log(previousUser)
+        onMutate: async ({ recepientId }) => {
+            await queryClient.cancelQueries({ queryKey: ['userRequests', user._id] })
+            const previousRequests = queryClient.getQueryData(['userRequests', user._id])
 
-            queryClient.setQueryData(['user', username], (user: any) => {
-                const updatedUser = produce(user, (draft: any) => {
-                    if (draft?.friendRequest?.isRecievedByUser) {
-                        draft.friendRequest.isRecievedByUser = false
-                    }
-                    console.log(user)
+            queryClient.setQueryData(['userRequests', user._id], (userRequests: any) => {
+                const _userRequests = produce(userRequests, (draft: any) => {
+                    draft.pages.forEach(((page, pageIndex) => (
+                        page.friendRequests.forEach(({ sender }, requestIndex) => {
+                            console.log(page)
 
-                    if (draft?.areFriends) {
-                        draft.areFriends = true
-                    }
+                            if (sender._id == recepientId) {
+                                console.log(userRequests.pages[pageIndex].friendRequests.splice(requestIndex, 1))
+                                // draft.pages[pageIndex].friendRequests.splice(requestIndex, 1)
+                                return
+                            }
+                        })
 
-                    if (draft?.friendsCount) {
-                        draft.friendsCount = draft.friendsCount + 1
-                    }
+                    )))
                     return draft
-                })
-                return updatedUser
-            });
-
-            if (pageIndex && requestIndex) {
-
-                await queryClient.cancelQueries({ queryKey: ['userRequests', user._id] })
-                const previousRequests = queryClient.getQueryData(['userRequests', user._id])
-                queryClient.setQueryData(['userRequests', user._id], (pages) => {
-                    const updatedRequests = produce(pages, (draft: any) => {
-                        if (draft?.pages[pageIndex]?.friendRequests[requestIndex]) {
-                            draft.pages[pageIndex].friendRequests.splice(requestIndex, 1)
-                            toast.success("Request accepted")
-                            return draft
-                        }
-                        // throw new Error()
-                    })
-
-                    return updatedRequests
-                })
-
-                return { previousUser, previousRequests };
-            }
-            return { previousUser };
-
-
+                });
+            })
+            return { previousRequests };
         },
 
         onError: (err, newComment, context) => {
             console.log(err)
             toast.error("something went wrong")
-            queryClient.setQueryData(['user', user.username], context.previousUser)
             queryClient.setQueryData(['userRequests', user._id], context?.previousRequests)
         },
-        onSettled: (e) => {
-            console.log(e)
+        onSettled: (data, err) => {
+            console.log(data)
+            toast.success("You're friends now")
+            queryClient.invalidateQueries({ queryKey: ['userRequests', user._id] })
             // uncommeting this will refetch the data again from the server to be in sync
             // queryClient.invalidateQueries({ queryKey: ['userRequests', user._id] })
             // queryClient.invalidateQueries({ queryKey: ['user'] })
@@ -309,21 +286,23 @@ export const useRemoveFriend = (username: string, userId) => {
         },
 
 
-        onMutate: async () => {
+        onMutate: async ({ recepientId }) => {
             await queryClient.cancelQueries({ queryKey: ['user', username] })
             const previousUser = queryClient.getQueryData(['user', username])
             const previousFriends = queryClient.getQueryData(['userFriends', userId])
 
             queryClient.setQueryData(['user', username], (user: any) => {
                 const updatedUser = produce(user, (draft: any) => {
-                    draft.areFriends = false
-                    draft.friendRequest = {
-                        exists: false,
-                        isRecievedByUser: false,
-                        isSentByUser: false,
-                    }
-                    if (draft.friendsCount > 0) {
-                        draft.friendsCount = draft.friendsCount - 1
+                    if (user) {
+                        draft.areFriends = false
+                        draft.friendRequest = {
+                            exists: false,
+                            isRecievedByUser: false,
+                            isSentByUser: false,
+                        }
+                        if (draft.friendsCount > 0) {
+                            draft.friendsCount = draft.friendsCount - 1
+                        }
                     }
                     return draft
 
@@ -334,9 +313,34 @@ export const useRemoveFriend = (username: string, userId) => {
             queryClient.setQueryData(['userFriends', userId], (friends: any) => {
                 const updatedUser = produce(friends, (draft: any) => {
                     console.log(friends)
+                    draft?.pages?.forEach(((page, pageIndex) => (
+                        page.friends.forEach(({ friend }, friendIndex) => {
+                            if (friend._id == recepientId) {
+                                console.log(friends.pages[pageIndex].friends)
+                                friends.pages[pageIndex].friends.splice(friendIndex, 1)
+                                return
+                            }
+                        })
+                    )))
+                    return draft
                 })
             });
 
+
+            queryClient.setQueryData(['userFriends', recepientId], (friends: any) => {
+                const updatedUser = produce(friends, (draft: any) => {
+                    draft?.pages?.forEach(((page, pageIndex) => (
+                        page.friends.forEach(({ friend }, friendIndex) => {
+                            if (friend._id == recepientId) {
+                                console.log(friends.pages[pageIndex].friends)
+                                friends.pages[pageIndex].friends.splice(friendIndex, 1)
+                                return
+                            }
+                        })
+                    )))
+                    return draft
+                })
+            });
 
 
             return { previousUser };
@@ -347,8 +351,9 @@ export const useRemoveFriend = (username: string, userId) => {
             toast.error("something went wrong")
             queryClient.setQueryData(['user', username], context.previousUser)
         },
-        onSettled: (e) => {
-            console.log(e)
+        onSettled: (data, err, {recepientId}) => {
+            console.log(data)
+            // queryClient.invalidateQueries({queryKey: ['userFriends', recepientId]})
             // uncommeting this will refetch the comments again from the server to be in sync
             // queryClient.invalidateQueries({ queryKey: ["user", username] })
         }

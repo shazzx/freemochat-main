@@ -8,8 +8,10 @@ const Cover: FC<CoverProps> = ({ cover, upload }) => {
   console.log(cover)
   return (
     <div className='relative group w-full aspect-[3/1] bg-profile roundd-md  overflow-hidden'>
+      
       {cover ?
         <div>
+                          
           <img className='w-full object-contain' src={cover} alt="" />
           {upload &&
             <div className='absolute inset-0 flex items-center justify-center bg-card bg-opacity-50 text-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer'>
