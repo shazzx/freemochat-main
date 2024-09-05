@@ -278,8 +278,8 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
     const handleMediaLoad = (event: React.SyntheticEvent<HTMLImageElement | HTMLVideoElement>) => {
         const media = event.currentTarget;
-        media.classList.remove('blur-md');
-        media.classList.add('blur-none');
+        // media.classList.remove('blur-md');
+        // media.classList.add('blur-none');
         
         // const loadingIndicator = media.parentElement?.querySelector('.loading-indicator');
         // if (loadingIndicator) {
@@ -485,7 +485,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                                 <div className="relative aspect-auto max-w-64 sm:max-w-96">
                                                     <img src={message.media.url} alt=""  onLoad={handleMediaLoad}/>
                                                     {message.media.isUploaded == false &&
-                                                        <div className='bg-card flex gap-4 p-2 blur-md w-full' >
+                                                        <div className='bg-card flex gap-4 p-2 w-full' >
                                                             <svg className="text-gray-700 animate-spin" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
                                                                 width="20" height="20">
                                                                 <path

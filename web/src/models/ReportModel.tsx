@@ -13,7 +13,20 @@ function ReportModel({ setModelTrigger, postId }) {
     const reportMessage = useRef<HTMLTextAreaElement>()
 
     const reportTypes = [
-        "Abuse", "Nudity", "Other"
+        "Harassment/Bullying",
+        "Hate speech",
+        "Spam",
+        "Inappropriate content",
+        "Copyright infringement",
+        "Impersonation",
+        "Self-harm or suicide threats",
+        "Misinformation",
+        "Violence or threats",
+        "Privacy violations",
+        "Illegal activities",
+        "Graphic content",
+        "Fake news",
+        "Other"
     ]
 
     console.log(reportTypes)
@@ -24,7 +37,10 @@ function ReportModel({ setModelTrigger, postId }) {
                 setModelTrigger(false)
             }}></div>
             <div className='flex flex-col gap-4 z-10 p-4 w-96 bg-background rounded-lg h-fit overflow-auto border-accent border'>
-                <div>
+                <div className="text-3xl text-center">
+                    Report
+                </div>
+                <div className="max-h-56 overflow-auto">
                     {reportTypes.map((type, i) => (
                         <div className={`p-2 cursor-pointer rounded-md ${i == selectedReportIndex && "bg-primary"}`} onClick={() => {
                             setSelectedReportIndex(i)
@@ -41,14 +57,23 @@ function ReportModel({ setModelTrigger, postId }) {
                 <Button onClick={async () => {
                     console.log('hello', selectedReportIndex)
                     if (typeof selectedReportIndex == "number") {
+                        if (selectedReportIndex == -1) {
+                            toast.info('Please select report type')
+                            return
+                        }
+
+                        if (reportMessage.current.value.length < 12) {
+                            console.log('less than')
+                            toast.info('Report message must be atleast 12 characters')
+                            return
+                        }
+
                         try {
                             console.log('hello')
                             const { data } = await axiosClient.post("posts/report", { reportData: { reportMessage: reportMessage.current.value, type: reportTypes[selectedReportIndex], userId: user?._id }, postId })
                             toast.success("Report has been submitted")
                             setModelTrigger(false)
                         } catch (error) {
-                            console.log('hello')
-                            const { data } = await axiosClient.post("posts/report", { reportData: { reportMessage: reportMessage.current.value, type: reportTypes[selectedReportIndex], userId: user?._id }, postId })
                             toast.info("You've already reported the post")
                             setModelTrigger(false)
                         }

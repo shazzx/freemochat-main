@@ -73,15 +73,14 @@ function FeedSection() {
                                             </Avatar>
                                         </div>
                                     </div>
-                                    <Input
-
-                                        type="text"
-                                        placeholder="Start writing a post"
-                                        className="max-w-2xl appearance-none bg-background shadow-none"
+                                    <div
+                                        className="max-w-2xl w-full rounded-md p-2 cursor-pointer flex items-center appearance-none bg-background border border-accent shadow-none"
                                         onClick={() => {
                                             setPostModal(true)
                                         }}
-                                    />
+                                    >
+                                        <span className='text-sm'>Start writing a post</span>
+                                    </div>
                                 </div>
                             </form>
                         </div>

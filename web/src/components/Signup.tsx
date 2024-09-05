@@ -67,7 +67,6 @@ export function Signup() {
     }
 
     if (isSuccess) {
-        showToast("signed up successfully", "success")
         // dispatchData(data)
         navigate("/auth/" + data?.username + "?auth_id=" + data?.tempSecret)
     }
@@ -267,7 +266,7 @@ export function Signup() {
 
                         <div className="mt-4 text-center text-sm">
                             Already have an account?{" "}
-                            <Link to="#" className="underline">
+                            <Link to="/login" className="underline">
                                 Login
                             </Link>
                         </div>

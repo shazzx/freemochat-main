@@ -14,7 +14,7 @@ import { useInView } from 'react-intersection-observer'
 import { useUpdateReply } from '../hooks/Post/useComments'
 import { v4 as uuidv4 } from 'uuid'
 
-function PostModel({ postIndex, pageIndex, setModelTrigger, postId, postData, useLikePost, useBookmarkPost, type }) {
+function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postData, useLikePost, useBookmarkPost, type }: any) {
     const { user } = useAppSelector((data) => data.user)
     const [isRecording, setIsRecording] = useState(false)
     const [replyState, setReplyState] = useState<{ _id: string, content: string, user: any, commentIndex: number }>()
@@ -25,12 +25,12 @@ function PostModel({ postIndex, pageIndex, setModelTrigger, postId, postData, us
     const [replyTo, setReplyTo] = useState(null)
     const [replyId, setReplyId] = useState(null)
     const [ref, inView] = useInView()
-
     const { data, isSuccess, isLoading, fetchNextPage } = useComments(postId)
-    const mutation = useCreateComment()
+    const mutation = useCreateComment(params)
     const replyMutation = useReplyOnComment()
-
+    
     const replies = useReplies(replyId)
+    console.log(params)
 
     useEffect(() => {
         scrollRef.current.scrollTop = postData?.media ? 600 : 200
@@ -44,14 +44,14 @@ function PostModel({ postIndex, pageIndex, setModelTrigger, postId, postData, us
         }
     }, [inView])
 
-    // useEffect(() => {
-    //     if (replyState?.content) {
-    //         setReplyId(replyState._id)
-    //         replyRef.current.focus()
-    //         replyRef.current.value = `@${replyState?.user?.username} `
-    //         setReplyTo(replyState?.user?.username)
-    //     }
-    // }, [replyState])
+    useEffect(() => {
+        if (replyState?.content) {
+            setReplyId(replyState._id)
+            // replyRef.current.focus()
+            // replyRef.current.value = `@${replyState?.user?.username} `
+            // setReplyTo(replyState?.user?.username)
+        }
+    }, [replyState])
 
     useEffect(() => {
 
@@ -88,6 +88,8 @@ function PostModel({ postIndex, pageIndex, setModelTrigger, postId, postData, us
         formData.append("replyData", JSON.stringify(replyData))
 
         replyMutation.mutateAsync({ ...replyData, formData })
+        replyRef.current.value = null
+
     }
 
     const [editCommentModelState, setEditCommentModelState] = useState(false)
@@ -165,11 +167,8 @@ function PostModel({ postIndex, pageIndex, setModelTrigger, postId, postData, us
                     </div>
                     } */}
                     {data.length > 0 && data[0]?.comments?.length > 0 ? data.map((page, pageIndex) => {
-
-
                         return (page.comments.map((comment, i) => {
                             if (i == page.comments.length - 1) {
-                                console.log(comment?.uuid)
                                 return (
                                     <div ref={ref}>
                                         <Comment reply={setReplyState} comment={comment} pageIndex={pageIndex} commentIndex={i} postId={postData?._id} userId={user._id} commentRef={replyRef} key={comment?._id || comment?.uuid} setCommentDetails={setCommentDetails} setEditCommentModelState={setEditCommentModelState} editCommentModelState={editCommentModelState} />

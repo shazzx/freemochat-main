@@ -90,7 +90,7 @@ export function useReplies(commentId): any {
   };
 }
 
-export const useCreateComment = () => {
+export const useCreateComment = ({ type, targetId, postId }: any) => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutateAsync } = useMutation({
@@ -98,6 +98,71 @@ export const useCreateComment = () => {
       return createComment(formData)
     },
     onMutate: async (newComment) => {
+
+      // await queryClient.cancelQueries({ queryKey: [type, targetId] })
+      // const previousPosts = queryClient.getQueryData([type, targetId])
+      // console.log(previousPosts)
+      // if (!previousPosts) {
+
+      //   await queryClient.cancelQueries({ queryKey: ['feed'] })
+      //   const previousPosts = queryClient.getQueryData(['feed'])
+
+      //   queryClient.setQueryData(['feed'], (pages: any) => {
+      //     const updatedComments = produce(pages, (draft: any) => {
+      //       return draft.pages.forEach((page, p) => {
+      //         return (page.posts.forEach((post, x) => {
+      //           if (post._id == postId) {
+      //             console.log(post.commentsCount)
+      //             console.log(post.commentsCount = post.commentsCount + 1)
+      //             return draft.pages[p].posts[x].commentsCount = post.commentsCount + 1
+      //           }
+      //         }))
+      //       })
+            // if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
+            //   draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
+            //   draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
+
+            //   return draft
+            // }
+
+            // if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
+            //   draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
+            //   draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
+
+            //   return draft
+            // }
+
+            // throw new Error()
+      //     })
+      //   });
+
+      // } else {
+
+      //   queryClient.setQueryData([type, targetId], (pages: any) => {
+      //     console.log(type, targetId)
+      //     const updatedComments = produce(pages, (draft: any) => {
+      //       console.log(pages)
+      //       // if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
+      //       //   draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
+      //       //   draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
+
+      //       //   return draft
+      //       // }
+
+      //       // if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
+      //       //   draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
+      //       //   draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
+
+      //       //   return draft
+      //       // }
+
+      //       // throw new Error()
+      //     })
+      //     return updatedComments
+      //   });
+      // }
+
+
       await queryClient.cancelQueries({ queryKey: ["comments"] })
       const previousComments = queryClient.getQueryData(["comments"])
 
@@ -144,6 +209,8 @@ export const useCreateComment = () => {
     onSettled: (data) => {
       console.log(data)
       queryClient.invalidateQueries({ queryKey: ["comments"] })
+      // queryClient.invalidateQueries({ queryKey: [type, targetId] })
+      // queryClient.invalidateQueries({ queryKey: ['feed'] })
     }
   })
 
@@ -253,8 +320,10 @@ export const useReplyOnComment = () => {
       console.log(replyDetails, commentId, postId)
       await queryClient.cancelQueries({ queryKey: ["replies"] })
       const previousReplies = queryClient.getQueryData(["replies"])
+
       queryClient.setQueryData(["replies"], (pages: any) => {
         const updatedReplies = produce(pages, (draft: any) => {
+          console.log(pages)
           if (audio) {
             draft.pages[0].replies.unshift({
               content: replyDetails.content, post: postId, audio, user: {
@@ -280,7 +349,7 @@ export const useReplyOnComment = () => {
         })
         return updatedReplies
       })
-      return {previousReplies}
+      return { previousReplies }
     },
 
     onError: (err, newReply, context) => {
@@ -288,8 +357,8 @@ export const useReplyOnComment = () => {
       toast.error("something went wrong")
       queryClient.setQueryData(["replies", newReply.commentId], context.previousReplies)
     },
-    onSettled: (data, reply, {commentId}) => {
-      queryClient.invalidateQueries({ queryKey: ["replies", commentId] })
+    onSettled: (data, reply, { commentId }) => {
+      queryClient.invalidateQueries({ queryKey: ["replies"] })
     }
   })
 

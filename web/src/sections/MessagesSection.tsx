@@ -2,7 +2,7 @@ import { useAppSelector } from "@/app/hooks";
 import Chat from "@/components/Chat"
 import ChatSidebar from "@/components/ChatSidebar"
 import { useUserChatlist } from "@/hooks/Chat/main";
-import { useState } from "react"
+import { memo, useState } from "react"
 
 function MessagesSection() {
     const [chatOpen, setChatOpen] = useState(false)
@@ -35,4 +35,4 @@ function MessagesSection() {
     )
 }
 
-export default MessagesSection
+export default memo(MessagesSection)

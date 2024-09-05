@@ -40,7 +40,7 @@ interface PostProps {
     profile?: string,
     isAdmin?: boolean
     isSearch?: boolean
-    query?: string
+    query?: any
     scrollRef?: any
 }
 
@@ -152,7 +152,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             </div>
         )
     }
-
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} onClick={() => {
             if (shareState) {
@@ -165,7 +164,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             }
             {
                 modelTrigger &&
-                <PostModel useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} postId={postData?._id} postData={postData} setModelTrigger={setModelTrigger} type={type} />
+                <PostModel params={isSearch ? {...query, postId: postData?._id} : {type: type + "Posts", targetId: postData?.targetId, postId: postData?._id}} useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} postId={postData?._id} postData={postData} setModelTrigger={setModelTrigger} type={type} />
             }
 
             {
@@ -249,9 +248,9 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                     <span className='text-sm'>
                     {postData?.likesCount > 0 &&  "Likes " + postData?.likesCount  }
                     </span>
-                    <span className='text-sm'>
+                    {/* <span className='text-sm'>
                     {postData?.commentsCount > 0 &&  "Comments " + postData?.commentsCount  }
-                    </span >
+                    </span > */}
                     </div>
                     <div className='flex  items-center justify-between w-full '>
 

@@ -300,15 +300,17 @@ export const useRemovePost = (key, id) => {
       const previousPosts = queryClient.getQueryData([key, id])
 
       queryClient.setQueryData([key, id], (pages: any) => {
-        console.log(pages.pages[pageIndex].posts[postIndex])
         const updatedPosts = produce(pages, (draft: any) => {
-
-          if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId) {
-            draft.pages[pageIndex].posts.splice(postIndex, 1)
+          if (draft?.pages[pageIndex]?.posts[postIndex] && draft?.pages[pageIndex]?.posts[postIndex]?._id == postId) {
+            draft?.pages[pageIndex].posts.splice(postIndex, 1)
             return draft
           }
 
-          throw new Error()
+          draft?.pages.forEach((page, pageIndex) => {
+            return page
+          })
+
+          // throw new Error()
         })
         return updatedPosts
       });
@@ -323,6 +325,7 @@ export const useRemovePost = (key, id) => {
     },
     onSettled: (e) => {
       queryClient.invalidateQueries({ queryKey: ["userMedia", user._id] })
+      queryClient.invalidateQueries({ queryKey: ['feed'] })
 
       // uncommeting this will refetch the comments again from the server to be in sync
       // queryClient.invalidateQueries({ queryKey: ["comments"] })

@@ -1574,7 +1574,7 @@ export class PostsService {
     }
 
     async reportPost(postId: string, { userId, type, reportMessage }) {
-        const alreadyReported = await  this.reportModel.findOne({ reportedBy: new Types.ObjectId(userId), type, postId: new Types.ObjectId(postId)})
+        const alreadyReported = await  this.reportModel.findOne({ reportedBy: new Types.ObjectId(userId), postId: new Types.ObjectId(postId)})
 
         if (alreadyReported ) {
             throw new BadRequestException("Already Reported")

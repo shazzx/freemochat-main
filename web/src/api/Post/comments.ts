@@ -68,6 +68,7 @@ export async function likeComment(commentDetails) {
 }
 
 export async function likeReply(replyDetails) {
+  console.log(replyDetails)
   const { data } = await axiosClient.post("/posts/likeReply", replyDetails)
   console.log(data)
   return data

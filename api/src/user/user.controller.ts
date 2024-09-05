@@ -103,12 +103,12 @@ export class UserController {
 
             if (type == 'email' && isValidEmailSecret && user.isPhoneVerified) {
 
-                await this.userService.updateUser(user._id, { tempSecret: null, isEmailVerified: true,  active: true })
+                await this.userService.updateUser(user._id, { tempSecret: null, isEmailVerified: true,  isActive:  true })
                 return res.json({ success: true, email: true, phone: true })
             }
 
             if (type == 'phone' && isValidPhoneSecret && user.isEmailVerified) {
-                await this.userService.updateUser(user._id, { tempSecret: null, isPhoneVerified: true, active: true })
+                await this.userService.updateUser(user._id, { tempSecret: null, isPhoneVerified: true, isActive: true })
                 return res.json({ success: true, email: true, phone: true })
             }
 
