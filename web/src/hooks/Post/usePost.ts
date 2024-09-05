@@ -96,9 +96,13 @@ export const useCreatePost = (key: string, targetId?: string) => {
       await queryClient.cancelQueries({ queryKey: [key, targetId] })
       const previousPosts = queryClient.getQueryData([key, targetId])
 
-      queryClient.setQueryData([key, targetId], (pages: any) => {
-        const updatedPosts = produce(pages, (draft: any) => {
+      await queryClient.cancelQueries({ queryKey: ['feed'] })
+      const previousFeed = queryClient.getQueryData(['feed'])
 
+      // !location.pathname.startsWith("/user")
+
+      queryClient.setQueryData(['feed'], (pages: any) => {
+        const updatedPosts = produce(pages, (draft: any) => {
           if (draft?.pages && draft?.pages[0].posts) {
             draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, media: selectedMedia, isUploaded: false })
             return draft
@@ -118,7 +122,29 @@ export const useCreatePost = (key: string, targetId?: string) => {
         return updatedPosts
       });
 
-      return { previousPosts };
+
+      queryClient.setQueryData([key, targetId], (pages: any) => {
+        const updatedPosts = produce(pages, (draft: any) => {
+          if (draft?.pages && draft?.pages[0].posts) {
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, media: selectedMedia, isUploaded: false })
+            return draft
+          }
+
+          if (!draft?.pages || !draft?.pages[0].posts) {
+            draft =
+            {
+              pages: [{
+                posts: [{ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: user, user: user._id, media: selectedMedia, isUploaded: false }],
+                nextCursor: null,
+              }]
+            }
+            return draft
+          }
+        })
+        return updatedPosts
+      });
+
+      return { previousPosts, previousFeed };
     },
 
     onError: (err, newComment, context) => {
@@ -129,6 +155,7 @@ export const useCreatePost = (key: string, targetId?: string) => {
     onSettled: (data) => {
       if(data.isUploaded == null){
         queryClient.invalidateQueries({ queryKey: [key, targetId] })
+        queryClient.invalidateQueries({ queryKey: ['feed'] })
         // queryClient.setQueryData([key, targetId], (pages: any) => {
         //   const updatedPosts = produce(pages, (draft: any) => {
   

@@ -93,14 +93,13 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 postId: postData?._id,
                 type: "promotion"
             })
-            console.log(data)
         }
         if (inView && fetchNextPage) {
             console.log('fetching')
             fetchNextPage()
         }
-        if (inView) {
-            // if (inView && postData?.promotion?.length > 0 && postData?.promotion[0]?.active == 1) {
+        // if (inView) {
+            if (inView && postData?.promotion?.length > 0 && postData?.promotion[0]?.active == 1) {
             console.log("promoted post view")
             // dispatch(insertViewedPost(postData._id))
             // viewPost()
@@ -110,7 +109,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     useEffect(() => {
         if (postData) {
             let date = format(postData.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')
-            console.log(date)
             setProfile(postData?.target?.profile)
             setFullname(postData?.firstname + postData?.lastname)
             setDate(date)
@@ -154,7 +152,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             </div>
         )
     }
-    console.log(postData)
 
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} onClick={() => {

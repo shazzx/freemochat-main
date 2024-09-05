@@ -33,9 +33,10 @@ function PublicRoute() {
                 }
                 const { data } = await axiosClient.post("user/refresh-token")
                 dispatch(setAccessToken(data?.accessToken))
+                console.log(data, 'accessToken')
 
                 let response = await axiosClient.get("user")
-                if (response.status == 202) {
+                if (response.status == 200) {
                     setIsFetched(true)
                     navigate('/')
                 } else {
@@ -49,18 +50,20 @@ function PublicRoute() {
                 console.log(error.response.data)
                 
 
-                // if (error.response.data.message.startsWith('already verified')) {
-                //     toast.error(error.response.data.message)
-                //     dispatch(setVerificationStatus({ isPhoneVerified: false, isEmailVerified: false, success: false }))
-                //     navigate('/login')
-                //     return
-                // }
+                if (error.response.data.message.startsWith('already verified')) {
+                    toast.error(error.response.data.message)
+                    dispatch(setVerificationStatus({ isPhoneVerified: false, isEmailVerified: false, success: false }))
+                    navigate('/login')
+                    return
+                }
+                
                 // if(!location.pathname.startsWith("/auth") && !error.response.data.message.startsWith('Your Account')){
                 //     toast.error(error.response.data.message)
                 //     dispatch(setVerificationStatus({isPhoneVerified: false, isEmailVerified: false, success: false}))
                 //     navigate('/login')
                 //     return
                 // }
+
                 if (error.response.data.message.startsWith('Your Account')) {
                     return
                 }

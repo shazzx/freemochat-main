@@ -31,7 +31,7 @@ function AuthVerificationForm() {
     const [searchParams] = useSearchParams()
     const authId = searchParams.get("auth_id")
     const username = params.username
-    if (!authId && !username) {
+    if (!authId || !username) {
         navigate("/login")
     }
 

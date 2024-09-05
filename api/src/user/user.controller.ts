@@ -214,14 +214,24 @@ export class UserController {
         })
     }
 
+
+    @Post('logout')
+    async logoutUser(
+        @Req() req: Request,
+        @Res({ passthrough: true }) response: Response) {
+            response.clearCookie('refreshToken', {httpOnly: true, sameSite: 'strict', })
+            response.json({success: true})
+    }
+
     @Public()
     @Post("refresh-token")
     async refreshToken(
         @Req() req: Request,
         @Res() res: Response) {
         const refreshToken = req.cookies.refreshToken
+    
         if (!refreshToken) {
-            return new BadRequestException("something went wrong")
+            throw new BadRequestException("something went wrong")
         }
 
         console.log(refreshToken, 'refresh')

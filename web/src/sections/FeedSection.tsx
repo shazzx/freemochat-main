@@ -44,12 +44,10 @@ function FeedSection() {
         setPostModal(false)
     }
 
-    console.log(data)
-
-    useEffect(() => {
-        console.log('fetching next posts...')
-        fetchNextPage()
-    }, [inView])
+    // useEffect(() => {
+    //     console.log('fetching next posts...')
+    //     fetchNextPage()
+    // }, [inView])
 
 
     return (
@@ -103,7 +101,7 @@ function FeedSection() {
                             return page.posts.map((post, postIndex: number) => {
                                 if (pageIndex == data.length - 1 && data[pageIndex].posts.length - 2 == postIndex) {
                                     return (
-                                        <Post useLikePost={useLikeFeedPost} useBookmarkPost={useBookmarkFeedPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} userId={user?._id} username={user?.username} profile={user?.profile} key={post?._id} type="user" scrollRef={ref} />
+                                        <Post useLikePost={useLikeFeedPost} useBookmarkPost={useBookmarkFeedPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} userId={user?._id} username={user?.username} profile={user?.profile} key={post?._id} type="user" scrollRef={ref}  fetchNextPage={fetchNextPage}/>
                                     )
                                 }
                                 return (

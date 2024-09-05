@@ -56,11 +56,18 @@ export class JwtAuthGuard implements CanActivate {
                 return false
             }
 
-            let refresh_token = await this.cacheService.getUesrRefreshToken(payload.sub)
+            // let refresh_token = await this.cacheService.getUesrRefreshToken(payload.sub)
+            // const valid_refresh_token = await this.jwtService.verifyAsync(
+            //     refresh_token,
+            //     {
+            //         secret: jwtConstants.secret
+            //     }
+            // );
 
-            if(!refresh_token){
-                return false
-            }
+            // if(!valid_refresh_token){
+            // console.log(payload, 'no refresh token')
+            //     return false
+            // }
 
             let accountStatus = await this.accountManagementService.getAccountStatus(payload.sub)
             console.log(accountStatus)

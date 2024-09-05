@@ -9,182 +9,184 @@ import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
-export const useSocket = (recepient? :string, _isOnline?: Function) => {
-    const queryClient = useQueryClient();
-    const {user} = useAppSelector(state => state.user)
-    const socket = socketConnect(user && user.username)
-    const socketRef = useRef(socket);
-    const dispatch = useDispatch();
+export const useSocket = (recepient?: string, _isOnline?: Function) => {
+  const queryClient = useQueryClient();
+  const { user } = useAppSelector(state => state.user)
+  const socket = socketConnect(user && user.username)
+  const socketRef = useRef(socket);
+  const dispatch = useDispatch();
 
-    useEffect(() => {
-      const socket = socketRef.current;
+  useEffect(() => {
+    const socket = socketRef.current;
 
-        socket.on('chat', (message) => {
-          console.log(message, 'new message')
-            let newMessage = {
-                recepient: message?.recepientDetails?.userId,
-                sender: message?.senderDetails?.userId,
-                content: message?.body,
-                media: message?.media,
-                type: message?.type
-            }
-            queryClient.setQueryData(["messages", recepient], (pages: any) => {
-                const updatedMessages = produce(pages, (draft: any) => {
-                    console.log(pages)
-                    if(!draft){
-                        console.log('no draft ')
-                        return null
-                    }
-                    if (draft.pages[draft.pages.length - 1].messages) {
-                        draft.pages[draft.pages.length - 1].messages = [...draft.pages[draft.pages.length - 1].messages, newMessage]
-                        return draft
-                    }
-                    console.log(pages)
-                    throw new Error()
-                })
-                return updatedMessages
-            });
+    socket.on('chat', (message) => {
+      console.log(message, 'new message')
+      let newMessage = {
+        recepient: message?.recepientDetails?.userId,
+        sender: message?.senderDetails?.userId,
+        content: message?.body,
+        media: message?.media,
+        type: message?.type
+      }
+      queryClient.setQueryData(["messages", recepient], (pages: any) => {
+        const updatedMessages = produce(pages, (draft: any) => {
+          console.log(pages)
+          if (!draft) {
+            console.log('no draft ')
+            return null
+          }
+          if (draft.pages[draft.pages.length - 1].messages) {
+            draft.pages[draft.pages.length - 1].messages = [...draft.pages[draft.pages.length - 1].messages, newMessage]
+            return draft
+          }
+          console.log(pages)
+          throw new Error()
+        })
+        return updatedMessages
+      });
 
-        });
+    });
 
-        socket.on("disconnect", () => { // fire when socked is disconnected
-            console.log("Socket disconnected");
-          });
-      
-          socket.on("notification", (data) => {
-            console.log(data)
-          })
-      
-          socket.on("users", (users) => {
-            console.log(users)
-          })
-      
-          socket.on("getOnlineFriends", (onlineFriends) => {
-            console.log(onlineFriends)
-          })
-      
-          socket.on("friendOnlineStatusChange", (statusChange) => {
-            console.log(statusChange)
-          })
-          
-      
-          socket.on("friendStatus", (data) => {
-            console.log(data, 'friend status')
-          })
-      
-          socket.on("upload-status", (data) => {
-            console.log(data, 'upload status')
-            if(data.isSuccess){
-              console.log('upload-success')
-            }else{
-              toast.error("something went wrong try agan later")
-            }
+    socket.on("disconnect", () => { // fire when socked is disconnected
+      console.log("Socket disconnected");
+    });
 
-            if(data.isSuccess && data.target?.invalidate == "posts"){
-              const {targetId} = data?.target
-              queryClient.invalidateQueries({ queryKey: [data.target.type+"Posts", targetId] })
-              queryClient.invalidateQueries({ queryKey: [data.target.type+"Media", targetId] })
-            }
+    socket.on("notification", (data) => {
+      console.log(data)
+    })
 
-            if(data.isSuccess && data.target.type == "page"){
-              // const {targetId} = data.target
-              queryClient.invalidateQueries({ queryKey: ['page'] })
-              queryClient.invalidateQueries({ queryKey: ['pages'] })
-              return
-            }
+    socket.on("users", (users) => {
+      console.log(users)
+    })
 
+    socket.on("getOnlineFriends", (onlineFriends) => {
+      console.log(onlineFriends)
+    })
 
-            if(data.isSuccess && data.target.type == "messages"){
-              const {targetId} = data.target
-              console.log('messages cond')
-              queryClient.invalidateQueries({ queryKey: ['messages', targetId] })
-              return
-            }
-            
-            if(data.isSuccess && data.target.type == "group"){
-              // const {targetId} = data.target
-              queryClient.invalidateQueries({ queryKey: ['group'] })
-              queryClient.invalidateQueries({ queryKey: ['groups'] })
-              return
-            }
-            
-              queryClient.invalidateQueries({ queryKey: ['userPosts', user._id] })
-              queryClient.invalidateQueries({ queryKey: ['userMedia', user._id] })
-          })
-      
-          socket.on("chatlist", (chatlists) => {
-            queryClient.invalidateQueries({ queryKey: ['chatlist'] })
-            // console.log(chatlists)
-          })
-
-
-        socket.on("friendStatus", (data) => {
-          console.log(data, 'friend status')
-          _isOnline(data.isOnline)
-      })
-
-      socket.on("notification", (data) => {
-        console.log(data)
-        dispatch(setNewNotification())
+    socket.on("friendOnlineStatusChange", (statusChange) => {
+      console.log(statusChange)
     })
 
 
-      socket.on("initiate-call", (data) => {
-          console.log(data)
-          if (data.type == 'VIDEO') {
-            dispatch(incomingCall(
-              {
-                onCall: true,
-                type: CallTypes.VIDEO,
-                recepientState: CallStates.CALLING,
-                callDetails: data,
-              }
-            ))
+    socket.on("friendStatus", (data) => {
+      console.log(data, 'friend status')
+    })
+
+    socket.on("upload-status", (data) => {
+      console.log(data, 'upload status')
+      if (data.isSuccess) {
+        console.log('upload-success')
+      } else {
+        toast.error("something went wrong try agan later")
+      }
+
+      if (data.isSuccess && data.target?.invalidate == "posts") {
+        const { targetId } = data?.target
+        queryClient.invalidateQueries({ queryKey: [data.target.type + "Posts", targetId] })
+        queryClient.invalidateQueries({ queryKey: [data.target.type + "Media", targetId] })
+        queryClient.invalidateQueries({ queryKey: ['feed'] })
+
+      }
+
+      if (data.isSuccess && data.target.type == "page") {
+        // const {targetId} = data.target
+        queryClient.invalidateQueries({ queryKey: ['page'] })
+        queryClient.invalidateQueries({ queryKey: ['pages'] })
+        return
+      }
+
+
+      if (data.isSuccess && data.target.type == "messages") {
+        const { targetId } = data.target
+        console.log('messages cond')
+        queryClient.invalidateQueries({ queryKey: ['messages', targetId] })
+        return
+      }
+
+      if (data.isSuccess && data.target.type == "group") {
+        // const {targetId} = data.target
+        queryClient.invalidateQueries({ queryKey: ['group'] })
+        queryClient.invalidateQueries({ queryKey: ['groups'] })
+        return
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['userPosts', user._id] })
+      queryClient.invalidateQueries({ queryKey: ['userMedia', user._id] })
+    })
+
+    socket.on("chatlist", (chatlists) => {
+      queryClient.invalidateQueries({ queryKey: ['chatlist'] })
+      // console.log(chatlists)
+    })
+
+
+    socket.on("friendStatus", (data) => {
+      console.log(data, 'friend status')
+      _isOnline(data.isOnline)
+    })
+
+    socket.on("notification", (data) => {
+      console.log(data)
+      dispatch(setNewNotification())
+    })
+
+
+    socket.on("initiate-call", (data) => {
+      console.log(data)
+      if (data.type == 'VIDEO') {
+        dispatch(incomingCall(
+          {
+            onCall: true,
+            type: CallTypes.VIDEO,
+            recepientState: CallStates.CALLING,
+            callDetails: data,
           }
-          if (data.type == 'AUDIO') {
-            dispatch(incomingCall(
-              {
-                onCall: true,
-                type: CallTypes.AUDIO,
-                recepientState: CallStates.CALLING,
-                callDetails: data,
-              }
-            ))
+        ))
+      }
+      if (data.type == 'AUDIO') {
+        dispatch(incomingCall(
+          {
+            onCall: true,
+            type: CallTypes.AUDIO,
+            recepientState: CallStates.CALLING,
+            callDetails: data,
           }
-      })
+        ))
+      }
+    })
 
 
-      socket.on("call-decline", (data) => {
-          console.log(data)
-      })
+    socket.on("call-decline", (data) => {
+      console.log(data)
+    })
 
-      socket.on("call-accept", (data) => {
-        console.log(data)
-          if (data?.type == "AUDIO") {
-            dispatch(acceptCall(
-              {
-                callDetails: data,
-              }
-            ))
-          } else {
+    socket.on("call-accept", (data) => {
+      console.log(data)
+      if (data?.type == "AUDIO") {
+        dispatch(acceptCall(
+          {
+            callDetails: data,
           }
-      })
-      
-          // remove all event listeners
-          return () => {
-            socket.off("connect");
-            socket.off("disconnect");
-            // socket.off("chat");
-            socket.off("chatlist");
-            socket.off("upload-status");
-            socket.off("friendOnlineStatusChange");
-            socket.off("friendStatus");
-            socket.off("users");
-            socket.off("getOnlineFriends");
-            socket.off("notification");
-            socket.off('newMessage');
-          };
-    }, [queryClient]);
+        ))
+      } else {
+      }
+    })
 
-    return socketRef.current;
+    // remove all event listeners
+    return () => {
+      socket.off("connect");
+      socket.off("disconnect");
+      // socket.off("chat");
+      socket.off("chatlist");
+      socket.off("upload-status");
+      socket.off("friendOnlineStatusChange");
+      socket.off("friendStatus");
+      socket.off("users");
+      socket.off("getOnlineFriends");
+      socket.off("notification");
+      socket.off('newMessage');
+    };
+  }, [queryClient]);
+
+  return socketRef.current;
 }

@@ -38,6 +38,7 @@ import { endCall } from "@/app/features/user/callSlice"
 import AudioCall from "./Call/Audio/AudioCall"
 import VideoCall from "./Call/Video/VideoCall"
 import { axiosClient } from "@/api/axiosClient"
+import { toast } from "react-toastify"
 
 const MainHome = ({ children }: any) => {
   useSocket()
@@ -310,8 +311,13 @@ const MainHome = ({ children }: any) => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => {
-                  navigate('/login')
+                <DropdownMenuItem onClick={async() => {
+                  let logout = await axiosClient.post("/user/logout")
+                  if(logout){
+                    navigate('/login')
+                    location.reload()
+                    return
+                  }
                 }}>Logout</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

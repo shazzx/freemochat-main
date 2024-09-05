@@ -4,9 +4,23 @@ export const fetchUser = async (username) => {
     console.log(username, 'username')
     const { data } = await axiosClient.get(`/user?username=${username}`)
     return data
-    // return data
 }
 
+export const fetchUserStories = async () => {
+    const { data } = await axiosClient.get("stories")
+    return data
+}
+
+export const uploadStory = async (formData: FormData) => {
+    const { data } = await axiosClient.post("/stories/create", formData, { headers: { "Content-Type": 'multipart/form-data' } })
+    return data
+}
+
+
+export const removeStory = async (_data: {storyId: string, url: string}) => {
+     const { data } = await axiosClient.post("/stories/delete", _data)
+    return data
+}
 
 export const updateUser = async (formData: FormData) => {
     const { data } = await axiosClient.post("/user/update", formData, { headers: { "Content-Type": 'multipart/form-data' }, timeout: 20000 })

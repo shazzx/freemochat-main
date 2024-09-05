@@ -25,13 +25,13 @@ export class CacheService {
     }
   }
 
-  async getUesrRefreshToken(userId: string): Promise<boolean | string> {
+  async getUesrRefreshToken(userId: string): Promise<string> {
     try {
       // 5 minutes expiration
     return await this.redis.get(`refresh-token:${userId}`); 
     } catch (error) {
       console.log(error)
-      return false
+      return error 
     }
   }
   async invalidateUesrRefreshToken(userId: string, token: string): Promise<boolean> {

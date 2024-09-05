@@ -1,4 +1,4 @@
-import { acceptFriendRequest, fetchUser, followUserToggle, rejectFriendRequest, removeFriend, sendFriendRequest, userFollowers, userFriendRequests, userFriends } from "@/api/User/users.api"
+import { acceptFriendRequest, fetchUser, fetchUserStories, followUserToggle, rejectFriendRequest, removeFriend, removeStory, sendFriendRequest, uploadStory, userFollowers, userFriendRequests, userFriends } from "@/api/User/users.api"
 import { useAppSelector } from "@/app/hooks"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { produce } from "immer"
@@ -22,6 +22,127 @@ export const useUser = (username, shouldFetch) => {
         isSuccess,
     }
 }
+
+
+export const useUserStories = (userId: string) => {
+    const { data, isLoading, isError, isFetched, isSuccess } = useQuery({
+        queryKey: ['stories', userId],
+        queryFn: () => {
+            return fetchUserStories()
+        },
+
+    })
+
+    return {
+        data,
+        isLoading,
+        isError,
+        isFetched,
+        isSuccess,
+    }
+}
+
+export const useUploadStory = (userId: string) => {
+    const queryClient = useQueryClient()
+    const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+        mutationFn: (formData: FormData) => {
+            return uploadStory(formData)
+        },
+
+
+        onMutate: async () => {
+            // await queryClient.cancelQueries({ queryKey: ['user', username] })
+            // const previousUser = queryClient.getQueryData(['user', username])
+
+            // queryClient.setQueryData(['user', username], (user: any) => {
+            //     const updatedUser = produce(user, (draft: any) => {
+            //         draft.friendRequest.isSentByUser = !draft.friendRequest.isSentByUser
+            //         if (draft.friendRequest.isSentByUser) {
+            //             toast.success('Friend request sent')
+            //         }
+            //         return draft
+
+            //     })
+            //     return updatedUser
+            // });
+
+            // return { previousUser };
+        },
+
+        onError: (err, newComment, context) => {
+            console.log(err)
+            toast.error("something went wrong")
+            queryClient.invalidateQueries({queryKey: ['stories', userId]})
+        },
+        onSettled: (e) => {
+            console.log(e)
+        
+            queryClient.invalidateQueries({queryKey: ['stories', userId]})
+            // uncommeting this will refetch the comments again from the server to be in sync
+            // queryClient.invalidateQueries({ queryKey: ["comments"] })
+        }
+    })
+
+    return {
+        data,
+        isPending,
+        isSuccess,
+        mutateAsync,
+        mutate
+    }
+}
+
+export const useRemoveStory = (userId: string) => {
+    const queryClient = useQueryClient()
+    const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+        mutationFn: ({storyId, url}: {storyId: string, url: string, openedStoryIndex: string, storyViewIndex: string}) => {
+            return removeStory({storyId, url})
+        },
+
+
+        onMutate: async ({openedStoryIndex, storyViewIndex, storyId}) => {
+            await queryClient.cancelQueries({ queryKey: ['stories', userId] })
+            const previousUser = queryClient.getQueryData(['stories', userId])
+
+            queryClient.setQueryData(['stories', userId], (stories: any) => {
+                const updatedUser = produce(stories, (draft: any) => {
+                    console.log(openedStoryIndex, storyViewIndex, stories)
+                    if (draft[openedStoryIndex]?.stories[storyViewIndex]?._id == storyId ) {
+                        draft[openedStoryIndex]?.stories.splice(storyViewIndex, 1)
+                    }
+                    return draft
+                })
+                return updatedUser
+            });
+
+            return { previousUser };
+        },
+
+        onError: (err, newComment, context) => {
+            console.log(err)
+            toast.error("something went wrong")
+            queryClient.invalidateQueries({queryKey: ['stories', userId]})
+
+        },
+        onSettled: (e) => {
+            console.log(e)
+            if(e){
+                queryClient.invalidateQueries({queryKey: ['stories', userId]})
+            }
+            // uncommeting this will refetch the comments again from the server to be in sync
+            // queryClient.invalidateQueries({ queryKey: ["comments"] })
+        }
+    })
+
+    return {
+        data,
+        isPending,
+        isSuccess,
+        mutateAsync,
+        mutate
+    }
+}
+
 
 export function useUserFollowers(userId?: string): any {
 

@@ -12,6 +12,7 @@ import { Mongoose } from 'mongoose';
 import { MongooseModule } from '@nestjs/mongoose';
 import { OTP, OTPSchema } from 'src/schema/otp';
 import { OtpModule } from 'src/otp/otp.module';
+import { CacheModule } from 'src/cache/cache.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { OtpModule } from 'src/otp/otp.module';
     PassportModule,
     MongooseModule.forFeature([{name: OTP.name, schema: OTPSchema}]),
     AccountManagementModule,
+    CacheModule,
     OtpModule,
     JwtModule.register({
       secret: jwtConstants.secret,
