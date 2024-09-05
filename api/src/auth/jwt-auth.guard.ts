@@ -11,10 +11,16 @@ import { Request } from 'express';
 import { AccountManagementService } from 'src/account-management/account-management.service';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from './public.decorator';
+import { CacheService } from 'src/cache/cache.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-    constructor(private jwtService: JwtService, private reflector: Reflector, private accountManagementService: AccountManagementService) { }
+    constructor(
+        private jwtService: JwtService, 
+        private reflector: Reflector, 
+        private accountManagementService: AccountManagementService,
+        private cacheService: CacheService
+    ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const isAdminRoute = this.reflector.getAllAndOverride<boolean>('isAdminRoute', [
@@ -47,6 +53,12 @@ export class JwtAuthGuard implements CanActivate {
 
             console.log(payload, 'payload auth guard')
             if(!payload){
+                return false
+            }
+
+            let refresh_token = await this.cacheService.getUesrRefreshToken(payload.sub)
+
+            if(!refresh_token){
                 return false
             }
 

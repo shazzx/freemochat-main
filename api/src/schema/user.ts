@@ -1,7 +1,6 @@
 import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose'
 import { isEmail } from 'validator'
-import { Friend } from './friends';
-import { ObjectId, Types } from 'mongoose'
+import { Types } from 'mongoose'
 
 class Address {
     @Prop()
@@ -12,14 +11,6 @@ class Address {
 
     @Prop()
     area: string;
-}
-
-class Images {
-    @Prop()
-    profile: string;
-
-    @Prop()
-    cover: string
 }
 
 @Schema({ timestamps: true })

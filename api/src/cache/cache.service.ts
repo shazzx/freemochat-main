@@ -14,6 +14,36 @@ export class CacheService {
   async set(key: string, value: any, expireIn: number) {
     await this.redis.set(key, value);
   }
+  async setUesrRefreshToken(userId: string, token: string): Promise<boolean> {
+    try {
+      // 5 minutes expiration
+    await this.redis.set(`refresh-token:${userId}`, token, 'EX', 600); 
+    return true
+    } catch (error) {
+      console.log(error)
+      return false
+    }
+  }
+
+  async getUesrRefreshToken(userId: string): Promise<boolean | string> {
+    try {
+      // 5 minutes expiration
+    return await this.redis.get(`refresh-token:${userId}`); 
+    } catch (error) {
+      console.log(error)
+      return false
+    }
+  }
+  async invalidateUesrRefreshToken(userId: string, token: string): Promise<boolean> {
+    try {
+    await this.redis.del(`refresh-token:${userId}`);
+    return true
+    } catch (error) {
+      console.log(error)
+      return false
+    }
+  }
+
 
   async invalidate(key: string) {
     await this.redis.del(key);
