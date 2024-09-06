@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom"
 import { SelectScrollable } from "./SelectScrollable"
 import { axiosClient } from "@/api/axiosClient"
 import ChangeCountryModel from "./ChangeCountryModel"
+import { PencilIcon } from "lucide-react"
 
 const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
@@ -114,7 +115,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     //     }
     // })
 
-    const [changeCountryModel, setChangeCountryModel]  = useState(false)
+    const [changeCountryModel, setChangeCountryModel] = useState(false)
 
     const navigate = useNavigate()
 
@@ -124,7 +125,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                 navigate(-1)
             }}></div>
             {
-                changeCountryModel && 
+                changeCountryModel &&
                 <ChangeCountryModel setModelTrigger={setChangeCountryModel} />
             }
             {
@@ -275,6 +276,12 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                         {errors.username && <p>{errors.username.message}</p>}
                                     </div>
                                 </div>
+                                <div className="flex gap-2 items-center">
+                                    <span className="my-2">Address</span >
+                                    <PencilIcon size="16" className="cursor-pointer" onClick={() => {
+                                        setChangeCountryModel(true)
+                                    }} />
+                                </div>
 
                                 <div className="flex flex-col w-full">
                                     <div className="flex gap-4 w-full">
@@ -283,32 +290,32 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                                 Country
                                             </Label>
                                             <Input
-                                            disabled
+                                                disabled
                                                 name="country"
                                                 placeholder="Enter your country name"
-                                                ref={countryRef}
+                                                // ref={countryRef}
                                                 id="country"
                                                 defaultValue={address?.country}
                                                 className="max-w-96 w-full"
-                                                {...register("address.country")}
+                                            // {...register("address.country")}
                                             />
-                                            {errors.address?.country && <p>{errors.address.country.message}</p>}
+                                            {/* {errors.address?.country && <p>{errors.address.country.message}</p>} */}
                                         </div>
                                         <div className="w-full">
                                             <Label >
                                                 City
                                             </Label>
                                             <Input
-                                            disabled
+                                                disabled
                                                 name="city"
                                                 placeholder="Enter your city name"
-                                                ref={cityRef}
+                                                // ref={cityRef}
                                                 id="city"
                                                 defaultValue={address?.city}
                                                 className="max-w-96 w-full"
-                                                {...register("address.city")}
+                                            // {...register("address.city")}
                                             />
-                                            {errors.address?.city && <p>{errors.address.city.message}</p>}
+                                            {/* {errors.address?.city && <p>{errors.address.city.message}</p>} */}
                                         </div>
                                     </div>
                                     <div className="w-full">
@@ -317,56 +324,68 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                                 Area
                                             </Label>
                                             <Input
-                                            disabled
+                                                disabled
                                                 name="area"
                                                 placeholder="Enter your area name"
-                                                ref={areaRef}
+                                                // ref={areaRef}
                                                 id="area"
                                                 defaultValue={address?.area}
                                                 className="max-w-96 w-full"
-                                                {...register("address.area")}
+                                            // {...register("address.area")}
                                             />
-                                            {errors.address?.area && <p>{errors.address.area.message}</p>}
+                                            {/* {errors.address?.area && <p>{errors.address.area.message}</p>} */}
                                         </div>
                                     </div>
-                                    <Button 
+                                    {/* <Button 
                                     className="max-w-40 p-0 my-4 border border-accent" 
                                     onClick={() => {setChangeCountryModel(true)}}
                                     type="button"
-                                    >Change Address</Button>
+                                    >Change Address</Button> */}
                                 </div>
 
                                 <div className="flex gap-4 w-full">
                                     <div className="w-full">
-                                        <Label >
-                                            Email
-                                        </Label>
+                                        <div className="flex gap-2 items-center">
+                                            <Label className="mb-1">
+                                                Email
+                                            </Label>
+                                            <PencilIcon size="16" className="cursor-pointer" onClick={() => {
+                                                setChangeCountryModel(true)
+                                            }} />
+                                        </div>
+
                                         <Input
+                                            disabled
                                             name="email"
-                                            ref={emailRef}
+                                            // ref={emailRef}
                                             placeholder="Enter your email"
                                             id="email"
                                             defaultValue={email}
                                             className="max-w-96 w-full"
-                                            {...register("email")}
+                                        // {...register("email")}
                                         />
-                                        {errors.email && <p>{errors.email.message}</p>}
+                                        {/* {errors.email && <p>{errors.email.message}</p>} */}
                                     </div>
                                     <div className="w-full">
-                                        <Label >
-                                            Phone
-                                        </Label>
+                                    <div className="flex gap-2 items-center">
+                                            <Label className="mb-1">
+                                                Phone
+                                            </Label>
+                                            <PencilIcon size="16" className="cursor-pointer" onClick={() => {
+                                                setChangeCountryModel(true)
+                                            }} />
+                                        </div>
                                         <Input
-                                        disabled
+                                            disabled
                                             name="phone"
-                                            ref={phoneRef}
+                                            // ref={phoneRef}
                                             placeholder="Enter your phone number"
                                             id="phone"
                                             defaultValue={phone}
                                             className="max-w-96 w-full"
-                                            {...register("phone")}
+                                        // {...register("phone")}
                                         />
-                                        {errors.phone && <p>{errors.phone.message}</p>}
+                                        {/* {errors.phone && <p>{errors.phone.message}</p>} */}
                                     </div>
 
                                 </div>

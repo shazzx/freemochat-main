@@ -60,7 +60,7 @@ export const UserSchema = yup.object().shape({
     .max(36, 'Name must not exceed 50 characters'),
   username: yup.string()
     .min(6, 'Handle must be at least 6 characters')
-    .max(30, 'Handle must not exceed 30 characters')
+    .max(30, 'Handle must not exceed 30 characters').required('username is required'),
     // .matches(/^[a-z0-9_]+$/, 'Handle must contain only lowercase letters, numbers, and underscores')
     // .test('unique-handle', 'This handle is already taken', async (value) => {
     //   if (value && value.length >= 6) {
@@ -75,16 +75,16 @@ export const UserSchema = yup.object().shape({
     //   }
     //   return true;
     // })
-    .required('Handle is required'),
-  email: yup
-    .string().email()
-    .required('emai is required'),
-  phone: yup.number().required('phone no is required'),
-  address: yup.object({
-    country: yup.string().required("country is required"),
-    city: yup.string().required('city is required'),
-    area: yup.string().required('area is required')
-  }),
+    // .required('Handle is required'),
+  // email: yup
+    // .string().email()
+    // .required('emai is required'),
+  // phone: yup.number().required('phone no is required'),
+  // address: yup.object({
+    // country: yup.string().required("country is required"),
+    // city: yup.string().required('city is required'),
+    // area: yup.string().required('area is required')
+  // }),
   bio: yup.string().max(160, "bio should not exceed 160 characters"),
   // password: yup.string().min(8, "password atleast be 8 characters long"),
   // confirmPassword: yup.string().required().oneOf([yup.ref('password'), null], "Passwords Must Match")

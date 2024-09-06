@@ -38,6 +38,7 @@ import { Link } from "react-router-dom"
 import { useCreatePage, usePages, useRemovePage, useUpdatePage } from "@/hooks/Post/usePage"
 import { toast } from "react-toastify"
 import CreateGroupModel from "@/models/CreateGroupModal"
+import { format } from "date-fns"
 
 
 export type Page = {
@@ -63,28 +64,28 @@ export function ManagePages() {
     const updatePageMutation = useUpdatePage()
 
     const columns = [
-        {
-            id: "select",
-            header: ({ table }) => (
-                <Checkbox
-                    checked={
-                        table.getIsAllPageRowsSelected() ||
-                        (table.getIsSomePageRowsSelected() && "indeterminate")
-                    }
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                    aria-label="Select all"
-                />
-            ),
-            cell: ({ row }) => (
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Select row"
-                />
-            ),
-            enableSorting: false,
-            enableHiding: false,
-        },
+        // {
+        //     id: "select",
+        //     header: ({ table }) => (
+        //         <Checkbox
+        //             checked={
+        //                 table.getIsAllPageRowsSelected() ||
+        //                 (table.getIsSomePageRowsSelected() && "indeterminate")
+        //             }
+        //             onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        //             aria-label="Select all"
+        //         />
+        //     ),
+        //     cell: ({ row }) => (
+        //         <Checkbox
+        //             checked={row.getIsSelected()}
+        //             onCheckedChange={(value) => row.toggleSelected(!!value)}
+        //             aria-label="Select row"
+        //         />
+        //     ),
+        //     enableSorting: false,
+        //     enableHiding: false,
+        // },
         {
             accessorKey: "name",
             header: ({ column }) => {
@@ -110,10 +111,10 @@ export function ManagePages() {
             ),
         },
         {
-            accessorKey: "totalPosts",
-            header: "Total Posts",
+            accessorKey: "createdAt",
+            header: "Created At",
             cell: ({ row }) => (
-                <div className="capitalize">{row.getValue("totalPosts") || 1}</div>
+                <div className="capitalize">{format(row.getValue("createdAt") , 'MMM d, yyy h:mm a')}</div>
             ),
         },
 

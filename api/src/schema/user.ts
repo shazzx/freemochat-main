@@ -39,7 +39,7 @@ export class User {
     @Prop()
     phone: string;
 
-    @Prop()
+    @Prop({type: String, default: null})
     bio: string;
 
     @Prop({ required: true })

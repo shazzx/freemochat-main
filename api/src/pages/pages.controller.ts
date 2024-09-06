@@ -64,7 +64,9 @@ export class PageController {
             { ...pageDetails, isUploaded: files.length > 0 ? false : null }
         )
 
-        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: page._id.toString(), images: {}, type: 'page' })
+        if(page){
+            this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: page._id.toString(), images: {}, type: 'page' })
+        }
 
         res.json(page)
     }
@@ -87,10 +89,11 @@ export class PageController {
             const originalname = file.originalname
             return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, originalname)
         })
+        let updatePage = await this.pageService.updatePage(pageId, { ...pageDetails, isUploaded: files.length > 0 ? false : null })
 
         this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: page._id.toString(), type: "page"})
-        
-        res.json(await this.pageService.updatePage(pageId, { ...pageDetails, isUploaded: files.length > 0 ? false : null }))
+
+        res.json(updatePage)
     }
 
     @Get("handleExists")

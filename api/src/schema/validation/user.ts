@@ -29,6 +29,7 @@ export const UpdateUser = z.object({
     firstname: z.string().optional(),
     lastname: z.string().optional(),
     username: z.string().optional(),
+    bio: z.string().optional(),
     email: z.string().optional(),
     phone: z.number().optional(),
     address: z.object({

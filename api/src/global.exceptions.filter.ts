@@ -30,7 +30,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Handle MongoDB errors
     else if (exception instanceof MongoError || exception instanceof MongooseError) {
       status = HttpStatus.BAD_REQUEST;
-      message = exception.message;
+      message = exception.message.startsWith("E1100") ? "Already Exists" : 'Something went wrong';
       errorCode = 'MONGO_ERROR';
     }
     // Handle custom S3 upload exception

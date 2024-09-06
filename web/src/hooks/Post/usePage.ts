@@ -18,7 +18,7 @@ export function usePage(handle: string): any {
   });
 
 
-  if(error){
+  if (error) {
     toast(error.message)
   }
 
@@ -45,7 +45,7 @@ export function usePages(): any {
 
 
 
-  if(error){
+  if (error) {
     toast(error.message)
   }
 
@@ -67,39 +67,44 @@ export const useCreatePage = () => {
       return createPage(pageDetails.formData)
     },
 
-    onMutate: async ({ pageDetails, images }) => {
-      await queryClient.cancelQueries({ queryKey: [PageKeys.PAGES] })
-      const previousPages = queryClient.getQueryData([PageKeys.PAGES])
+    // onMutate: async ({ pageDetails, images }) => {
+    //   await queryClient.cancelQueries({ queryKey: [PageKeys.PAGES] })
+    //   const previousPages = queryClient.getQueryData([PageKeys.PAGES])
 
-      queryClient.setQueryData([PageKeys.PAGES], (pages: any) => {
-        const updatedPages = produce(pages, (draft: any) => {
-          return [{ ...pageDetails, images, followers: 0, totalPosts: 0 }, ...pages]
-        })
-        return updatedPages
-      });
+    //   queryClient.setQueryData([PageKeys.PAGES], (pages: any) => {
+    //     const updatedPages = produce(pages, (draft: any) => {
+    //       return [{ ...pageDetails, images, followers: 0, totalPosts: 0 }, ...pages]
+    //     })
+    //     return updatedPages
+    //   });
 
-      return { previousPages };
-    },
+    //   return { previousPages };
+    // },
 
     onError: (err: any, data, context) => {
       const { response } = err
       if (!response) {
+        queryClient.invalidateQueries({ queryKey: [PageKeys.PAGE] })
         toast.error(err.message)
         return
       }
-      const { data: {  message } } = response
+      const { data: { message } } = response
+      console.log(err)
+      
       toast.error(message)
-      queryClient.setQueryData([PageKeys.PAGES], context.previousPages)
+      queryClient.invalidateQueries({ queryKey: [PageKeys.PAGE] })
     },
 
     onSettled: (data) => {
-      queryClient.setQueryData([PageKeys.PAGES], (pages: any) => {
-        const updatedPages = produce(pages, (draft: any) => {
-          pages.splice(0, 1)
-          return [{...data}, ...pages]
-        })
-        return updatedPages
-      });
+      queryClient.invalidateQueries({ queryKey: [PageKeys.PAGE] })
+
+      // queryClient.setQueryData([PageKeys.PAGES], (pages: any) => {
+      //   const updatedPages = produce(pages, (draft: any) => {
+      //     pages.splice(0, 1)
+      //     return [{ ...data }, ...pages]
+      //   })
+      //   return updatedPages
+      // });
     }
   })
 
@@ -129,7 +134,7 @@ export const useUpdatePage = () => {
       queryClient.setQueryData([PageKeys.PAGES], (pages: any) => {
         const updatedPages = produce(pages, (draft: any) => {
           console.log(draft[pageDetails.index])
-          draft[pageDetails.index] = { ...draft[pageDetails.index],  ...images , ...updatedPageDetails }
+          draft[pageDetails.index] = { ...draft[pageDetails.index], ...images, ...updatedPageDetails }
           console.log(draft[pageDetails.index])
 
           return draft
@@ -146,7 +151,7 @@ export const useUpdatePage = () => {
         toast.error(err.message)
         return
       }
-      const { data: {  message } } = response
+      const { data: { message } } = response
       toast.error(message)
       queryClient.setQueryData([PageKeys.PAGES], context.previousPages)
     },
@@ -202,7 +207,7 @@ export const useRemovePage = () => {
         toast.error(err.message)
         return
       }
-      const { data: {  message } } = response
+      const { data: { message } } = response
       toast.error(message)
       queryClient.setQueryData([PageKeys.PAGES], context.previousPages)
     },
@@ -236,7 +241,7 @@ export function usePageFollowers(pageId: string): any {
     getNextPageParam: (lastPage) => lastPage.nextCursor
   });
 
-  if(error){
+  if (error) {
     toast(error.message)
   }
 
@@ -294,7 +299,7 @@ export const useFollowPage = () => {
         toast.error(err.message)
         return
       }
-      const { data: {  message } } = response
+      const { data: { message } } = response
       toast.error(message)
       queryClient.setQueryData([PageKeys.PAGE], context.previousPage)
     },

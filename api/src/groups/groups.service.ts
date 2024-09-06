@@ -88,6 +88,7 @@ export class GroupsService {
                     admins: "$populatedAdmins",
                     user: 1,
                     isMember: 1,
+                    createdAt: 1
                 },
             },
         ]);
