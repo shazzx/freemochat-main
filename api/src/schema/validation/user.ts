@@ -14,7 +14,7 @@ export const CreateUser = z.object({
     lastname: z.string().optional(),
     username: z.string(),
     email: z.string(),
-    phone: z.string().optional(),
+    phone: z.string(),
     password: z.string(),
     confirmPassword: z.string(),
     address: z.object({

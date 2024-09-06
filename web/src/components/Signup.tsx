@@ -21,6 +21,8 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import { SignupSchema } from "@/utils/schemas/auth"
 import Selector from "./Selector"
 import { SelectScrollable } from "@/models/SelectScrollable"
+import phone from "phone"
+import { toast } from "react-toastify"
 
 
 export function Signup() {
@@ -84,8 +86,7 @@ export function Signup() {
         if (country !== null) {
             console.log(country)
             const fetchCities = async () => {
-                const { data } = await axiosClient.get('/location/cities', { params: { country } })
-                console.log(data, 'cities')
+                const { data } = await axiosClient.get('/location/cities', { params: { country: country.name } })
                 setCities(data)
             }
 
@@ -93,13 +94,30 @@ export function Signup() {
         }
     }, [country])
 
+    const valdatePhone = (_phone, country) => {
+        console.log(_phone, country )
+        return phone(_phone, { country })
+    }
     const onSubmit = (_data) => {
         if (!country || !city) {
-            throw new Error("please select country and city")
+        setSignupButtonState(false)
+            toast.info("please select country and city")
+            return
         }
-        let data = { ..._data, address: { country, city, ..._data.address } }
-        mutateAsync(data)
+
+
+        let phone = valdatePhone(`${_data.phone}`, country["iso3"])
+
+        if (phone.isValid) {
+            let data = { ..._data, phone: phone.phoneNumber, address: { country: country.name, city, ..._data.address } }
+            console.log(data)
+            mutateAsync(data)
+            return
+        }
+        setSignupButtonState(false)
+        toast.info("phone number is not valid")
     }
+
 
 
     return (

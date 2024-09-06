@@ -37,7 +37,7 @@ export class User {
     password: string;
 
     @Prop()
-    phone: number;
+    phone: string;
 
     @Prop()
     bio: string;

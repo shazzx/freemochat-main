@@ -13,6 +13,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { OTP, OTPSchema } from 'src/schema/otp';
 import { OtpModule } from 'src/otp/otp.module';
 import { CacheModule } from 'src/cache/cache.module';
+import { TwilioModule } from 'src/twilio/twilio.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CacheModule } from 'src/cache/cache.module';
     MongooseModule.forFeature([{name: OTP.name, schema: OTPSchema}]),
     AccountManagementModule,
     CacheModule,
+    TwilioModule,
     OtpModule,
     JwtModule.register({
       secret: jwtConstants.secret,

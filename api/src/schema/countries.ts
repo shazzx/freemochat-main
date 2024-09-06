@@ -8,8 +8,11 @@ export class Countries {
     @Prop({type: Number, unique: true})
     code: number
 
-    @Prop({type: String, unique: true})
-    shortName: string
+    @Prop({type: String})
+    iso3: string
+
+    @Prop({type: String})
+    iso2: string
 }
 
 export const CountriesSchema = SchemaFactory.createForClass(Countries)

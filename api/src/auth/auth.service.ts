@@ -9,13 +9,15 @@ import { Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid'
 import { USER } from 'src/utils/enums/user.c';
 import { OtpService } from 'src/otp/otp.service';
+import { TwilioService } from 'src/twilio/twilio.service';
 
 @Injectable()
 export class AuthService {
     constructor(
-        private userService: UserService, 
+        private userService: UserService,
         private jwtService: JwtService,
         private otpService: OtpService,
+        private readonly twilioService: TwilioService,
         @InjectModel(OTP.name) private readonly otpModel: Model<OTP>
     ) { }
 
@@ -28,7 +30,7 @@ export class AuthService {
         let isValidPassword = await compare(password, user.password)
 
         if (!isValidPassword) {
-            throw new HttpException({message: USER.WRONG_DATA, type: 'invalid credentials'}, HttpStatus.BAD_REQUEST)
+            throw new HttpException({ message: USER.WRONG_DATA, type: 'invalid credentials' }, HttpStatus.BAD_REQUEST)
         }
 
         let verification = {
@@ -36,31 +38,50 @@ export class AuthService {
             phone: false
         }
 
-        if(user.isEmailVerified){
+        if (user.isEmailVerified) {
             verification.email = true
         }
 
-        if(user.isPhoneVerified){
+        if (user.isPhoneVerified) {
             verification.phone = true
         }
 
-        if(verification.email && verification.phone){
+        if (verification.email && verification.phone) {
             return user
         }
-        if(!user.tempSecret){
+        if (!user.tempSecret) {
             let tempSecret = uuidv4()
             let emailOTP = await this.otpService.generateOtp(user._id, 'email')
             let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
             console.log(emailOTP, phoneOTP)
-        
-            await this.userService.updateUser(user._id,{tempSecret: tempSecret})
-            throw new HttpException({message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: {username, auth_id: user.tempSecret} , verification}, HttpStatus.BAD_REQUEST)
+
+            await this.twilioService.sendEmail({
+                to: user.email,
+                from: 'freedombook99@gmail.com',
+                subject: "OTP Verification",
+                text: `Your email otp code is: ${emailOTP} `,
+                // html: emailData.html,
+            })
+
+            await this.twilioService.sendSMS(user.phone, `Your email otp code is: ${phoneOTP}`)
+            await this.userService.updateUser(user._id, { tempSecret: tempSecret })
+            throw new HttpException({ message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: { username, auth_id: user.tempSecret }, verification }, HttpStatus.BAD_REQUEST)
         }
         let emailOTP = await this.otpService.generateOtp(user._id, 'email')
         let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
+        await this.twilioService.sendEmail({
+            to: user.email,
+            from: 'freedombook99@gmail.com',
+            subject: "OTP Verification",
+            text: `Your email otp is: ${emailOTP} `,
+            // html: emailData.html,
+        })
+
+        await this.twilioService.sendSMS(user.phone, `Your phone otp is: ${phoneOTP}`)
+
         console.log(emailOTP, phoneOTP)
-    
-        throw new HttpException({message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: {username, auth_id: user.tempSecret}, verification}, HttpStatus.BAD_REQUEST)
+
+        throw new HttpException({ message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: { username, auth_id: user.tempSecret }, verification }, HttpStatus.BAD_REQUEST)
 
     }
 
@@ -76,7 +97,7 @@ export class AuthService {
     async refreshToken(token) {
         try {
             const payload = await this.jwtService.verifyAsync(token, { secret: jwtConstants.secret })
-            const access_token =  this.jwtService.sign({username: payload.username, sub: payload.sub}, {secret: jwtConstants.secret, expiresIn: '1h'})
+            const access_token = this.jwtService.sign({ username: payload.username, sub: payload.sub }, { secret: jwtConstants.secret, expiresIn: '1h' })
             return access_token
         } catch (error) {
             console.log(error)
@@ -85,12 +106,12 @@ export class AuthService {
     }
 
     async otpEmailVerification(userId, otpData) {
-        const otp = await this.otpModel.findOne({user: userId})
-        if(!otp){
+        const otp = await this.otpModel.findOne({ user: userId })
+        if (!otp) {
             throw new BadRequestException()
         }
 
-        if(otp.email === otpData.code){
+        if (otp.email === otpData.code) {
             return true
         }
         return false
@@ -98,12 +119,12 @@ export class AuthService {
 
 
     async otpPhoneVerification(userId, otpData) {
-        const otp = await this.otpModel.findOne({user: userId})
-        if(!otp){
+        const otp = await this.otpModel.findOne({ user: userId })
+        if (!otp) {
             throw new BadRequestException()
         }
 
-        if(otp.phone === otpData.code){
+        if (otp.phone === otpData.code) {
             return true
         }
         return false

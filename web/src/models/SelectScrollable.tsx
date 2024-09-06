@@ -5,6 +5,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { useState } from "react"
 
 export function SelectScrollable({ placeholder, selectData, setCity, setCountry, areCities, countryName, cityName, areAreas, setArea }: any) {
     let disable= true
@@ -18,12 +19,13 @@ export function SelectScrollable({ placeholder, selectData, setCity, setCountry,
 
     return (
         <Select onValueChange={(value) => {
+            let val = JSON.parse(value)
             if (areCities) {
-                setCity(value)
+                setCity(val.name)
             } else if(areAreas) {
-                setArea(value)
+                setArea(val.name)
             }else{
-                setCountry(value)
+                setCountry({name: val.name, "iso2": val["iso2"], "iso3": val["iso3"] })
             }
         }} disabled={disable}
         >
@@ -32,7 +34,7 @@ export function SelectScrollable({ placeholder, selectData, setCity, setCountry,
             </SelectTrigger>
             <SelectContent className="w-[280px]">
                 {selectData?.length > 0 && selectData.map((data) => {
-                    return < SelectItem value={data.name}> {data.name}</SelectItem>
+                    return < SelectItem value={JSON.stringify(data)}> {data.name}</SelectItem>
                 })}
             </SelectContent>
         </Select >

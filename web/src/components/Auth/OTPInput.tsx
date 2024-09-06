@@ -77,10 +77,10 @@ export function InputOTPForm({label, description, onSubmit, type, otpResend}: {l
           )}
         />
         <div className="flex gap-2">
-
+{/* 
         <Button type="button" onClick={() => {
           otpResend(type)
-        }}>Resend</Button>
+        }}>Resend</Button> */}
         <Button type="submit">Verify</Button>
         </div>
       </form>
