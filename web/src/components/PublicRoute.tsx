@@ -57,12 +57,12 @@ function PublicRoute() {
                     return
                 }
                 
-                // if(!location.pathname.startsWith("/auth") && !error.response.data.message.startsWith('Your Account')){
-                //     toast.error(error.response.data.message)
-                //     dispatch(setVerificationStatus({isPhoneVerified: false, isEmailVerified: false, success: false}))
-                //     navigate('/login')
-                //     return
-                // }
+                if(!location.pathname.startsWith("/auth") && !error.response.data.message.startsWith('Your Account')){
+                    toast.error(error.response.data.message)
+                    dispatch(setVerificationStatus({isPhoneVerified: false, isEmailVerified: false, success: false}))
+                    navigate('/login')
+                    return
+                }
 
                 if (error.response.data.message.startsWith('Your Account')) {
                     return

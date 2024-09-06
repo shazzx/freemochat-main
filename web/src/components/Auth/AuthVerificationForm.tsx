@@ -58,8 +58,8 @@ try {
     console.log(response.data)
     if(response.data.email && response.data.phone){
         toast.success("Verified successfully")
-        dispatch(setVerificationStatus({isPhoneVerified: true, isEmailVerified: true}))
         navigate("/login")
+        dispatch(setVerificationStatus({isPhoneVerified: false, isEmailVerified: false}))
     }
 } catch (error) {
     toast.info(error.message)

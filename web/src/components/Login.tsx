@@ -51,6 +51,7 @@ export function LoginForm() {
         dispatch(setAccessToken(mutation.data.access_token))
         let response = await axiosClient.get("user", { headers: { Authorization: `Bearer ${store.getState().auth.access_token}` } })
         dispatch(setUser(response.data))
+        
     }
 
     const onSubmit = async (data) => {

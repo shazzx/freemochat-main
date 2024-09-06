@@ -95,29 +95,34 @@ export class UserController {
 
             let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
             let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
-            console.log(isValidEmailSecret, 'email', isValidPhoneSecret, 'phone')
 
             if (!isValidEmailSecret && !isValidPhoneSecret) {
                 throw new BadRequestException("OTP is not valid")
             }
 
             if (type == 'email' && isValidEmailSecret && user.isPhoneVerified) {
+                console.log('type em')
 
                 await this.userService.updateUser(user._id, { tempSecret: null, isEmailVerified: true,  isActive:  true })
                 return res.json({ success: true, email: true, phone: true })
             }
 
             if (type == 'phone' && isValidPhoneSecret && user.isEmailVerified) {
+                console.log('type phone')
+
                 await this.userService.updateUser(user._id, { tempSecret: null, isPhoneVerified: true, isActive: true })
                 return res.json({ success: true, email: true, phone: true })
             }
 
             if (type == 'email' && isValidEmailSecret) {
+                console.log('just em')
                 await this.userService.updateUser(user._id, { isEmailVerified: true })
                 return res.json({ success: true, email: true })
             }
 
             if (type == 'phone' && isValidPhoneSecret) {
+                console.log('just phone')
+
                 await this.userService.updateUser(user._id, { isPhoneVerified: true })
                 return res.json({ success: true, phone: true })
             }
