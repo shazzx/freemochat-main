@@ -15,6 +15,7 @@ import { CryptoModule } from 'src/crypto/crypto.module';
 import { Countries, CountriesSchema } from 'src/schema/countries';
 import { Cities, CitiesSchema } from 'src/schema/cities';
 import { LocationModule } from 'src/location/location.module';
+import { TwilioModule } from 'src/twilio/twilio.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { LocationModule } from 'src/location/location.module';
     OtpModule,
     CryptoModule,
     MetricsAggregatorModule,
+    TwilioModule,
     LocationModule,
     forwardRef(() => UploadModule),
     MongooseModule.forFeature([

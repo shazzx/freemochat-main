@@ -68,7 +68,7 @@ export function Notifications({ setNotificationsState }) {
             <div className="absolute top-0 right-0 h-screen w-screen z-10" onClick={() => {
                 setNotificationsState(false)
             }}></div>
-            <Card className=" p-1 w-full h-full md:w-[360px] bg-background md:h-[400px] absolute top-14 md:top-9 z-50 md:right-36 border-2 border-accent overflow-auto">
+            <Card className=" p-1 w-full h-full md:w-[360px] bg-background md:h-[400px] absolute top-14 md:top-9 z-50 md:right-36 sm:border-2 sm:border-accent overflow-auto">
                 <CardHeader className="p-4">
                     <div className="flex gap-2 items-center">
                         <CardTitle>Notifications </CardTitle>
@@ -79,7 +79,6 @@ export function Notifications({ setNotificationsState }) {
                 <CardContent className="grid gap-4 p-1 ">
                     <div>
                         {notifications && notifications?.map((notification, index) => {
-                            console.log(notification)
                             if (notification?.value) {
                                 return (
                                     <div

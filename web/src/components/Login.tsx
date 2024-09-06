@@ -3,6 +3,7 @@ import {
     Card,
     CardContent,
     CardDescription,
+    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
@@ -21,6 +22,8 @@ import { setUser } from "@/app/features/user/userSlice"
 import { useState } from "react"
 import { toast } from "react-toastify"
 import { setVerificationStatus } from "@/app/features/user/verificationStatusSlice"
+import profile from './../assets/logo.png'
+
 
 export function LoginForm() {
     const { register, handleSubmit } = useForm({ resolver: zodResolver(LoginUserSchema) })
@@ -51,7 +54,7 @@ export function LoginForm() {
         dispatch(setAccessToken(mutation.data.access_token))
         let response = await axiosClient.get("user", { headers: { Authorization: `Bearer ${store.getState().auth.access_token}` } })
         dispatch(setUser(response.data))
-        
+
     }
 
     const onSubmit = async (data) => {
@@ -68,7 +71,8 @@ export function LoginForm() {
     const [loginButtonState, setLoginButtonState] = useState(false)
 
     return (
-        <div className="flex items-center justify-center w-screen h-screen">
+        <div className="flex items-center justify-center w-screen h-screen flex-col gap-10">
+            <h1 className="text-2xl font-bold "><img className="sm:h-[72px] h-16" src={profile} alt="" /></h1>
             <Card className="mx-auto max-w-sm">
                 <CardHeader>
                     <CardTitle className="text-2xl">Login</CardTitle>
@@ -124,6 +128,30 @@ export function LoginForm() {
                     </form>
                 </CardContent>
             </Card>
+            <div className="flex flex-col gap-2 items-center justify-center">
+                <div className="flex flex-wrap max-w-72 items-center justify-center gap-2">
+                    <span className="text-xs cursor-pointer">
+                        Privacy Policy
+                    </span>
+                    <span className="text-xs cursor-pointer">
+                        Terms of Service
+                    </span>
+                    <span className="text-xs cursor-pointer">
+                        Cookie Policy
+                    </span>
+                    <span className="text-xs cursor-pointer">
+                        Help/FAQ
+                    </span>
+                    <span className="text-xs cursor-pointer">
+                        Contact Us
+                    </span>
+                </div>
+                <div>
+                    <span className="text-xs cursor-pointer">
+                        Freedombook @ 2024
+                    </span>
+                </div>
+            </div>
         </div>
     )
 }

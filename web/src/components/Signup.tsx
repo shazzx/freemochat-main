@@ -103,7 +103,7 @@ export function Signup() {
 
 
     return (
-        <div className="w-screen h-screen flex items-center justify-center">
+        <div className="w-screen h-screen flex items-center justify-center overflow-auto">
             <Card className="mx-auto max-w-md">
                 <CardHeader>
                     <CardTitle className="text-2xl">Sign Up</CardTitle>
@@ -212,6 +212,20 @@ export function Signup() {
                                 {errors.address?.area && <p>{errors.address.area.message}</p>}
 
                             </div>
+                            <div className="w-full">
+                                <Label >
+                                    Phone
+                                </Label>
+                                <Input
+                                    name="phone"
+                                    placeholder="Enter your phone number"
+                                    id="phone"
+                                    className="max-w-96 w-full"
+                                    {...register("phone")}
+                                />
+                                {errors.phone && <p>{errors.phone.message}</p>}
+                            </div>
+
                             <div className="grid gap-2">
                                 <Label htmlFor="password">Password</Label>
                                 <Input

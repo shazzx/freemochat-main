@@ -68,7 +68,6 @@ function Stories() {
     let [openStory, setOpenStory] = useState(false)
     useEffect(() => {
         if (stories && storyViewModelState && stories.length > 0 && openedStoryIndex >= 0 && storyViewIndex >= 0 && !isPaused) {
-            console.log(openedStoryIndex, storyViewIndex)
             storyTimeRef.current = setInterval(() => {
                 if (openedStoryIndex == stories.length - 1 && storyViewIndex == stories[openedStoryIndex].stories.length - 1) {
                     console.log('right equal')
@@ -109,7 +108,7 @@ function Stories() {
 
     return (
         <div className='flex gap-3  overflow-hidden  overflow-x-auto z-50'>
-            {openStory && openedStoryIndex >= 0 && storyViewIndex >= 0 && stories?.length > 0 &&
+            {stories && openStory && openedStoryIndex >= 0 && storyViewIndex >= 0 && stories?.length > 0 &&
                 // <div className="z-50 absolute top-0 left-0 w-full h-full flex overflow-hidden items-center justify-center bg-black" onClick={() => {
                 // }}>
                 //     <div className="w-full flex items-center justify-center">
@@ -172,7 +171,7 @@ function Stories() {
                                     </DropdownMenuContent>
 
                                 </DropdownMenu>
-                            </div>
+                            </div>0
                         </div>
                         <div className="flex items-center aspect-auto max-w-96 h-full justify-center overflow-hidden bg-dark ">
                             <img

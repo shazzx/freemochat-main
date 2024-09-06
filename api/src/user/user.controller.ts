@@ -12,9 +12,9 @@ import { CreateUser, CreateUserDTO, FriendGeneral, FriendGeneralDTO, GetFriends,
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import { OtpService } from 'src/otp/otp.service';
-import { CryptoService } from 'src/crypto/crypto.service';
 import { LocationService } from 'src/location/location.service';
 import { USER } from 'src/utils/enums/user.c';
+import { TwilioService } from 'src/twilio/twilio.service';
 
 @Controller('user')
 export class UserController {
@@ -25,6 +25,7 @@ export class UserController {
         private readonly uploadService: UploadService,
         private readonly otpService: OtpService,
         private readonly locationService: LocationService,
+        private readonly twilioService: TwilioService,
     ) { }
 
 
@@ -52,9 +53,15 @@ export class UserController {
 
             console.log('phoneOTP: ', phoneOTP, "emailOTP: ", emailOTP, "tempSecret: ", tempSecret, "phone secret: ")
 
-            // await this.otpService.sendOTPEmail("thanosgaming121@gmail.com", phoneOTP)
-            // await this.otpService.sendOTPPhone("923122734021", phoneOTP)
+            await this.twilioService.sendEmail({
+                to: email,
+                from: 'freedombook99@gmail.com',
+                subject: "OTP Verification",
+                text: `Your email otp code is: ${emailOTP} `,
+                // html: emailData.html,
+              })
 
+              await this.twilioService.sendSMS(phone, `Your email otp code is: ${phoneOTP}`)
             res.json({ success: true, tempSecret, username: user.username, message: "account created successfully", verification: "pending" })
 
         } catch (error) {
