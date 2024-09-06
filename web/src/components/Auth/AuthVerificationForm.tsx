@@ -66,7 +66,6 @@ try {
 }
         // return response.data
     }
-    // 139578 emailOTP:  653196
     const mutation = useMutation({
         mutationFn: async (data: { pin: string, type: string }): Promise<any> => {
             let _data = {

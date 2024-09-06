@@ -122,7 +122,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     return (
         <div className='absolute top-0 right-0 w-screen z-50 sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
             <div className='absolute top-0 right-0 opacity-15  bg-black w-full h-full' onClick={() => {
-                navigate(-1)
+                navigate('', {replace: true})
             }}></div>
             {
                 changeCountryModel &&

@@ -144,7 +144,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
                     {/* profile settings model */}
                     {searchParams.get("settings") && <QuickSettings user={localUserData.user} setModelTrigger={setProfileSettingsModel} uploadSingle={uploadSingle} />}
-                    {postModal && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+                    {searchParams.get("createpost")   && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
 
                     <div className='flex w-full flex-col items-center w-ful'>
                         <div className="flex max-w-5xl w-full flex-col justify-cente relative">
@@ -260,6 +260,8 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                                 </div>
                                                                 <Input
                                                                     onClick={() => {
+                                        navigate("?createpost=true")
+
                                                                         setPostModal(true)
                                                                     }}
                                                                     ref={postContent}

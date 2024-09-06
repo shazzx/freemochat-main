@@ -1,20 +1,36 @@
 import { axiosClient } from '@/api/axiosClient'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { SelectScrollable } from './SelectScrollable'
 import { Label } from '@radix-ui/react-dropdown-menu'
 import { Card } from '@/components/ui/card'
 import { phone } from 'phone'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { InputOTPForm } from '@/components/Auth/OTPInput'
+import { toast } from 'react-toastify'
+import { useAppDispatch, useAppSelector } from '@/app/hooks'
+import { useMutation } from '@tanstack/react-query'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 function ChangeCountryModel({ setModelTrigger }) {
+
+    const { user } = useAppSelector((state) => state.user)
 
     const [country, setCountry] = useState(null)
     const [cities, setCities] = useState(null)
     const [countries, setCountries] = useState(null)
     const [city, setCity] = useState(null)
     const [_phone, setPhone] = useState(null)
+    const [otp, setOtp] = useState(null)
+    const areaRef = useRef<HTMLInputElement>()
 
-    const valdatePhone = (_phone, country) => {
+    const navigate = useNavigate()
+    const params = useParams()
+    const [searchParams] = useSearchParams()
+
+    const dispatch = useAppDispatch()
+
+
+    const validatePhone = (_phone, country) => {
         return phone(_phone, { country: country || "PK" })
     }
 
@@ -31,7 +47,7 @@ function ChangeCountryModel({ setModelTrigger }) {
         if (country !== null) {
             console.log(country)
             const fetchCities = async () => {
-                const { data } = await axiosClient.get('/location/cities', { params: { country } })
+                const { data } = await axiosClient.get('/location/cities', { params: { country: country.name } })
                 console.log(data, 'cities')
                 setCities(data)
             }
@@ -40,9 +56,85 @@ function ChangeCountryModel({ setModelTrigger }) {
         }
     }, [country])
 
+    const [isPhoneValid, setIsPhoneValid] = useState(false)
+
     useEffect(() => {
-        console.log(_phone)
+        if (country && _phone) {
+            let phoneValidation = validatePhone(_phone, country['iso3'])
+            if (!phoneValidation.isValid) {
+                setIsPhoneValid(false)
+                return
+            }
+            setIsPhoneValid(true)
+        }
     }, [_phone])
+
+
+    const otpResend = async (type: string) => {
+        const { data } = await axiosClient.post("/user/resend-otp-user", { type, username: user.username })
+        console.log(data)
+        if (data.success) {
+            toast.success(data.message)
+        }
+    }
+    const [otpSent, setOtpSent] = useState(false)
+
+    const verifyOTP = async (data: any) => {
+        try {
+
+            const response = await axiosClient.post("/user/verify-otp-user", data, { timeout: 20000 })
+            console.log(response.data)
+
+            if (response.data.success) {
+                toast.success('Phone Verified')
+            }
+
+        } catch (error) {
+            toast.info("Wrong or expired OTP")
+            setOtpSent(false)
+        }
+        // return response.data
+    }
+
+    const mutation = useMutation({
+        mutationFn: async (data: {
+            otp: string, type: string, updatedData: {
+                phone: number, address: {
+                    country: string,
+                    city: string,
+                    area: string
+                }
+            }
+        }): Promise<any> => {
+            let _data = {
+                username: user.username,
+                ...data
+            }
+            return await verifyOTP(_data)
+        },
+        onError: (e: any) => {
+            if (e.response.data.error.message) {
+                toast.info("Wrong or expired OTP")
+            }
+        },
+        onSettled: (data) => {
+            console.log(data)
+        }
+    })
+
+
+    const changeCountry = async () => {
+        mutation.mutate({
+            otp, type: 'phone', updatedData: {
+                phone: _phone, address: {
+                    country: country.name,
+                    city,
+                    area: areaRef.current.value
+                }
+            }
+        })
+        console.log(otp)
+    }
 
     return (
         <div className='fixed inset-0 z-50  w-screen overflow-hidden h-screen flex items-center justify-center top-0 right-0'>
@@ -52,7 +144,7 @@ function ChangeCountryModel({ setModelTrigger }) {
             <Card className='z-10 p-6 border border-accent'>
                 <form action="" onSubmit={(e) => {
                     e.preventDefault()
-                    let valid = valdatePhone(_phone, "PK")
+                    let valid = validatePhone(_phone, country['iso3'])
                     console.log(valid)
                 }}>
 
@@ -110,11 +202,11 @@ function ChangeCountryModel({ setModelTrigger }) {
                                     Area
                                 </Label>
                                 <Input
-                                disabled={!country || !city ? true : false}
+                                    disabled={!country || !city ? true : false}
 
                                     name="area"
                                     placeholder="Enter your area name"
-                                    // ref={areaRef}
+                                    ref={areaRef}
                                     id="area"
                                     // defaultValue={address?.area}
                                     className="max-w-96 w-full"
@@ -123,8 +215,10 @@ function ChangeCountryModel({ setModelTrigger }) {
                                 {/* {errors.address?.area && <p>{errors.address.area.message}</p>} */}
                             </div>
                         </div>
+                        <InputOTPForm changeData={changeCountry} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeCountry} data={!country || !city || !_phone || !otpSent ? true : false} type="phone" label="Phone Verification" description={otpSent ? "Please enter the one-time password sent to your phone." : "Click on send to get an OTP for verification."} />
+
                     </div>
-                    <Button disabled={!country || !city || !_phone ? true : false} >Change</Button>
+
                 </form>
             </Card>
         </div>

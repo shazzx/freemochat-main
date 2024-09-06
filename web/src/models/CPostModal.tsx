@@ -5,8 +5,9 @@ import { Theme } from 'emoji-picker-react'
 import { MdCancel } from "react-icons/md"
 import PostCarousel from "@/components/Carousel"
 import { Combobox } from "@/components/Comboxbox"
-import { Loader } from "lucide-react"
+import { ChevronLeft, Loader } from "lucide-react"
 import { toast } from "react-toastify"
+import { useNavigate } from "react-router-dom"
 
 const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetails, updatePost }) => {
     const [selectedMedia, setSelectedMedia] = useState([])
@@ -22,7 +23,7 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
     useEffect(() => {
         if (postMedia?.length > 0) {
             console.log(postMedia)
-            setPostMedia([...selectedMedia, ...postMedia ])
+            setPostMedia([...selectedMedia, ...postMedia])
             // setRemoveMedia(postMedia.map((media) => {
             //     if (media?.remove) {
             //         return 
@@ -38,20 +39,22 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
 
     useEffect(() => {
         console.log(postMedia)
-    },[])
+    }, [])
 
     const getSelected = (selectionState) => {
         setSelected(selectionState)
         console.log(selectionState)
     }
-
+const navigate = useNavigate()
 
     return (
         <div className='fixed inset-0 z-50  w-screen overflow-hidden h-screen flex items-center justify-center top-0 right-0'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
+                navigate('', {replace: true})
+
                 setModelTrigger(false)
             }}></div>
-            <div className='relative z-10 bg-background rounded-lg w-[440px] overflow-auto border-2 border-accent'>
+            <div className='relative z-10 h-full sm:max-h-[700px] bg-background rounded-lg w-full sm:w-[440px] overflow-auto sm:border-2 sm:border-accent'>
                 {uploading &&
                     <div className="z-10 absolute w-full h-full flex items-center justify-center">
                         <div className="absolute w-full h-full bg-card opacity-70">
@@ -64,8 +67,8 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
 
                     </div>
                 }
-                <div className="p-3 h-full overflow-y-auto relative bg-background-secondary border border-primary">
-                    <form className="flex flex-col h-full gap-2 justify-between" onSubmit={async (e) => {
+                <div className="p-3 h-full overflow-y-auto relative bg-background-secondary sm:border sm:border-accent">
+                    <form className="flex flex-col h-full gap-10" onSubmit={async (e) => {
                         e.preventDefault()
 
                         const formData = new FormData()
@@ -90,7 +93,7 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
                         toast.info("Content must be atleats of 12 characters")
                     }}>
                         <div>
-                            <h3>{editPost ? "Update Post" : "Create Post"}</h3>
+                            <h3 className="text-center text-lg sm:text-xl">{editPost ? "Update Post" : "Create Post"}</h3>
                         </div>
                         <div className={`w-full ${selectedMedia?.length > 0 || postDetails?.media?.length ? 'h-[240px]' : 'h-[360px]'} flex flex-col items-center`}>
                             <textarea name="" className="border-accent border w-full bg-card h-full p-2" defaultValue={editPost && postDetails?.content} placeholder="write something" id="" ref={content}>

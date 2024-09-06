@@ -8,7 +8,7 @@ import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
 import { Public } from 'src/auth/public.decorator';
-import { CreateUser, CreateUserDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, resendOTP, resendOTPDTO, UpdateUser, UpdateUserDTO, verificationStatus, verificationStatusDTO, VerifyOTP, VerifyOTPDTO } from 'src/schema/validation/user';
+import { CreateUser, CreateUserDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, resendOTP, resendOTPDTO, resendOTPUser, resendOTPUserDTO, UpdateUser, UpdateUserDTO, verificationStatus, verificationStatusDTO, VerifyOTP, VerifyOTPDTO, VerifyOTPUser, VerifyOTPUserDTO } from 'src/schema/validation/user';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import { OtpService } from 'src/otp/otp.service';
@@ -141,6 +141,42 @@ export class UserController {
         }
     }
 
+    @Post('verify-otp-user')
+    async veriyfOTPUser(
+        @Body(new ZodValidationPipe(VerifyOTPUser)) verifyOTP: VerifyOTPUserDTO,
+        @Req() req: Request,
+        @Res() res: Response) {
+        const { username, updatedData, otp, type } = verifyOTP
+        try {
+            const user = await this.userService.findUser(username)
+            if (!user) {
+                throw new BadRequestException()
+            }
+
+            let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
+            let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
+
+            if (!isValidEmailSecret && !isValidPhoneSecret) {
+                throw new BadRequestException("OTP is not valid")
+            }
+
+            if (type == 'email' && updatedData.email) {
+                await this.userService.updateUser(user._id, { email: updatedData.email })
+                return res.json({ success: true })
+            }
+
+            if (type == 'phone' && updatedData.phone) {
+                await this.userService.updateUser(user._id, { phone: updatedData.phone, address: updatedData.address  })
+                return res.json({ success: true})
+            }
+
+            throw new BadRequestException()
+
+        } catch (error) {
+            res.status(400).json({ success: false, error: { message: error.message } })
+        }
+    }
+
     @Public()
     @Post('verification-status')
     async checkVerificationStatus(
@@ -184,6 +220,37 @@ export class UserController {
 
             if (type == 'email') {
                 // let secret = this.otpService.generateSecret()
+                let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+                console.log(emailOTP, 'email')
+                return res.json({ success: true, message: "otp has been sent to your email" })
+            }
+
+
+            if (type == 'phone') {
+                let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
+                console.log(phoneOTP, 'phone')
+                return res.json({ success: true, message: "otp has been sent to your phone" })
+            }
+
+            throw new BadRequestException()
+        } catch (err) {
+            res.status(err.statusCode || 500).json({ success: false, message: err.message })
+        }
+    }
+
+    @Post('resend-otp-user')
+    async resendOTPUser(
+        @Body(new ZodValidationPipe(resendOTPUser)) resendOTPDTO: resendOTPUserDTO,
+        @Req() req: Request,
+        @Res() res: Response) {
+        const {username, type } = resendOTPDTO
+        try {
+            const user = await this.userService.findUser(username)
+            if (!user) {
+                throw new BadRequestException()
+            }
+
+            if (type == 'email') {
                 let emailOTP = await this.otpService.generateOtp(user._id, 'email')
                 console.log(emailOTP, 'email')
                 return res.json({ success: true, message: "otp has been sent to your email" })
