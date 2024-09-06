@@ -30,7 +30,7 @@ const FormSchema = z.object({
   }),
 })
 
-export function InputOTPForm({ setOtpSent, sent, send, label, description, onSubmit, type, otpResend, data, setCode, changeData}: { label: string, description: string, onSubmit, type: string, otpResend, send?: boolean, sent?: boolean, setOtpSent?: Function, data?: boolean, setCode?: Function, changeData: MouseEventHandler}) {
+export function InputOTPForm({buttonTitle, setOtpSent, sent, send, label, description, onSubmit, type, otpResend, data, setCode, changeData}: { label: string, buttonTitle: string, description: string, onSubmit, type: string, otpResend: Function, send?: boolean, sent?: boolean, setOtpSent?: Function, data?: boolean, setCode?: Function, changeData: MouseEventHandler, }) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -95,7 +95,7 @@ export function InputOTPForm({ setOtpSent, sent, send, label, description, onSub
               <span>Sent</span>
             </div> : "Send"
               }</Button>}
-          {!send ? <Button type="submit">Verify</Button> : <Button disabled={data} type="button" onClick={changeData} >Change Address</Button>}
+          {!send ? <Button type="submit">Verify</Button> : <Button disabled={data} type="button" onClick={changeData} >{buttonTitle}</Button>}
         </div>
       </form>
     </Form>

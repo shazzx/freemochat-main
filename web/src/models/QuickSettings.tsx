@@ -16,6 +16,7 @@ import { SelectScrollable } from "./SelectScrollable"
 import { axiosClient } from "@/api/axiosClient"
 import ChangeCountryModel from "./ChangeCountryModel"
 import { PencilIcon } from "lucide-react"
+import ChangePhoneModel from "./ChangePhoneModel"
 
 const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
@@ -34,7 +35,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     let [uploadImageState, setUploadImageState] = useState(false)
     let [cropperModel, setCropperModel] = useState(false)
 
-    const { firstname, lastname, username, email, address, images, bio, phone } = user
+    const { firstname, lastname, username, email, address, profile, cover, bio, phone } = user
 
 
     const dispatch = useAppDispatch()
@@ -116,6 +117,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     // })
 
     const [changeCountryModel, setChangeCountryModel] = useState(false)
+    const [changePhoneModel, setChangePhoneModel] = useState(false)
 
     const navigate = useNavigate()
 
@@ -127,6 +129,10 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
             {
                 changeCountryModel &&
                 <ChangeCountryModel setModelTrigger={setChangeCountryModel} />
+            }
+            {
+                changePhoneModel &&
+                <ChangePhoneModel setModelTrigger={setChangePhoneModel} />
             }
             {
                 profileForCrop && cropperModel &&
@@ -163,7 +169,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                         <div className='relative w-full max-h-64 roundd-md  overflow-hidden'>
                             <form className='image-upload_form'>
                                 <label htmlFor="image">
-                                    <Cover cover={user?.images?.cover || coverLocalUrl} upload={true} />
+                                    <Cover cover={cover || coverLocalUrl} upload={true} />
                                 </label>
                                 <input className="hidden" ref={coverInputRef} type="file" accept='image/*' id='image' onChange={async (e) => {
                                     if (e.target.files && e.target.files.length > 0) {
@@ -183,7 +189,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                             <form onSubmit={(e: FormEvent) => e.preventDefault()} className='image-upload_form'>
 
                                 <label htmlFor="profile-image">
-                                    <Profile image={images?.profile || profileLocalUrl} fallbackName={user && firstname[0]?.toUpperCase() + lastname[0]?.toUpperCase()} width={'w-28'} smWidth={'w-32'} height={'h-28'} smHeight={'h-32'} upload={true} />
+                                    <Profile image={profile || profileLocalUrl} fallbackName={user && firstname[0]?.toUpperCase() + lastname[0]?.toUpperCase()} width={'w-28'} smWidth={'w-32'} height={'h-28'} smHeight={'h-32'} upload={true} />
                                 </label>
 
                                 <input className="hidden" ref={profileInputRef} type="file" accept='image/*' id='profile-image'
@@ -372,7 +378,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                                 Phone
                                             </Label>
                                             <PencilIcon size="16" className="cursor-pointer" onClick={() => {
-                                                setChangeCountryModel(true)
+                                                setChangePhoneModel(true)
                                             }} />
                                         </div>
                                         <Input

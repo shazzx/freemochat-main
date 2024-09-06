@@ -12,7 +12,9 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { updateUser } from '@/app/features/user/userSlice'
-function ChangeCountryModel({ setModelTrigger }) {
+import { countryToAlpha3 } from "country-to-iso";
+
+function ChangePhoneModel({ setModelTrigger }) {
 
     const { user } = useAppSelector((state) => state.user)
 
@@ -32,7 +34,7 @@ function ChangeCountryModel({ setModelTrigger }) {
 
 
     const validatePhone = (_phone, country) => {
-        return phone(_phone, { country: country || "PK" })
+        return phone(_phone, { country: countryToAlpha3(user.country) })
     }
 
     useEffect(() => {
@@ -86,19 +88,15 @@ function ChangeCountryModel({ setModelTrigger }) {
             const response = await axiosClient.post("/user/verify-otp-user", data, { timeout: 20000 })
             console.log(response.data)
 
-            if (response.data.success) {
                 dispatch(updateUser({
-                    address: {
-                        country: country.name,
-                        city,
-                        area: areaRef.current.value
-                    }
+                    phone: _phone
                 }))
 
                 toast.success('Phone Verified')
-            }
+                navigate('')
 
         } catch (error) {
+            console.log(error)
             toast.info("Wrong or expired OTP")
             setOtpSent(false)
         }
@@ -108,11 +106,7 @@ function ChangeCountryModel({ setModelTrigger }) {
     const mutation = useMutation({
         mutationFn: async (data: {
             otp: string, type: string, updatedData: {
-                phone: number, address: {
-                    country: string,
-                    city: string,
-                    area: string
-                }
+                phone: number,
             }
         }): Promise<any> => {
             let _data = {
@@ -135,11 +129,7 @@ function ChangeCountryModel({ setModelTrigger }) {
     const changeCountry = async () => {
         mutation.mutate({
             otp, type: 'phone', updatedData: {
-                phone: _phone, address: {
-                    country: country.name,
-                    city,
-                    area: areaRef.current.value
-                }
+                phone: _phone
             }
         })
         console.log(otp)
@@ -160,40 +150,10 @@ function ChangeCountryModel({ setModelTrigger }) {
                     <div className="flex flex-col gap-4 w-full">
                         <div className="w-full">
                             <Label >
-                                Country
-                            </Label>
-                            {/* <Input
-                                        name="country"
-                                        placeholder="Enter your country name"
-                                        id="country"
-                                        className="max-w-96 w-full"
-                                        {...register("address.country")}
-                                    />
-                                    {errors.address?.country && <p>{errors.address.country.message}</p>} */}
-                            <div className="flex gap-2 ">
-                                <SelectScrollable placeholder={"Select country"} selectData={countries} setCity={setCity} setCountry={setCountry} />
-                            </div>
-
-                        </div>
-                        <div className="w-full">
-                            <Label >
-                                City
-                            </Label>
-                            <SelectScrollable
-                                placeholder={"Select city"}
-                                selectData={cities}
-                                setCity={setCity}
-                                setCountry={setCountry}
-                                areCities={true}
-                                countryName={country} />
-                        </div>
-                        <div className="w-full">
-                            <Label >
                                 Phone
                             </Label>
                             <Input
                                 onChange={(e) => setPhone(e.target.value)}
-                                disabled={!country || !city ? true : false}
                                 name="phone"
                                 type='number'
                                 // ref={phoneRef}
@@ -205,26 +165,7 @@ function ChangeCountryModel({ setModelTrigger }) {
                             />
                             {/* {errors.phone && <p>{errors.phone.message}</p>} */}
                         </div>
-                        <div className="w-full">
-                            <div className="w-full">
-                                <Label >
-                                    Area
-                                </Label>
-                                <Input
-                                    disabled={!country || !city ? true : false}
-
-                                    name="area"
-                                    placeholder="Enter your area name"
-                                    ref={areaRef}
-                                    id="area"
-                                    // defaultValue={address?.area}
-                                    className="max-w-96 w-full"
-                                // {...register("address.area")}
-                                />
-                                {/* {errors.address?.area && <p>{errors.address.area.message}</p>} */}
-                            </div>
-                        </div>
-                        <InputOTPForm changeData={changeCountry} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeCountry} buttonTitle={"Change Address"} data={!country || !city || !_phone || !otpSent ? true : false} type="phone" label="Phone Verification" description={otpSent ? "Please enter the one-time password sent to your phone." : "Click on send to get an OTP for verification."} />
+                        <InputOTPForm changeData={changeCountry} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeCountry} buttonTitle={"Change Phone"} data={!_phone || !otpSent ? true : false} type="phone" label="Phone Verification" description={otpSent ? "Please enter the one-time password sent to your phone." : "Click on send to get an OTP for verification."} />
 
                     </div>
 
@@ -234,4 +175,4 @@ function ChangeCountryModel({ setModelTrigger }) {
     )
 }
 
-export default ChangeCountryModel
+export default ChangePhoneModel
