@@ -85,7 +85,7 @@ function FeedSection() {
                             </form>
                         </div>
                     </div>
-                    {!data.isLoading && data[0]?.viewed &&
+                    {!data.isLoading && data && data.length && data[0]?.viewed &&
                         <Card className="w-full mx-auto bg-card border border-muted rounded-lg p-6 flex items-center space-x-4">
                             <FaCheckCircle className="text-green-500 text-3xl" />
                             <div className="flex-1">

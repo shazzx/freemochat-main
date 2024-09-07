@@ -8,7 +8,7 @@ import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
 import { Public } from 'src/auth/public.decorator';
-import { CreateUser, CreateUserDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, resendOTP, resendOTPDTO, resendOTPUser, resendOTPUserDTO, UpdateUser, UpdateUserDTO, verificationStatus, verificationStatusDTO, VerifyOTP, VerifyOTPDTO, VerifyOTPUser, VerifyOTPUserDTO } from 'src/schema/validation/user';
+import { ChangePassword, ChangePasswordDTO, CreateUser, CreateUserDTO, ForgetPassword, ForgetPasswordDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, resendOTP, resendOTPDTO, resendOTPUser, resendOTPUserDTO, UpdateUser, UpdateUserDTO, verificationStatus, verificationStatusDTO, VerifyOTP, VerifyOTPDTO, VerifyOTPUser, VerifyOTPUserDTO } from 'src/schema/validation/user';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import { OtpService } from 'src/otp/otp.service';
@@ -160,8 +160,6 @@ export class UserController {
 
             let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
             let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
-            console.log(isValidPhoneSecret, isValidEmailSecret)
-
 
             if (!isValidEmailSecret && !isValidPhoneSecret) {
                 throw new BadRequestException("OTP is not valid")
@@ -207,6 +205,36 @@ export class UserController {
             throw new BadRequestException()
 
         } catch (error) {
+            res.status(400).json({ success: false, error: { message: error.message } })
+        }
+    }
+
+    @Post('change-current-password')
+    async changeUserPassword(
+        @Body(new ZodValidationPipe(ChangePassword)) changePasswordDTO: ChangePasswordDTO,
+        @Req() req: Request,
+        @Res() res: Response) {
+
+        const username = req.user.username
+        const { changePassword } = changePasswordDTO
+        try {
+            const user = await this.userService.findUser(username)
+            if (!user) {
+                throw new BadRequestException()
+            }
+
+            let isValidPassword = await compare(changePassword.currentPassword, user.password)
+            console.log(isValidPassword)
+            if (isValidPassword) {
+                let hashedPassword = await this.cryptoService.hash(changePassword.password, 16)
+                await this.userService.updateUser(user._id, { password: hashedPassword })
+                res.json({ success: true })
+                return
+            }
+            throw new BadRequestException("invalid current password")
+
+        } catch (error) {
+            console.log(error)
             if (error.name == "MongoServerError" && error.code == 11000) {
                 res.status(400).json({ success: false, error: { message: error.keyPattern['email'] ? "Email Already Taken" : "Phone Already Taken" } })
                 return
@@ -214,6 +242,80 @@ export class UserController {
             res.status(400).json({ success: false, error: { message: error.message } })
         }
     }
+
+    @Post('forget-password')
+    async forgetPassword(
+        @Body(new ZodValidationPipe(ForgetPassword)) changePasswordDTO: ForgetPasswordDTO,
+        @Req() req: Request,
+        @Res() res: Response) {
+        const { otp, type, changePassword } = changePasswordDTO
+        const username = req.user.username
+
+        try {
+            const user = await this.userService.findUser(username)
+            if (!user) {
+                throw new BadRequestException()
+            }
+
+
+            let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
+            let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
+
+            if (!isValidEmailSecret && !isValidPhoneSecret) {
+                throw new BadRequestException("OTP is not valid")
+            }
+
+            if (type == 'email') {
+                let hashedPassword = await this.cryptoService.hash(changePassword.password, 16)
+                await this.userService.updateUser(user._id, { password: hashedPassword })
+                res.json({ success: true })
+                return
+            }
+
+            throw new BadRequestException("somthing went wrong")
+
+        } catch (error) {
+            res.status(400).json({ success: false, error: { message: error.message } })
+        }
+    }
+
+
+
+    @Public()
+    @Post('forget-password-open')
+    async forgetPasswordPub(
+        @Body(new ZodValidationPipe(ForgetPassword)) changePasswordDTO: ForgetPasswordDTO,
+        @Req() req: Request,
+        @Res() res: Response) {
+        const { username, otp, type, changePassword } = changePasswordDTO
+
+        try {
+            const user = await this.userService.findUser(username)
+            if (!user) {
+                throw new BadRequestException()
+            }
+
+            let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
+            let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
+
+            if (!isValidEmailSecret && !isValidPhoneSecret) {
+                throw new BadRequestException("OTP is not valid")
+            }
+
+            if (type == 'email') {
+                let hashedPassword = await this.cryptoService.hash(changePassword.password, 16)
+                await this.userService.updateUser(user._id, { password: hashedPassword })
+                res.json({ success: true })
+                return
+            }
+
+            throw new BadRequestException("somthing went wrong")
+
+        } catch (error) {
+            res.status(400).json({ success: false, error: { message: error.message } })
+        }
+    }
+
 
     @Public()
     @Post('verification-status')

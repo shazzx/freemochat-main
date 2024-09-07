@@ -19,6 +19,7 @@ import { PencilIcon } from "lucide-react"
 import ChangePhoneModel from "./ChangePhoneModel"
 import ChangeEmailModel from "./ChangeEmailModel"
 import ChangePasswordModel from "./ChangePasswordModel"
+import ForgetPasswordModel from "./ForgetPasswordModel"
 
 const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
@@ -122,6 +123,8 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     const [changePhoneModel, setChangePhoneModel] = useState(false)
     const [changeEmailModel, setChangeEmailModel] = useState(false)
     const [changePasswordModel, setChangePasswordModel] = useState(false)
+    const [forgetPasswordModel, setForgetPasswordModel] = useState(false)
+    
     
 
     const navigate = useNavigate()
@@ -145,7 +148,11 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
             }
                         {
                 changePasswordModel &&
-                <ChangePasswordModel setModelTrigger={setChangePasswordModel} />
+                <ChangePasswordModel setModelTrigger={setChangePasswordModel} setForgetPasswordModel={setForgetPasswordModel}/>
+            }
+                   {
+                forgetPasswordModel &&
+                <ForgetPasswordModel setModelTrigger={setForgetPasswordModel}/>
             }
             {
                 profileForCrop && cropperModel &&

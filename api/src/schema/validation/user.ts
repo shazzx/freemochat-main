@@ -98,6 +98,24 @@ export const VerifyOTPUser = z.object({
     )
 })
 
+
+export const ChangePassword = z.object({
+    changePassword: z.object({
+        password: z.string(),
+        currentPassword: z.string(),
+    }),
+})
+
+
+export const ForgetPassword = z.object({
+    otp: z.string(),
+    type: z.string(),
+    username: z.string().optional(),
+    changePassword: z.object({
+        password: z.string(),
+    }),
+})
+
 export const resendOTP = z.object({
     username: z.string().min(5),
     type: z.string(),
@@ -134,6 +152,8 @@ export type FriendGeneralDTO = z.infer<typeof FriendGeneral>
 export type GetFriendsDTO = z.infer<typeof GetFriends>
 export type VerifyOTPDTO = z.infer<typeof VerifyOTP>
 export type VerifyOTPUserDTO = z.infer<typeof VerifyOTPUser>
+export type ChangePasswordDTO = z.infer<typeof ChangePassword>
+export type ForgetPasswordDTO = z.infer<typeof ForgetPassword>
 export type resendOTPDTO = z.infer<typeof resendOTP>
 export type resendOTPUserDTO = z.infer<typeof resendOTPUser>
 export type verificationStatusDTO = z.infer<typeof verificationStatus>
