@@ -139,7 +139,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
     let user = await this.userService.getRawUser(payload.userDetails.userId)
     let _recepient = await this.userService.getRawUser(payload.recepientDetails.userId)
-    this.server.to(recepient?.socketId).emit("initiate-call", { userDetails: payload?.userDetails, recepientDetails: _recepient , type: payload?.type })
+    this.server.to(recepient?.socketId).emit("initiate-call", { userDetails: payload?.userDetails, recepientDetails: {..._recepient, userId: _recepient._id} , type: payload?.type })
   }
 
   @SubscribeMessage("call-decline")
@@ -175,10 +175,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if(payload.recepientDetails && !payload.recepientDetails.userId){
       throw new BadRequestException('recepient id required')
     }
+
+    console.log(payload)
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
     let user = JSON.parse(await this.cacheService.getOnlineUser(payload.userDetails.userId))
     console.log(user, 'accepted')
-    const uuid = '3u293urasdjkof'
 
 
     this.server.to(user?.socketId).emit("call-end", { status: "END", })

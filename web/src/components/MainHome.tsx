@@ -69,8 +69,8 @@ const MainHome = ({ children }: any) => {
         console.log('video call end')
         // setVideoCallCallerState(false)
         // setVideoCallState("NEUTRAL")
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-        mediaStream.getTracks().forEach(track => track.stop())
+        // const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        // mediaStream.getTracks().forEach(track => track.stop())
       }
       dispatch(endCall())
       // setCallDetails(null)

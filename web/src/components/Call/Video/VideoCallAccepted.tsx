@@ -21,8 +21,8 @@ import { join } from "path";
 
 
 const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
-  const { callDetails, callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
-  const {user}=useAppSelector((state)=>state.user )
+    const { callDetails, callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
+    const { user } = useAppSelector((state) => state.user)
 
     console.log(callDetails)
     const socket = useSocket()
@@ -53,14 +53,14 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
     };
     console.log(callDetails)
 
-        useJoin(
-            {
-                appid: appId,
-                channel: callDetails.channel ,
-                token: null,
-            },
-            activeConnection,
-        );
+    useJoin(
+        {
+            appid: appId,
+            channel: callDetails.channel,
+            token: null,
+        },
+        activeConnection,
+    );
 
     usePublish([localMicrophoneTrack, localCameraTrack]);
 
@@ -74,55 +74,69 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
         console.log(localMicrophoneTrack, localCameraTrack)
     }, [localMicrophoneTrack, localCameraTrack])
     const callDecline = () => {
-        socket.emit('call-decline', { recepientDetails: callDetails.userDetails })
+        socket.emit('call-decline', {
+            recepientDetails: callDetails.userDetails, userDetails: {
+                userId: user._id,
+                username: user.username,
+                fullname: user.firstname + " " + user?.lastname,
+                profile: user?.profile
+            }
+        })
         // dispatch(endCall())
     }
 
 
-  useEffect(() => {
-    socket.on("call-end", (data) => {
-      console.log('call end', data)
-      setActiveConnection(false)
-      cancelCall("VIDEO")
+    useEffect(() => {
+        socket.on("call-end", (data) => {
+            console.log('call end', data)
+            setActiveConnection(false)
+            cancelCall("VIDEO")
+        })
     })
-  })
 
     const callAccept = () => {
-        socket.emit('call-accept', { type: "VIDEO",  recepientDetails: callDetails.userDetails, userDetails: {
-            userId: user._id,
-            username: user.username,
-            fullname: user.firstname + " " + user?.lastname,
-            profile: user?.profile
-        }})
+        socket.emit('call-accept', {
+            type: "VIDEO", recepientDetails: callDetails.userDetails, userDetails: {
+                userId: user._id,
+                username: user.username,
+                fullname: user.firstname + " " + user?.lastname,
+                profile: user?.profile
+            }
+        })
     }
-
+console.log(callDetails?.recepientDetails.username, user.username)
     return (
         <div className="mainContainer absolute left-0 top-0 overflow-hidden flex items-center justify-center z-50">
-            {targetDetails ? 
-            <div className="flex gap-12 absolute bottom-12 z-30">
-            <button className="rounded-full p-[14px] bg-red-500 hover:bg-red-400 active:bg-red-600"
-                onClick={async () => {
-                    setActiveConnection(false)
-                    socket.emit("call-end", callDetails)
-                    cancelCall("VIDEO")
-                }}>
-                <MdPhone size={32} color="white" />
-            </button>
+            { recepientState == 'ACCEPTED' || callDetails?.recepientDetails.username !== user.username  ?
+                <div className="flex gap-12 absolute bottom-12 z-30">
+                    <button className="rounded-full p-[14px] bg-red-500 hover:bg-red-400 active:bg-red-600"
+                        onClick={async () => {
+                            setActiveConnection(false)
+                            socket.emit("call-end", {...callDetails, userDetails: {
+                                userId: user._id,
+                                username: user.username,
+                                fullname: user.firstname + " " + user?.lastname,
+                                profile: user?.profile
+                            }})
+                            cancelCall("VIDEO")
+                        }}>
+                        <MdPhone size={32} color="white" />
+                    </button>
 
-            <button className="rounded-full p-[14px] bg-red-500" onClick={() => setMic(a => !a)}>
-                <Mic color="white" size={32} />
-            </button>
-        </div>:
-                        <div className="flex gap-12 absolute bottom-20 z-10">
-                        <Button type="button" className="rounded-full p-4 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={callDecline}>
-                            <MdPhone size={32} color="white" />
-                        </Button>
-    
-                        <Button className="rounded-full p-4 bg-green-500 hover:bg-green-400 active:bg-green-600" type="button" onClick={callAccept} >
-                            <MdPhone size={32} color="white" />
-                        </Button>
-                    </div>
-        }
+                    <button className="rounded-full p-[14px] bg-red-500" onClick={() => setMic(a => !a)}>
+                        <Mic color="white" size={32} />
+                    </button>
+                </div> :
+                <div className="flex gap-12 absolute bottom-20 z-10">
+                    <Button type="button" className="rounded-full p-4 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={callDecline}>
+                        <MdPhone size={32} color="white" />
+                    </Button>
+
+                    <Button className="rounded-full p-4 bg-green-500 hover:bg-green-400 active:bg-green-600" type="button" onClick={callAccept} >
+                        <MdPhone size={32} color="white" />
+                    </Button>
+                </div>
+            }
             <div className="remoteVideoContainer">
                 {
                     // Initialize each remote stream using RemoteUser component
@@ -136,19 +150,19 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
                     )
 
                 }
-                {remoteUsers.length  == 0 && 
-                <div className='flex flex-col gap-4 items-center justify-center'>
-                <div className='w-28 h-28 border-2 border-accent rounded-full flex items-center justify-center bg-accent overflow-hidden'>
-                  <Avatar className="flex  items-center justify-center">
-                    <AvatarImage src={callDetails?.userDetails?.profile || targetDetails?.profile} alt="Avatar" />
-                    <AvatarFallback className='text-4xl'>{callDetails?.userDetails?.fullname[0]?.toUpperCase() || targetDetails?.fullname[0]?.toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className='flex flex-col  items-center justify-center'>
-                  <span className='text-lg'>{callDetails?.userDetails?.fullname || targetDetails?.fullname}</span>
-                  <span>@{callDetails?.userDetails?.username || targetDetails?.username}</span>
-                </div>
-              </div>
+                {remoteUsers.length == 0 &&
+                    <div className='flex flex-col gap-4 items-center justify-center'>
+                        <div className='w-28 h-28 border-2 border-accent rounded-full flex items-center justify-center bg-accent overflow-hidden'>
+                            <Avatar className="flex  items-center justify-center">
+                                <AvatarImage src={callDetails?.userDetails?.profile || targetDetails?.profile || callDetails?.recepientDetails?.profile} alt="Avatar" />
+                                <AvatarFallback className='text-4xl'>{callDetails?.userDetails?.fullname[0]?.toUpperCase() || targetDetails?.fullname[0]?.toUpperCase() || callDetails?.recepientDetails?.fullname[0]?.toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                        </div>
+                        <div className='flex flex-col  items-center justify-center'>
+                            <span className='text-lg'>{callDetails?.userDetails?.fullname || targetDetails?.fullname}</span>
+                            <span>@{callDetails?.userDetails?.username || targetDetails?.username}</span>
+                        </div>
+                    </div>
                 }
             </div>
             <div id='localVideo'>
