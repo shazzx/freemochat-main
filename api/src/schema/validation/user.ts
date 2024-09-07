@@ -83,12 +83,16 @@ export const VerifyOTPUser = z.object({
     otp: z.string(),
     type: z.string(),
     updatedData: z.object({
+        changePassword: z.object({
+            password: z.string(),
+            currentPassword: z.string(),
+        }).optional(),
         email: z.string().optional(),
         phone: z.string().optional(),
         address: z.object({
-            country: z.string().optional(),
-            city: z.string().optional(),
-            area: z.string().optional(),
+            country: z.string(),
+            city: z.string(),
+            area: z.string(),
         }).optional(),
     }
     )

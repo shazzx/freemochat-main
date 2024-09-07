@@ -34,7 +34,9 @@ function ChangePhoneModel({ setModelTrigger }) {
 
 
     const validatePhone = (_phone, country) => {
-        return phone(_phone, { country: countryToAlpha3(user.country) })
+        let data  =countryToAlpha3(user.address.country)
+        console.log(_phone, data)
+        return phone(_phone, { country: countryToAlpha3(user.address.country) })
     }
 
     useEffect(() => {
@@ -86,14 +88,15 @@ function ChangePhoneModel({ setModelTrigger }) {
         try {
 
             const response = await axiosClient.post("/user/verify-otp-user", data, { timeout: 20000 })
-            console.log(response.data)
 
+            if (response.data.success) {
                 dispatch(updateUser({
                     phone: _phone
                 }))
 
-                toast.success('Phone Verified')
+                toast.success('Phone Number Changed')
                 navigate('')
+            }
 
         } catch (error) {
             console.log(error)
@@ -106,7 +109,7 @@ function ChangePhoneModel({ setModelTrigger }) {
     const mutation = useMutation({
         mutationFn: async (data: {
             otp: string, type: string, updatedData: {
-                phone: number,
+                phone: string,
             }
         }): Promise<any> => {
             let _data = {
@@ -127,12 +130,19 @@ function ChangePhoneModel({ setModelTrigger }) {
 
 
     const changeCountry = async () => {
+        let phone = validatePhone(_phone, user.country)
+        if (phone.isValid) {
+
+
         mutation.mutate({
             otp, type: 'phone', updatedData: {
-                phone: _phone
+                phone: phone.phoneNumber
             }
         })
         console.log(otp)
+        return 
+    }
+        toast.info("phone number is not valid")
     }
 
     return (

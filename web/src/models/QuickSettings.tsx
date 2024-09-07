@@ -17,6 +17,8 @@ import { axiosClient } from "@/api/axiosClient"
 import ChangeCountryModel from "./ChangeCountryModel"
 import { PencilIcon } from "lucide-react"
 import ChangePhoneModel from "./ChangePhoneModel"
+import ChangeEmailModel from "./ChangeEmailModel"
+import ChangePasswordModel from "./ChangePasswordModel"
 
 const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
@@ -118,13 +120,16 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
     const [changeCountryModel, setChangeCountryModel] = useState(false)
     const [changePhoneModel, setChangePhoneModel] = useState(false)
+    const [changeEmailModel, setChangeEmailModel] = useState(false)
+    const [changePasswordModel, setChangePasswordModel] = useState(false)
+    
 
     const navigate = useNavigate()
 
     return (
         <div className='absolute top-0 right-0 w-screen z-50 sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
             <div className='absolute top-0 right-0 opacity-15  bg-black w-full h-full' onClick={() => {
-                navigate('', {replace: true})
+                navigate('', { replace: true })
             }}></div>
             {
                 changeCountryModel &&
@@ -133,6 +138,14 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
             {
                 changePhoneModel &&
                 <ChangePhoneModel setModelTrigger={setChangePhoneModel} />
+            }
+            {
+                changeEmailModel &&
+                <ChangeEmailModel setModelTrigger={setChangeEmailModel} />
+            }
+                        {
+                changePasswordModel &&
+                <ChangePasswordModel setModelTrigger={setChangePasswordModel} />
             }
             {
                 profileForCrop && cropperModel &&
@@ -356,7 +369,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                                 Email
                                             </Label>
                                             <PencilIcon size="16" className="cursor-pointer" onClick={() => {
-                                                setChangeCountryModel(true)
+                                                setChangeEmailModel(true)
                                             }} />
                                         </div>
 
@@ -373,7 +386,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                         {/* {errors.email && <p>{errors.email.message}</p>} */}
                                     </div>
                                     <div className="w-full">
-                                    <div className="flex gap-2 items-center">
+                                        <div className="flex gap-2 items-center">
                                             <Label className="mb-1">
                                                 Phone
                                             </Label>
@@ -400,31 +413,9 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                             <div className="w-full flex flex-col gap-2">
                                 <h2>Privacy</h2>
                                 <div className="flex w-full flex-col md:flex-row justify-start items-start gap-4">
-                                    <div className="w-full">
-                                        <Label>
-                                            Current Password
-                                        </Label>
-                                        <Input
-                                            placeholder="Enter your current password"
-                                            ref={currentPasswordRef}
-                                            id="current-password"
-                                            type="password"
-                                            className="max-w-96 w-full"
-                                        />
-                                    </div>
-                                    <div className="w-full">
-                                        <Label >
-                                            New Password
-                                        </Label>
-                                        <Input
-                                            placeholder="Enter new secure password"
-                                            ref={newPasswordRef}
-                                            id="new-password"
-                                            type="password"
-                                            className="max-w-96 w-full"
-                                        />
-                                    </div>
-
+                                    <Button type="button" onClick={() => {
+                                                setChangePasswordModel(true)
+                                    }}>Change Password</Button>
                                 </div>
                                 <Button type="submit">Save changes</Button>
                             </div>

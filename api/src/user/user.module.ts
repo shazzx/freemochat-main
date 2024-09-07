@@ -25,6 +25,7 @@ import { TwilioModule } from 'src/twilio/twilio.module';
     CryptoModule,
     MetricsAggregatorModule,
     TwilioModule,
+    CryptoModule,
     LocationModule,
     forwardRef(() => UploadModule),
     MongooseModule.forFeature([

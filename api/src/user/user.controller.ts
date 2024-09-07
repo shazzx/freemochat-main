@@ -15,6 +15,8 @@ import { OtpService } from 'src/otp/otp.service';
 import { LocationService } from 'src/location/location.service';
 import { USER } from 'src/utils/enums/user.c';
 import { TwilioService } from 'src/twilio/twilio.service';
+import { compare } from 'bcrypt';
+import { CryptoService } from 'src/crypto/crypto.service';
 
 @Controller('user')
 export class UserController {
@@ -26,6 +28,7 @@ export class UserController {
         private readonly otpService: OtpService,
         private readonly locationService: LocationService,
         private readonly twilioService: TwilioService,
+        private readonly cryptoService: CryptoService,
     ) { }
 
 
@@ -59,9 +62,9 @@ export class UserController {
                 subject: "OTP Verification",
                 text: `Your email otp code is: ${emailOTP} `,
                 // html: emailData.html,
-              })
+            })
 
-              await this.twilioService.sendSMS(phone, `Your email otp code is: ${phoneOTP}`)
+            await this.twilioService.sendSMS(phone, `Your email otp code is: ${phoneOTP}`)
             res.json({ success: true, tempSecret, username: user.username, message: "account created successfully", verification: "pending" })
 
         } catch (error) {
@@ -110,7 +113,7 @@ export class UserController {
             if (type == 'email' && isValidEmailSecret && user.isPhoneVerified) {
                 console.log('type em')
 
-                await this.userService.updateUser(user._id, { tempSecret: null, isEmailVerified: true,  isActive:  true })
+                await this.userService.updateUser(user._id, { tempSecret: null, isEmailVerified: true, isActive: true })
                 return res.json({ success: true, email: true, phone: true })
             }
 
@@ -153,26 +156,61 @@ export class UserController {
                 throw new BadRequestException()
             }
 
+            console.log("username, updatedData, otp, type", username, updatedData, otp, type)
+
             let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
             let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
+            console.log(isValidPhoneSecret, isValidEmailSecret)
+
 
             if (!isValidEmailSecret && !isValidPhoneSecret) {
                 throw new BadRequestException("OTP is not valid")
             }
 
-            if (type == 'email' && updatedData.email) {
-                await this.userService.updateUser(user._id, { email: updatedData.email })
-                return res.json({ success: true })
+
+            if (type == 'email' && updatedData['changePassword']) {
+                console.log('updatng emal', updatedData.changePassword)
+                let isValidPassword = await compare(updatedData.changePassword.currentPassword, user.password)
+                if (isValidPassword) {
+                    let hashedPassword = await this.cryptoService.hash(updatedData.changePassword.password, 16)
+                    await this.userService.updateUser(user._id, { password: hashedPassword })
+                    res.json({ success: true })
+                    return
+                }
+                throw new BadRequestException("invalid current password")
             }
 
-            if (type == 'phone' && updatedData.phone) {
-                await this.userService.updateUser(user._id, { phone: updatedData.phone, address: updatedData.address  })
-                return res.json({ success: true})
+            if (type == 'email' && updatedData['email']) {
+                console.log('updatng emal', updatedData.email)
+
+                await this.userService.updateUser(user._id, { email: updatedData.email })
+                res.json({ success: true })
+                return
             }
+
+            if (type == 'phone' && updatedData['address']) {
+                console.log('updatng address')
+
+                await this.userService.updateUser(user._id, { address: updatedData.address })
+                res.json({ success: true })
+                return
+            }
+
+            if (type == 'phone' && updatedData['phone']) {
+                console.log('updatng phone')
+                await this.userService.updateUser(user._id, { phone: updatedData.phone })
+                res.json({ success: true })
+                return
+            }
+
 
             throw new BadRequestException()
 
         } catch (error) {
+            if (error.name == "MongoServerError" && error.code == 11000) {
+                res.status(400).json({ success: false, error: { message: error.keyPattern['email'] ? "Email Already Taken" : "Phone Already Taken" } })
+                return
+            }
             res.status(400).json({ success: false, error: { message: error.message } })
         }
     }
@@ -243,7 +281,7 @@ export class UserController {
         @Body(new ZodValidationPipe(resendOTPUser)) resendOTPDTO: resendOTPUserDTO,
         @Req() req: Request,
         @Res() res: Response) {
-        const {username, type } = resendOTPDTO
+        const { username, type } = resendOTPDTO
         try {
             const user = await this.userService.findUser(username)
             if (!user) {
@@ -298,8 +336,8 @@ export class UserController {
     async logoutUser(
         @Req() req: Request,
         @Res({ passthrough: true }) response: Response) {
-            response.clearCookie('refreshToken', {httpOnly: true, sameSite: 'strict', })
-            response.json({success: true})
+        response.clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict', })
+        response.json({ success: true })
     }
 
     @Public()
@@ -308,7 +346,7 @@ export class UserController {
         @Req() req: Request,
         @Res() res: Response) {
         const refreshToken = req.cookies.refreshToken
-    
+
         if (!refreshToken) {
             throw new BadRequestException("something went wrong")
         }
