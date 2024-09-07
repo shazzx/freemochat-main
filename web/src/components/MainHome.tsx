@@ -39,6 +39,7 @@ import AudioCall from "./Call/Audio/AudioCall"
 import VideoCall from "./Call/Video/VideoCall"
 import { axiosClient } from "@/api/axiosClient"
 import { toast } from "react-toastify"
+import VideoCallAccepted from "./Call/Video/VideoCallAccepted"
 
 const MainHome = ({ children }: any) => {
   useSocket()
@@ -107,8 +108,13 @@ const MainHome = ({ children }: any) => {
         <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={AudioCall} />
       }
 
-      {onCall && type == "Video" &&
-        <Agora callDetails={callDetails} channel={''} Call={VideoCall} />
+      {onCall && (recepientState == "CALLING" || callerState == "CALLING") && type == "Video" &&
+        <Agora callDetails={callDetails} channel={''} Call={VideoCall} cancelCall={cancelCall} />
+      }
+
+
+{onCall && recepientState == "ACCEPTED" && type == "Video" &&
+        <Agora callDetails={callDetails} channel={''} Call={VideoCallAccepted} cancelCall={cancelCall} />
       }
       {/* {onCall && (recepientState == "ACCEPTED" || (callerState == "ACCEPTED" || callerState == "CALLING")) && callDetails?.type == "VIDEO" && callDetails?.channel &&
         <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} />

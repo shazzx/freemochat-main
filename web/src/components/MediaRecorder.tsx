@@ -85,6 +85,9 @@ const AudioRecorder = ({ onRecordingComplete, setIsRecordingMain }) => {
                         <button
                             onClick={() => {
                                 uploadState.current = false
+            recordingTime.current = 0;
+            setRecordingTime(0)
+
                                 stopRecording()
                             }}
                             className="bg-red-500 p-[4px] px-2 text-white rounded-md hover:bg-red-600 transition duration-300 ease-in-out"
@@ -94,6 +97,8 @@ const AudioRecorder = ({ onRecordingComplete, setIsRecordingMain }) => {
 
                         <svg width="42" className="stroke-white dark:stroke-white" onClick={() => {
                             uploadState.current = true
+                            recordingTime.current = 0 
+                            setRecordingTime(0)
                             stopRecording()
 
                         }} height="42"  viewBox="0 0 47 50" fill="none" xmlns="http://www.w3.org/2000/svg">

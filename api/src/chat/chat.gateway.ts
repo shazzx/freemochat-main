@@ -138,7 +138,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(payload)
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
     let user = await this.userService.getRawUser(payload.userDetails.userId)
-    this.server.to(recepient?.socketId).emit("initiate-call", { userDetails: payload?.userDetails, type: payload?.type })
+    let _recepient = await this.userService.getRawUser(payload.recepientDetails.userId)
+    this.server.to(recepient?.socketId).emit("initiate-call", { userDetails: payload?.userDetails, recepientDetails: _recepient , type: payload?.type })
   }
 
   @SubscribeMessage("call-decline")

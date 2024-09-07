@@ -169,6 +169,11 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
           }
         ))
       } else {
+        dispatch(acceptCall(
+          {
+            callDetails: data,
+          }
+        ))
       }
     })
 

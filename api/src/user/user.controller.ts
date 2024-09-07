@@ -299,7 +299,7 @@ export class UserController {
             const authId = uuidv4()
 
             await this.cacheService.setForgetPassword(user.userId, authId)
-            console.log(`http://localhost:5173/forget-password/${authId}`)
+            console.log(`http://localhost:5173/forget-password/${authId}?username=${user.username}`)
             return res.json({ success: true, message: "otp has been sent to your email" })
 
         } catch (error) {

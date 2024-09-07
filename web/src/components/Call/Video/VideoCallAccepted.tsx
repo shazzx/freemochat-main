@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { join } from "path";
 
 
-const VideoCall = ({ channel, _callDetails, cancelCall }) => {
+const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
   const { callDetails, callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
   const {user}=useAppSelector((state)=>state.user )
 
@@ -56,7 +56,7 @@ const VideoCall = ({ channel, _callDetails, cancelCall }) => {
         useJoin(
             {
                 appid: appId,
-                channel: user._id ,
+                channel: callDetails.channel ,
                 token: null,
             },
             activeConnection,
@@ -77,6 +77,15 @@ const VideoCall = ({ channel, _callDetails, cancelCall }) => {
         socket.emit('call-decline', { recepientDetails: callDetails.userDetails })
         // dispatch(endCall())
     }
+
+
+  useEffect(() => {
+    socket.on("call-end", (data) => {
+      console.log('call end', data)
+      setActiveConnection(false)
+      cancelCall("VIDEO")
+    })
+  })
 
     const callAccept = () => {
         socket.emit('call-accept', { type: "VIDEO",  recepientDetails: callDetails.userDetails, userDetails: {
@@ -104,7 +113,7 @@ const VideoCall = ({ channel, _callDetails, cancelCall }) => {
                 <Mic color="white" size={32} />
             </button>
         </div>:
-                        <div className="flex gap-12 absolute bottom-32">
+                        <div className="flex gap-12 absolute bottom-20 z-10">
                         <Button type="button" className="rounded-full p-4 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={callDecline}>
                             <MdPhone size={32} color="white" />
                         </Button>
@@ -177,4 +186,4 @@ const VideoCall = ({ channel, _callDetails, cancelCall }) => {
     )
 }
 
-export default VideoCall
+export default VideoCallAccepted

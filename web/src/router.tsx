@@ -19,6 +19,7 @@ import { Signup } from "./components/Signup";
 import ManagePages from "./sections/ManagePages";
 import SearchSection from "./sections/SearchSection";
 import YourAccount from "./components/YourAccount";
+import ForgetPassword from "./components/ForgetPassword";
 
 export const router = createBrowserRouter([
     {
@@ -109,6 +110,10 @@ export const router = createBrowserRouter([
             {
                 path: "/forget-password",
                 element: <YourAccount/>,
+            },
+            {
+                path: "/reset-password",
+                element: <ForgetPassword/>,
             },
         ],
 

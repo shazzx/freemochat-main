@@ -28,9 +28,9 @@ import { format } from "date-fns"
 
 
 function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
-    const userFriends = useUserFriends()
     const { data } = useChatGroups()
     const {user} = useAppSelector(state => state.user)
+    const userFriends = useUserFriends(user._id)
 
     const [chatOptions, setChatOptions] = useState(false)
     const [groupModelState, setGroupModelState] = useState(false)
@@ -72,6 +72,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [chatOptions])
+    console.log(userFriends)
     
     return (
         <div className={`min-w-[260px] sm:max-w-[460px] w-full flex h-full ${chatOpen && "hidden lg:flex"}`}>

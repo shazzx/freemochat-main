@@ -67,7 +67,7 @@ function Stories() {
 
     let [openStory, setOpenStory] = useState(false)
     useEffect(() => {
-        if (stories && storyViewModelState && stories.length > 0 && openedStoryIndex >= 0 && storyViewIndex >= 0 && !isPaused) {
+        if (stories && stories.length > 0 && openedStoryIndex >= 0 && storyViewIndex >= 0 && !isPaused) {
             storyTimeRef.current = setInterval(() => {
                 if (openedStoryIndex == stories.length - 1 && storyViewIndex == stories[openedStoryIndex].stories.length - 1) {
                     console.log('right equal')
@@ -82,6 +82,7 @@ function Stories() {
                     setOpenedStoryIndex(openedStoryIndex + 1)
                     setStoryViewIndex(0)
                 }
+                console.log(openedStoryIndex)
 
                 if (storyViewIndex < stories[openedStoryIndex].stories.length - 1) {
                     console.log(storyViewIndex)
@@ -116,6 +117,8 @@ function Stories() {
                 //     </div>
                 // </div>
                 <div className="z-50 absolute top-0 left-0 justify-center items-center w-full h-screen flex bg-black" onClick={() => {
+                    // setOpenStory(false)
+                    clearInterval(storyTimeRef.current)
                 }}>
                     <div onClick={() => {
                         if (openedStoryIndex >= 0 && openedStoryIndex <= stories.length - 1 && storyViewIndex <= stories[openedStoryIndex].stories.length - 1 && storyViewIndex > 0) {
@@ -166,12 +169,13 @@ function Stories() {
                                             setStoryViewIndex(0)
                                             setStoryViewModelState(false)
                                             setOpenStory(false)
+                                            pauseStory()
                                         }}><CiSquareRemove size={22} /> <span>Remove</span></DropdownMenuItem>
 
                                     </DropdownMenuContent>
 
                                 </DropdownMenu>
-                            </div>0
+                            </div>
                         </div>
                         <div className="flex items-center aspect-auto max-w-96 h-full justify-center overflow-hidden bg-dark ">
                             <img

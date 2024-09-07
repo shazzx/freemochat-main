@@ -45,12 +45,12 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const { _id, firstname, lastname, username, email, bio, areFriends, isFollowed, friendRequest, followersCount, friendsCount, address, profile, cover } = user
 
     const friendRequestToggle = useFriendRequestToggle(username)
-    const removeFriend = useRemoveFriend(username, _id)
-    const followUserToggle = useFollowUserToggle(username, _id)
-    const userFollowers = !query.isLoading ? useUserFollowers(_id) : useUserFollowers()
-    const userFriends = !query.isLoading ? useUserFriends(_id) : useUserFriends()
-    const createPost = useCreatePost("userPosts", _id)
-    const updatePost = useUpdatePost("userPosts", _id)
+    const removeFriend = useRemoveFriend(username, _id && _id)
+    const followUserToggle = useFollowUserToggle(username, _id && _id)
+    const userFollowers = !query.isLoading ? useUserFollowers(_id && _id) : useUserFollowers()
+    const userFriends = !query.isLoading ? useUserFriends(_id && _id) : useUserFriends()
+    const createPost = useCreatePost("userPosts", _id && _id)
+    const updatePost = useUpdatePost("userPosts", _id && _id)
 
     const postContent = useRef()
     const [profileSettingsModel, setProfileSettingsModel] = useState(false)

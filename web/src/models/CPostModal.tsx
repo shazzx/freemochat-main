@@ -48,10 +48,10 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
     const navigate = useNavigate()
 
     return (
-        <div className='fixed inset-0 z-50  w-screen overflow-hidden h-screen flex items-center justify-center top-0 right-0'>
+        <div className='fixed inset-0 z-[100]  w-screen overflow-hidden h-screen flex items-center justify-center top-0 right-0'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
                 setModelTrigger(false)
-                navigate('', { replace: true })
+                navigate('/', { replace: true })
 
             }}></div>
             <div className='relative z-10 h-full sm:max-h-[700px] bg-background rounded-lg w-full sm:w-[440px] overflow-auto sm:border-2 sm:border-accent'>
@@ -67,7 +67,7 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
 
                     </div>
                 }
-                <div className="p-3 h-full overflow-y-auto relative bg-background-secondary sm:border sm:border-accent">
+                <div className="p-3 h-full z-10 overflow-y-auto relative bg-background-secondary sm:border sm:border-accent">
                     <form className="flex flex-col h-full gap-10" onSubmit={async (e) => {
                         e.preventDefault()
 

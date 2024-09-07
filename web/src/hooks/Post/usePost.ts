@@ -14,9 +14,9 @@ export function useFeed(): any {
     queryKey: ['feed'],
     queryFn: ({ pageParam }) => fetchFeed(pageParam),
     staleTime: 0,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchOnReconnect: false,
+    refetchOnReconnect: true,
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor
   });
@@ -56,17 +56,17 @@ export function usePost(postId: string, type: string): any {
 
 
 export function useUserPosts(type: string, targetId: string): any {
-  
+
   const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
     queryKey: ['userPosts', targetId],
     queryFn: ({ pageParam, }) => fetchPosts(pageParam, type, targetId),
     enabled: !!targetId,
     refetchInterval: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchOnReconnect: false,
+    refetchOnReconnect: true,
     initialPageParam: null,
-    getNextPageParam: (lastPage) => lastPage.nextCursor
+    getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined
   });
 
   return {
@@ -95,55 +95,52 @@ export const useCreatePost = (key: string, targetId?: string) => {
     onMutate: async ({ content, selectedMedia, type, target }) => {
       await queryClient.cancelQueries({ queryKey: [key, targetId] })
       const previousPosts = queryClient.getQueryData([key, targetId])
-
       await queryClient.cancelQueries({ queryKey: ['feed'] })
       const previousFeed = queryClient.getQueryData(['feed'])
-
-      // !location.pathname.startsWith("/user")
-
       queryClient.setQueryData(['feed'], (pages: any) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft?.pages && draft?.pages[0].posts) {
-            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, media: selectedMedia, isUploaded: false })
+            console.log(pages, 'feed')
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
             return draft
           }
 
-          if (!draft?.pages || !draft?.pages[0].posts) {
-            draft =
-            {
-              pages: [{
-                posts: [{ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: user, user: user._id, media: selectedMedia, isUploaded: false }],
-                nextCursor: null,
-              }]
-            }
-            return draft
-          }
+          // if (!draft?.pages || !draft?.pages[0].posts) {
+          //   draft =
+          //   {
+          //     pages: [{
+          //       posts: [{ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: user, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null }],
+          //       nextCursor: null,
+          //     }, { pageParams: [null] }]
+          //   }
+          //   return draft
+          // }
         })
         return updatedPosts
       });
-
 
       queryClient.setQueryData([key, targetId], (pages: any) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft?.pages && draft?.pages[0].posts) {
-            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, media: selectedMedia, isUploaded: false })
+            console.log(pages, 'user')
+
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
             return draft
           }
 
-          if (!draft?.pages || !draft?.pages[0].posts) {
-            draft =
-            {
-              pages: [{
-                posts: [{ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: user, user: user._id, media: selectedMedia, isUploaded: false }],
-                nextCursor: null,
-              }]
-            }
-            return draft
-          }
+          // if (!draft?.pages || !draft?.pages[0].posts) {
+          //   draft =
+          //   {
+          //     pages: [{
+          //       posts: [{ isBookmarkedByUser: false, isLikedByUser: selectedMedia.length > 0 ? false : null, content, createdAt: Date.now(), target: user, user: user._id, media: selectedMedia, isUploaded: false }],
+          //       nextCursor: null,
+          //     }, { pageParams: [null] }]
+          //   }
+          //   return draft
+          // }
         })
         return updatedPosts
       });
-
       return { previousPosts, previousFeed };
     },
 
@@ -153,34 +150,34 @@ export const useCreatePost = (key: string, targetId?: string) => {
       queryClient.setQueryData([key, targetId], context.previousPosts)
     },
     onSettled: (data) => {
-      if(data.isUploaded == null){
+      if (data.isUploaded == null) {
         queryClient.invalidateQueries({ queryKey: [key, targetId] })
         queryClient.invalidateQueries({ queryKey: ['feed'] })
-        // queryClient.setQueryData([key, targetId], (pages: any) => {
-        //   const updatedPosts = produce(pages, (draft: any) => {
-  
-        //     if (draft?.pages && draft?.pages[0].posts) {
-        //       draft.pages[0].posts.unshift(data)
-        //       return draft
-        //     }
-  
-        //     if (!draft?.pages || !draft?.pages[0].posts) {
-        //       draft =
-        //       {
-        //         pages: [{
-        //           posts: [{data}],
-        //           nextCursor: null,
-        //         }]
-        //       }
-        //       return draft
-        //     }
-        //   })
-        //   return updatedPosts
-        // });
-  
-        toast.success("Post created")
-        return 
       }
+      // queryClient.setQueryData([key, targetId], (pages: any) => {
+      //   const updatedPosts = produce(pages, (draft: any) => {
+
+      //     if (draft?.pages && draft?.pages[0].posts) {
+      //       draft.pages[0].posts.unshift(data)
+      //       return draft
+      //     }
+
+      //     if (!draft?.pages || !draft?.pages[0].posts) {
+      //       draft =
+      //       {
+      //         pages: [{
+      //           posts: [{data}],
+      //           nextCursor: null,
+      //         }]
+      //       }
+      //       return draft
+      //     }
+      //   })
+      //   return updatedPosts
+      // });
+
+      toast.success("Post created")
+      return
     }
   })
 
@@ -197,7 +194,7 @@ export const usePromotePost = () => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, error, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: ({postId, promotionDetails}: any) => {
+    mutationFn: ({ postId, promotionDetails }: any) => {
       return promotePost(postId, promotionDetails)
     },
 
@@ -207,14 +204,15 @@ export const usePromotePost = () => {
         toast.error(err.message)
         return false
       }
-      const { data: {  message } } = response
+      const { data: { message } } = response
       toast.info(message)
     },
     onSettled: (data) => {
-      if(data){
+      if (data) {
         redirectToCheckout(data)
       }
-  }})
+    }
+  })
 
   return {
     data,
@@ -230,7 +228,7 @@ export const usePromotePost = () => {
 export const useUpdatePost = (key, id: string) => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (postDetails: { postId: string, postIndex: number, pageIndex: number, content: string, media: { type: string, url: string | UrlObject, file?: File, remove?: boolean  }[], selectedMedia: { file: File, type: string, url: UrlObject }[], formData: FormData }) => {
+    mutationFn: (postDetails: { postId: string, postIndex: number, pageIndex: number, content: string, media: { type: string, url: string | UrlObject, file?: File, remove?: boolean }[], selectedMedia: { file: File, type: string, url: UrlObject }[], formData: FormData }) => {
       return updatePost(postDetails.formData)
     },
 
@@ -243,7 +241,7 @@ export const useUpdatePost = (key, id: string) => {
           if (draft.pages[pageIndex] && draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId) {
             draft.pages[pageIndex].posts[postIndex].content = content
             let _media = media.map((media) => {
-              if(!media.remove){
+              if (!media.remove) {
                 return media
               }
             })
@@ -261,9 +259,9 @@ export const useUpdatePost = (key, id: string) => {
 
     onError: (err, newComment, context) => {
       console.log(err)
-      if(err["response"].status == 400){
+      if (err["response"].status == 400) {
         toast.info(err["response"].data.message)
-        return 
+        return
       }
       toast.error("something went wrong")
       queryClient.setQueryData([key, id], context.previousPosts)
@@ -287,7 +285,7 @@ export const useUpdatePost = (key, id: string) => {
 
 
 export const useRemovePost = (key, id) => {
-  const {user} = useAppSelector(state => state.user)
+  const { user } = useAppSelector(state => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
     mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, media: { type: string, url: string }[] }) => {
@@ -614,7 +612,7 @@ export const useBookmarkSinglePost = () => {
 
 
 export function useSearch(type: any, query: any, key: any): any {
-console.log(type.current," : type", " : query",query, " : key", key)
+  console.log(type.current, " : type", " : query", query, " : key", key)
 
   const { data, isLoading, refetch, isFetching, fetchStatus, isSuccess, error } = useQuery({
     queryKey: ["search", query.current],
@@ -1385,7 +1383,7 @@ export const useLikeFeedPost = () => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
     mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, authorId: string, type?: string, targetId: string }) => {
-      return likePost({ postId: postDetails.postId, authorId: postDetails.authorId, type: postDetails?.type, targetId: postDetails.targetId  })
+      return likePost({ postId: postDetails.postId, authorId: postDetails.authorId, type: postDetails?.type, targetId: postDetails.targetId })
     },
 
 
@@ -1400,10 +1398,10 @@ export const useLikeFeedPost = () => {
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
-            
+
             return draft
           }
-          
+
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = true

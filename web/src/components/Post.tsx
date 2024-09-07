@@ -94,7 +94,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 type: "promotion"
             })
         }
-        if (inView && fetchNextPage) {
+        if (inView &&  postData?.promotion?.length > 0 && postData?.promotion[0]?.active == 1 && fetchNextPage) {
             console.log('fetching')
             fetchNextPage()
         }
