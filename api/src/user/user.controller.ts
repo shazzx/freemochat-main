@@ -8,7 +8,7 @@ import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
 import { Public } from 'src/auth/public.decorator';
-import { ChangePassword, ChangePasswordDTO, CreateUser, CreateUserDTO, ForgetPassword, ForgetPasswordDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, resendOTP, resendOTPDTO, resendOTPUser, resendOTPUserDTO, UpdateUser, UpdateUserDTO, verificationStatus, verificationStatusDTO, VerifyOTP, VerifyOTPDTO, VerifyOTPUser, VerifyOTPUserDTO } from 'src/schema/validation/user';
+import { ChangePassword, ChangePasswordDTO, CreateUser, CreateUserDTO, ForgetPassword, ForgetPasswordDTO, ForgetPasswordRequestDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, resendOTP, resendOTPDTO, resendOTPUser, resendOTPUserDTO, UpdateUser, UpdateUserDTO, verificationStatus, verificationStatusDTO, VerifyOTP, VerifyOTPDTO, VerifyOTPUser, VerifyOTPUserDTO } from 'src/schema/validation/user';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import { OtpService } from 'src/otp/otp.service';
@@ -17,6 +17,7 @@ import { USER } from 'src/utils/enums/user.c';
 import { TwilioService } from 'src/twilio/twilio.service';
 import { compare } from 'bcrypt';
 import { CryptoService } from 'src/crypto/crypto.service';
+import { CacheService } from 'src/cache/cache.service';
 
 @Controller('user')
 export class UserController {
@@ -29,6 +30,7 @@ export class UserController {
         private readonly locationService: LocationService,
         private readonly twilioService: TwilioService,
         private readonly cryptoService: CryptoService,
+        private readonly cacheService: CacheService,
     ) { }
 
 
@@ -279,7 +281,32 @@ export class UserController {
         }
     }
 
+    @Public()
+    @Post('forget-password-request')
+    async forgetPasswordRequest(
+        @Body(new ZodValidationPipe(ForgetPassword)) changePasswordDTO: ForgetPasswordRequestDTO,
+        @Req() req: Request,
+        @Res() res: Response) {
+        const { username } = changePasswordDTO
 
+        try {
+            const user = await this.userService.findUser(username)
+
+            if (!user) {
+                throw new BadRequestException()
+            }
+
+            const authId = uuidv4()
+
+            await this.cacheService.setForgetPassword(user.userId, authId)
+            console.log(`http://localhost:5173/forget-password/${authId}`)
+            return res.json({ success: true, message: "otp has been sent to your email" })
+
+        } catch (error) {
+            res.status(400).json({ success: false, error: { message: error.message } })
+
+        }
+    }
 
     @Public()
     @Post('forget-password-open')
@@ -287,11 +314,15 @@ export class UserController {
         @Body(new ZodValidationPipe(ForgetPassword)) changePasswordDTO: ForgetPasswordDTO,
         @Req() req: Request,
         @Res() res: Response) {
-        const { username, otp, type, changePassword } = changePasswordDTO
+        const { username, authId, otp, type, changePassword } = changePasswordDTO
 
         try {
             const user = await this.userService.findUser(username)
             if (!user) {
+                throw new BadRequestException()
+            }
+
+            if (!otp || !type || !changePassword) {
                 throw new BadRequestException()
             }
 
@@ -301,6 +332,13 @@ export class UserController {
             if (!isValidEmailSecret && !isValidPhoneSecret) {
                 throw new BadRequestException("OTP is not valid")
             }
+
+            let _authId = await this.cacheService.getForgetPassword(user._id)
+
+            if (authId !== _authId) {
+                throw new BadRequestException("OTP is not valid")
+            }
+
 
             if (type == 'email') {
                 let hashedPassword = await this.cryptoService.hash(changePassword.password, 16)

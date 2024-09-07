@@ -110,6 +110,22 @@ export const ChangePassword = z.object({
 export const ForgetPassword = z.object({
     otp: z.string(),
     type: z.string(),
+    username: z.string(),
+    authId: z.string().refine(
+        (val) => isUUID(val),
+        {
+            message: 'Invalid UUID',
+        }
+    ),
+    changePassword: z.object({
+        password: z.string(),
+    }),
+})
+
+
+export const ForgetPasswordRequest = z.object({
+    otp: z.string(),
+    type: z.string(),
     username: z.string().optional(),
     changePassword: z.object({
         password: z.string(),
@@ -154,6 +170,7 @@ export type VerifyOTPDTO = z.infer<typeof VerifyOTP>
 export type VerifyOTPUserDTO = z.infer<typeof VerifyOTPUser>
 export type ChangePasswordDTO = z.infer<typeof ChangePassword>
 export type ForgetPasswordDTO = z.infer<typeof ForgetPassword>
+export type ForgetPasswordRequestDTO = z.infer<typeof ForgetPasswordRequest>
 export type resendOTPDTO = z.infer<typeof resendOTP>
 export type resendOTPUserDTO = z.infer<typeof resendOTPUser>
 export type verificationStatusDTO = z.infer<typeof verificationStatus>

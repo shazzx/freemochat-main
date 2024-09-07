@@ -18,6 +18,7 @@ import PublicRoute from "./components/PublicRoute";
 import { Signup } from "./components/Signup";
 import ManagePages from "./sections/ManagePages";
 import SearchSection from "./sections/SearchSection";
+import YourAccount from "./components/YourAccount";
 
 export const router = createBrowserRouter([
     {
@@ -104,6 +105,10 @@ export const router = createBrowserRouter([
             {
                 path: "/signup",
                 element: <Signup/>,
+            },
+            {
+                path: "/forget-password",
+                element: <YourAccount/>,
             },
         ],
 

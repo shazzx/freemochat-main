@@ -25,6 +25,39 @@ export class CacheService {
     }
   }
 
+  async setForgetPassword(userId: string, authId: string): Promise<boolean> {
+    try {
+      // 5 minutes expiration
+    await this.redis.set(`authId:${userId}`, authId, 'EX', 600); 
+    return true
+    } catch (error) {
+      console.log(error)
+      return false
+    }
+  }
+
+
+
+  async getForgetPassword(userId: string): Promise<string> {
+    try {
+      // 5 minutes expiration
+    return await this.redis.get(`authId:${userId}`); 
+    } catch (error) {
+      console.log(error)
+      return error 
+    }
+  }
+
+  async invalidateForgetPassword(userId: string, token: string): Promise<boolean> {
+    try {
+    await this.redis.del(`authId:${userId}`);
+    return true
+    } catch (error) {
+      console.log(error)
+      return false
+    }
+  }
+
   async getUesrRefreshToken(userId: string): Promise<string> {
     try {
       // 5 minutes expiration
@@ -34,6 +67,7 @@ export class CacheService {
       return error 
     }
   }
+
   async invalidateUesrRefreshToken(userId: string, token: string): Promise<boolean> {
     try {
     await this.redis.del(`refresh-token:${userId}`);
