@@ -42,6 +42,9 @@ export const PageCreateSchema = yup.object().shape({
       return true;
     })
     .required('Handle is required'),
+    bio: yup
+    .string()
+    .max(120, 'Bio must not exceed 120 characters'),
   about: yup
     .string()
     .max(500, 'About must not exceed 500 characters')
@@ -60,7 +63,22 @@ export const UserSchema = yup.object().shape({
     .max(36, 'Name must not exceed 50 characters'),
   username: yup.string()
     .min(6, 'Handle must be at least 6 characters')
-    .max(30, 'Handle must not exceed 30 characters').required('username is required'),
+    .max(30, 'Handle must not exceed 30 characters')
+    .matches(/^[a-z0-9_]+$/, 'Handle must contain only lowercase letters, numbers, and underscores')
+    .test('unique-handle', 'This handle is already taken', async (value) => {
+      if (value && value.length >= 6) {
+        try {
+          const response = await axiosClient.post(`user/username-exists`, {username: value});
+          console.log(response.data)
+          return response.data.success;
+        } catch (error) {
+          console.error('Error checking handle availability:', error);
+          return false; // Assume available in case of error
+        }
+      }
+      return false;
+    })
+    .required('username is required'),
     // .matches(/^[a-z0-9_]+$/, 'Handle must contain only lowercase letters, numbers, and underscores')
     // .test('unique-handle', 'This handle is already taken', async (value) => {
     //   if (value && value.length >= 6) {
@@ -121,7 +139,7 @@ export const SignupSchema = yup.object().shape({
   email: yup
     .string().email()
     .required('emai is required'),
-  phone: yup.number().required('phone no is required'),
+  phone: yup.string().required('phone no is required'),
   address: yup.object({
     // country: yup.string().required("country is required"),
     // city: yup.string().required('city is required'),
@@ -157,6 +175,9 @@ export const GroupCreateSchema = yup.object().shape({
       return true;
     })
     .required('Handle is required'),
+    bio: yup
+    .string()
+    .max(300, 'Bio must not exceed 120 characters'),
   description: yup
     .string()
     .max(300, 'About must not exceed 300 characters')

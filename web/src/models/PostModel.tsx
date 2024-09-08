@@ -13,6 +13,8 @@ import React, { FormEvent, useEffect, useRef, useState } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { useUpdateReply } from '../hooks/Post/useComments'
 import { v4 as uuidv4 } from 'uuid'
+import { MdSend } from 'react-icons/md'
+import { toast } from 'react-toastify'
 
 function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postData, useLikePost, useBookmarkPost, type }: any) {
     const { user } = useAppSelector((data) => data.user)
@@ -38,8 +40,9 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
     }, [mutation.isSuccess, mutation.data, replyState])
 
     useEffect(() => {
-        if (inView && isSuccess && data[data.length - 1].hasMore) {
-            console.log('fetching')
+        console.log('vew')
+        if (inView && !isLoading) {
+            console.log('fetching comments')
             fetchNextPage()
         }
     }, [inView])
@@ -58,6 +61,11 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
     })
 
     const commentOnPost = async (recordingUrl?, recordingTime?) => {
+        
+        if (!recordingUrl && !recordingTime && commentRef.current?.value.length == 0) {
+            toast.info("Comment can't be empty")
+        }
+
         let formData = new FormData()
         let commentDetails = { postId, commentDetails: { content: recordingUrl ? null : commentRef.current?.value, username: user?.username }, uuid: uuidv4() }
 
@@ -148,7 +156,7 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
                 </div>
 
                 <Post useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} model={true} postData={postData} username={user?.username} userId={user?._id} type={type} />
-                <div className='relative p-4 flex h-full flex-col gap-2 '>
+                <div className='relative p-4 flex h-full flex-col gap-2  overflow-y-auto'>
                     {/* comment section */}
                     {/* {isLoading &&
                         // <ScreenLoader limit={1} />
@@ -190,7 +198,7 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
                         </div>
                     }
                     {replyState && replyState?.content &&
-                        <div className='absolute bg-background gap-4 w-full h-full flex justify-between flex-col top-0 left-0 z-10'>
+                        <div className='absolute bg-background gap-4 w-full h-full flex justify-between flex-col top-0 left-0 z-10 overflow-y-auto'>
                             <div className='p-4 flex flex-col gap-4'>
                                 <div className='flex gap-2'>
                                     <ChevronLeft className='cursor-pointer' onClick={() => {
@@ -240,13 +248,11 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
                                         replyOnPost(audioBlob, recordingTime)
                                     }
                                 }} />
-                                {!isRecording && <svg width="47" className="stroke-white dark:stroke-white" onClick={() => {
-                                    replyOnPost()
-                                }} cursor="pointer" height="50" viewBox="0 0 47 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="0.5" y="1" width="46" height="48" rx="4" fill="#433FFA" />
-                                    <rect x="0.5" y="1" width="46" height="48" rx="4" stroke="#433FFA" stroke-linejoin="bevel" />
-                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M30.8814 24.0836L15.786 17.1726C15.3915 16.963 14.9089 16.9431 14.4952 17.1194C14.0815 17.2957 13.7897 17.6456 13.7148 18.0552C13.72 18.1913 13.7561 18.3249 13.8209 18.4477L16.695 24.7566C16.8392 25.1756 16.9177 25.6109 16.9282 26.0497C16.9178 26.4886 16.8393 26.9239 16.695 27.3428L13.8209 33.6518C13.7561 33.7746 13.72 33.9082 13.7148 34.0443C13.7902 34.4533 14.0819 34.8025 14.4952 34.9785C14.9085 35.1545 15.3905 35.1347 15.7846 34.9256L30.8814 28.0147C31.7233 27.6594 32.2618 26.8926 32.2618 26.0491C32.2618 25.2057 31.7233 24.4389 30.8814 24.0836V24.0836Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>}
+                                {!isRecording && <Button className="m-0 bg-transparent  py-5 px-2 border-[2px] border-primary" onClick={() => {
+                            replyOnPost()
+                        }} >
+                        <MdSend size={24} className=""></MdSend>
+                    </Button>}
                             </div>
                         </div>
                     }
@@ -284,13 +290,12 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
                             }
 
                         }} />
-                        {!isRecording && <svg width="47" className="stroke-white dark:stroke-white" onClick={() => {
+                        {!isRecording && 
+                        <Button className="m-0 bg-transparent  py-5 px-2 border-[2px] border-primary" onClick={() => {
                             commentOnPost()
-                        }} height="50" viewBox="0 0 47 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="0.5" y="1" width="46" height="48" rx="4" fill="#433FFA" />
-                            <rect x="0.5" y="1" width="46" height="48" rx="4" stroke="#433FFA" stroke-linejoin="bevel" />
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M30.8815 24.0836L15.7861 17.1726C15.3917 16.963 14.909 16.3339431 14.4953 17.1194C14.0816 17.2957 13.7898 17.6456 13.715 18.0552C13.7201 18.1913 13.7562 18.3249 13.821 18.4477L16.6951 24.7566C16.8393 25.1756 16.9179 25.6109 16.9283 26.0497C16.9179 26.4886 16.8394 26.9239 16.6951 27.3428L13.821 33.6518C13.7562 33.7746 13.7201 33.9082 13.715 34.0443C13.7903 34.4533 14.082 34.8025 14.4953 34.9785C14.9086 35.1545 15.3906 35.1347 15.7848 34.9256L30.8815 28.0147C31.7234 27.6594 32.262 26.8926 32.262 26.0491C32.262 25.2057 31.7234 24.4389 30.8815 24.0836V24.0836Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        }} >
+                        <MdSend size={24} className=""></MdSend>
+                    </Button>
                         }
                     </div>}
             </div>

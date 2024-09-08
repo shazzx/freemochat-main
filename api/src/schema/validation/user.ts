@@ -145,8 +145,14 @@ export const resendOTP = z.object({
 
 
 export const resendOTPUser = z.object({
+    phone: z.string().optional(),
     username: z.string(),
     type: z.string(),
+})
+
+
+export const usernameExists = z.object({
+    username: z.string(),
 })
 
 export const verificationStatus = z.object({
@@ -173,4 +179,5 @@ export type ForgetPasswordDTO = z.infer<typeof ForgetPassword>
 export type ForgetPasswordRequestDTO = z.infer<typeof ForgetPasswordRequest>
 export type resendOTPDTO = z.infer<typeof resendOTP>
 export type resendOTPUserDTO = z.infer<typeof resendOTPUser>
+export type usernameExistsDTO = z.infer<typeof usernameExists>
 export type verificationStatusDTO = z.infer<typeof verificationStatus>

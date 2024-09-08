@@ -7,6 +7,7 @@ import callReducer from './features/user/callSlice'
 import viewedPostsReducer from './features/user/viewPostSlice'
 import notificationReducer from './features/user/notificationSlice'
 import verificationStatusReducer from './features/user/verificationStatusSlice'
+import onlineReducer from './features/user/onlineSlice'
 import adminAuthReducer from './features/admin/authSlice'
 import adminReducer from './features/admin/adminSlice'
 
@@ -21,6 +22,7 @@ export const store = configureStore({
         call: callReducer,
         verificationStatus: verificationStatusReducer,
         viewedPosts: viewedPostsReducer,
+        online: onlineReducer,
         socket: socketReducer,
     }
 })

@@ -306,7 +306,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                     <Friends userFriends={!isLoading && userFriends} removeFriend={removeFriend} media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                                 </TabsContent>
                                 <TabsContent value="followers" className="">
-                                    <Followers userFollowers={!userFollowers.isLoading && userFollowers} followUserToggle={followUserToggle} recepientId={_id} media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                    <Followers isSelf={isSelf} userFollowers={!userFollowers.isLoading && userFollowers} followUserToggle={followUserToggle} recepientId={_id} media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                                 </TabsContent>
                                 <TabsContent value="media" className='flex flex-col gap-2'>
                                     <MediaSection media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />

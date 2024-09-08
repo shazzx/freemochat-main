@@ -12,6 +12,9 @@ export class Group {
     @Prop()
     cover: string;
 
+    @Prop()
+    bio: string;
+
     @Prop({type: String, unique: true})
     handle: String;
 

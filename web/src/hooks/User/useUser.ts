@@ -12,7 +12,6 @@ export const useUser = (username, shouldFetch) => {
         },
 
     })
-    console.log(data)
 
     return {
         data,
@@ -72,12 +71,12 @@ export const useUploadStory = (userId: string) => {
         onError: (err, newComment, context) => {
             console.log(err)
             toast.error("something went wrong")
-            queryClient.invalidateQueries({queryKey: ['stories', userId]})
+            queryClient.invalidateQueries({ queryKey: ['stories', userId] })
         },
         onSettled: (e) => {
             console.log(e)
-        
-            queryClient.invalidateQueries({queryKey: ['stories', userId]})
+
+            queryClient.invalidateQueries({ queryKey: ['stories', userId] })
             // uncommeting this will refetch the comments again from the server to be in sync
             // queryClient.invalidateQueries({ queryKey: ["comments"] })
         }
@@ -95,19 +94,19 @@ export const useUploadStory = (userId: string) => {
 export const useRemoveStory = (userId: string) => {
     const queryClient = useQueryClient()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-        mutationFn: ({storyId, url}: {storyId: string, url: string, openedStoryIndex: string, storyViewIndex: string}) => {
-            return removeStory({storyId, url})
+        mutationFn: ({ storyId, url }: { storyId: string, url: string, openedStoryIndex: string, storyViewIndex: string }) => {
+            return removeStory({ storyId, url })
         },
 
 
-        onMutate: async ({openedStoryIndex, storyViewIndex, storyId}) => {
+        onMutate: async ({ openedStoryIndex, storyViewIndex, storyId }) => {
             await queryClient.cancelQueries({ queryKey: ['stories', userId] })
             const previousUser = queryClient.getQueryData(['stories', userId])
 
             queryClient.setQueryData(['stories', userId], (stories: any) => {
                 const updatedUser = produce(stories, (draft: any) => {
                     console.log(openedStoryIndex, storyViewIndex, stories)
-                    if (draft[openedStoryIndex]?.stories[storyViewIndex]?._id == storyId ) {
+                    if (draft[openedStoryIndex]?.stories[storyViewIndex]?._id == storyId) {
                         draft[openedStoryIndex]?.stories.splice(storyViewIndex, 1)
                     }
                     return draft
@@ -121,13 +120,13 @@ export const useRemoveStory = (userId: string) => {
         onError: (err, newComment, context) => {
             console.log(err)
             toast.error("something went wrong")
-            queryClient.invalidateQueries({queryKey: ['stories', userId]})
+            queryClient.invalidateQueries({ queryKey: ['stories', userId] })
 
         },
         onSettled: (e) => {
             console.log(e)
-            if(e){
-                queryClient.invalidateQueries({queryKey: ['stories', userId]})
+            if (e) {
+                queryClient.invalidateQueries({ queryKey: ['stories', userId] })
             }
             // uncommeting this will refetch the comments again from the server to be in sync
             // queryClient.invalidateQueries({ queryKey: ["comments"] })
@@ -472,7 +471,7 @@ export const useRemoveFriend = (username: string, userId) => {
             toast.error("something went wrong")
             queryClient.setQueryData(['user', username], context.previousUser)
         },
-        onSettled: (data, err, {recepientId}) => {
+        onSettled: (data, err, { recepientId }) => {
             console.log(data)
             // queryClient.invalidateQueries({queryKey: ['userFriends', recepientId]})
             // uncommeting this will refetch the comments again from the server to be in sync
@@ -492,17 +491,22 @@ export const useRemoveFriend = (username: string, userId) => {
 export const useFollowUserToggle = (username: string, userId: string) => {
     const queryClient = useQueryClient()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-        mutationFn: (userDetails: { recepientId: string }) => {
+        mutationFn: (userDetails: { recepientId: string, followers?: boolean }) => {
             return followUserToggle(userDetails.recepientId)
         },
 
 
-        onMutate: async () => {
+        onMutate: async ({ recepientId, followers }) => {
             await queryClient.cancelQueries({ queryKey: ['user', username] })
             const previousUser = queryClient.getQueryData(['user', username])
 
             queryClient.setQueryData(['user', username], (user: any) => {
                 const updatedUser = produce(user, (draft: any) => {
+                    if (followers) {
+                        return draft
+                    }
+
+
                     if (draft.isFollowed && draft.followersCount > 0) {
                         draft.followersCount = draft.followersCount - 1
                     } else {
@@ -515,6 +519,29 @@ export const useFollowUserToggle = (username: string, userId: string) => {
                 return updatedUser
             });
 
+            if (followers) {
+
+
+                await queryClient.cancelQueries({ queryKey: ['userFollowers', userId] })
+                const previousUser = queryClient.getQueryData(['userFollowers', userId])
+
+                queryClient.setQueryData(['userFollowers', userId], (followers: any) => {
+                    const updatedUser = produce(followers, (draft: any) => {
+                        return draft.pages.forEach((page, p) => {
+                            return page.followers.forEach(({ follower }, x) => {
+                                if (follower._id == recepientId) {
+                                    draft.pages[p].followers.splice(x, 1)
+                                    return draft
+                                }
+
+                            })
+                        })
+                    })
+                    return updatedUser
+                });
+            }
+
+
             return { previousUser };
         },
 
@@ -526,7 +553,7 @@ export const useFollowUserToggle = (username: string, userId: string) => {
         onSettled: (e) => {
             console.log(e)
             // uncommeting this will refetch the comments again from the server to be in sync
-            queryClient.invalidateQueries({ queryKey: ["userFollowers", userId] })
+            // queryClient.invalidateQueries({ queryKey: ["userFollowers", userId] })
         }
     })
 

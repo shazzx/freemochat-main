@@ -267,7 +267,6 @@ export const useFollowPage = () => {
       return followPage(pageDetails)
     },
 
-
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: [PageKeys.PAGE] })
       const previousPage = queryClient.getQueryData([PageKeys.PAGE])
@@ -279,6 +278,7 @@ export const useFollowPage = () => {
             draft.followersCount = draft.followersCount - 1
             return draft
           }
+          
           if (draft.isFollower == false) {
             draft.isFollower = true
             draft.followersCount = draft.followersCount + 1
@@ -315,3 +315,4 @@ export const useFollowPage = () => {
     mutate
   }
 }
+

@@ -236,6 +236,7 @@ export const useUpdatePost = (key, id: string) => {
     onMutate: async ({ postId, postIndex, pageIndex, content, media, selectedMedia }) => {
       await queryClient.cancelQueries({ queryKey: [key, id] })
       const previousPosts = queryClient.getQueryData([key, id])
+
       queryClient.setQueryData([key, id], (pages: any) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft.pages[pageIndex] && draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId) {

@@ -8,7 +8,7 @@ import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
 import { Public } from 'src/auth/public.decorator';
-import { ChangePassword, ChangePasswordDTO, CreateUser, CreateUserDTO, ForgetPassword, ForgetPasswordDTO, ForgetPasswordRequestDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, resendOTP, resendOTPDTO, resendOTPUser, resendOTPUserDTO, UpdateUser, UpdateUserDTO, verificationStatus, verificationStatusDTO, VerifyOTP, VerifyOTPDTO, VerifyOTPUser, VerifyOTPUserDTO } from 'src/schema/validation/user';
+import { ChangePassword, ChangePasswordDTO, CreateUser, CreateUserDTO, ForgetPassword, ForgetPasswordDTO, ForgetPasswordRequestDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, resendOTP, resendOTPDTO, resendOTPUser, resendOTPUserDTO, UpdateUser, UpdateUserDTO, usernameExists, usernameExistsDTO, verificationStatus, verificationStatusDTO, VerifyOTP, VerifyOTPDTO, VerifyOTPUser, VerifyOTPUserDTO } from 'src/schema/validation/user';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import { OtpService } from 'src/otp/otp.service';
@@ -66,7 +66,7 @@ export class UserController {
                 // html: emailData.html,
             })
 
-            await this.twilioService.sendSMS(phone, `Your email otp code is: ${phoneOTP}`)
+            await this.twilioService.sendSMS(phone, `Your phone otp code is: ${phoneOTP}`)
             res.json({ success: true, tempSecret, username: user.username, message: "account created successfully", verification: "pending" })
 
         } catch (error) {
@@ -354,6 +354,23 @@ export class UserController {
         }
     }
 
+    @Post('username-exists')
+    async userExists(
+        @Body(new ZodValidationPipe(usernameExists)) usernameExists: usernameExistsDTO,
+        @Req() req: Request,
+        @Res() res: Response) {
+        const { username } = usernameExists
+         
+        if (username == req.user.username) {
+            return res.json({ success: true })
+        }
+        const user = await this.userService.findUser(username)
+        if (!user) {
+            return res.json({ success: true })
+        }
+        return res.json({ success: false })
+    }
+
 
     @Public()
     @Post('verification-status')
@@ -400,6 +417,14 @@ export class UserController {
                 // let secret = this.otpService.generateSecret()
                 let emailOTP = await this.otpService.generateOtp(user._id, 'email')
                 console.log(emailOTP, 'email')
+
+                // await this.twilioService.sendEmail({
+                //     to: user.email,
+                //     from: 'freedombook99@gmail.com',
+                //     subject: "OTP Verification",
+                //     text: `Your email otp code is: ${emailOTP} `,
+                //     // html: emailData.html,
+                // })
                 return res.json({ success: true, message: "otp has been sent to your email" })
             }
 
@@ -407,6 +432,8 @@ export class UserController {
             if (type == 'phone') {
                 let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
                 console.log(phoneOTP, 'phone')
+                console.log(user.phone)
+                await this.twilioService.sendSMS(user.phone, `Your phone otp code is: ${phoneOTP}`)
                 return res.json({ success: true, message: "otp has been sent to your phone" })
             }
 
@@ -415,13 +442,14 @@ export class UserController {
             res.status(err.statusCode || 500).json({ success: false, message: err.message })
         }
     }
+    
 
     @Post('resend-otp-user')
     async resendOTPUser(
         @Body(new ZodValidationPipe(resendOTPUser)) resendOTPDTO: resendOTPUserDTO,
         @Req() req: Request,
         @Res() res: Response) {
-        const { username, type } = resendOTPDTO
+        const { username, type, phone } = resendOTPDTO
         try {
             const user = await this.userService.findUser(username)
             if (!user) {
@@ -430,6 +458,14 @@ export class UserController {
 
             if (type == 'email') {
                 let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+
+                await this.twilioService.sendEmail({
+                    to: user.email,
+                    from: 'freedombook99@gmail.com',
+                    subject: "OTP Verification",
+                    text: `Your email otp code is: ${emailOTP} `,
+                    // html: emailData.html,
+                })
                 console.log(emailOTP, 'email')
                 return res.json({ success: true, message: "otp has been sent to your email" })
             }
@@ -437,7 +473,10 @@ export class UserController {
 
             if (type == 'phone') {
                 let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
-                console.log(phoneOTP, 'phone')
+                console.log(phoneOTP, 'phone send to', (phone || user.phone))
+                console.log(phone || user.phone)
+                // await this.twilioService.sendSMS(user.phone, `Your phone otp code is: ${phoneOTP}`)
+
                 return res.json({ success: true, message: "otp has been sent to your phone" })
             }
 

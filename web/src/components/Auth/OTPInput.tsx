@@ -87,7 +87,6 @@ export function InputOTPForm({ buttonTitle, setOtpSent, sent, send, label, descr
           {send &&
             <Button type="button" className={sent ? "bg-card border border-accent my-2" : "my-2"} onClick={() => {
               if (!sent) {
-                setOtpSent(true)
                 otpResend(type)
               }
             }}>{sent ? <div className="flex gap-2 items-center justify-center">

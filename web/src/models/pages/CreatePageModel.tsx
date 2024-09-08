@@ -36,6 +36,7 @@ const createPageModel: FC<any> = ({ setModelTrigger, createPage, editPage, editS
 
     const pageName = useRef<HTMLInputElement>()
     const pageHandle = useRef<HTMLInputElement>()
+    const pageBio = useRef<HTMLInputElement>()
     const pageAbout = useRef<HTMLTextAreaElement>()
     const onSubmit = async (pageDetails) => {
         console.log(pageDetails)
@@ -157,7 +158,7 @@ const createPageModel: FC<any> = ({ setModelTrigger, createPage, editPage, editS
                                         placeholder="Page Name"
                                         {...register('name')}
                                     />
-                                    {errors.name && <p>{errors.name.message}</p>}
+                                    {errors.name && <p className="max-w-80">{errors.name.message}</p>}
                                 </div>
 
                                 <div>
@@ -173,8 +174,26 @@ const createPageModel: FC<any> = ({ setModelTrigger, createPage, editPage, editS
                                         placeholder="@page_handle"
                                         {...register('handle')}
                                     />
-                                    {errors.handle && <p>{errors.handle.message}</p>}
+                                    {errors.handle && <p className="max-w-80">{errors.handle.message}</p>}
                                 </div>
+
+
+                                <div>
+                                    <Label >
+                                        Page Bio
+                                    </Label>
+                                    <Input
+                                        name="bio"
+                                        ref={pageBio}
+                                        defaultValue={pageDetails?.bio}
+                                        id="bio"
+                                        className="w-96"
+                                        placeholder="bio"
+                                        {...register('bio')}
+                                    />
+                                    {errors.bio && <p className="max-w-80" >{errors.handle.message}</p>}
+                                </div>
+
 
                                 <div>
                                     <Label >
@@ -189,7 +208,7 @@ const createPageModel: FC<any> = ({ setModelTrigger, createPage, editPage, editS
                                         maxLength={150}
                                         {...register('about')}
                                     />
-                                    {errors.about && <p>{errors.about.message}</p>}
+                                    {errors.about && <p className="max-w-80">{errors.about.message}</p>}
                                 </div>
                             </div>
                             <div className="w-full flex justify-end ">

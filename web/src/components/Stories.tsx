@@ -49,7 +49,7 @@ function Stories() {
 
     useEffect(() => {
         const getStories = async () => {
-            const storiesIndex = data.findIndex((storyData) => {
+            const storiesIndex = data && data.findIndex((storyData) => {
                 if (storyData.user.username == username) {
                     return storyData
                 }

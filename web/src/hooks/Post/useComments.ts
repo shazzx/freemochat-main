@@ -208,7 +208,14 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
     },
     onSettled: (data) => {
       console.log(data)
-      queryClient.invalidateQueries({ queryKey: ["comments"] })
+
+      queryClient.setQueryData(['comments'], (pages: any) => {
+        produce(pages, (draft: any) => {
+          draft.pages[0].comments[0] = data
+          return draft
+        })
+      })
+      // queryClient.invalidateQueries({ queryKey: ["comments"] })
       // queryClient.invalidateQueries({ queryKey: [type, targetId] })
       // queryClient.invalidateQueries({ queryKey: ['feed'] })
     }

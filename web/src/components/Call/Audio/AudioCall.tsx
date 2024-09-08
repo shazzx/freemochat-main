@@ -14,11 +14,13 @@ import { Mic } from "lucide-react";
 import { MdPhone } from "react-icons/md";
 import CallSecondsCounter from "../CallSecondsCounter";
 import { useSocket } from "@/hooks/useSocket";
+import { useAppSelector } from "@/app/hooks";
 
 const AudioCall = ({ channel, callDetails, cancelCall}) => {
   const recepient = callDetails.recepientDetails 
   const appId = 'f41145d4d6fa4a3caab3104ac89622ec'
   const socket = useSocket()
+  const { user } = useAppSelector((state) => state.user)
 
 
   const [activeConnection, setActiveConnection] = useState(true);
@@ -97,19 +99,24 @@ const AudioCall = ({ channel, callDetails, cancelCall}) => {
             <div >
               <CallSecondsCounter isCallActive={true} key={callDetails.userId} />
             </div>
-            <div className="flex gap-12 absolute bottom-32">
-              <button className="rounded-full p-[14px] bg-red-500 hover:bg-red-400 active:bg-red-600"
+            <div className="flex gap-12 absolute bottom-36">
+              <button className="rounded-full p-[14px]  bg-red-500 hover:bg-red-400 active:bg-red-600"
                 onClick={async () => {
                   setActiveConnection(false)
-                  socket.emit("call-end",  callDetails )
+                  socket.emit("call-end",  {...callDetails, userDetails: {
+                    userId: user._id,
+                    username: user.username,
+                    fullname: user.firstname + " " + user?.lastname,
+                    profile: user?.profile
+                }} )
                   cancelCall("AUDIO")
                 }}>
                 <MdPhone size={32} color="white" />
               </button>
-
+{/* 
               <button className="rounded-full p-[14px] bg-red-500" onClick={() => setMic(a => !a)}>
                 <Mic color="white" size={32} />
-              </button>
+              </button> */}
             </div>
           </div>
         </div>

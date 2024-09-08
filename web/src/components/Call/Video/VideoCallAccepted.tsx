@@ -84,7 +84,7 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
         })
         // dispatch(endCall())
     }
-
+    console.log(callDetails)
 
     useEffect(() => {
         socket.on("call-end", (data) => {
@@ -104,28 +104,31 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
             }
         })
     }
-console.log(callDetails?.recepientDetails.username, user.username)
+    console.log(callDetails?.recepientDetails.username, user.username)
     return (
         <div className="mainContainer absolute left-0 top-0 overflow-hidden flex items-center justify-center z-50">
-            { recepientState == 'ACCEPTED' || callDetails?.recepientDetails.username !== user.username  ?
+            {recepientState == 'ACCEPTED' || callDetails?.recepientDetails.username !== user.username ?
                 <div className="flex gap-12 absolute bottom-12 z-30">
                     <button className="rounded-full p-[14px] bg-red-500 hover:bg-red-400 active:bg-red-600"
                         onClick={async () => {
                             setActiveConnection(false)
-                            socket.emit("call-end", {...callDetails, userDetails: {
-                                userId: user._id,
-                                username: user.username,
-                                fullname: user.firstname + " " + user?.lastname,
-                                profile: user?.profile
-                            }})
+                            socket.emit("call-end", {
+                                ...callDetails, userDetails: {
+                                    userId: user._id,
+                                    username: user.username,
+                                    fullname: user.firstname + " " + user?.lastname,
+                                    profile: user?.profile
+                                }
+                            })
                             cancelCall("VIDEO")
                         }}>
                         <MdPhone size={32} color="white" />
                     </button>
-
+                    
+                    {/* 
                     <button className="rounded-full p-[14px] bg-red-500" onClick={() => setMic(a => !a)}>
                         <Mic color="white" size={32} />
-                    </button>
+                    </button> */}
                 </div> :
                 <div className="flex gap-12 absolute bottom-20 z-10">
                     <Button type="button" className="rounded-full p-4 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={callDecline}>
@@ -154,13 +157,13 @@ console.log(callDetails?.recepientDetails.username, user.username)
                     <div className='flex flex-col gap-4 items-center justify-center'>
                         <div className='w-28 h-28 border-2 border-accent rounded-full flex items-center justify-center bg-accent overflow-hidden'>
                             <Avatar className="flex  items-center justify-center">
-                                <AvatarImage src={callDetails?.userDetails?.profile || targetDetails?.profile || callDetails?.recepientDetails?.profile} alt="Avatar" />
-                                <AvatarFallback className='text-4xl'>{callDetails?.userDetails?.fullname[0]?.toUpperCase() || targetDetails?.fullname[0]?.toUpperCase() || callDetails?.recepientDetails?.fullname[0]?.toUpperCase()}</AvatarFallback>
+                                <AvatarImage src={callDetails?.recepientDetails?.profile || targetDetails?.profile} alt="Avatar" />
+                                <AvatarFallback className='text-4xl'>{callDetails?.recepientDetails?.fullname[0]?.toUpperCase() || targetDetails?.fullname[0]?.toUpperCase() || callDetails?.recepientDetails?.fullname[0]?.toUpperCase()}</AvatarFallback>
                             </Avatar>
                         </div>
                         <div className='flex flex-col  items-center justify-center'>
-                            <span className='text-lg'>{callDetails?.userDetails?.fullname || targetDetails?.fullname}</span>
-                            <span>@{callDetails?.userDetails?.username || targetDetails?.username}</span>
+                            <span className='text-lg'>{callDetails?.recepientDetails?.fullname || targetDetails?.fullname}</span>
+                            <span>@{callDetails?.recepientDetails?.username || targetDetails?.username}</span>
                         </div>
                     </div>
                 }

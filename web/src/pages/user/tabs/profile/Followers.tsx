@@ -9,12 +9,13 @@ import { RiUserUnfollowLine } from 'react-icons/ri'
 import { useInView } from 'react-intersection-observer'
 import { Link } from 'react-router-dom'
 
-function Followers({ userFollowers, followUserToggle, media, recepientId, setMediaModelDetails, setMediaOpenDetails, setMediaOpenModel }) {
+function Followers({isSelf, userFollowers, followUserToggle, media, recepientId, setMediaModelDetails, setMediaOpenDetails, setMediaOpenModel }) {
     const {ref, inView} = useInView()
 
     useEffect(() => {
         userFollowers.fetchNextPage()
     },[inView])
+    console.log(userFollowers)
 
     return (
         <div className='w-full items-center md:items-start p-2 flex gap-2 border-muted'>
@@ -40,7 +41,7 @@ function Followers({ userFollowers, followUserToggle, media, recepientId, setMed
 
                                         </div>
                                     </Link>
-                                    <DropdownMenu>
+{/* {isSelf &&                                    <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" className="h-8 w-8 bg-card p-2 rounded-md">
                                                 <span className="sr-only">Open menu</span>
@@ -54,7 +55,9 @@ function Followers({ userFollowers, followUserToggle, media, recepientId, setMed
                                                 <RiUserUnfollowLine size={22} /> <span>Remove</span>
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
+
                                     </DropdownMenu>
+                                } */}
                                 </div>
                             </div>
                         )
@@ -77,6 +80,7 @@ function Followers({ userFollowers, followUserToggle, media, recepientId, setMed
 
                                         </div>
                                     </Link>
+                                    {/* {isSelf &&
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" className="h-8 w-8 bg-card p-2 rounded-md">
@@ -86,12 +90,13 @@ function Followers({ userFollowers, followUserToggle, media, recepientId, setMed
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className='bg-card border-2 border-accent rounded-md'>
                                             <DropdownMenuItem className=' cursor-pointer hover:bg-accent flex gap-2 p-2 items-center justify-center' onClick={async () => {
-                                                followUserToggle.mutate({ recepientId })
+                                                followUserToggle.mutate({ recepientId, followers: true })
                                             }}>
                                                 <RiUserUnfollowLine size={22} /> <span>Remove</span>
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
+                                     } */}
                                 </div>
                             </div>
                         )

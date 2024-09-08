@@ -13,6 +13,7 @@ import {
 import { MdDelete, MdEdit, MdReport, MdUpgrade } from "react-icons/md"
 
 export function DropdownMenuMain({ deletePost, setConfirmModelState, setReportModelState, reportModelState, postPromotion, setPostPromotion, postBy, setEditPostModelState }) {
+    console.log(location.pathname)
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -23,7 +24,7 @@ export function DropdownMenuMain({ deletePost, setConfirmModelState, setReportMo
             </DropdownMenuTrigger>
             <DropdownMenuContent >
                 <DropdownMenuGroup>
-                    {postBy && <DropdownMenuItem className="cursor-pointer" onClick={() => {
+                    {postBy && (location.pathname !==  '/' && location.pathname !==  '/groups' && location.pathname !==  '/pages') && <DropdownMenuItem className="cursor-pointer" onClick={() => {
                         setEditPostModelState(true)
                     }}>
                         <MdEdit className="mr-2 h-4 w-4" />
@@ -48,7 +49,7 @@ export function DropdownMenuMain({ deletePost, setConfirmModelState, setReportMo
                         <span>Report</span>
                     </DropdownMenuItem>}
 
-                    {postBy && <DropdownMenuItem className="cursor-pointer" onClick={deletePost}>
+                    {postBy && (location.pathname !==  '/' && location.pathname !==  '/groups' && location.pathname !==  '/pages'  ) && <DropdownMenuItem className="cursor-pointer" onClick={deletePost}>
                         <MdDelete className="mr-2 h-4 w-4" />
                         <span>Delete</span>
                     </DropdownMenuItem>}

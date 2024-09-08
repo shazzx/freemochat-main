@@ -71,6 +71,7 @@ export class PageService {
                     cover: 1,
                     followersCount: 1,
                     admins: 1,
+                    bio: 1,
                     about: 1,
                     isFollower: 1,
                     createdAt: 1

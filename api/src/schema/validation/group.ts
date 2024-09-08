@@ -11,7 +11,8 @@ export const CreateGroup = z.object({
     groupDetails: z.object({
         name: z.string(),
         handle: z.string(),
-        description: z.string()
+        bio: z.string().optional(),
+        description: z.string().optional()
     }),
 })
 
@@ -20,7 +21,8 @@ export const UpdateGroup = z.object({
     groupDetails: z.object({
         name: z.string(),
         handle: z.string(),
-        description: z.string()
+        bio: z.string().optional(),
+        description: z.string().optional()
     }),
     groupId: z.string(),
     images: z.object({profile: z.string().optional(), cover: z.string().optional()}).optional(),

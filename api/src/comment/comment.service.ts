@@ -17,7 +17,7 @@ export class CommentService {
     ) { }
 
     async getComments(postId, cursor, userId: string) {
-        const limit = 5
+        const limit = 12
         const cacheKey = `post:${postId}:comments:${cursor || 'start'}:${limit}`
         // const cachedPage = await this.cacheService.get(cacheKey)
         // console.log(cachedPage)
@@ -108,7 +108,7 @@ export class CommentService {
     }
 
     async getReplies(commentId, cursor, userId: string) {
-        const limit = 5
+        const limit = 12
         // const cacheKey = `post:${postId}:comments:${cursor || 'start'}:${limit}`
         // const cachedPage = await this.cacheService.get(cacheKey)
         // console.log(cachedPage)

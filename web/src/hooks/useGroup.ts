@@ -52,14 +52,14 @@ export const useCreateGroup = () => {
       await queryClient.cancelQueries({ queryKey: ['groups'] })
       const previousGroups = queryClient.getQueryData(['groups'])
 
-      queryClient.setQueryData(['groups'], (pages: any) => {
-        const updatedGroups = produce(pages, (draft: any) => {
-          return [{ ...groupDetails, images, followers: 0, totalPosts: 0 }, ...pages]
+      // queryClient.setQueryData(['groups'], (pages: any) => {
+      //   const updatedGroups = produce(pages, (draft: any) => {
+      //     return [{ ...groupDetails, images, followers: 0, isUploaded: images.length > 0 ? false : null,  createdAt: Date.now(), totalPosts: 0 }, ...pages]
 
-          // throw new Error()
-        })
-        return updatedGroups
-      });
+      //     // throw new Error()
+      //   })
+      //   return updatedGroups
+      // });
 
       return { previousGroups };
     },
@@ -70,6 +70,8 @@ export const useCreateGroup = () => {
       // queryClient.setQueryData(['groups'], context.previousGroups)
     },
     onSettled: (e) => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] })
+
       // uncommeting this will refetch the comments again from the server to be in sync
       // queryClient.invalidateQueries({ queryKey: ["comments"] })
     }
@@ -100,7 +102,7 @@ export const useUpdateGroup = () => {
 
       queryClient.setQueryData(['groups'], (groups: any) => {
         const updatedGroups = produce(groups, (draft: any) => {
-          draft[groupDetails.index] = { ...draft[groupDetails.index],  ...images , isUploaded : false, ...updatedGroupDetails }
+          draft[groupDetails.index] = { ...draft[groupDetails.index],  ...images , isUploaded : false, createdAt: Date.now(), ...updatedGroupDetails }
           console.log(draft[groupDetails.index])
 
           return draft

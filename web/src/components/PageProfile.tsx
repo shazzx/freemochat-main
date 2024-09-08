@@ -192,7 +192,7 @@ function PageProfile() {
                                         <div className='text-gray-400 text-sm'>@{_pageData?.data?.handle}</div>
                                     </div>
                                     <div>
-                                        <p className='leading-tight text-sm'>"we may encounter many defeats but we must not be defeated"</p>
+                                        <p className='leading-tight text-sm'>{_pageData?.data?.bio}</p>
                                     </div>
                                     <div className='flex flex-col text-sm'>
                                         <span>{!_pageData.isLoading && _pageData?.data?.followersCount == 1 ? _pageData?.data?.followersCount + " follower" : _pageData?.data?.followersCount > 1 ? _pageData?.data?.followersCount + " followers" : _pageData.isLoading ? "followers loading..." : "no followers"}</span>
@@ -203,7 +203,7 @@ function PageProfile() {
                         </div>
                         {_pageData?.data?.isUploaded == false &&
 
-                            <div className='relative bottom-6 min-w-fit z-10 flex  justify-center items-center gap-2' >
+                            <div className='relative bottom-6 min-w-fit right-6 z-10 flex  justify-center items-center gap-2' >
                                 <svg className="text-foreground animate-spin" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
                                     width="20" height="20">
                                     <path
@@ -285,14 +285,14 @@ function PageProfile() {
 
                         </TabsContent>
                         <TabsContent value="followers" className="">
-                            <div className='flex-responsive w-full items-center md:items-start p-2 flex gap-2 border-muted'>
-                                <div className='flex w-full items-center  flex-col gap-2 '>
+                            <div className='w-full items-center md:items-start p-2 flex gap-2 border-muted'>
+                                <div className='flex max-w-xl w-full items-center  flex-col gap-2 bg-card'>
                                     {!pageFollowers.isLoading && pageFollowers.data && pageFollowers.data.map((page) => {
                                         return page.followers.map((followerData) => {
                                             return (
-                                                <Link className='flex flex-col gap-1 w-full bg-card' to={domain + "/user/" + followerData?.follower?.username}>
+                                                <div className='flex items-center p-2 gap-2 relative w-full '>
+                                                    <Link className='flex flex-col gap-1 w-full' to={domain + "/user/" + followerData?.follower?.username}>
 
-                                                    <div className='flex-responsive items-center p-2 gap-2 relative w-full '>
                                                         <div className='flex w-full gap-2'>
                                                             <div className='w-16 h-16  rounded-md flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                                                 <Avatar >
@@ -306,27 +306,27 @@ function PageProfile() {
 
                                                             </div>
                                                         </div>
+                                                    </Link>
+{/* 
+                                                    {_pageData?.data?.admins?.includes(user?._id) &&
 
-                                                        {_pageData?.data?.admins?.includes(user?._id) &&
-
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" className="h-8 w-8 bg-card p-2 rounded-md">
-                                                                        <span className="sr-only">Open menu</span>
-                                                                        <EllipsisVertical className="h-4 w-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end" className='bg-card p-2 rounded-md'>
-                                                                    <DropdownMenuItem >Remove</DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
-                                                        }
-                                                    </div>
-                                                </Link>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" className="h-8 w-8 bg-card p-2 rounded-md">
+                                                                    <span className="sr-only">Open menu</span>
+                                                                    <EllipsisVertical className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end" className='bg-card p-2 rounded-md'>
+                                                                <DropdownMenuItem >Remove</DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    } */}
+                                                </div>
                                             )
                                         })
                                     })}
-                                    {followersCount == 0 &&
+                                    {pageFollowers.isLoading && pageFollowers.data && pageFollowers.data[0]?.followers?.length! > 0 &&
                                         <div className='flex flex-col w-full items-center justify-center'>
                                             <svg width="160" height="100" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="transparent" d="M0 0h900v600H0z" /><path fill-rule="evenodd" clip-rule="evenodd" d="M684.111 166.5H467.893a33.43 33.43 0 0 1-27.826-14.907l-46.923-70.652a33.428 33.428 0 0 0-27.926-14.94H215.889C178.947 66 149 95.996 149 133v335c0 37.003 29.947 67 66.889 67h468.222C721.053 535 751 505.003 751 468V233.5c0-37.003-29.947-67-66.889-67z" fill="#fff" stroke="#E1E4E5" stroke-width="4" /><rect x="201" y="370" width="114" height="114" rx="57" fill="#666AF6" /><path fill-rule="evenodd" clip-rule="evenodd" d="M284 450.58v3.71a3.713 3.713 0 0 1-3.714 3.71h-44.572a3.713 3.713 0 0 1-3.714-3.71v-3.769C232 439.294 244.844 432 258 432s26 7.298 26 18.521m-16.954-51.713c5.272 5.076 5.272 13.308 0 18.384-5.272 5.077-13.82 5.077-19.092 0-5.272-5.076-5.272-13.308 0-18.384 5.272-5.077 13.82-5.077 19.092 0z" fill="#fff" /><rect x="345" y="379" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="345" y="418" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="345" y="457" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="201" y="224" width="114" height="114" rx="57" fill="#666AF6" /><path fill-rule="evenodd" clip-rule="evenodd" d="M284 304.58v3.71a3.713 3.713 0 0 1-3.714 3.71h-44.572a3.713 3.713 0 0 1-3.714-3.71v-3.769C232 293.294 244.844 286 258 286s26 7.298 26 18.521m-16.954-51.713c5.272 5.076 5.272 13.308 0 18.384-5.272 5.077-13.82 5.077-19.092 0-5.272-5.076-5.272-13.308 0-18.384 5.272-5.077 13.82-5.077 19.092 0z" fill="#fff" /><rect x="345" y="233" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="345" y="272" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="345" y="311" width="347" height="16" rx="8" fill="#E1E4E5" /></svg>
                                             <span>No Followers</span>

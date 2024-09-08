@@ -82,9 +82,11 @@ export class GroupsService {
                     name: 1,
                     description: 1,
                     handle: 1,
+                    isUploaded: 1,
                     membersCount: 1,
                     profile: 1,
                     cover: 1,
+                    bio: 1,
                     admins: "$populatedAdmins",
                     user: 1,
                     isMember: 1,
@@ -105,7 +107,7 @@ export class GroupsService {
     }
 
     async getGroups(userId: string) {
-        const groups = await this.groupModal.find({$or: [{ user: new Types.ObjectId(userId)}, {user: new Types.ObjectId(userId) }]})
+        const groups = await this.groupModal.find({$or: [{ user: new Types.ObjectId(userId)}, {user: new Types.ObjectId(userId) }]}).sort({createdAt: -1})
         return groups
     }
 

@@ -1,7 +1,7 @@
 import { ChevronLeft, Copy, Delete, DeleteIcon, EllipsisIcon, File, Image, Video } from "lucide-react"
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import EmojiPicker, { Categories } from "emoji-picker-react";
-import { MdCancel, MdDelete } from "react-icons/md";
+import { MdCancel, MdDelete, MdSend } from "react-icons/md";
 import { axiosClient } from "@/api/axiosClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
@@ -29,10 +29,8 @@ import Agora from "./Call/agora/AgoraRTC";
 import VideoCall from "./Call/Video/VideoCall";
 
 function Chat({ user, recepientDetails, setChatOpen }) {
-    const _isOnline = useCallback((online: boolean) => () => setIsOnline(online), [])
-
     const [emojiPickerState, setEmojiPickerState] = useState(false)
-    const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId, _isOnline)
+    const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId)
     const group: any = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId) : {}
     const [chatGroupInfo, setChatGroupInfo] = useState(false)
     const [inputValue, setInputValue] = useState("");
@@ -59,7 +57,18 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     const textRef = useRef(null)
     const emojiPickerRef = useRef(null)
     const queryClient = useQueryClient()
+    const [isOnline, setIsOnline] = useState(null)
 
+    const online = useAppSelector((state) => state.online)
+
+
+    useEffect(() => {
+        if (online.isOnline[recepientDetails?.userId]) {
+            setIsOnline(true)
+        }else{
+            setIsOnline(false)
+        }
+    },[online.isOnline])
 
     // useEffect(() => {
     //     function handleClickOutside(event) {
@@ -111,7 +120,6 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         socket.emit("leavegroup", { userId: user?._id, groupId: recepientDetails?.groupId })
     }
 
-    const [isOnline, setIsOnline] = useState(null)
 
     // useEffect(() => {
 
@@ -204,8 +212,9 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         }
 
         queryClient.invalidateQueries({ queryKey: ['chatlist'] })
+        console.log(e)
 
-        if (e.type !== "click" && e.key !== "Enter") {
+        if (e?.type !== "click" && e?.key !== "Enter") {
             return
         }
         const messageData = { recepeint: recepientDetails.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, type: recepientDetails?.type, messageType: "Text" }
@@ -404,7 +413,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                 </div>
             </div>
 
-            <div className="h-full px-4 flex flex-col gap-4  overflow-y-scroll" onClick={() => {
+            <div className="h-full px-4 flex flex-col gap-4  overflow-y-auto mt-2" onClick={() => {
 
                 if (openedDropDownMessageId !== null) {
                     setOpenedDropDownMessageId(null)
@@ -752,7 +761,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                         }}
                         type="search"
                         placeholder="Type your message..."
-                        className="w-full appearance-none bg-background-secondary pl-8 shadow-none border-none focus:outline-none"
+                        className="w-full appearance-none bg-background-secondary pl-2 sm:pl-8 shadow-none border-none focus:outline-none"
                     />
 
                     <div className="relative">
@@ -828,15 +837,8 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
                 }} />
                 {!isRecording &&
-                    <Button className="p-0 m-0 bg-transparent" onClick={() => {
-                        handleSendMessage()
-                    }}>
-
-                        <svg width="47" className="stroke-white" cursor="pointer" height="50" viewBox="0 0 47 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="0.5" y="1" width="46" height="48" rx="4" fill="#433FFA" />
-                            <rect x="0.5" y="1" width="46" height="48" rx="4" stroke="#433FFA" stroke-linejoin="bevel" />
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M30.8814 24.0836L15.786 17.1726C15.3915 16.963 14.9089 16.9431 14.4952 17.1194C14.0815 17.2957 13.7897 17.6456 13.7148 18.0552C13.72 18.1913 13.7561 18.3249 13.8209 18.4477L16.695 24.7566C16.8392 25.1756 16.9177 25.6109 16.9282 26.0497C16.9178 26.4886 16.8393 26.9239 16.695 27.3428L13.8209 33.6518C13.7561 33.7746 13.72 33.9082 13.7148 34.0443C13.7902 34.4533 14.0819 34.8025 14.4952 34.9785C14.9085 35.1545 15.3905 35.1347 15.7846 34.9256L30.8814 28.0147C31.7233 27.6594 32.2618 26.8926 32.2618 26.0491C32.2618 25.2057 31.7233 24.4389 30.8814 24.0836V24.0836Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                    <Button className="m-0 bg-transparent  py-5 px-2 border-[2px] border-primary" onClick={handleSendMessage} >
+                        <MdSend size={24} className=""></MdSend>
                     </Button>
                 }
             </div>

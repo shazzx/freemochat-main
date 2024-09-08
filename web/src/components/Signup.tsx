@@ -95,12 +95,12 @@ export function Signup() {
     }, [country])
 
     const valdatePhone = (_phone, country) => {
-        console.log(_phone, country )
+        console.log(_phone, country)
         return phone(_phone, { country })
     }
     const onSubmit = (_data) => {
         if (!country || !city) {
-        setSignupButtonState(false)
+            setSignupButtonState(false)
             toast.info("please select country and city")
             return
         }
@@ -119,6 +119,9 @@ export function Signup() {
     }
 
 
+    useEffect(() => {
+        setSignupButtonState(false)
+    }, [errors])
 
     return (
         <div className="w-screen h-screen flex items-center justify-center overflow-auto">

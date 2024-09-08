@@ -72,11 +72,33 @@ function ChangeCountryModel({ setModelTrigger }) {
 
 
     const otpResend = async (type: string) => {
-        const { data } = await axiosClient.post("/user/resend-otp-user", { type, username: user.username })
-        console.log(data)
-        if (data.success) {
-            toast.success(data.message)
+        
+        if (!country || !city ) {
+            toast.info("please select country and city")
+            return
         }
+
+
+        if (areaRef.current.value.length < 3) {
+            toast.info("area name must be of 3 or more characters")
+            return
+        }
+
+        
+
+        let phone = validatePhone(`${_phone}`, country["iso3"])
+
+        if (phone.isValid) {
+            setOtpSent(true)
+            const { data } = await axiosClient.post("/user/resend-otp-user", { type, username: user.username, phone: phone.phoneNumber })
+            if (data.success) {
+                toast.success(data.message)
+            }
+            return
+        }
+
+        toast.info("phone number does not match with your selected country")
+
     }
     const [otpSent, setOtpSent] = useState(false)
 
@@ -95,7 +117,8 @@ function ChangeCountryModel({ setModelTrigger }) {
                     }
                 }))
 
-                toast.success('Phone Verified')
+                toast.success('Address Changed')
+                navigate('')
             }
 
         } catch (error) {
@@ -108,7 +131,7 @@ function ChangeCountryModel({ setModelTrigger }) {
     const mutation = useMutation({
         mutationFn: async (data: {
             otp: string, type: string, updatedData: {
-                phone: number, address: {
+                phone: string, address: {
                     country: string,
                     city: string,
                     area: string
@@ -133,16 +156,21 @@ function ChangeCountryModel({ setModelTrigger }) {
 
 
     const changeCountry = async () => {
-        mutation.mutate({
-            otp, type: 'phone', updatedData: {
-                phone: _phone, address: {
-                    country: country.name,
-                    city,
-                    area: areaRef.current.value
+        let phone = validatePhone(`${_phone}`, country["iso3"])
+
+        if (phone.isValid) {
+            mutation.mutate({
+                otp, type: 'phone', updatedData: {
+                    phone: phone.phoneNumber, address: {
+                        country: country.name,
+                        city,
+                        area: areaRef.current.value
+                    }
                 }
-            }
-        })
-        console.log(otp)
+            })
+            return
+        }
+        toast.info("phone number is not valid")
     }
 
     return (

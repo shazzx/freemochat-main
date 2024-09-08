@@ -34,6 +34,7 @@ const CreateGroupModel: FC<any> = ({ setModelTrigger, createGroup, editGroup, ed
 
     const groupName = useRef<HTMLInputElement>()
     const groupHandle = useRef<HTMLInputElement>()
+    const groupBio = useRef<HTMLInputElement>()
     const groupDescription = useRef<HTMLTextAreaElement>()
 
     const onSubmit = async (groupData) => {
@@ -156,7 +157,7 @@ const CreateGroupModel: FC<any> = ({ setModelTrigger, createGroup, editGroup, ed
                                         placeholder="group name"
                                         {...register('name')}
                                         />
-                                        {errors.name && <p>{errors.name.message}</p>}
+                                        {errors.name && <p className="max-w-80"  >{errors.name.message}</p>}
                                 </div>
 
                                 <div>
@@ -172,7 +173,24 @@ const CreateGroupModel: FC<any> = ({ setModelTrigger, createGroup, editGroup, ed
                                         placeholder="@your_group_handle"
                                         {...register('handle')}
                                     />
-                                    {errors.handle && <p>{errors.handle.message}</p>}
+                                    {errors.handle && <p className="max-w-80" >{errors.handle.message}</p>}
+                                </div>
+
+
+                                <div>
+                                    <Label >
+                                        Group Bio
+                                    </Label>
+                                    <Input
+                                        name="bio"
+                                        ref={groupBio}
+                                        defaultValue={groupDetails?.bio}
+                                        id="bio"
+                                        className="w-96"
+                                        placeholder="bio"
+                                        {...register('bio')}
+                                    />
+                                    {errors.bio && <p className="max-w-80" >{errors.handle.message}</p>}
                                 </div>
 
                                 <div>
@@ -189,7 +207,7 @@ const CreateGroupModel: FC<any> = ({ setModelTrigger, createGroup, editGroup, ed
                                         maxLength={150}
                                         {...register('description')}
                                     />
-                                    {errors.description && <p>{errors.description.message}</p>}
+                                    {errors.description && <p className="max-w-80"  >{errors.description.message}</p>}
                                 </div>
                             </div>
                             <div className="w-full flex justify-end ">
