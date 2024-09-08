@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Provider } from 'react-redux'
 import { store } from './app/store.ts'
 import { BrowserRouter } from 'react-router-dom'
-// console.log = () => {};
+console.log = () => {};
 console.warn = () => {};
 console.error = () => {};
 console.debug = () => {};

@@ -475,8 +475,7 @@ export class UserController {
                 let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
                 console.log(phoneOTP, 'phone send to', (phone || user.phone))
                 console.log(phone || user.phone)
-                // await this.twilioService.sendSMS(user.phone, `Your phone otp code is: ${phoneOTP}`)
-
+                await this.twilioService.sendSMS(user.phone, `Your phone otp code is: ${phoneOTP}`)
                 return res.json({ success: true, message: "otp has been sent to your phone" })
             }
 
