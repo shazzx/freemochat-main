@@ -56,9 +56,9 @@ export const removeFriend = async (recepientId) => {
 }
 
 export const followUserToggle = async (recepientId) => {
-    // const { data } = await axiosClient.post("/user/follow", { recepientId })
-    // console.log(data)
-    // return data
+    const { data } = await axiosClient.post("/user/follow", { recepientId })
+    console.log(data)
+    return data
 }
 
 

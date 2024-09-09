@@ -302,18 +302,41 @@ export const useAcceptFriendRequest = () => {
     const { user } = useAppSelector(state => state.user)
     const queryClient = useQueryClient()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+
         mutationFn: (userDetails: { recepientId: string, pageIndex?: number, requestIndex?: number, username: string }) => {
             return acceptFriendRequest(userDetails.recepientId)
         },
 
-        onMutate: async ({ recepientId }) => {
+        onMutate: async ({ recepientId, username }) => {
+            console.log(username)
             await queryClient.cancelQueries({ queryKey: ['userRequests', user._id] })
             const previousRequests = queryClient.getQueryData(['userRequests', user._id])
 
+            await queryClient.cancelQueries({ queryKey: ['user', username] })
+            const previousUser = queryClient.getQueryData(['user', username])
+
+
+            queryClient.setQueryData(['user', username], (user: any) => {
+                const updatedUser = produce(user, (draft: any) => {
+                    if (user) {
+                        draft.areFriends = true
+                        draft.friendRequest = {
+                            exists: false,
+                            isRecievedByUser: false,
+                            isSentByUser: false,
+                        }
+                            draft.friendsCount = draft.friendsCount + 1
+                    }
+                    return draft
+
+                })
+                return updatedUser
+            });
+
             queryClient.setQueryData(['userRequests', user._id], (userRequests: any) => {
                 const _userRequests = produce(userRequests, (draft: any) => {
-                    draft.pages.forEach(((page, pageIndex) => (
-                        page.friendRequests.forEach(({ sender }, requestIndex) => {
+                    draft?.pages?.forEach(((page, pageIndex) => (
+                        page?.friendRequests?.forEach(({ sender }, requestIndex) => {
                             console.log(page)
 
                             if (sender._id == recepientId) {
@@ -324,16 +347,17 @@ export const useAcceptFriendRequest = () => {
                         })
 
                     )))
-                    return draft
+                    return draft 
                 });
             })
-            return { previousRequests };
+            return { previousRequests, previousUser };
         },
 
-        onError: (err, newComment, context) => {
+        onError: (err, {username}, context,) => {
             console.log(err)
             toast.error("something went wrong")
             queryClient.setQueryData(['userRequests', user._id], context?.previousRequests)
+            queryClient.setQueryData(['user',username], context?.previousUsersss)
         },
         onSettled: (data, err) => {
             console.log(data)
@@ -447,20 +471,20 @@ export const useRemoveFriend = (username: string, userId) => {
             });
 
 
-            queryClient.setQueryData(['userFriends', recepientId], (friends: any) => {
-                const updatedUser = produce(friends, (draft: any) => {
-                    draft?.pages?.forEach(((page, pageIndex) => (
-                        page.friends.forEach(({ friend }, friendIndex) => {
-                            if (friend._id == recepientId) {
-                                console.log(friends.pages[pageIndex].friends)
-                                friends.pages[pageIndex].friends.splice(friendIndex, 1)
-                                return
-                            }
-                        })
-                    )))
-                    return draft
-                })
-            });
+            // queryClient.setQueryData(['userFriends', recepientId], (friends: any) => {
+            //     const updatedUser = produce(friends, (draft: any) => {
+            //         draft?.pages?.forEach(((page, pageIndex) => (
+            //             page.friends.forEach(({ friend }, friendIndex) => {
+            //                 if (friend._id == recepientId) {
+            //                     console.log(friends.pages[pageIndex].friends)
+            //                     friends.pages[pageIndex].friends.splice(friendIndex, 1)
+            //                     return
+            //                 }
+            //             })
+            //         )))
+            //         return draft
+            //     })
+            // });
 
 
             return { previousUser };

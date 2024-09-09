@@ -332,28 +332,28 @@ export class PostsService {
             { $match: query },
             { $sort: { createdAt: -1 } },
             { $limit: limit + 1 },
-            {
-                $lookup: {
-                    from: 'viewedposts',
-                    let: { postId: '$_id' },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$userId', new Types.ObjectId(userId)] },
-                                        { $eq: ['$postId', '$$postId'] }
-                                    ]
-                                }
-                            }
-                        }
-                    ],
-                    as: 'viewed'
-                }
-            },
-            {
-                $match: { viewed: { $size: 0 } }
-            },
+            // {
+            //     $lookup: {
+            //         from: 'viewedposts',
+            //         let: { postId: '$_id' },
+            //         pipeline: [
+            //             {
+            //                 $match: {
+            //                     $expr: {
+            //                         $and: [
+            //                             { $eq: ['$userId', new Types.ObjectId(userId)] },
+            //                             { $eq: ['$postId', '$$postId'] }
+            //                         ]
+            //                     }
+            //                 }
+            //             }
+            //         ],
+            //         as: 'viewed'
+            //     }
+            // },
+            // {
+            //     $match: { viewed: { $size: 0 } }
+            // },
             {
                 $lookup: {
                     from: 'users',
@@ -379,17 +379,17 @@ export class PostsService {
                 }
             },
 
-            {
-                $lookup: {
-                    from: 'promotions',
-                    localField: '_id',
-                    foreignField: 'postId',
-                    pipeline: [
-                        { $match: { active: 1 } }  // Only include active promotions
-                    ],
-                    as: 'promotion'
-                }
-            },
+            // {
+            //     $lookup: {
+            //         from: 'promotions',
+            //         localField: '_id',
+            //         foreignField: 'postId',
+            //         pipeline: [
+            //             { $match: { active: 1 } }  // Only include active promotions
+            //         ],
+            //         as: 'promotion'
+            //     }
+            // },
 
 
             {
@@ -484,7 +484,7 @@ export class PostsService {
                             0
                         ]
                     },
-                    promotion: '$promotion',
+                    // promotion: '$promotion',
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                 }

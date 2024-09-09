@@ -37,6 +37,7 @@ const AudioRecorder = ({ onRecordingComplete, setIsRecordingMain }) => {
                 chunks.current = [];
                 setRecordedAudio(recordedBlob)
                 onRecordingComplete(recordedBlob, uploadState.current, recordingTime.current)
+                setRecordingTime(0)
             };
             mediaRecorder.current.start();
             setIsRecording(true)
@@ -97,8 +98,6 @@ const AudioRecorder = ({ onRecordingComplete, setIsRecordingMain }) => {
 
                         <svg width="42" className="stroke-white dark:stroke-white" onClick={() => {
                             uploadState.current = true
-                            recordingTime.current = 0 
-                            setRecordingTime(0)
                             stopRecording()
 
                         }} height="42"  viewBox="0 0 47 50" fill="none" xmlns="http://www.w3.org/2000/svg">

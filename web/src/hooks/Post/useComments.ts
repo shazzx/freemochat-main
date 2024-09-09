@@ -169,11 +169,11 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
       queryClient.setQueryData(['comments'], (pages: any) => {
         const firstPage = pages.pages[0]
         const updatedComments = produce(pages, (draft: any) => {
-
+console.log(newComment)
           if (newComment.audio) {
             draft.pages[0].comments.unshift(
               {
-                content: newComment.commentDetails.content, post: newComment.postId, user: {
+                content: newComment.commentDetails.content, audio: {...newComment.audio, duration: newComment.commentDetails.duration}, post: newComment.postId, user: {
                   images: user?.images,
                   firstname: user?.firstname,
                   lastname: user?.lastname,
