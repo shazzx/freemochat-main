@@ -497,6 +497,7 @@ export class PostsService {
                     media: 1,
                     user: 1,
                     promotion: 1,
+                    isUploaded:  1,
                     target: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },

@@ -151,6 +151,7 @@ export const useCreatePost = (key: string, targetId?: string) => {
     },
     onSettled: (data) => {
       if (data.isUploaded == null) {
+        toast.success("Post created")
         queryClient.invalidateQueries({ queryKey: [key, targetId] })
         queryClient.invalidateQueries({ queryKey: ['feed'] })
       }
@@ -176,7 +177,6 @@ export const useCreatePost = (key: string, targetId?: string) => {
       //   return updatedPosts
       // });
 
-      toast.success("Post created")
       return
     }
   })

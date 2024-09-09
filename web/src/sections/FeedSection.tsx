@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import React, { useEffect, useMemo, useState } from 'react'
 import { FaCheckCircle } from 'react-icons/fa'
 import { useInView } from 'react-intersection-observer'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 function FeedSection() {
     const [searchParams] = useSearchParams()
@@ -44,6 +44,8 @@ function FeedSection() {
         setPostModal(false)
     }
 
+    const navigate = useNavigate()
+
     // useEffect(() => {
     //     console.log('fetching next posts...')
     //     fetchNextPage()
@@ -52,7 +54,8 @@ function FeedSection() {
 
     return (
         <div className='w-full z-10 flex justify-center md:justify-normal overflow-y-auto border-muted md:px-6 lg:px-24'>
-            {postModal && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+            {searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+
             <div className='max-w-xl w-full flex flex-col gap-2'>
                 <div className='w-full flex items-center  border border-muted px-2 bg-card'>
                     <Stories />
@@ -76,7 +79,7 @@ function FeedSection() {
                                     <div
                                         className="max-w-2xl w-full rounded-md p-2 cursor-pointer flex items-center appearance-none bg-background border border-accent shadow-none"
                                         onClick={() => {
-                                            setPostModal(true)
+                                            navigate("?createpost=true")
                                         }}
                                     >
                                         <span className='text-sm'>Start writing a post</span>
@@ -85,7 +88,7 @@ function FeedSection() {
                             </form>
                         </div>
                     </div>
-                    {!data.isLoading && data && data.length && data[0]?.viewed &&
+                    {/* {!data.isLoading && data && data.length && data[0]?.viewed &&
                         <Card className="w-full mx-auto bg-card border border-muted rounded-lg p-6 flex items-center space-x-4">
                             <FaCheckCircle className="text-green-500 text-3xl" />
                             <div className="flex-1">
@@ -93,14 +96,14 @@ function FeedSection() {
                                 <p className="mt-1">You've seen all new posts.</p>
                             </div>
                         </Card>
-                    }
+                    } */}
                     <div className='flex w-full items-center  flex-col gap-2  '>
                         {!isLoading && data.length > 0 ? data.map((page, pageIndex: number) => {
 
                             return page.posts.map((post, postIndex: number) => {
                                 if (pageIndex == data.length - 1 && data[pageIndex].posts.length - 2 == postIndex) {
                                     return (
-                                        <Post useLikePost={useLikeFeedPost} useBookmarkPost={useBookmarkFeedPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} userId={user?._id} username={user?.username} profile={user?.profile} key={post?._id} type="user" scrollRef={ref}  fetchNextPage={fetchNextPage}/>
+                                        <Post useLikePost={useLikeFeedPost} useBookmarkPost={useBookmarkFeedPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} userId={user?._id} username={user?.username} profile={user?.profile} key={post?._id} type="user" scrollRef={ref} fetchNextPage={fetchNextPage} />
                                     )
                                 }
                                 return (

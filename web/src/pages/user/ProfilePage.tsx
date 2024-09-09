@@ -128,7 +128,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
     return (
         <>
-        {query.isError &&
+            {query.isError &&
                 <div className='w-full h-full flex items-center justify-center'>Something went wrong...</div>
             }
             {query.isLoading &&
@@ -144,7 +144,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
                     {/* profile settings model */}
                     {searchParams.get("settings") && <QuickSettings user={localUserData.user} setModelTrigger={setProfileSettingsModel} uploadSingle={uploadSingle} />}
-                    {searchParams.get("createpost")   && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+                    {searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
 
                     <div className='flex w-full flex-col items-center w-ful'>
                         <div className="flex max-w-5xl w-full flex-col justify-cente relative">
@@ -258,7 +258,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                                         </Avatar>
                                                                     </div>
                                                                 </div>
-                                                                <Input
+                                                                {/* <Input
                                                                     onClick={() => {
                                         navigate("?createpost=true")
 
@@ -268,7 +268,15 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                                     type="text"
                                                                     placeholder="Start writing a post"
                                                                     className="max-w-2xl appearance-none bg-background shadow-none"
-                                                                />
+                                                                /> */}
+                                                                <div
+                                                                    className="max-w-2xl w-full rounded-md p-2 cursor-pointer flex items-center appearance-none bg-background border border-accent shadow-none"
+                                                                    onClick={() => {
+                                                                        navigate("?createpost=true")
+                                                                    }}
+                                                                >
+                                                                    <span className='text-sm'>Start writing a post</span>
+                                                                </div>
                                                             </div>
                                                         </form>
                                                     </div>

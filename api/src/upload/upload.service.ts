@@ -1,4 +1,4 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException, UnsupportedMediaTypeException } from '@nestjs/common';
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
@@ -52,7 +52,7 @@ export class UploadService {
         originalname?: string, 
         ) {
         let processedContent: Buffer;
-        let moderationResult: { isSafe: boolean; labels: string[] };
+        let moderationResult: { isSafe: boolean; labels: string[] } | string;
 
         if (contentType == 'image') {
             // processedContent = await this.optimizeImage(file);
@@ -69,6 +69,8 @@ export class UploadService {
             }
             // processedContent = await this.optimizeVideo(file, inputInfo);
             moderationResult = await this.moderateVideo(file, fileName);
+            return {url: moderationResult, fileName, fileType: contentType, originalname};
+
         } else if (contentType == 'pdf') {
             processedContent = file; // No optimization for PDF
             moderationResult = await this.moderatePdf(file);
@@ -200,12 +202,13 @@ export class UploadService {
     }
 
 
-    private async moderateVideo(file: Buffer, fileName: string): Promise<{ isSafe: boolean; labels: string[] }> {
+    private async moderateVideo(file: Buffer, fileName: string): Promise<string> {
         const bucketName = this.configService.get('AWS_S3_BUCKET_NAME');
         const s3Key = `${fileName}`;
 
         // Upload video to S3
-        await this.uploadToS3(file, s3Key, 'video/mp4');
+        let url = await this.uploadToS3(file, s3Key, 'video/mp4');
+        return url
 
         const startCommand = new StartContentModerationCommand({
             Video: {
@@ -227,16 +230,21 @@ export class UploadService {
                 const getCommand = new GetContentModerationCommand({ JobId: jobId });
                 moderationResult = await this.rekognitionClient.send(getCommand);
                 jobComplete = moderationResult.JobStatus === 'SUCCEEDED';
-                console.log(moderationResult.JobStatus)
-                if (!jobComplete) await new Promise(resolve => setTimeout(resolve, 5000));
+                console.log(moderationResult)
+                if (moderationResult.JobStatus === "FAILED" && moderationResult.StatusMessage){
+                    throw new UnsupportedMediaTypeException("Unsupported Format")
+                }
+                if (!jobComplete) await new Promise(resolve => setTimeout(resolve, 3000));
             }
 
             const labels = moderationResult.ModerationLabels?.map(label => label.ModerationLabel.Name) || [];
 
-            await this.deleteFromS3(s3Key);
+            if ( labels.length === 0) {
+                return url
+            } else {
+                throw new Error('Content violates moderation policies');
+            }
 
-            console.log('is safe')
-            return { isSafe: labels.length === 0, labels };
         } catch (error) {
             console.error('Error in video moderation:', error);
             // Ensure we delete the temporary file even if there's an error

@@ -136,6 +136,9 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
     let navigation = postData?.type == "user" ? postData?.target?.username : postData?.target?.handle
 
+    console.log(postData)
+
+
     if (postData?.isUploaded == false) {
         return (
             <div className='max-w-xl w-full bg-card flex gap-4 p-3 sm:min-w-[420px]' >

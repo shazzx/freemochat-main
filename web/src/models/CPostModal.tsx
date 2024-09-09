@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { FC, useEffect, useRef, useState } from "react"
 import EmojiPicker from 'emoji-picker-react'
 import { Theme } from 'emoji-picker-react'
-import { MdCancel } from "react-icons/md"
+import { MdCancel, MdRestaurant } from "react-icons/md"
 import PostCarousel from "@/components/Carousel"
 import { Combobox } from "@/components/Comboxbox"
 import { ChevronLeft, Loader } from "lucide-react"
@@ -51,7 +51,12 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
         <div className='fixed inset-0 z-[100]  w-screen overflow-hidden h-screen flex items-center justify-center top-0 right-0'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
                 setModelTrigger(false)
-                navigate('/', { replace: true })
+                if (location.pathname == '/') {
+                    navigate('/', { replace: true })
+                    return
+                }
+
+                navigate('', { replace: true })
 
             }}></div>
             <div className='relative z-10 h-full sm:max-h-[700px] bg-background rounded-lg w-full sm:w-[440px] overflow-auto sm:border-2 sm:border-accent'>
@@ -81,14 +86,14 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
                         if ((content.current.value.length > 12 || selectedMedia.length > 0) && !editPost) {
                             createPost({ content: content.current.value, formData, selectedMedia })
                             setUploading(true)
-                            navigate('', {replace: true})
+                            navigate('', { replace: true })
                             return
                         }
 
                         if (content.current.value.length > 12 || selectedMedia.length > 0 && editPost) {
                             updatePost({ content: content.current.value, formData, selectedMedia, media: postMedia, setModelTrigger })
                             setUploading(true)
-                            navigate('', {replace: true})
+                            navigate('', { replace: true })
                             return
                         }
 

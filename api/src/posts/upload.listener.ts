@@ -116,7 +116,12 @@ export class UploadListener {
                 await this.postsService.deletePost(postId);
             }
 
-            await this.chatGateway.uploadSuccess({ isSuccess: false })
+            await this.chatGateway.uploadSuccess({ isSuccess: false, target: {
+                targetId,
+                type,
+                error,
+                invalidate: "posts"
+            } })
         }
     }
 

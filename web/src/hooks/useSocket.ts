@@ -78,11 +78,15 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
       if (data.isSuccess) {
         console.log('upload-success')
       } else {
-        toast.error("something went wrong try agan later")
+        toast.error(data.target?.error?.message || "something went wrong try agan later")
       }
 
-      if (data.isSuccess && data.target?.invalidate == "posts") {
+      if (data.target?.invalidate == "posts") {
         const { targetId } = data?.target
+        if (data.isSuccess) {
+          toast.success("Post created")
+        }
+
         queryClient.invalidateQueries({ queryKey: [data.target.type + "Posts", targetId] })
         queryClient.invalidateQueries({ queryKey: [data.target.type + "Media", targetId] })
         queryClient.invalidateQueries({ queryKey: ['feed'] })
@@ -125,7 +129,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
       console.log(data, 'friend status')
       if (data?.isOnline && data?.friendId) {
         dispatch(setOnline(data.friendId))
-      }else{
+      } else {
         dispatch(setOffline(data.friendId))
       }
     })
