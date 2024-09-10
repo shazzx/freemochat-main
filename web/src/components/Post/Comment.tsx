@@ -13,7 +13,6 @@ const Comment: FC<any> = ({fetchNextPage, reply, comment, pageIndex, commentInde
     const deleteComment = useDeleteComment()
 
     let [likeParentComment, setLikeParentComment] = useState(comment?.isLikedByUser)
-    console.log(comment)
     // if (inView) {
     //     console.log('fetching')
     //     fetchNextPage()

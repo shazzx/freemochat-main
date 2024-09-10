@@ -18,7 +18,7 @@ export class CommentService {
 
     async getComments(postId, cursor, userId: string) {
         const limit = 12
-        const cacheKey = `post:${postId}:comments:${cursor || 'start'}:${limit}`
+        // const cacheKey = `post:${postId}:comments:${cursor || 'start'}:${limit}`
         // const cachedPage = await this.cacheService.get(cacheKey)
         // console.log(cachedPage)
         // if (cachedPage) {
@@ -40,7 +40,7 @@ export class CommentService {
         const query = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
         const comments = await this.commentModel.aggregate([
             { $match: { ...query, post: postId, type: 'comment' } },
-            { $sort: { createdAt: -1 } },
+            // { $sort: { createdAt: -1 } },
             { $limit: limit + 1 },
             {
                 $lookup: {
@@ -82,11 +82,11 @@ export class CommentService {
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                 },
             },
-            // { $sort: { createdAt: -1 } },
             {
                 $project: {
                     _id: 1,
                     content: 1,
+                    post: 1,
                     user: 1,
                     audio: 1,
                     likesCount: 1,
@@ -94,14 +94,13 @@ export class CommentService {
                     createdAt: 1,
                 },
             },
-        ]);
+        ]).sort({createdAt: -1});
 
         const hasNextPage = comments.length > limit;
         const _comments = hasNextPage ? comments.slice(0, -1) : comments;
         const nextCursor = hasNextPage ? _comments[_comments.length - 1].createdAt.toISOString() : null;
-
         const results = { comments: _comments, nextCursor };
-        console.log(results)
+
         // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
 
         return results
@@ -131,7 +130,7 @@ export class CommentService {
         const query = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
         const replies = await this.commentModel.aggregate([
             { $match: { ...query, parentId: new Types.ObjectId(commentId), type: 'reply', } },
-            { $sort: { createdAt: -1 } },
+            // { $sort: { createdAt: -1 } },
             { $limit: limit + 1 },
             {
                 $lookup: {
@@ -177,6 +176,7 @@ export class CommentService {
                 $project: {
                     _id: 1,
                     content: 1,
+                    post: 1,
                     user: 1,
                     parentId: 1,
                     type: 1,
@@ -186,14 +186,14 @@ export class CommentService {
                     createdAt: 1,
                 },
             },
-        ]);
+        ]).sort({createdAt: -1});
 
         const hasNextPage = replies.length > limit;
         const _replies = hasNextPage ? replies.slice(0, -1) : replies;
         const nextCursor = hasNextPage ? _replies[_replies.length - 1].createdAt.toISOString() : null;
 
         const results = { replies: _replies, nextCursor };
-        console.log(results)
+        // console.log(results)
         // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
 
         return results

@@ -14,11 +14,12 @@ import { useRemovePost, useUpdatePost } from '@/hooks/Post/usePost'
 import CPostModal from '@/models/CPostModal'
 import { domain } from '@/config/domain'
 import { toast } from 'react-toastify'
-import { useAppSelector } from '@/app/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { PostMediaCarousel } from './Post/PostMediaCarousel'
 import { Copy } from 'lucide-react'
 import { useDispatch } from 'react-redux'
 import { insertViewedPost } from '@/app/features/user/viewPostSlice'
+import { setOpen } from '@/app/features/user/postModelSlice'
 
 interface PostProps {
     postData: any,
@@ -94,13 +95,13 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 type: "promotion"
             })
         }
-        
+
         if (inView && fetchNextPage) {
             console.log('fetching')
             fetchNextPage()
         }
         // if (inView) {
-            if (inView && postData?.promotion?.length > 0 && postData?.promotion[0]?.active == 1) {
+        if (inView && postData?.promotion?.length > 0 && postData?.promotion[0]?.active == 1) {
             console.log("promoted post view")
             // dispatch(insertViewedPost(postData._id))
             // viewPost()
@@ -133,6 +134,17 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         };
     }, [shareState])
 
+
+    const videoRef = useRef(null)
+    const { isOpen, id } = useAppSelector(state => state.postModel)
+
+    useEffect(() => {
+
+        if (isOpen && videoRef.current?.pause && postData._id == id) {
+            console.log('yes')
+            videoRef.current.play()
+        }
+    }, [isOpen, videoRef.current])
 
     let navigation = postData?.type == "user" ? postData?.target?.username : postData?.target?.handle
 
@@ -168,7 +180,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             }
             {
                 modelTrigger &&
-                <PostModel params={isSearch ? {...query, postId: postData?._id} : {type: type + "Posts", targetId: postData?.targetId, postId: postData?._id}} useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} postId={postData?._id} postData={postData} setModelTrigger={setModelTrigger} type={type} />
+                <PostModel params={isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }} useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} postId={postData?._id} postData={postData} setModelTrigger={setModelTrigger} type={type} />
             }
 
             {
@@ -231,6 +243,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         postData && postData.media &&
                         <div className=' overflow-hidden aspect-auto max-w-xl flex items-center justify-center bg-background' onClick={() => {
                             if (!model) {
+                                dispatch(setOpen(postData._id))
                                 setModelTrigger(true)
                             }
                         }}>
@@ -238,7 +251,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 <PostMediaCarousel media={postData?.media} />
                                 :
                                 postData.media[0]?.type == 'video' ?
-                                    <video className='w-full h-full' autoPlay={false} src={postData?.media && postData?.media[0]?.url} controls></video>
+                                    <video ref={videoRef} className='w-full max-h-[500px] h-full' autoPlay={false} src={postData?.media && postData?.media[0]?.url} controls></video>
                                     :
                                     <img className='object-contain' src={postData?.media[0]?.url} alt="" />
 
@@ -249,10 +262,10 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 </CardContent>
                 <CardFooter className='py-2 px-3 md:p-4 select-none flex flex-col'>
                     <div className='hidden sm:flex gap-2 w-full flex-start'>
-                    <span className='text-sm'>
-                    {postData?.likesCount > 0 &&  "Likes " + postData?.likesCount  }
-                    </span>
-                    {/* <span className='text-sm'>
+                        <span className='text-sm'>
+                            {postData?.likesCount > 0 && "Likes " + postData?.likesCount}
+                        </span>
+                        {/* <span className='text-sm'>
                     {postData?.commentsCount > 0 &&  "Comments " + postData?.commentsCount  }
                     </span > */}
                     </div>
@@ -273,6 +286,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         </div>
                         <div className='flex gap-0 items-center cursor-pointer' onClick={() => {
                             if (!model) {
+                                dispatch(setOpen(postData._id))
                                 setModelTrigger(true)
                             }
                         }}>
@@ -299,8 +313,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         </div>
 
                         <div className='relative flex gap-0 items-center cursor-pointer z-10' onClick={() => {
-                            console.log(shareState)
-                            setShareState(true)
+                            setShareState(!shareState)
                         }}>
                             <svg width="43" height="42" className="stroke-foreground  dark:stroke-foreground" viewBox="0 0 43 42" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path fill-rule="evenodd" clip-rule="evenodd" d="M25.4095 27.8205L33.26 21.2405C33.5699 20.9872 33.7496 20.6082 33.7496 20.208C33.7496 19.8078 33.5699 19.4288 33.26 19.1755L25.4095 12.5955C24.9908 12.2376 24.4046 12.1498 23.8994 12.3695C23.3942 12.5891 23.0586 13.0777 23.0347 13.628V16.2233C12.0132 14.314 9.25 24.177 9.25 29.7455C11.8067 25.5035 18.4322 17.814 23.0347 24.177V26.7793C23.0554 27.3312 23.3898 27.8227 23.8956 28.0445C24.4015 28.2663 24.9896 28.1793 25.4095 27.8205Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -308,18 +321,18 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                             <span className='text-sm hidden sm:block' >Share</span>
                             {shareState &&
-                                <div className='border-accent border absolute flex flex-col gap-4 items-center justify-center top-10 -left-5 drop-shadow-xl z-10 bg-card rounded-md p-2' ref={shareRef}>
-                                    <WhatsappShareButton url={'localhost:5173'} >
+                                <div className='border-accent border absolute flex flex-col gap-4 items-center justify-center top-10 -left-20 sm:-left-5 drop-shadow-xl z-10 bg-card rounded-md p-2' ref={shareRef}>
+                                    <WhatsappShareButton url={`${domain}/post/${postData._id}?type=${postData.type}`} >
                                         <div className='flex gap-1 items-center justify-center'>
                                             <WhatsappIcon borderRadius={60} size={24} /> <span>Whatsapp</span>
                                         </div>
                                     </WhatsappShareButton>
-                                        <div className='flex gap-1 items-center justify-center' onClick={() => {
-                                            navigator.clipboard.writeText(`${domain}/post/${postData._id}?type=${postData.type}`);
-                                            toast.info("URL Copied")
-                                        }}>
-                                            <Copy size={24} /> <span>Copy URL</span>
-                                        </div>
+                                    <div className='flex gap-1 items-center justify-center' onClick={() => {
+                                        navigator.clipboard.writeText(`${domain}/post/${postData._id}?type=${postData.type}`);
+                                        toast.info("URL Copied")
+                                    }}>
+                                        <Copy size={24} /> <span>Copy URL</span>
+                                    </div>
                                 </div>}
                             {/* <span className='text-sm sm:hidden'>25</span> */}
                         </div>

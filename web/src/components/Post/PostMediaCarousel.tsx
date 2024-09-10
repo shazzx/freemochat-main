@@ -15,7 +15,7 @@ export function PostMediaCarousel({ media }) {
           <CarouselItem key={index} className="flex justify-center items-center">
             <div className="aspect-auto max-w-xl">
               {type == 'video' ?
-                <video className='object-contain' autoPlay={false} src={url} controls></video>
+                <video className='w-full max-h-[500px] h-full' autoPlay={true} src={url} controls></video>
                 :
                 <img src={url} alt="" />
               }

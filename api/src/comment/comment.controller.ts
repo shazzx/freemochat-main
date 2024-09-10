@@ -64,6 +64,7 @@ export class CommentController {
   @Delete("comment")
   async deleteComment(@Req() req) {
     const { commentDetails } = req.query
+    
     return await this.commentService.removeComment(commentDetails)
   }
 

@@ -325,7 +325,7 @@ export class PostsService {
 
     async feed(userId, cursor) {
         console.log(userId, cursor)
-        const limit = 5
+        const limit = 12
         const query = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
 
         const posts = await this.postModel.aggregate([

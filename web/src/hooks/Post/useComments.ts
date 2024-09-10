@@ -118,21 +118,21 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
       //           }
       //         }))
       //       })
-            // if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
-            //   draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
-            //   draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
+      // if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
+      //   draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
+      //   draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
 
-            //   return draft
-            // }
+      //   return draft
+      // }
 
-            // if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
-            //   draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
-            //   draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
+      // if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
+      //   draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
+      //   draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
 
-            //   return draft
-            // }
+      //   return draft
+      // }
 
-            // throw new Error()
+      // throw new Error()
       //     })
       //   });
 
@@ -169,11 +169,11 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
       queryClient.setQueryData(['comments'], (pages: any) => {
         const firstPage = pages.pages[0]
         const updatedComments = produce(pages, (draft: any) => {
-console.log(newComment)
+          console.log(newComment)
           if (newComment.audio) {
             draft.pages[0].comments.unshift(
               {
-                content: newComment.commentDetails.content, audio: {...newComment.audio, duration: newComment.commentDetails.duration}, post: newComment.postId, user: {
+                content: newComment.commentDetails.content, audio: { ...newComment.audio, duration: newComment.commentDetails.duration }, post: newComment.postId, user: {
                   images: user?.images,
                   firstname: user?.firstname,
                   lastname: user?.lastname,
@@ -206,18 +206,21 @@ console.log(newComment)
       toast.error("something went wrong")
       queryClient.setQueryData(["comments"], context.previousComments)
     },
-    onSettled: (data) => {
-      console.log(data)
+    onSettled: async (data) => {
+
+      await queryClient.cancelQueries({ queryKey: ["comments"] })
 
       queryClient.setQueryData(['comments'], (pages: any) => {
-        produce(pages, (draft: any) => {
-          draft.pages[0].comments[0] = data
+        const firstPage = pages.pages[0]
+        const updatedComments = produce(pages, (draft: any) => {
+          draft.pages[0].comments[0] = {...data, ...draft.pages[0].comments[0]}
           return draft
         })
+        return updatedComments
       })
+
+
       // queryClient.invalidateQueries({ queryKey: ["comments"] })
-      // queryClient.invalidateQueries({ queryKey: [type, targetId] })
-      // queryClient.invalidateQueries({ queryKey: ['feed'] })
     }
   })
 
@@ -303,7 +306,7 @@ export const useDeleteComment = () => {
       queryClient.setQueryData(["comments"], context.previousComments)
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments"] })
+      // queryClient.invalidateQueries({ queryKey: ["comments"] })
     }
   })
 

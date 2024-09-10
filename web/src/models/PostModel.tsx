@@ -1,5 +1,5 @@
 
-import { useAppSelector } from '@/app/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import AudioRecorder from '@/components/MediaRecorder'
 import Post from '@/components/Post'
 import Comment from '@/components/Post/Comment'
@@ -15,8 +15,9 @@ import { useUpdateReply } from '../hooks/Post/useComments'
 import { v4 as uuidv4 } from 'uuid'
 import { MdSend } from 'react-icons/md'
 import { toast } from 'react-toastify'
+import { setClose } from '@/app/features/user/postModelSlice'
 
-function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postData, useLikePost, useBookmarkPost, type }: any) {
+function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, postData, useLikePost, useBookmarkPost, type }: any) {
     const { user } = useAppSelector((data) => data.user)
     const [isRecording, setIsRecording] = useState(false)
     const [replyState, setReplyState] = useState<{ _id: string, content: string, user: any, commentIndex: number }>()
@@ -30,7 +31,7 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
     const { data, isSuccess, isLoading, fetchNextPage } = useComments(postId)
     const mutation = useCreateComment(params)
     const replyMutation = useReplyOnComment()
-    
+
     const replies = useReplies(replyId)
     console.log(params)
 
@@ -61,7 +62,7 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
     })
 
     const commentOnPost = async (recordingUrl?, recordingTime?) => {
-        
+
         if (!recordingUrl && !recordingTime && commentRef.current?.value.length == 0) {
             toast.info("Comment can't be empty")
         }
@@ -106,9 +107,11 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
     const updateComment = useUpdateComment()
     const updateReply = useUpdateReply()
 
+    const dispatch = useAppDispatch()
     return (
         <div className='fixed inset-0 z-50  w-screen sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
+                dispatch(setClose())
                 setModelTrigger(false)
             }}></div>
             <div ref={scrollRef} className='z-10 max-w-xl w-full h-full flex flex-col bg-background relative rounded-lg sm:h-fit max-h-full scroll-smooth overflow-auto border-2 border-accent shadow-md'>
@@ -156,7 +159,7 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
                 </div>
 
                 <Post useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} model={true} postData={postData} username={user?.username} userId={user?._id} type={type} />
-                <div className='relative p-4 flex h-full flex-col gap-2  overflow-y-auto'>
+                <div className='relative p-4 flex h-full flex-col gap-2'>
                     {/* comment section */}
                     {/* {isLoading &&
                         // <ScreenLoader limit={1} />
@@ -198,7 +201,7 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
                         </div>
                     }
                     {replyState && replyState?.content &&
-                        <div className='absolute bg-background gap-4 w-full h-full flex justify-between flex-col top-0 left-0 z-10 overflow-y-auto'>
+                        <div className='absolute bg-background gap-4 w-full h-full flex justify-between flex-col top-0 left-0 z-10'>
                             <div className='p-4 flex flex-col gap-4'>
                                 <div className='flex gap-2'>
                                     <ChevronLeft className='cursor-pointer' onClick={() => {
@@ -249,10 +252,10 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
                                     }
                                 }} />
                                 {!isRecording && <Button className="m-0 bg-transparent  py-5 px-2 border-[2px] border-primary" onClick={() => {
-                            replyOnPost()
-                        }} >
-                        <MdSend size={24} className=""></MdSend>
-                    </Button>}
+                                    replyOnPost()
+                                }} >
+                                    <MdSend size={24} className=""></MdSend>
+                                </Button>}
                             </div>
                         </div>
                     }
@@ -290,12 +293,12 @@ function PostModel({params, postIndex, pageIndex, setModelTrigger, postId, postD
                             }
 
                         }} />
-                        {!isRecording && 
-                        <Button className="m-0 bg-transparent  py-5 px-2 border-[2px] border-primary" onClick={() => {
-                            commentOnPost()
-                        }} >
-                        <MdSend size={24} className=""></MdSend>
-                    </Button>
+                        {!isRecording &&
+                            <Button className="m-0 bg-transparent  py-5 px-2 border-[2px] border-primary" onClick={() => {
+                                commentOnPost()
+                            }} >
+                                <MdSend size={24} className=""></MdSend>
+                            </Button>
                         }
                     </div>}
             </div>

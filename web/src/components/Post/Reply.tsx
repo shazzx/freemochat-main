@@ -5,6 +5,8 @@ import { useDeleteReply, useLikeReply } from '@/hooks/Post/useComments'
 import AudioPlayer from '@/AudioPlayer'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
 import { EllipsisVertical } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { domain } from '@/config/domain'
 
 const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, setEditCommentModelState, editCommentModelState, setCommentDetails }) => {
     const { mutate } = useLikeReply()
@@ -15,12 +17,13 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                 reply?.audio ?
                     <div className="flex gap-2 select-none" key={reply._id} ref={ref}>
 
-                        <div className='max-w-10 max-h-10 rounded-full overflow-hidden'>
+
+                        <Link to={`${domain}/user/${reply.user.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
-                                <AvatarImage src={reply?.user?.images?.profile} alt="Avatar" />
-                                <AvatarFallback>{(reply?.user?.firstname[0]?.toUpperCase()) + (reply?.user?.lastname[0]?.toUpperCase())}</AvatarFallback>
+                                <AvatarImage src={reply.user?.profile} alt="Avatar" />
+                                <AvatarFallback>{reply.user.firstname && reply.user.firstname[0]?.toUpperCase()}</AvatarFallback>
                             </Avatar>
-                        </div>
+                        </Link>
                         <div className='flex flex-col'>
                             <div className='flex px-2 gap-4 text-xs'>
                                 <span className="font-medium">{reply?.user?.firstname} {reply?.user?.lastname}</span>
@@ -53,12 +56,12 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                     </div> :
                     <div className="flex gap-2 select-none" key={reply._id} ref={ref}>
 
-                        <div className='max-w-10 max-h-10 rounded-full overflow-hidden'>
+                        <Link to={`${domain}/user/${reply.user.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
-                                <AvatarImage src={reply?.user?.images?.profile} alt="Avatar" />
-                                <AvatarFallback>{(reply?.user?.firstname[0]?.toUpperCase()) + (reply?.user?.lastname[0]?.toUpperCase())}</AvatarFallback>
+                                <AvatarImage src={reply.user?.profile} alt="Avatar" />
+                                <AvatarFallback>{reply.user.firstname && reply.user.firstname[0]?.toUpperCase()}</AvatarFallback>
                             </Avatar>
-                        </div>
+                        </Link>
                         <div className='flex flex-col'>
                             <div className='flex px-2 gap-4 text-xs'>
                                 <span className="font-medium">{reply?.user?.firstname} {reply?.user?.lastname}</span>
