@@ -220,7 +220,7 @@ function PageProfile() {
                         }
                     </div>
 
-                    <div className='flex justify-end px-24 gap-2'>
+                    <div className='flex justify-end px-4 sm:px-10 lg:px-24 gap-2'>
 
                         {_pageData?.data && !isAdmin && <Button className='bg-card hover:bg-accent active:bg-muted' onClick={() => setOpenQuickChat(!openQuickChat)}>Message</Button>}
                         {_pageData?.data && !isAdmin && (_pageData.data.isFollower ? <Button onClick={followPage}>Unfollow</Button> : <Button onClick={followPage}>Follow</Button>)}
@@ -307,7 +307,7 @@ function PageProfile() {
                                                             </div>
                                                         </div>
                                                     </Link>
-{/* 
+                                                    {/* 
                                                     {_pageData?.data?.admins?.includes(user?._id) &&
 
                                                         <DropdownMenu>
@@ -346,13 +346,13 @@ function PageProfile() {
                                 {!_pageData.isLoading &&
 
                                     <div className="flex gap-4 flex-col w-full justify-center">
-                                        <div className="flex gap-4 w-full">
+                                        <div className="flex flex-col sm:flex-row gap-4 w-full">
                                             {_pageData?.data?.name &&
                                                 <div className='flex flex-col w-full gap-2'>
                                                     <div>
                                                         Name
                                                     </div>
-                                                    <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>
+                                                    <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
                                                         {_pageData.data.name}
                                                     </div>
                                                 </div>
@@ -362,20 +362,20 @@ function PageProfile() {
                                                     <div>
                                                         Handle
                                                     </div>
-                                                    <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>{lastname}</div>
+                                                    <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>{lastname}</div>
                                                 </div>
                                             }
 
                                         </div>
 
-                                        <div className="flex gap-4 w-full">
+                                        <div className="flexflex-col sm:flex-row gap-4 w-full">
                                             {_pageData?.data?.moto &&
                                                 <div className='flex flex-col w-full gap-2'>
                                                     <div>
-                                                        Moto
+                                                        Bio
                                                     </div>
-                                                    <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>
-                                                        {_pageData?.data?.moto}
+                                                    <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
+                                                        {_pageData?.data?.bio}
                                                     </div>
                                                 </div>
                                             }
@@ -386,7 +386,7 @@ function PageProfile() {
                                                 <div>
                                                     Creation Date
                                                 </div>
-                                                <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>
+                                                <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
                                                     <p className='text-sm'>{_pageData?.data?.creationDate}</p>
                                                 </div>
                                             </div>
@@ -398,7 +398,7 @@ function PageProfile() {
                                                 <div>
                                                     About
                                                 </div>
-                                                <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>
+                                                <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
                                                     <p className='text-sm'>{_pageData?.data?.about}</p>
                                                 </div>
                                             </div>

@@ -2,6 +2,7 @@ import { Card } from './ui/card'
 
 const MediaSection = ({media, setMediaOpenDetails, setMediaOpenModel }) => {
     // let media = { images: [], videos: [] }
+    console.log(media)
 
     return (
         <div className='flex flex-col gap-4 p-4'>
@@ -19,7 +20,7 @@ const MediaSection = ({media, setMediaOpenDetails, setMediaOpenModel }) => {
                             return null
                         }
                         return (
-                            <div className='relative h-24 w-24 rounded-lg  overflow-hidden' onClick={() => {
+                            <div className='relative h-24 w-24 rounded-lg  overflow-hidden' key={image} onClick={() => {
                                 setMediaOpenDetails({ type: 'image', url: image }, setMediaOpenDetails, setMediaOpenModel)
                                 setMediaOpenModel(true)
                             }}>
@@ -43,7 +44,7 @@ const MediaSection = ({media, setMediaOpenDetails, setMediaOpenModel }) => {
                     {media && media?.videos?.length > 0 && media?.videos?.map((video) => {
                         return (
                             <div className='relative h-24 w-24 rounded-lg  overflow-hidden' onClick={() => {
-                                setMediaOpenDetails({ type: 'video', url: video.url })
+                                setMediaOpenDetails({ type: 'video', url: video })
                                 setMediaOpenModel(true)
                             }}>
                                 <video src={video} className='absolute inset-0 w-full h-full object-cover' />

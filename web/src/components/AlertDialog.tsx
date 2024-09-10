@@ -9,8 +9,10 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
+import { useNavigate } from "react-router-dom"
 
-  export function AlertDialogC({action, alertDialog, setAlertDialog}) {
+  export function AlertDialogC({action, alertDialog, setAlertDialog, setChatOpen }) {
+
     return (
       <AlertDialog open={alertDialog}>
         <AlertDialogContent>
@@ -18,14 +20,19 @@ import {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete your
-              account and remove your data from our servers.
+              chat.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel
+            onClick={() => {
+              setAlertDialog(false)
+            }}
+            >Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
               action()
               setAlertDialog(false)
+              setChatOpen(false)
             }}>Continue</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

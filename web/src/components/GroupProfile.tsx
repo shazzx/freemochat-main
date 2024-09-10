@@ -21,6 +21,7 @@ import { setMediaModelDetails } from '@/utils/mediaOpenModel'
 import MediaSection from './MediaSection'
 import { RiAdminLine, RiUserUnfollowLine } from 'react-icons/ri'
 import CustomTabList from './profile/CustomTabList'
+import { format } from 'date-fns'
 
 function GroupProfile() {
 
@@ -243,7 +244,7 @@ function GroupProfile() {
                                                                 <div className='text-gray-400 text-sm'>@{admin?.username}</div>
                                                             </div>
                                                         </div>
-{/* 
+                                                        {/* 
                                                         {data?.isSuperAdmin && admin?._id !== data?.user &&
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild>
@@ -293,7 +294,7 @@ function GroupProfile() {
 
                                                                 </div>
                                                             </div>
-{/* 
+                                                            {/* 
                                                             {data?.isSuperAdmin &&
                                                                 <DropdownMenu>
                                                                     <DropdownMenuTrigger asChild>
@@ -337,12 +338,12 @@ function GroupProfile() {
                         <TabsContent value="about" className="">
                             <div className='px-8 flex-responsive w-full items-center md:items-start  flex gap-2 border-muted'>
                                 <div className="flex flex-col w-full justify-center gap-4 mt-10">
-                                    <div className="flex gap-4 w-full">
+                                    <div className="flex  flex-col sm:flex-row gap-4 w-full">
                                         <div className='flex flex-col w-full gap-2'>
                                             <div>
                                                 Group Name
                                             </div>
-                                            <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>
+                                            <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
                                                 {data?.name}
                                             </div>
                                         </div>
@@ -350,29 +351,32 @@ function GroupProfile() {
                                             <div>
                                                 Group Handle
                                             </div>
-                                            <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>{data?.handle}</div>
+                                            <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>{data?.handle}</div>
                                         </div>
 
                                     </div>
 
 
                                     <div className='flex'>
-                                        <div className='flex flex-col gap-2'>
+                                        <div className='flex flex-col gap-2 w-full'>
                                             <div>
-                                                Moto
+                                                Bio
                                             </div>
-                                            <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>
-                                                <p className='text-sm'>Freedom is the sure possession of those alone who have the courage to defend it.</p>
+                                            <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
+                                                <p className='text-sm w-full'>
+                                                    {data?.bio}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
                                     {data?.createdAt &&
-                                        <div className="flex gap-4 w-full">
+                                        <div className="flex flex-col sm:flex-row gap-4 w-full">
                                             <div className='flex w-full flex-col gap-2'>
                                                 <div>
                                                     Creation Date
                                                 </div>
-                                                <div className='bg-card p-2 px-3 rounded-md w-full max-w-64'>{data?.createdAt}</div>
+                                                <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
+                                                    {format(data?.createdAt, 'MMM d, yyy h:mm a')}</div>
                                             </div>
 
                                         </div>}

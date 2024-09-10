@@ -8,7 +8,7 @@ export const MediaOpenModel = ({ setMediaOpenModel, setMediaOpenDetails, mediaOp
                 setMediaOpenDetails({ type: '', url: '' })
             }}>
             </div>
-            <div className='aspect-auto h-[500px] bg-card rounded-md z-10 border-4 border-accent '>
+            <div className='aspect-auto h-[500px] bg-card rounded-md z-10'>
                 {mediaOpenDetails.type == 'video' ?
                     <video src={mediaOpenDetails.url} controls className='w-full'></video>
                     :

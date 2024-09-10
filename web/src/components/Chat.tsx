@@ -373,7 +373,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                 <AudioCallCaller recepientDetails={recepientDetails} setAudioCallCaller={setAudioCallCallerState} />
             }
 
-            <AlertDialogC action={deleteChat} alertDialog={alertDialog} setAlertDialog={setAlertDialog} />
+            <AlertDialogC action={deleteChat} setChatOpen={setChatOpen} alertDialog={alertDialog} setAlertDialog={setAlertDialog} />
 
             <div className='flex items-center justify-between p-3 border border-muted'>
                 <div className='flex gap-2 items-center justify-center'>

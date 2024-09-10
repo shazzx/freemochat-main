@@ -25,7 +25,7 @@ export const DropdownUser: FC<any> = ({ setAlertDialog, blockUser, setReportMode
             </DropdownMenuTrigger>
             <DropdownMenuContent className="mr-8" >
                 <DropdownMenuGroup>
-                    <DropdownMenuItem className="cursor-pointer" onClick={blockUser}>
+                    {/* <DropdownMenuItem className="cursor-pointer" onClick={blockUser}>
                         <MdUpgrade className="mr-2 h-4 w-4" />
                         <span>Block</span>
                     </DropdownMenuItem>
@@ -35,10 +35,12 @@ export const DropdownUser: FC<any> = ({ setAlertDialog, blockUser, setReportMode
                     }} className="cursor-pointer">
                         <MdReport className="mr-2 h-4 w-4" />
                         <span>Report</span>
-                    </DropdownMenuItem>
+                    </DropdownMenuItem> */}
 
-                    <DropdownMenuItem className="cursor-pointer" onClick={() => setAlertDialog(true)}>
-                        <Button><MdDelete className="mr-2 h-4 w-4" /> Delete Chat</Button>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => {
+                        setAlertDialog(true)
+                    }}>
+                        <span className="flex"><MdDelete className="mr-2 h-4 w-4" /> Delete Chat</span>
                     </DropdownMenuItem>
                 </DropdownMenuGroup>
             </DropdownMenuContent>
