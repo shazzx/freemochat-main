@@ -23,6 +23,7 @@ import { useState } from "react"
 import { toast } from "react-toastify"
 import { setVerificationStatus } from "@/app/features/user/verificationStatusSlice"
 import profile from './../assets/logo.png'
+import { domain } from "@/config/domain"
 
 
 export function LoginForm() {
@@ -96,7 +97,7 @@ export function LoginForm() {
                             <div className="grid gap-2">
                                 <div className="flex items-center">
                                     <Label htmlFor="password">Password</Label>
-                                    <Link to="#" className="ml-auto inline-block text-sm underline">
+                                    <Link to={`${domain}/forget-password`} className="ml-auto inline-block text-sm underline">
                                         Forgot your password?
                                     </Link>
                                 </div>
@@ -121,7 +122,7 @@ export function LoginForm() {
                         </div>
                         <div className="mt-4 text-center text-sm">
                             Don&apos;t have an account?{" "}
-                            <Link to="http://localhost:5173/signup" className="underline">
+                            <Link to={`${domain}/signup`} className="underline">
                                 Sign up
                             </Link>
                         </div>

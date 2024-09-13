@@ -19,8 +19,8 @@ function YourAccount() {
     const verifyOTP = async (data: any) => {
         try {
 
-            const response = await axiosClient.post("/user/forget-password", data, { timeout: 30000 })
-            toast.success('Password Changed')
+            const response = await axiosClient.post("/user/forget-password-request", data, { timeout: 30000 })
+            toast.success('OTP Has Been Sent To Your Emal')
             navigate('')
 
         } catch (error) {
@@ -81,7 +81,9 @@ function YourAccount() {
     return (
         <div className='fixed inset-0 z-50  w-screen overflow-hidden h-screen flex items-center justify-center top-0 right-0'>
             <Card className='z-10 p-6 border border-accent'>
-                <form action="">
+                <form  action="" onSubmit={(e) => {
+                    e.preventDefault()
+                }}>
 
                     <div className="flex flex-col gap-4 w-full">
                         <div className="flex w-full flex-col justify-start items-start gap-4">

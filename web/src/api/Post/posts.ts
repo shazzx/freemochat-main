@@ -37,13 +37,13 @@ export async function fetchPost(postId: string, type: string) {
 
 
 export async function createPost(formData: FormData) {
-  const response = await axiosClient.post("/posts/create", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 20000 })
+  const response = await axiosClient.post("/posts/create", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 2000000 })
   return response.data;
 }
 
 
 export async function updatePost(formData: FormData) {
-  const response = await axiosClient.post("/posts/update", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 20000 })
+  const response = await axiosClient.post("/posts/update", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 2000000 })
   return response.data;
 }
 

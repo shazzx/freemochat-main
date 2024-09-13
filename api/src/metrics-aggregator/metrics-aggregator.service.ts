@@ -16,18 +16,34 @@ export class MetricsAggregatorService {
             },
             { upsert: true }
         )
-        console.log(targetId, name, type, "increment")
+        console.log(targetId, name, type, "increment", counter)
         return counter
     }
+
+    async userMetrics(targetId: string) {
+        let notification = await this.counterModel.findOne({ targetId: new Types.ObjectId(targetId), name: "notification", type: "user" })
+        let requests = await this.counterModel.findOne({ targetId: new Types.ObjectId(targetId), name: "request", type: "user" })
+        return { notification, requests }
+    }
+
 
     async getAll() {
         return await this.counterModel.find()
     }
 
-
-    async deleteAll() {
-        return await this.counterModel.deleteMany()
+    async defaultCount(targetId: string, name: string, type: string) {
+        let counter = await this.counterModel.updateOne(
+            { targetId: new Types.ObjectId(targetId), name, type },
+            { targetId, name, type, count: 0 },
+            { upsert: true }
+        )
+        console.log(targetId, name, type, "default")
+        return counter
     }
+
+    // async deleteAll() {
+    //     return await this.counterModel.deleteMany()
+    // }
 
     async decrementCount(targetId: Types.ObjectId, name: string, type: string) {
         let counter = await this.counterModel.updateOne(

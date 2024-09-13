@@ -1,4 +1,4 @@
-import { acceptFriendRequest, fetchUser, fetchUserStories, followUserToggle, rejectFriendRequest, removeFriend, removeStory, sendFriendRequest, uploadStory, userFollowers, userFriendRequests, userFriends } from "@/api/User/users.api"
+import { acceptFriendRequest, defaultMetric, fetchUser, fetchUserMetrics, fetchUserStories, followUserToggle, rejectFriendRequest, removeFriend, removeStory, sendFriendRequest, uploadStory, userFollowers, userFriendRequests, userFriends } from "@/api/User/users.api"
 import { useAppSelector } from "@/app/hooks"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { produce } from "immer"
@@ -40,6 +40,58 @@ export const useUserStories = (userId: string) => {
         isSuccess,
     }
 }
+
+
+export const useUserMetrics = () => {
+    
+    const { data, isLoading, isError, isFetched, isSuccess } = useQuery({
+        queryKey: ['metrics'],
+        queryFn: () => {
+            return fetchUserMetrics()
+        },
+
+    })
+
+    return {
+        data,
+        isLoading,
+        isError,
+        isFetched,
+        isSuccess,
+    }
+}
+
+export const useUserDefaultMetric = () => {
+    const queryClient = useQueryClient()
+    const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+        mutationFn: (name: string) => {
+            return defaultMetric(name)
+        },
+
+
+        onMutate: async () => {
+        },
+
+        onError: (err) => {
+            console.log(err)
+            toast.error("something went wrong")
+            queryClient.invalidateQueries({ queryKey: ['metrics'] })
+        },
+        onSettled: (e) => {
+            console.log(e)
+            queryClient.invalidateQueries({ queryKey: ['metrics'] })
+        }
+    })
+
+    return {
+        data,
+        isPending,
+        isSuccess,
+        mutateAsync,
+        mutate
+    }
+}
+
 
 export const useUploadStory = (userId: string) => {
     const queryClient = useQueryClient()

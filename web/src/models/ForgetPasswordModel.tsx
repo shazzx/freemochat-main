@@ -125,7 +125,9 @@ function ForgetPasswordModel({ setModelTrigger }) {
                 setModelTrigger(false)
             }}></div>
             <Card className='z-10 p-6 border border-accent'>
-                <form action="">
+                <form action="" onSubmit={(e) => {
+                    e.preventDefault()
+                }}>
 
                     <div className="flex flex-col gap-4 w-full">
                         <div className="flex w-full flex-col justify-start items-start gap-4">

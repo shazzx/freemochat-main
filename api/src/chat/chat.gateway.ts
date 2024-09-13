@@ -187,11 +187,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async handleNotifications(event) {
-    await this.userService.getRawUser(event.userId)
-    console.log(event, 'chatgateway')
     let user = JSON.parse(await this.cacheService.getOnlineUser(event.user))
     this.server.to(user?.socketId).emit('notification', event)
-    // this.server.to(recepientId).emit('notification', event)
+  }
+
+
+  async handleRequest(request) {
+    let user = JSON.parse(await this.cacheService.getOnlineUser(request.user))
+    this.server.to(user?.socketId).emit('request', request)
   }
 
 

@@ -17,6 +17,7 @@ import { Cities, CitiesSchema } from 'src/schema/cities';
 import { LocationModule } from 'src/location/location.module';
 import { TwilioModule } from 'src/twilio/twilio.module';
 import { CacheModule } from 'src/cache/cache.module';
+import { ChatModule } from 'src/chat/chat.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CacheModule } from 'src/cache/cache.module';
     MetricsAggregatorModule,
     TwilioModule,
     CryptoModule,
+    ChatModule,
     CacheModule,
     LocationModule,
     forwardRef(() => UploadModule),

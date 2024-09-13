@@ -1,6 +1,6 @@
 import { axiosClient} from "@/api/axiosClient"
 import { HTTP_CONTENT_TYPES } from "@/utils/enums/global.c"
-import { PAGE_ROUTES } from "@/utils/enums/routes/page.routes.c"
+import { PAGE_ROUTES } from "@/utils/enums/routes/page.routes.e"
 import { GenericFormData } from "axios"
 
 export const fetchPage = async (handle: string) => {

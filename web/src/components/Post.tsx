@@ -136,19 +136,22 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
 
     const videoRef = useRef(null)
-    const { isOpen, id } = useAppSelector(state => state.postModel)
+    const { isOpen, id, click } = useAppSelector(state => state.postModel)
 
     useEffect(() => {
-
-        if (isOpen && videoRef.current?.pause && postData._id == id) {
+        if (isOpen && videoRef.current?.pause && postData._id == id && click == 'comment') {
             console.log('yes')
             videoRef.current.play()
+        }
+
+        if (isOpen && videoRef.current?.pause && postData._id == id && click !== 'comment') {
+            videoRef.current.pause()
         }
     }, [isOpen, videoRef.current])
 
     let navigation = postData?.type == "user" ? postData?.target?.username : postData?.target?.handle
 
-    console.log(postData)
+    // console.log(postData)
 
 
     if (postData?.isUploaded == false) {
@@ -243,7 +246,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         postData && postData.media &&
                         <div className=' overflow-hidden aspect-auto max-w-xl flex items-center justify-center bg-background' onClick={() => {
                             if (!model) {
-                                dispatch(setOpen(postData._id))
+                                dispatch(setOpen({click: 'comment', id: postData._id}))
                                 setModelTrigger(true)
                             }
                         }}>
@@ -265,9 +268,9 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         <span className='text-sm'>
                             {postData?.likesCount > 0 && "Likes " + postData?.likesCount}
                         </span>
-                        {/* <span className='text-sm'>
+                        <span className='text-sm'>
                     {postData?.commentsCount > 0 &&  "Comments " + postData?.commentsCount  }
-                    </span > */}
+                    </span >
                     </div>
                     <div className='flex  items-center justify-between w-full '>
 
@@ -286,7 +289,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         </div>
                         <div className='flex gap-0 items-center cursor-pointer' onClick={() => {
                             if (!model) {
-                                dispatch(setOpen(postData._id))
+                                dispatch(setOpen({click: '', id: postData._id}))
                                 setModelTrigger(true)
                             }
                         }}>

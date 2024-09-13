@@ -48,13 +48,6 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
 
     });
 
-    socket.on("disconnect", () => { // fire when socked is disconnected
-      console.log("Socket disconnected");
-    });
-
-    socket.on("notification", (data) => {
-      console.log(data)
-    })
 
     socket.on("users", (users) => {
       console.log(users)
@@ -135,8 +128,14 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
     })
 
     socket.on("notification", (data) => {
-      console.log(data)
-      dispatch(setNewNotification())
+      queryClient.invalidateQueries({ queryKey: ['metrics'] })
+      // dispatch(setNewNotification())
+    })
+
+
+    socket.on("request", (data) => {
+      queryClient.invalidateQueries({ queryKey: ['metrics'] })
+      queryClient.invalidateQueries({ queryKey: ['userRequests',user._id] })
     })
 
 
@@ -186,7 +185,11 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
       }
     })
 
-    // remove all event listeners
+
+    socket.on("disconnect", () => { 
+      console.log("Socket disconnected");
+    });
+
     return () => {
       socket.off("connect");
       socket.off("disconnect");

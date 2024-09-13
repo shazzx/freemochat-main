@@ -19,6 +19,7 @@ import { Link } from "react-router-dom"
 import { domain } from "@/config/domain"
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 import { useAppSelector } from "@/app/hooks"
+import { useUserDefaultMetric } from "@/hooks/User/useUser"
 
 const notifications = [
     {
@@ -55,6 +56,7 @@ const getTarget = (targetType, targetId, handle, type) => {
 export function Notifications({ setNotificationsState }) {
     const [notifications, setNotifications] = useState([])
     const {notification} = useAppSelector((state) => state.notification)
+    const defaultMetric = useUserDefaultMetric()
 
     useEffect(() => {
         const getNotifications = async () => {
@@ -73,6 +75,11 @@ export function Notifications({ setNotificationsState }) {
                     <div className="flex gap-2 items-center">
                         <CardTitle>Notifications </CardTitle>
                         <BellRing size={26} />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                        <Button onClick={() =>{
+                            defaultMetric.mutate('notification')
+                        }}>Mark as Read</Button>
                     </div>
                     {/* <CardDescription>{notifications?.length > 0 ? "You have " + notifications?.length + " unread messages." : " You have no notifications"} </CardDescription> */}
                 </CardHeader>

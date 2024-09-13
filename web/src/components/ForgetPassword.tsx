@@ -12,9 +12,11 @@ function ForgetPassword() {
     const [confirmPassword, setConfirmPassword] = useState(null)
     const [newPassword, setNewPassword] = useState(null)
 
+    const params = useParams()
     const [searchParams] = useSearchParams()
-    console.log(searchParams.get("username"))
-    console.log(searchParams.get("auth"))
+    
+    console.log(params.auth, searchParams.get('username'))
+
 
     const [otp, setOtp] = useState(null)
     const [otpSent, setOtpSent] = useState(false)
@@ -123,10 +125,11 @@ function ForgetPassword() {
     return (
         <div className='fixed inset-0 z-50  w-screen overflow-hidden h-screen flex items-center justify-center top-0 right-0'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
-                setModelTrigger(false)
             }}></div>
             <Card className='z-10 p-6 border border-accent'>
-                <form action="">
+                <form action="" onSubmit={(e) => {
+                    e.preventDefault()
+                }}>
 
                     <div className="flex flex-col gap-4 w-full">
                         <div className="flex w-full flex-col justify-start items-start gap-4">

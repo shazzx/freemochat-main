@@ -1,2 +1,1 @@
-// export const domain = 'https://main.dvmorrmnbu2gy.amplifyapp.com'
-export const domain = 'http://localhost:5173'
+export const domain = process.env.ENV == 'PRODUCTION' ? "http://ec2-15-206-203-226.ap-south-1.compute.amazonaws.com:5173" : 'http://localhost:5173'

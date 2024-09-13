@@ -6,10 +6,8 @@ import { User } from 'src/schema/user';
 import { Friend } from 'src/schema/friends';
 import { Follower } from 'src/schema/followers';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
-import { NotificationService } from 'src/notification/notification.service';
 import { CryptoService } from 'src/crypto/crypto.service';
-import { Countries } from 'src/schema/countries';
-import { Cities } from 'src/schema/cities';
+import { ChatGateway } from 'src/chat/chat.gateway';
 
 
 @Injectable()
@@ -21,6 +19,7 @@ export class UserService {
         @InjectModel(Friend.name) private readonly friendModel: Model<Friend>,
         @InjectModel(Follower.name) private readonly followerModel: Model<Follower>,
         private readonly metricsAggregatorService: MetricsAggregatorService,
+        private readonly notificationGateway: ChatGateway,
         private readonly cryptoService: CryptoService
     ) {
 
@@ -167,20 +166,14 @@ export class UserService {
         // await this.friendRequestModel.deleteMany();
 
         const deleteResult = await this.friendRequestModel.deleteOne(filter);
-        console.log(deleteResult)
         if (deleteResult.deletedCount === 0) {
             const request = await this.friendRequestModel.create(filter);
-            // await this.notificationService.createNotification(
-            //     {
-            //         from: new Types.ObjectId(userId),
-            //         user: new Types.ObjectId(recepientId),
-            //         targetId: new Types.ObjectId(recepientId),
-            //         type: "user",
-            //         value: "sent you a friend request"
-            //     }
-            // )
+            this.metricsAggregatorService.incrementCount(filter.reciever, "request", "user")
+            await this.notificationGateway.handleRequest({ user: filter.reciever });
             return true;
         }
+        this.metricsAggregatorService.decrementCount(filter.reciever, "request", "user")
+        await this.notificationGateway.handleRequest({ user: filter.reciever });
 
         return false;
     }
@@ -198,6 +191,7 @@ export class UserService {
         if (deleteResult.deletedCount === 0) {
             await this.followerModel.create(filter);
             await this.metricsAggregatorService.incrementCount(filter.targetId, "user", "followers")
+
             // await this.notificationService.createNotification(
             //     {
             //         from: new Types.ObjectId(userId),
@@ -228,6 +222,9 @@ export class UserService {
         if (deleteResult.deletedCount === 0) {
             throw new BadRequestException()
         }
+
+        this.metricsAggregatorService.decrementCount(filter[0].sender, "request", "user")
+        await this.notificationGateway.handleRequest({ user: filter[0].sender });
 
         let friends = await this.friendModel.insertMany([
             { user: new Types.ObjectId(userId), friend: new Types.ObjectId(recepientId) },

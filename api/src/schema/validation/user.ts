@@ -124,12 +124,7 @@ export const ForgetPassword = z.object({
 
 
 export const ForgetPasswordRequest = z.object({
-    otp: z.string(),
-    type: z.string(),
     username: z.string().optional(),
-    changePassword: z.object({
-        password: z.string(),
-    }),
 })
 
 export const resendOTP = z.object({

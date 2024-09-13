@@ -4,12 +4,14 @@ import { Model } from 'mongoose';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { Notification } from 'src/schema/Notification';
 import { Types } from 'mongoose'
+import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 
 @Injectable()
 export class NotificationService {
   constructor(
     @InjectModel(Notification.name) private notificationModel: Model<Notification>,
-    private readonly notificationGateway: ChatGateway
+    private readonly notificationGateway: ChatGateway,
+    private readonly metricsAggregatorService: MetricsAggregatorService,
   ) { }
 
   async createNotification(data: { from: Types.ObjectId, user: Types.ObjectId, targetId: Types.ObjectId, type: string, targetType?: string,  value: string, handle?: string }) {
@@ -20,6 +22,7 @@ export class NotificationService {
       return null
     }
     const notification = await this.notificationModel.create(data);
+    this.metricsAggregatorService.incrementCount(data.user, "notification", "user")
     this.notificationGateway.handleNotifications(data);
     return notification
   }

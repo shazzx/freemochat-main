@@ -42,7 +42,7 @@ export function DropdownMenuMain({ deletePost, setConfirmModelState, setReportMo
                     }
 
                     {!postBy && <DropdownMenuItem onClick={() => {
-                        console.log('yes', reportModelState)
+                        // console.log('yes', reportModelState)
                         setReportModelState(!reportModelState)
                     }} className="cursor-pointer">
                         <MdReport className="mr-2 h-4 w-4" />

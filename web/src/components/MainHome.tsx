@@ -40,6 +40,7 @@ import VideoCall from "./Call/Video/VideoCall"
 import { axiosClient } from "@/api/axiosClient"
 import { toast } from "react-toastify"
 import VideoCallAccepted from "./Call/Video/VideoCallAccepted"
+import { useUserMetrics } from "@/hooks/User/useUser"
 
 const MainHome = ({ children }: any) => {
   useSocket()
@@ -54,7 +55,9 @@ const MainHome = ({ children }: any) => {
   const { callDetails, callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
   const data = useAppSelector((state) => state.call)
   const { notification } = useAppSelector((state) => state.notification)
-  console.log(callDetails, callerState, onCall, recepientState, targetDetails, type)
+  const metrics = useUserMetrics()
+  // console.log(callDetails, callerState, onCall, recepientState, targetDetails, type)
+  console.log(metrics.data)
 
   let cancelCall = async (type) => {
     try {
@@ -280,19 +283,22 @@ const MainHome = ({ children }: any) => {
           </div>
 
           <div className="flex items-center gap-3 md:relative">
-            <MdGroup size="24px" cursor="pointer" onClick={async () => {
+            <div className="relative" onClick={async () => {
               if (friendRequestState == false) {
                 setFriendRequestState(true)
               }
-            }} />
+            }}>
+            <MdGroup size="24px" cursor="pointer"  />
+              {metrics?.data?.requests?.count && metrics?.data?.requests?.count > 0 ? (<span className="absolute cursor-pointer -top-1 -right-2 w-5 h-5 text-xs flex items-center justify-center rounded-full bg-red-500">{metrics?.data?.requests?.count > 0 && metrics?.data?.requests?.count} </span>): null}
+            </div>
             {friendRequestState &&
               <FriendRequests setFriendRequestState={setFriendRequestState} />
             }
-            <div className="relative">
-              <MdNotifications onClick={() => {
+            <div className="relative" onClick={() => {
                 setNotificationsState(true)
-              }} size="24px" cursor="pointer" />
-              {notification && <span className="absolute top-0 right-1 w-2 h-2 rounded-full bg-red-500"></span>}
+              }}>
+              <MdNotifications  size="24px" cursor="pointer" />
+              {metrics?.data?.notification?.count && metrics?.data?.notification?.count > 0 && <span className="absolute cursor-pointer -top-1 -right-2 w-5 h-5 text-xs flex items-center justify-center rounded-full bg-red-500">{metrics?.data?.notification?.count} </span>}
             </div>
 
             {notificationsState && <Notifications setNotificationsState={setNotificationsState} />}

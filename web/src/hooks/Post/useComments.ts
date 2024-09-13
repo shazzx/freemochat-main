@@ -1,8 +1,9 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchComments, CommentsResponse, createComment, likeComment, replyOnComment, fetchReplies, likeReply, updateComment, deleteComment, deleteReply, updateReply } from '../../api/Post/comments';
+import { fetchComments, CommentsResponse, createComment, likeComment, replyOnComment, fetchReplies, likeReply, updateComment, deleteComment, deleteReply, updateReply } from '../../api/Post/comments.api';
 import { useAppSelector } from '@/app/hooks';
 import { toast } from 'react-toastify';
 import { produce } from 'immer'
+import { CommentKeys } from '@/utils/enums/keys/main';
 
 interface CreateComment {
   postId: string,
@@ -36,10 +37,10 @@ interface DeleteComment {
   audio?: { src: string }
 }
 
-export function useComments(postId): any {
+export function useComments(postId: string) {
 
   const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery<CommentsResponse>({
-    queryKey: ['comments'],
+    queryKey: [CommentKeys.COMMENTS],
     queryFn: ({ pageParam }) => fetchComments(postId, pageParam),
     staleTime: 0,
     refetchOnWindowFocus: false,
@@ -66,7 +67,7 @@ export function useComments(postId): any {
 export function useReplies(commentId): any {
 
   const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery<CommentsResponse>({
-    queryKey: ['replies'],
+    queryKey: [CommentKeys.REPLIES],
     queryFn: ({ pageParam }) => fetchReplies(commentId, pageParam),
     staleTime: 0,
     enabled: !!commentId,
@@ -99,74 +100,47 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
     },
     onMutate: async (newComment) => {
 
-      // await queryClient.cancelQueries({ queryKey: [type, targetId] })
-      // const previousPosts = queryClient.getQueryData([type, targetId])
-      // console.log(previousPosts)
-      // if (!previousPosts) {
+      await queryClient.cancelQueries({ queryKey: [type, targetId] })
+      const previousPosts = queryClient.getQueryData([type, targetId])
+      console.log(type, targetId, postId)
+      if (!previousPosts) {
 
-      //   await queryClient.cancelQueries({ queryKey: ['feed'] })
-      //   const previousPosts = queryClient.getQueryData(['feed'])
+        await queryClient.cancelQueries({ queryKey: ['feed'] })
+        const previousPosts = queryClient.getQueryData(['feed'])
 
-      //   queryClient.setQueryData(['feed'], (pages: any) => {
-      //     const updatedComments = produce(pages, (draft: any) => {
-      //       return draft.pages.forEach((page, p) => {
-      //         return (page.posts.forEach((post, x) => {
-      //           if (post._id == postId) {
-      //             console.log(post.commentsCount)
-      //             console.log(post.commentsCount = post.commentsCount + 1)
-      //             return draft.pages[p].posts[x].commentsCount = post.commentsCount + 1
-      //           }
-      //         }))
-      //       })
-      // if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
-      //   draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
-      //   draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
-
-      //   return draft
-      // }
-
-      // if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
-      //   draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
-      //   draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
-
-      //   return draft
-      // }
-
-      // throw new Error()
-      //     })
-      //   });
-
-      // } else {
-
-      //   queryClient.setQueryData([type, targetId], (pages: any) => {
-      //     console.log(type, targetId)
-      //     const updatedComments = produce(pages, (draft: any) => {
-      //       console.log(pages)
-      //       // if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
-      //       //   draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
-      //       //   draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
-
-      //       //   return draft
-      //       // }
-
-      //       // if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
-      //       //   draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
-      //       //   draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
-
-      //       //   return draft
-      //       // }
-
-      //       // throw new Error()
-      //     })
-      //     return updatedComments
-      //   });
-      // }
+        queryClient.setQueryData(['feed'], (pages: any) => {
+          const updatedComments = produce(pages, (draft: any) => {
+            return draft.pages.forEach((page, p) => {
+              return (page.posts.forEach((post, x) => {
+                if (post._id == postId) {
+                  return draft.pages[p].posts[x].commentsCount = post.commentsCount + 1
+                }
+              }))
+            })
+          })
+          return updatedComments
+        })
+      } else {
+        queryClient.setQueryData([type, targetId], (pages: any) => {
+          console.log(type, targetId)
+          const updatedComments = produce(pages, (draft: any) => {
+            return draft.pages.forEach((page, p) => {
+              return (page.posts.forEach((post, x) => {
+                if (post._id == postId) {
+                  return draft.pages[p].posts[x].commentsCount = post.commentsCount + 1
+                }
+              }))
+            })
+          })
+          return updatedComments
+        });
+      }
 
 
-      await queryClient.cancelQueries({ queryKey: ["comments"] })
-      const previousComments = queryClient.getQueryData(["comments"])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS] })
+      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS])
 
-      queryClient.setQueryData(['comments'], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.COMMENTS], (pages: any) => {
         const firstPage = pages.pages[0]
         const updatedComments = produce(pages, (draft: any) => {
           console.log(newComment)
@@ -174,10 +148,12 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
             draft.pages[0].comments.unshift(
               {
                 content: newComment.commentDetails.content, audio: { ...newComment.audio, duration: newComment.commentDetails.duration }, post: newComment.postId, user: {
-                  images: user?.images,
-                  firstname: user?.firstname,
+                  cover: user?.cover,
+                  profile: user?.profile,
+                  firstname: user.firstname,
                   lastname: user?.lastname,
-                  username: newComment.commentDetails.username
+                  username: user.username,
+                  _id: user._id
                 }
               }
             )
@@ -186,10 +162,12 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
 
           draft.pages[0].comments.unshift({
             content: newComment.commentDetails.content, post: newComment.postId, user: {
-              images: user?.images,
-              firstname: user?.firstname,
+              cover: user?.cover,
+              profile: user?.profile,
+              firstname: user.firstname,
               lastname: user?.lastname,
-              username: newComment.commentDetails.username
+              username: user.username,
+              _id: user._id
             }
           })
 
@@ -204,23 +182,23 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData(["comments"], context.previousComments)
+      queryClient.setQueryData([CommentKeys.COMMENTS], context?.previousComments)
     },
     onSettled: async (data) => {
 
-      await queryClient.cancelQueries({ queryKey: ["comments"] })
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS] })
 
-      queryClient.setQueryData(['comments'], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.COMMENTS], (pages: any) => {
         const firstPage = pages.pages[0]
         const updatedComments = produce(pages, (draft: any) => {
-          draft.pages[0].comments[0] = {...data, ...draft.pages[0].comments[0]}
+          draft.pages[0].comments[0] = { ...data, ...draft.pages[0].comments[0] }
           return draft
         })
         return updatedComments
       })
 
 
-      // queryClient.invalidateQueries({ queryKey: ["comments"] })
+      // queryClient.invalidateQueries({ queryKey: [CommentKeys.COMMENTS] })
     }
   })
 
@@ -239,10 +217,10 @@ export const useUpdateComment = () => {
       return updateComment(commentDetails.formData)
     },
     onMutate: async ({ commentDetails, pageIndex, commentId, commentIndex }) => {
-      await queryClient.cancelQueries({ queryKey: ["comments"] })
-      const previousComments = queryClient.getQueryData(["comments"])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS] })
+      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS])
 
-      queryClient.setQueryData(['comments'], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.COMMENTS], (pages: any) => {
         const updatedComments = produce(pages, (draft: any) => {
 
           if (draft.pages[pageIndex].comments[commentIndex] && draft.pages[pageIndex].comments[commentIndex]._id == commentId) {
@@ -260,10 +238,10 @@ export const useUpdateComment = () => {
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData(["comments"], context.previousComments)
+      queryClient.setQueryData([CommentKeys.COMMENTS], context.previousComments)
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments"] })
+      queryClient.invalidateQueries({ queryKey: [CommentKeys.COMMENTS] })
     }
   })
 
@@ -282,10 +260,10 @@ export const useDeleteComment = () => {
       return deleteComment({ commentId: commentDetails.commentId, postId: commentDetails.postId, audio: commentDetails?.audio ?? null })
     },
     onMutate: async ({ commentId, pageIndex, commentIndex }) => {
-      await queryClient.cancelQueries({ queryKey: ["comments"] })
-      const previousComments = queryClient.getQueryData(["comments"])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS] })
+      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS])
 
-      queryClient.setQueryData(['comments'], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.COMMENTS], (pages: any) => {
         const updatedComments = produce(pages, (draft: any) => {
 
           if (draft.pages[pageIndex].comments[commentIndex] && draft.pages[pageIndex].comments[commentIndex]._id == commentId) {
@@ -303,10 +281,10 @@ export const useDeleteComment = () => {
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData(["comments"], context.previousComments)
+      queryClient.setQueryData([CommentKeys.COMMENTS], context.previousComments)
     },
     onSettled: () => {
-      // queryClient.invalidateQueries({ queryKey: ["comments"] })
+      // queryClient.invalidateQueries({ queryKey: [CommentKeys.COMMENTS] })
     }
   })
 
@@ -328,19 +306,20 @@ export const useReplyOnComment = () => {
     },
     onMutate: async ({ replyDetails, commentId, postId, audio }) => {
       console.log(replyDetails, commentId, postId)
-      await queryClient.cancelQueries({ queryKey: ["replies"] })
-      const previousReplies = queryClient.getQueryData(["replies"])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES] })
+      const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES])
 
-      queryClient.setQueryData(["replies"], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.REPLIES], (pages: any) => {
         const updatedReplies = produce(pages, (draft: any) => {
           console.log(pages)
           if (audio) {
             draft.pages[0].replies.unshift({
               content: replyDetails.content, post: postId, audio, user: {
-                images: user?.images,
+                profile: user?.profile,
+                cover: user?.cover,
                 firstname: user?.firstname,
                 lastname: user?.lastname,
-                username: 'null'
+                username: user?.username
               }
             })
             return draft
@@ -348,10 +327,11 @@ export const useReplyOnComment = () => {
 
           draft.pages[0].replies.unshift({
             content: replyDetails.content, post: postId, audio, user: {
-              images: user?.images,
+              profile: user?.profile,
+              cover: user?.cover,
               firstname: user?.firstname,
               lastname: user?.lastname,
-              username: 'null'
+              username: user?.username
             }
           })
 
@@ -365,10 +345,10 @@ export const useReplyOnComment = () => {
     onError: (err, newReply, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData(["replies", newReply.commentId], context.previousReplies)
+      queryClient.setQueryData([CommentKeys.REPLIES, newReply.commentId], context.previousReplies)
     },
     onSettled: (data, reply, { commentId }) => {
-      queryClient.invalidateQueries({ queryKey: ["replies"] })
+      queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES] })
     }
   })
 
@@ -388,10 +368,10 @@ export const useUpdateReply = () => {
       return updateReply(replyDetails.formData)
     },
     onMutate: async ({ replyDetails, pageIndex, replyId, replyIndex }) => {
-      await queryClient.cancelQueries({ queryKey: ["replies"] })
-      const previousReplies = queryClient.getQueryData(["replies"])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES] })
+      const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES])
 
-      queryClient.setQueryData(["replies"], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.REPLIES], (pages: any) => {
         const updatedReplies = produce(pages, (draft: any) => {
 
           if (draft.pages[pageIndex].replies[replyIndex] && draft.pages[pageIndex].replies[replyIndex]._id == replyId) {
@@ -409,10 +389,10 @@ export const useUpdateReply = () => {
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData(["replies"], context.previousReplies)
+      queryClient.setQueryData([CommentKeys.REPLIES], context.previousReplies)
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["replies"] })
+      queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES] })
     }
   })
 
@@ -432,10 +412,10 @@ export const useDeleteReply = () => {
       return deleteReply({ replyId: replyDetails.replyId, audio: replyDetails?.audio ?? null })
     },
     onMutate: async ({ replyId, pageIndex, replyIndex }) => {
-      await queryClient.cancelQueries({ queryKey: ["replies"] })
-      const previousReplies = queryClient.getQueryData(["replies"])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES] })
+      const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES])
 
-      queryClient.setQueryData(['replies'], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.REPLIES], (pages: any) => {
         const updatedReplies = produce(pages, (draft: any) => {
 
           if (draft.pages[pageIndex].replies[replyIndex] && draft.pages[pageIndex].replies[replyIndex]._id == replyId) {
@@ -453,10 +433,10 @@ export const useDeleteReply = () => {
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData(["replies"], context.previousReplies)
+      queryClient.setQueryData([CommentKeys.REPLIES], context.previousReplies)
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["replies"] })
+      queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES] })
     }
   })
 
@@ -479,10 +459,10 @@ export const useLikeComment = () => {
 
 
     onMutate: async ({ commentId, commentIndex, pageIndex, userId }) => {
-      await queryClient.cancelQueries({ queryKey: ["comments"] })
-      const previousComments = queryClient.getQueryData(["comments"])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS] })
+      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS])
 
-      queryClient.setQueryData(['comments'], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.COMMENTS], (pages: any) => {
         const updatedComments = produce(pages, (draft: any) => {
 
           if (draft.pages[pageIndex].comments[commentIndex] && draft.pages[pageIndex].comments[commentIndex]._id == commentId && draft.pages[pageIndex].comments[commentIndex].isLikedByUser) {
@@ -506,11 +486,11 @@ export const useLikeComment = () => {
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData(["comments"], context.previousComments)
+      queryClient.setQueryData([CommentKeys.COMMENTS], context.previousComments)
     },
     onSettled: (e) => {
       // uncommeting this will refetch the comments again from the server to be in sync
-      // queryClient.invalidateQueries({ queryKey: ["comments"] })
+      // queryClient.invalidateQueries({ queryKey: [CommentKeys.COMMENTS] })
     }
   })
 
@@ -534,10 +514,10 @@ export const useLikeReply = () => {
 
 
     onMutate: async ({ replyId, replyIndex, commentId, pageIndex, userId }) => {
-      await queryClient.cancelQueries({ queryKey: ["replies"] })
-      const previousReplies = queryClient.getQueryData(["replies"])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES] })
+      const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES])
 
-      queryClient.setQueryData(['replies'], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.REPLIES], (pages: any) => {
         const updatedReplies = produce(pages, (draft: any) => {
           console.log(draft.pages[pageIndex].replies[replyIndex])
 
@@ -562,12 +542,10 @@ export const useLikeReply = () => {
     onError: (err, newReply, context) => {
       console.log(err)
       toast.error("something went wrong")
-      // queryClient.setQueryData(["replies", ], context.previousComments)
+      queryClient.setQueryData([CommentKeys.REPLIES], context.previousReplies)
     },
     onSettled: (e) => {
-      console.log(e)
-      // uncommeting this will refetch the comments again from the server to be in sync
-      // queryClient.invalidateQueries({ queryKey: ["comments"] })
+      queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES] })
     }
   })
 

@@ -59,7 +59,7 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
                 navigate('', { replace: true })
 
             }}></div>
-            <div className='relative z-10 h-full sm:max-h-[700px] bg-background rounded-lg w-full sm:w-[440px] overflow-auto sm:border-2 sm:border-accent'>
+            <div className='relative z-20 h-full sm:max-h-[700px] bg-background rounded-lg w-full sm:w-[440px] overflow-auto sm:border-2 sm:border-accent'>
                 {uploading &&
                     <div className="z-10 absolute w-full h-full flex items-center justify-center">
                         <div className="absolute w-full h-full bg-card opacity-70">

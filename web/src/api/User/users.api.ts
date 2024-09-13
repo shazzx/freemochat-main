@@ -11,6 +11,7 @@ export const fetchUserStories = async () => {
     return data
 }
 
+
 export const uploadStory = async (formData: FormData) => {
     const { data } = await axiosClient.post("/stories/create", formData, { headers: { "Content-Type": 'multipart/form-data' } })
     return data
@@ -85,5 +86,19 @@ export const userFriendRequests = async (pageParam) => {
 export const userNotifications = async (pageParam) => {
     const { data } = await axiosClient.get("/notifications", { params: { cursor: pageParam } })
     console.log(data)
+    return data
+}
+
+
+
+export const fetchUserMetrics = async () => {
+    const { data } = await axiosClient.get("metrics-aggregator/user/metrics")
+    return data
+}
+
+
+export const defaultMetric = async (name) => {
+    console.log(name)
+    const { data } = await axiosClient.post("metrics-aggregator/user/metrics/default", {  name  })
     return data
 }

@@ -8,7 +8,7 @@ import { toast } from 'react-toastify'
 import { Link } from 'react-router-dom'
 import { domain } from '@/config/domain'
 
-const Comment: FC<any> = ({fetchNextPage, reply, comment, pageIndex, commentIndex, userId, ref, editCommentModelState, setEditCommentModelState, setCommentDetails, isParent }) => {
+const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentIndex, userId, ref, editCommentModelState, setEditCommentModelState, setCommentDetails, isParent }) => {
     const { mutate } = useLikeComment()
     const deleteComment = useDeleteComment()
 
@@ -36,17 +36,17 @@ const Comment: FC<any> = ({fetchNextPage, reply, comment, pageIndex, commentInde
                             </Link>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-muted text-sm rounded-lg ">
                                 <AudioPlayer src={comment.audio.src} duration={comment.audio.duration} />
-
-                                < DropdownMenu >
-                                    <DropdownMenuTrigger asChild className='cursor-pointer'>
-                                        <EllipsisVertical size="16px" />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className='bg-card p-2 rounded-md'>
-                                        <DropdownMenuItem className='cursor-pointer' onClick={async () => {
-                                            deleteComment.mutate({ commentId: comment._id, pageIndex, commentIndex, audio: { src: comment.audio.src, }, postId: comment.post })
-                                        }}>Remove</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                {comment.user._id == userId &&
+                                    < DropdownMenu >
+                                        <DropdownMenuTrigger asChild className='cursor-pointer'>
+                                            <EllipsisVertical size="16px" />
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className='bg-card p-2 rounded-md'>
+                                            <DropdownMenuItem className='cursor-pointer' onClick={async () => {
+                                                deleteComment.mutate({ commentId: comment._id, pageIndex, commentIndex, audio: { src: comment.audio.src, }, postId: comment.post })
+                                            }}>Remove</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>}
                             </div>
                             <div className='flex px-2 gap-4 text-xs'>
                                 <span className={`cursor-pointer ${(isParent ? likeParentComment : comment?.isLikedByUser) && "text-primary"}`} onClick={async () => {
@@ -82,21 +82,21 @@ const Comment: FC<any> = ({fetchNextPage, reply, comment, pageIndex, commentInde
                             </Link>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-accent bg-card dark:bg-transparent text-sm rounded-lg ">
                                 <p >{comment?.content}</p>
-
-                                < DropdownMenu >
-                                    <DropdownMenuTrigger asChild className='cursor-pointer'>
-                                        <EllipsisVertical size="16px" />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className='bg-card p-2 rounded-md'>
-                                        <DropdownMenuItem className='cursor-pointer' onClick={async () => {
-                                            setEditCommentModelState(!editCommentModelState)
-                                            setCommentDetails({ content: comment.content, commentId: comment._id, pageIndex, commentIndex })
-                                        }}>Edit</DropdownMenuItem>
-                                        <DropdownMenuItem className='cursor-pointer' onClick={async () => {
-                                            deleteComment.mutate({ postId: comment.post, commentId: comment._id, pageIndex, commentIndex })
-                                        }}>Remove</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                {comment.user._id == userId &&
+                                    < DropdownMenu >
+                                        <DropdownMenuTrigger asChild className='cursor-pointer'>
+                                            <EllipsisVertical size="16px" />
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className='bg-card p-2 rounded-md'>
+                                            <DropdownMenuItem className='cursor-pointer' onClick={async () => {
+                                                setEditCommentModelState(!editCommentModelState)
+                                                setCommentDetails({ content: comment.content, commentId: comment._id, pageIndex, commentIndex })
+                                            }}>Edit</DropdownMenuItem>
+                                            <DropdownMenuItem className='cursor-pointer' onClick={async () => {
+                                                deleteComment.mutate({ postId: comment.post, commentId: comment._id, pageIndex, commentIndex })
+                                            }}>Remove</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>}
                             </div>
                             <div className='flex px-2 gap-4 text-xs'>
                                 <span className={`cursor-pointer ${comment?.isLikedByUser && "text-primary"}`} onClick={async () => {
