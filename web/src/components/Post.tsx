@@ -20,6 +20,7 @@ import { Copy } from 'lucide-react'
 import { useDispatch } from 'react-redux'
 import { insertViewedPost } from '@/app/features/user/viewPostSlice'
 import { setOpen } from '@/app/features/user/postModelSlice'
+import AutoPlayVideo from './AutoPlayVideo'
 
 interface PostProps {
     postData: any,
@@ -231,8 +232,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         <DropdownMenuMain deletePost={deletePost} setConfirmModelState={setConfirmModelState} setReportModelState={setReportModelState} reportModelState={reportModelState} postPromotion={postPromotion} setPostPromotion={setPostPromotion} setEditPostModelState={setEditPostModelState} postBy={postData?.user == user._id} />
                     </div>
                 </CardHeader>
-                <CardContent className="flex flex-col gap-2 text-2xl p-0 px-3 font-bold">
-                    <div className='text-sm font-normal'>
+                <CardContent className="flex flex-col gap-2 text-2xl p-0 sm:px-3 font-bold">
+                    <div className='text-sm font-normal px-2 sm:px-0'>
 
                         {expanded ?
                             postData?.content :
@@ -246,7 +247,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         postData && postData.media &&
                         <div className=' overflow-hidden aspect-auto max-w-xl flex items-center justify-center bg-background' onClick={() => {
                             if (!model) {
-                                dispatch(setOpen({click: 'comment', id: postData._id}))
+                                dispatch(setOpen({ click: 'comment', id: postData._id }))
                                 setModelTrigger(true)
                             }
                         }}>
@@ -254,23 +255,35 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 <PostMediaCarousel media={postData?.media} />
                                 :
                                 postData.media[0]?.type == 'video' ?
-                                    <video ref={videoRef} className='w-full max-h-[500px] h-full' autoPlay={false} src={postData?.media && postData?.media[0]?.url} controls></video>
+
+                                    <AutoPlayVideo src={postData?.media && postData?.media[0]?.url} />
+
+                                    // <video ref={videoRef} className='w-full max-h-[500px] h-full' autoPlay={false} src={postData?.media && postData?.media[0]?.url} controls></video>
                                     :
                                     <img className='object-contain' src={postData?.media[0]?.url} alt="" />
 
-
                             }
+
                         </div>
                     }
                 </CardContent>
                 <CardFooter className='py-2 px-3 md:p-4 select-none flex flex-col'>
+                    {postData?.media?.length > 1 &&
+                        <div className='flex gap-2 p-2'>
+                            {postData?.media.map(() => (
+                                <div className='w-[6px] h-[6px] sm:w-2 sm:h-2 rounded-full bg-foreground'>
+                                </div>
+
+                            ))}
+                        </div>
+                    }
                     <div className='hidden sm:flex gap-2 w-full flex-start'>
                         <span className='text-sm'>
                             {postData?.likesCount > 0 && "Likes " + postData?.likesCount}
                         </span>
                         <span className='text-sm'>
-                    {postData?.commentsCount > 0 &&  "Comments " + postData?.commentsCount  }
-                    </span >
+                            {postData?.commentsCount > 0 && "Comments " + postData?.commentsCount}
+                        </span >
                     </div>
                     <div className='flex  items-center justify-between w-full '>
 
@@ -289,7 +302,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         </div>
                         <div className='flex gap-0 items-center cursor-pointer' onClick={() => {
                             if (!model) {
-                                dispatch(setOpen({click: '', id: postData._id}))
+                                dispatch(setOpen({ click: '', id: postData._id }))
                                 setModelTrigger(true)
                             }
                         }}>
@@ -310,9 +323,9 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                             </svg>
 
                             <span className='text-sm hidden sm:block'>Bookmark</span>
-                            {postData?.bookmarksCount && postData?.bookmarksCount > 0 ?
+                            {/* {postData?.bookmarksCount && postData?.bookmarksCount > 0 ?
                                 <span className='text-sm sm:hidden'>{postData?.bookmarksCount}</span> : <span></span>
-                            }
+                            } */}
                         </div>
 
                         <div className='relative flex gap-0 items-center cursor-pointer z-10' onClick={() => {

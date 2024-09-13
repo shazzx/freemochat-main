@@ -168,6 +168,13 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
                         <div className="flex justify-end gap-2">
                             <Button type="button" disabled={uploading} className="bg-card text-foreground border border-accent hover:text-background-secondary" onClick={() => {
                                 setModelTrigger(false)
+                                if (location.pathname == '/') {
+                                    navigate('/', { replace: true })
+                                    return
+                                }
+
+                                navigate('', { replace: true })
+
                             }} >{editPost ? "Discard" : "Cancel"}</Button>
                             <Button type="submit" disabled={uploading} className="w-[120px]">{editPost ? "Save" : "Post"}</Button>
                         </div>
