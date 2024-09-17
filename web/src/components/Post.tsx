@@ -8,7 +8,7 @@ import { useInView } from 'react-intersection-observer'
 import PostPromotionModel from '@/models/PostPromotionModel'
 import { format } from 'date-fns'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { WhatsappIcon, WhatsappShareButton } from 'react-share'
 import { useRemovePost, useUpdatePost } from '@/hooks/Post/usePost'
 import CPostModal from '@/models/CPostModal'
@@ -21,6 +21,7 @@ import { useDispatch } from 'react-redux'
 import { insertViewedPost } from '@/app/features/user/viewPostSlice'
 import { setOpen } from '@/app/features/user/postModelSlice'
 import AutoPlayVideo from './AutoPlayVideo'
+import ShareModel from '@/models/ShareModel'
 
 interface PostProps {
     postData: any,
@@ -61,6 +62,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     const [expanded, setExpanded] = useState(false)
     const words = postData?.content?.split(' ')
     const expandable = words?.slice(0, 40).join(' ')
+    const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
 
     const { mutate } = useLikePost(isSearch ? query : type + "Posts", postData?.targetId)
     const bookmarkMutation = useBookmarkPost(isSearch ? query : type + "Posts", postData?.targetId, isSearch)
@@ -172,6 +175,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             </div>
         )
     }
+
+
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} onClick={() => {
             if (shareState) {
@@ -182,7 +187,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 editPostModelState &&
                 <CPostModal setModelTrigger={setEditPostModelState} editPost={true} postDetails={postData} updatePost={_updatePost} />
             }
-            {
+            {searchParams.get("model") == "post" && 
                 modelTrigger &&
                 <PostModel params={isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }} useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} postId={postData?._id} postData={postData} setModelTrigger={setModelTrigger} type={type} />
             }
@@ -249,6 +254,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                             if (!model) {
                                 dispatch(setOpen({ click: 'comment', id: postData._id }))
                                 setModelTrigger(true)
+                                navigate("?model=post")
                             }
                         }}>
                             {model ?
@@ -337,19 +343,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                             <span className='text-sm hidden sm:block' >Share</span>
                             {shareState &&
-                                <div className='border-accent border absolute flex flex-col gap-4 items-center justify-center top-10 -left-20 sm:-left-5 drop-shadow-xl z-10 bg-card rounded-md p-2' ref={shareRef}>
-                                    <WhatsappShareButton url={`${domain}/post/${postData._id}?type=${postData.type}`} >
-                                        <div className='flex gap-1 items-center justify-center'>
-                                            <WhatsappIcon borderRadius={60} size={24} /> <span>Whatsapp</span>
-                                        </div>
-                                    </WhatsappShareButton>
-                                    <div className='flex gap-1 items-center justify-center' onClick={() => {
-                                        navigator.clipboard.writeText(`${domain}/post/${postData._id}?type=${postData.type}`);
-                                        toast.info("URL Copied")
-                                    }}>
-                                        <Copy size={24} /> <span>Copy URL</span>
-                                    </div>
-                                </div>}
+                            <ShareModel postId={postData?._id} postType={postData?.type} setModelTrigger={setShareState} />
+                                }
                             {/* <span className='text-sm sm:hidden'>25</span> */}
                         </div>
                     </div>

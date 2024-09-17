@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { MdSend } from 'react-icons/md'
 import { toast } from 'react-toastify'
 import { setClose } from '@/app/features/user/postModelSlice'
+import { useNavigate } from 'react-router-dom'
 
 function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, postData, useLikePost, useBookmarkPost, type }: any) {
     const { user } = useAppSelector((data) => data.user)
@@ -65,6 +66,7 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
 
         if (!recordingUrl && !recordingTime && commentRef.current?.value.length == 0) {
             toast.info("Comment can't be empty")
+            return
         }
 
         let formData = new FormData()
@@ -108,11 +110,19 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
     const updateReply = useUpdateReply()
 
     const dispatch = useAppDispatch()
+    const navigate = useNavigate()
     return (
         <div className='fixed inset-0 z-50  w-screen sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
                 dispatch(setClose())
                 setModelTrigger(false)
+                if (location.pathname == '/') {
+                    navigate("/", { replace: true })
+                    return
+                }
+
+                navigate("", { replace: true })
+
             }}></div>
             <div ref={scrollRef} className='z-10 max-w-xl w-full h-full flex flex-col bg-background relative rounded-lg sm:h-fit max-h-full scroll-smooth overflow-auto border-2 border-accent shadow-md'>
                 {editCommentModelState &&
@@ -155,7 +165,16 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
                 }
 
                 <div className='relative bg-card w-full flex p-2'>
-                    <ChevronLeft size={24} z={12} className='z-20' cursor="pointer" onClick={() => setModelTrigger(false)} /> <span className='w-full text-center text-lg relative right-[5%]'>Post</span>
+                    <ChevronLeft size={24} z={12} className='z-20' cursor="pointer" onClick={() => {
+                        setModelTrigger(false)
+                        if (location.pathname == '/') {
+                            navigate("/", { replace: true })
+                            return
+                        }
+                        navigate("", { replace: true })
+
+                    }
+                    } /> <span className='w-full text-center text-lg relative right-[5%]'>Post</span>
                 </div>
 
                 <Post useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} model={true} postData={postData} username={user?.username} userId={user?._id} type={type} />

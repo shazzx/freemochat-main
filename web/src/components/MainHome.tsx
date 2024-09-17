@@ -289,7 +289,7 @@ const MainHome = ({ children }: any) => {
               }
             }}>
             <MdGroup size="24px" cursor="pointer"  />
-              {metrics?.data?.requests?.count && metrics?.data?.requests?.count > 0 ? (<span className="absolute cursor-pointer -top-1 -right-2 w-5 h-5 text-xs flex items-center justify-center rounded-full bg-red-500">{metrics?.data?.requests?.count > 0 && metrics?.data?.requests?.count} </span>): null}
+              {metrics?.data?.requests?.count && metrics?.data?.requests?.count > 0 ? (<span className="absolute cursor-pointer -top-1 -right-2 w-5 h-5 text-xs text-white flex items-center justify-center rounded-full bg-red-500">{metrics?.data?.requests?.count > 0 && metrics?.data?.requests?.count} </span>): null}
             </div>
             {friendRequestState &&
               <FriendRequests setFriendRequestState={setFriendRequestState} />
@@ -298,7 +298,7 @@ const MainHome = ({ children }: any) => {
                 setNotificationsState(true)
               }}>
               <MdNotifications  size="24px" cursor="pointer" />
-              {metrics?.data?.notification?.count && metrics?.data?.notification?.count > 0 && <span className="absolute cursor-pointer -top-1 -right-2 w-5 h-5 text-xs flex items-center justify-center rounded-full bg-red-500">{metrics?.data?.notification?.count} </span>}
+              {metrics?.data?.notification?.count && metrics?.data?.notification?.count > 0 && <span className="absolute cursor-pointer -top-1 -right-2 w-5 h-5 text-white text-xs flex items-center justify-center rounded-full bg-red-500">{metrics?.data?.notification?.count} </span>}
             </div>
 
             {notificationsState && <Notifications setNotificationsState={setNotificationsState} />}
