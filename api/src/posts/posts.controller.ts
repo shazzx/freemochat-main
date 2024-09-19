@@ -131,7 +131,7 @@ export class PostsController {
                 ...createPostDTO,
                 isUploaded: files.length > 0 ? false : null,
                 targetId,
-                user: sub
+                user: new Types.ObjectId(sub)
             })
 
         if (files.length > 0) {

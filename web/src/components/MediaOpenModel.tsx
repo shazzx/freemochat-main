@@ -1,5 +1,3 @@
-import { FC } from "react"
-
 export const MediaOpenModel = ({ setMediaOpenModel, setMediaOpenDetails, mediaOpenDetails }) => {
     return (
         <div className='absolute top-0 right-0 w-screen z-50 overflow-hidden h-screen flex justify-center items-center'>

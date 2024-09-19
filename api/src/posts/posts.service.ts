@@ -63,6 +63,17 @@ export class PostsService {
                 }
             },
             {
+                $lookup: {
+                    from: 'users',
+                    localField: "user",
+                    foreignField: "_id",
+                    as: "user"
+                }
+            },
+            {
+                $unwind: "$user"
+            },
+            {
                 $unwind: "$target"
             },
             {

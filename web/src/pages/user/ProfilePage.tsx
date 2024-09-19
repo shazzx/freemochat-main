@@ -54,7 +54,6 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
     const postContent = useRef()
     const [profileSettingsModel, setProfileSettingsModel] = useState(false)
-    // console.log(profileSettingsModel)
     const [postModal, setPostModal] = useState(false)
 
     const [posts, setPosts] = useState([])
@@ -63,7 +62,6 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const navigate = useNavigate()
 
     const [searchParams, setSearchParams] = useSearchParams()
-    // console.log(setSearchParams)
     const { data, isLoading, fetchNextPage } = useUserPosts("user", _id)
     const userMedia = useMedia("userMedia", _id)
     const media = userMedia?.data
@@ -75,7 +73,6 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
         }
     }, [newPost])
 
-    // profile upload
     const uploadSingle = async (media, type, completeUser) => {
         const formData = new FormData()
         if (media) {
@@ -125,7 +122,6 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
         console.log('yes')
     }, [inView])
 
-
     return (
         <>
             {query.isError &&
@@ -134,6 +130,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
             {query.isLoading &&
                 <div className='w-full h-full flex items-center justify-center'>loading...</div>
             }
+
             {
                 query.isSuccess &&
                 <div className='w-full flex flex-col overflow-y-auto border-muted bg-background-secondary'>
@@ -149,8 +146,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                     <div className='flex w-full flex-col items-center w-ful'>
                         <div className="flex max-w-5xl w-full flex-col justify-cente relative">
                             {/* cover image component */}
-                            <Cover cover={cover} />
-
+                                <Cover cover={cover} />
                             {/* profile image */}
                             <div className='flex justify-between'>
                                 <div className='flex-responsive gap-2 relative pl-4 sm:pl10 left max-w-[90%] sm:w-full bottom-6'>
@@ -406,7 +402,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                     <div>
                                                         Area
                                                     </div>
-                                                        <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>{address?.area}</div>
+                                                    <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>{address?.area}</div>
                                                 </div>
                                             }
                                         </div>

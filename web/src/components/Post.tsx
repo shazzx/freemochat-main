@@ -187,7 +187,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 editPostModelState &&
                 <CPostModal setModelTrigger={setEditPostModelState} editPost={true} postDetails={postData} updatePost={_updatePost} />
             }
-            {searchParams.get("model") == "post" && 
+            {searchParams.get("model") == "post" &&
                 modelTrigger &&
                 <PostModel params={isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }} useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} postId={postData?._id} postData={postData} setModelTrigger={setModelTrigger} type={type} />
             }
@@ -206,30 +206,61 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                     <div className='flex items-center justify-between'>
                         <Link to={`${domain}/${postData?.type}/${navigation}`}>
                             <div className='flex gap-2'>
-                                <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
-                                    {postData?.type !== 'user' ?
-                                        <Avatar >
-                                            <AvatarImage src={_profile} alt="Avatar" />
-                                            <AvatarFallback>{(postData?.target?.name && postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase()}</AvatarFallback>
-                                        </Avatar>
-                                        :
-                                        <>
-                                            {self ?
-                                                <Avatar >
-                                                    <AvatarImage src={profile} alt="Avatar" />
-                                                    <AvatarFallback>{(postData?.target?.firstname && postData?.target?.firstname[0]?.toUpperCase()) + (postData?.target?.lastname && postData?.target?.lastname[0]?.toUpperCase())}</AvatarFallback>
-                                                </Avatar> :
-                                                <Avatar >
-                                                    <AvatarImage src={_profile} alt="Avatar" />
-                                                    <AvatarFallback>{(postData?.target?.firstname && postData?.target?.firstname[0]?.toUpperCase()) + (postData?.target?.lastname && postData?.target?.lastname[0]?.toUpperCase())}</AvatarFallback>
-                                                </Avatar>
-                                            }
-                                        </>
+                                {postData.type == 'group'
+                                    ?
+                                    <div className='relative'>
+                                        <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
 
-                                    }
-                                </div>
+
+                                            <Avatar >
+                                                <AvatarImage src={_profile} alt="Avatar" />
+                                                <AvatarFallback>{(postData?.target?.name && postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase()}</AvatarFallback>
+                                            </Avatar>
+                                        </div>
+                                        <div className='absolute -bottom-1 border border-accent -right-1 bg-accent w-8 h-8 flex items-center justify-center rounded-full overflow-hidden'>
+
+
+
+                                            <Avatar >
+                                                <AvatarImage src={postData.user.profile} alt="Avatar" />
+                                                <AvatarFallback>{(postData?.user?.firstname && postData?.user?.firstname[0]?.toUpperCase())}</AvatarFallback>
+                                            </Avatar>
+                                        </div>
+
+                                    </div>
+                                    :
+                                    <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
+                                        {postData?.type !== 'user' ?
+                                            <Avatar>
+                                                <AvatarImage src={_profile} alt="Avatar" />
+                                                <AvatarFallback>{(postData?.target?.name && postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase()}</AvatarFallback>
+                                            </Avatar>
+                                            :
+                                            <>
+                                                {self ?
+                                                    <Avatar >
+                                                        <AvatarImage src={profile} alt="Avatar" />
+                                                        <AvatarFallback>{(postData?.target?.firstname && postData?.target?.firstname[0]?.toUpperCase()) + (postData?.target?.lastname && postData?.target?.lastname[0]?.toUpperCase())}</AvatarFallback>
+                                                    </Avatar> :
+                                                    <Avatar >
+                                                        <AvatarImage src={_profile} alt="Avatar" />
+                                                        <AvatarFallback>{(postData?.target?.firstname && postData?.target?.firstname[0]?.toUpperCase()) + (postData?.target?.lastname && postData?.target?.lastname[0]?.toUpperCase())}</AvatarFallback>
+                                                    </Avatar>
+                                                }
+                                            </>
+
+                                        }
+                                    </div>
+                                }
+
                                 <div className='flex flex-col gap-1'>
+                                    
+                                    {postData.type == 'group' ?
+
+<h3 className='text-card-foreground flex gap-2 text-sm'>{postData?.user?.username} ({postData?.target?.name}) </h3>
+:
                                     <h3 className='text-card-foreground flex gap-2 text-sm'>{postData?.target?.username || postData?.target?.name}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
+                                    }
                                     <span className='text-muted-foreground text-xs'>{postData?.promotion?.length > 0 ? "sponsored" : date}</span>
                                 </div>
                             </div>
@@ -343,8 +374,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                             <span className='text-sm hidden sm:block' >Share</span>
                             {shareState &&
-                            <ShareModel postId={postData?._id} postType={postData?.type} setModelTrigger={setShareState} />
-                                }
+                                <ShareModel postId={postData?._id} postType={postData?.type} setModelTrigger={setShareState} />
+                            }
                             {/* <span className='text-sm sm:hidden'>25</span> */}
                         </div>
                     </div>

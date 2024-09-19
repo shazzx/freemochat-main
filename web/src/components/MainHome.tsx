@@ -286,7 +286,7 @@ const MainHome = ({ children }: any) => {
                     placeholder="Search..."
                     className="max-w-2xl appearance-none bg-background pl-8 shadow-none"
                   />
-                  <MdCancel size="24px" cursor="pointer" />
+                  {/* <MdCancel size="24px" cursor="pointer" /> */}
                 </div>}
                 {searchState &&
                   <div className="flex relative">

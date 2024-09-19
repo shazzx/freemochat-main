@@ -1,18 +1,37 @@
-import { FC } from "react"
+import { FC, useState } from "react"
+import { MdClose } from "react-icons/md"
 interface CoverProps {
   cover?: string,
   upload?: boolean,
 }
 
 const Cover: FC<CoverProps> = ({ cover, upload }) => {
-  console.log(cover)
+
+  const [profileOpen, setProfileOpen] = useState(false)
+
   return (
+    <>
+    {
+        profileOpen &&
+        <div className='fixed inset-0 z-50  w-screen sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
+          <div className='absolute w-full h-full bg-black opacity-80'>
+          </div>
+            <MdClose size={28} cursor="pointer" className="absolute top-3 right-3 sm:top-6 sm:right-6 z-50" onClick={() => {
+              setProfileOpen(false)
+            }} />
+          <div className='flex items-center justify-center w-full z-50'>
+            <img src={cover} className='w-full sm:w-[90%] md:w-[80%] lg:w-[70%] object-contain' alt="image" />
+          </div>
+        </div>
+      }
     <div className='relative group w-full aspect-[3/1] bg-profile roundd-md  overflow-hidden'>
       
       {cover ?
         <div>
-                          
-          <img className='w-full object-contain' src={cover} alt="" />
+
+          <img className='w-full object-contain' onClick={() => {
+            setProfileOpen(true)
+          }} src={cover} alt="" />
           {upload &&
             <div className='absolute inset-0 flex items-center justify-center bg-card bg-opacity-50 text-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer'>
               <span className='text-xl'>Upload</span>
@@ -35,7 +54,7 @@ const Cover: FC<CoverProps> = ({ cover, upload }) => {
 
       }
     </div>
-
+    </>
   )
 }
 

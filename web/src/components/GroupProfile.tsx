@@ -43,7 +43,7 @@ function GroupProfile() {
     const groupMedia = useMedia("groupMedia", data?._id)
     const groupAdminToggle = useToggleAdmin()
     let media = groupMedia.data
-    console.log(data)
+    console.log(groupPosts)
 
     useEffect(() => {
         if (newPost !== undefined) {
@@ -121,7 +121,7 @@ function GroupProfile() {
                         <TabsContent value="posts" className="">
                             <div className='flex-responsive w-full items-center md:items-start p-2 flex gap-2  border-muted'>
                                 <div className='max-w-xl w-full flex flex-col gap-2 '>
-                                    <div className='w-full flex items-center justify-center h-fit border border-muted p-3 bg-card'>
+                                    {data.isMember && <div className='w-full flex items-center justify-center h-fit border border-muted p-3 bg-card'>
                                         <div className="w-full flex-1">
                                             <form onSubmit={async (e) => {
                                                 e.preventDefault()
@@ -147,7 +147,7 @@ function GroupProfile() {
                                                 </div>
                                             </form>
                                         </div>
-                                    </div>
+                                    </div>}
                                     {/* <div className="w-full flex-1">
                                             <form onSubmit={async (e) => {
                                                 e.preventDefault()

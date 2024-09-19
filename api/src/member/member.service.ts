@@ -125,7 +125,7 @@ export class MemberService {
 
         if (deleteResult.deletedCount === 0) {
             await this.memberModel.create({...filter, type: groupDetails.type});
-            let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.groupId, recepient: filter.member, content: "added in group", messageType: "Info", isGroup: true })
+            // let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.groupId, recepient: filter.member, content: "added in group", messageType: "Info", isGroup: true })
             // await this.notificationService.createNotification(
             //     {
             //         from: new Types.ObjectId(userId),
@@ -142,8 +142,8 @@ export class MemberService {
             return true;
         }
 
-        let message = await this.messageService.createMessage({ type: 'Group', sender: filter.groupId, recepient: filter.member, content: "removed from group", messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
-        console.log(message)
+        // let message = await this.messageService.createMessage({ type: 'Group', sender: filter.groupId, recepient: filter.member, content: "removed from group", messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
+        // console.log(message)
         await this.metricsAggregatorService.decrementCount(filter.groupId, "members", "group")
         return false;
     }

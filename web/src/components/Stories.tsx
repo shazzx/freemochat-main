@@ -239,7 +239,7 @@ function Stories() {
             <div className='relative flex text-sm flex-col items-center gap-2'>
                 {/* story upload */}
                 <form className='image-upload_form'>
-                    <label htmlFor="image">
+                    <label htmlFor="image" className="cursor-pointer">
                         <div className='w-5 h-5 z-10 bottom-7 right-0 bg-primary text-primary-foreground  shadow-md rounded-full text-base font-medium flex items-center justify-center absolute '>
                             +
                         </div>
