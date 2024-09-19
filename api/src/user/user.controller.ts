@@ -42,29 +42,29 @@ export class UserController {
         @Res() res: Response) {
 
         try {
-            const { firstname, lastname, username, email, password, confirmPassword, address, phone } = createUserDTO
+            const { firstname, lastname, username, password, confirmPassword, address, phone } = createUserDTO
 
             await this.locationService.isValidAddress({ country: address.country, city: address.city })
 
             const tempSecret = uuidv4()
 
-            let user = await this.userService.createUser({ firstname, lastname, username, email, password, confirmPassword, address, phone, tempSecret })
+            let user = await this.userService.createUser({ firstname, lastname, username, password, confirmPassword, address, phone, tempSecret })
 
             await this.locationService.checkAddressRegisteration(address)
 
             console.log("user created")
             const phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
-            const emailOTP = await this.otpService.generateOtp(user._id, 'email')
+            // const emailOTP = await this.otpService.generateOtp(user._id, 'email')
 
-            console.log('phoneOTP: ', phoneOTP, "emailOTP: ", emailOTP, "tempSecret: ", tempSecret, "phone secret: ")
+            console.log('phoneOTP: ', phoneOTP, "tempSecret: ", tempSecret, "phone secret: ")
 
-            await this.twilioService.sendEmail({
-                to: email,
-                from: 'freedombook99@gmail.com',
-                subject: "OTP Verification",
-                text: `Your email otp code is: ${emailOTP} `,
-                // html: emailData.html,
-            })
+            // await this.twilioService.sendEmail({
+            //     to: email,
+            //     from: 'freedombook99@gmail.com',
+            //     subject: "OTP Verification",
+            //     text: `Your email otp code is: ${emailOTP} `,
+            //     // html: emailData.html,
+            // })
 
             await this.twilioService.sendSMS(phone, `Your phone otp code is: ${phoneOTP}`)
             res.json({ success: true, tempSecret, username: user.username, message: "account created successfully", verification: "pending" })
@@ -106,38 +106,43 @@ export class UserController {
 
 
             let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
-            let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
+            // let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
 
-            if (!isValidEmailSecret && !isValidPhoneSecret) {
+            // if (!isValidEmailSecret && !isValidPhoneSecret) {
+            //     throw new BadRequestException("OTP is not valid")
+            // }
+
+
+            if (!isValidPhoneSecret) {
                 throw new BadRequestException("OTP is not valid")
             }
 
-            if (type == 'email' && isValidEmailSecret && user.isPhoneVerified) {
-                console.log('type em')
+            // if (type == 'email' && isValidEmailSecret && user.isPhoneVerified) {
+            //     console.log('type em')
 
-                await this.userService.updateUser(user._id, { tempSecret: null, isEmailVerified: true, isActive: true })
-                return res.json({ success: true, email: true, phone: true })
-            }
+            //     await this.userService.updateUser(user._id, { tempSecret: null, isEmailVerified: true, isActive: true })
+            //     return res.json({ success: true, email: true, phone: true })
+            // }
 
-            if (type == 'phone' && isValidPhoneSecret && user.isEmailVerified) {
+            if (type == 'phone' && isValidPhoneSecret) {
                 console.log('type phone')
 
                 await this.userService.updateUser(user._id, { tempSecret: null, isPhoneVerified: true, isActive: true })
-                return res.json({ success: true, email: true, phone: true })
-            }
-
-            if (type == 'email' && isValidEmailSecret) {
-                console.log('just em')
-                await this.userService.updateUser(user._id, { isEmailVerified: true })
-                return res.json({ success: true, email: true })
-            }
-
-            if (type == 'phone' && isValidPhoneSecret) {
-                console.log('just phone')
-
-                await this.userService.updateUser(user._id, { isPhoneVerified: true })
                 return res.json({ success: true, phone: true })
             }
+
+            // if (type == 'email' && isValidEmailSecret) {
+            //     console.log('just em')
+            //     await this.userService.updateUser(user._id, { isEmailVerified: true })
+            //     return res.json({ success: true, email: true })
+            // }
+
+            // if (type == 'phone' && isValidPhoneSecret) {
+            //     console.log('just phone')
+
+            //     await this.userService.updateUser(user._id, { isPhoneVerified: true })
+            //     return res.json({ success: true, phone: true })
+            // }
 
             throw new BadRequestException()
 
@@ -161,15 +166,15 @@ export class UserController {
             console.log("username, updatedData, otp, type", username, updatedData, otp, type)
 
             let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
-            let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
+            // let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
 
-            if (!isValidEmailSecret && !isValidPhoneSecret) {
+            if (!isValidPhoneSecret) {
                 throw new BadRequestException("OTP is not valid")
             }
 
 
-            if (type == 'email' && updatedData['changePassword']) {
-                console.log('updatng emal', updatedData.changePassword)
+            if (type == 'phone' && updatedData['changePassword']) {
+                console.log('updating password', updatedData.changePassword)
                 let isValidPassword = await compare(updatedData.changePassword.currentPassword, user.password)
                 if (isValidPassword) {
                     let hashedPassword = await this.cryptoService.hash(updatedData.changePassword.password, 16)
@@ -180,16 +185,16 @@ export class UserController {
                 throw new BadRequestException("invalid current password")
             }
 
-            if (type == 'email' && updatedData['email']) {
-                console.log('updatng emal', updatedData.email)
+            // if (type == 'email' && updatedData['email']) {
+            //     console.log('updatng emal', updatedData.email)
 
-                await this.userService.updateUser(user._id, { email: updatedData.email })
-                res.json({ success: true })
-                return
-            }
+            //     await this.userService.updateUser(user._id, { email: updatedData.email })
+            //     res.json({ success: true })
+            //     return
+            // }
 
             if (type == 'phone' && updatedData['address']) {
-                console.log('updatng address')
+                console.log('updating address')
 
                 await this.userService.updateUser(user._id, { address: updatedData.address })
                 res.json({ success: true })
@@ -197,7 +202,7 @@ export class UserController {
             }
 
             if (type == 'phone' && updatedData['phone']) {
-                console.log('updatng phone')
+                console.log('updating phone')
                 await this.userService.updateUser(user._id, { phone: updatedData.phone })
                 res.json({ success: true })
                 return
@@ -238,7 +243,8 @@ export class UserController {
         } catch (error) {
             console.log(error)
             if (error.name == "MongoServerError" && error.code == 11000) {
-                res.status(400).json({ success: false, error: { message: error.keyPattern['email'] ? "Email Already Taken" : "Phone Already Taken" } })
+                // res.status(400).json({ success: false, error: { message: error.keyPattern['email'] ? "Email Already Taken" : "Phone Already Taken" } })
+                res.status(400).json({ success: false, error: { message: "Phone Already Taken" } })
                 return
             }
             res.status(400).json({ success: false, error: { message: error.message } })
@@ -261,13 +267,13 @@ export class UserController {
 
 
             let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
-            let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
+            // let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
 
-            if (!isValidEmailSecret && !isValidPhoneSecret) {
+            if (!isValidPhoneSecret) {
                 throw new BadRequestException("OTP is not valid")
             }
 
-            if (type == 'email') {
+            if (type == 'phone') {
                 let hashedPassword = await this.cryptoService.hash(changePassword.password, 16)
                 await this.userService.updateUser(user._id, { password: hashedPassword })
                 res.json({ success: true })
@@ -327,9 +333,9 @@ export class UserController {
             }
 
             let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
-            let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
+            // let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
 
-            if (!isValidEmailSecret && !isValidPhoneSecret) {
+            if (!isValidPhoneSecret) {
                 throw new BadRequestException("OTP is not valid")
             }
 
@@ -340,7 +346,7 @@ export class UserController {
             }
 
 
-            if (type == 'email') {
+            if (type == 'phone') {
                 let hashedPassword = await this.cryptoService.hash(changePassword.password, 16)
                 await this.userService.updateUser(user._id, { password: hashedPassword })
                 res.json({ success: true })
@@ -413,10 +419,10 @@ export class UserController {
                 throw new BadRequestException()
             }
 
-            if (type == 'email') {
+            // if (type == 'email') {
                 // let secret = this.otpService.generateSecret()
-                let emailOTP = await this.otpService.generateOtp(user._id, 'email')
-                console.log(emailOTP, 'email')
+                // let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+                // console.log(emailOTP, 'email')
 
                 // await this.twilioService.sendEmail({
                 //     to: user.email,
@@ -425,8 +431,8 @@ export class UserController {
                 //     text: `Your email otp code is: ${emailOTP} `,
                 //     // html: emailData.html,
                 // })
-                return res.json({ success: true, message: "otp has been sent to your email" })
-            }
+            //     return res.json({ success: true, message: "otp has been sent to your email" })
+            // }
 
 
             if (type == 'phone') {
@@ -456,20 +462,19 @@ export class UserController {
                 throw new BadRequestException()
             }
 
-            if (type == 'email') {
-                let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+            // if (type == 'email') {
+            //     let emailOTP = await this.otpService.generateOtp(user._id, 'email')
 
-                await this.twilioService.sendEmail({
-                    to: user.email,
-                    from: 'freedombook99@gmail.com',
-                    subject: "OTP Verification",
-                    text: `Your email otp code is: ${emailOTP} `,
-                    // html: emailData.html,
-                })
-                console.log(emailOTP, 'email')
-                return res.json({ success: true, message: "otp has been sent to your email" })
-            }
-
+            //     await this.twilioService.sendEmail({
+            //         to: user.email,
+            //         from: 'freedombook99@gmail.com',
+            //         subject: "OTP Verification",
+            //         text: `Your email otp code is: ${emailOTP} `,
+            //         // html: emailData.html,
+            //     })
+            //     console.log(emailOTP, 'email')
+            //     return res.json({ success: true, message: "otp has been sent to your email" })
+            // }
 
             if (type == 'phone') {
                 let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')

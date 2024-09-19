@@ -243,11 +243,6 @@ function Stories() {
                         <div className='w-5 h-5 z-10 bottom-7 right-0 bg-primary text-primary-foreground  shadow-md rounded-full text-base font-medium flex items-center justify-center absolute '>
                             +
                         </div>
-                    </label>
-                    <input className="hidden" name="image" type="file" accept='image/*' id='image' onChange={(e) => {
-                        uploadStory(e.target.files[0])
-                    }} />
-                </form>
 
                 <div className='w-14 h-14 flex items-center justify-center rounded-full overflow-hidden border-2 border-primary-active'>
                     {(!isLoading && !load) && userStory?.stories && userStory?.stories[0]?.url ?
@@ -279,6 +274,13 @@ function Stories() {
                     }
 
                 </div>
+                </label>
+                <input className="hidden" name="image" type="file" accept='image/*' id='image' onChange={(e) => {
+                        uploadStory(e.target.files[0])
+                    }} />
+
+                </form>
+
                 <div className='flex flex-col gap-0'>
                     <h3 className='text-card-foreground text-sm'>You</h3>
                 </div>

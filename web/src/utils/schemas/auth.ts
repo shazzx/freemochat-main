@@ -136,9 +136,9 @@ export const SignupSchema = yup.object().shape({
     //   return true;
     // })
     .required('Handle is required'),
-  email: yup
-    .string().email()
-    .required('emai is required'),
+  // email: yup
+  //   .string().email()
+  //   .required('emai is required'),
   phone: yup.string().required('phone no is required'),
   address: yup.object({
     // country: yup.string().required("country is required"),

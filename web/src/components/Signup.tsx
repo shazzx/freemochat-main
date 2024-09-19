@@ -170,7 +170,22 @@ export function Signup() {
                                 {errors.username && <p>{errors.username.message}</p>}
 
                             </div>
-                            <div className="grid gap-2">
+
+                            <div className="w-full">
+                                <Label >
+                                    Phone
+                                </Label>
+                                <Input
+                                    name="phone"
+                                    placeholder="Enter your phone number"
+                                    id="phone"
+                                    className="max-w-96 w-full"
+                                    {...register("phone")}
+                                />
+                                {errors.phone && <p>{errors.phone.message}</p>}
+                            </div>
+
+                            {/* <div className="grid gap-2">
                                 <Label htmlFor="email">Email</Label>
                                 <Input
                                     type="email"
@@ -179,7 +194,7 @@ export function Signup() {
                                     {...register("email")}
                                 />
                                 {errors.email && <p>{errors.email.message}</p>}
-                            </div>
+                            </div> */}
 
                             <div className="flex gap-4 w-full">
                                 <div className="w-full">
@@ -233,19 +248,7 @@ export function Signup() {
                                 {errors.address?.area && <p>{errors.address.area.message}</p>}
 
                             </div>
-                            <div className="w-full">
-                                <Label >
-                                    Phone
-                                </Label>
-                                <Input
-                                    name="phone"
-                                    placeholder="Enter your phone number"
-                                    id="phone"
-                                    className="max-w-96 w-full"
-                                    {...register("phone")}
-                                />
-                                {errors.phone && <p>{errors.phone.message}</p>}
-                            </div>
+
 
                             <div className="grid gap-2">
                                 <Label htmlFor="password">Password</Label>

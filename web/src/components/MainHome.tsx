@@ -4,7 +4,7 @@ import {
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MdGroup, MdNotifications } from 'react-icons/md'
+import { MdCancel, MdGroup, MdNotifications, MdSearch } from 'react-icons/md'
 
 import {
   DropdownMenu,
@@ -41,12 +41,13 @@ import { axiosClient } from "@/api/axiosClient"
 import { toast } from "react-toastify"
 import VideoCallAccepted from "./Call/Video/VideoCallAccepted"
 import { useUserMetrics } from "@/hooks/User/useUser"
+import BottomNav from "./BottomNav"
 
 const MainHome = ({ children }: any) => {
   useSocket()
   const { user } = useAppSelector((state) => state.user)
   const navigate = useNavigate()
-
+  
   const [active, setActive] = useState(location.pathname)
   const [notificationsState, setNotificationsState] = useState(false)
   const [friendRequestState, setFriendRequestState] = useState(false)
@@ -56,6 +57,7 @@ const MainHome = ({ children }: any) => {
   const data = useAppSelector((state) => state.call)
   const { notification } = useAppSelector((state) => state.notification)
   const metrics = useUserMetrics()
+  const [searchState, setSearchState] = useState(false)
   // console.log(callDetails, callerState, onCall, recepientState, targetDetails, type)
   console.log(metrics.data)
 
@@ -95,11 +97,11 @@ const MainHome = ({ children }: any) => {
   //     }, 10000)
   //     return () => clearInterval(timeout)
   //   }
-    
+
   // },[viewedPosts])
   return (
 
-    <div className="h-screen w-full flex flex-col overflow-hidden">
+    <div className="relative h-screen w-full flex flex-col overflow-hidden">
       {/* incoming call */}
       {onCall && type == "Audio" && recepientState == "CALLING" && callDetails?.userDetails &&
         <AudioCallRecepient recepientDetails={callDetails.userDetails} />
@@ -116,17 +118,18 @@ const MainHome = ({ children }: any) => {
       }
 
 
-{onCall && recepientState == "ACCEPTED" && type == "Video" &&
+      {onCall && recepientState == "ACCEPTED" && type == "Video" &&
         <Agora callDetails={callDetails} channel={''} Call={VideoCallAccepted} cancelCall={cancelCall} />
       }
       {/* {onCall && (recepientState == "ACCEPTED" || (callerState == "ACCEPTED" || callerState == "CALLING")) && callDetails?.type == "VIDEO" && callDetails?.channel &&
         <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} />
       } */}
+      <BottomNav />
 
       <div className="flex flex-col">
-        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
-          <Sheet>
-            <SheetTrigger asChild>
+        <header className="flex h-14 items-center gap-4 border-b bg-card px-2 lg:h-[60px] lg:px-6">
+          {/* <Sheet> */}
+          {/* <SheetTrigger asChild>
               <Button
                 variant="outline"
                 size="icon"
@@ -135,12 +138,12 @@ const MainHome = ({ children }: any) => {
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col">
-              {/* small screen navigation bar */}
+            </SheetTrigger> */}
+          {/* <SheetContent side="left" className="flex flex-col"> */}
+          {/* small screen navigation bar */}
 
-              <nav className="grid gap-2 text-sm font-base pt-4">
-                <Link
+          {/* <nav className="grid gap-2 text-sm font-base pt-4"> */}
+          {/* <Link
                   to={domain + "/profile"}
                   onClick={() => {
                     if (active !== '/profile') {
@@ -156,8 +159,8 @@ const MainHome = ({ children }: any) => {
                   </div>
                   Profile
                 </Link>
-
-                <Link
+ */}
+          {/* <Link
                   onClick={() => {
                     if (active !== '/') {
                       setActive('/')
@@ -170,9 +173,9 @@ const MainHome = ({ children }: any) => {
                     <path d="M6.39653 14.3514C6.05988 14.5928 5.98261 15.0613 6.22394 15.3979C6.46526 15.7346 6.93381 15.8119 7.27046 15.5705L6.39653 14.3514ZM14.3432 9.57765L14.7802 10.1872L14.781 10.1866L14.3432 9.57765ZM24.6555 9.57765L24.2177 10.1866L24.2186 10.1873L24.6555 9.57765ZM31.7299 15.5706C32.0666 15.8119 32.5351 15.7346 32.7764 15.3979C33.0177 15.0612 32.9404 14.5927 32.6037 14.3514L31.7299 15.5706ZM10.5633 17.9867C10.5633 17.5725 10.2275 17.2367 9.81333 17.2367C9.39912 17.2367 9.06333 17.5725 9.06333 17.9867H10.5633ZM9.81333 24.0367L10.5633 24.0422V24.0367H9.81333ZM11.5409 28.2963L12.0752 27.7699L11.5409 28.2963ZM15.7746 30.0866L15.7691 30.8366H15.7746V30.0866ZM23.2257 30.0866V30.8366L23.2313 30.8365L23.2257 30.0866ZM27.4594 28.2963L27.9936 28.8227L27.4594 28.2963ZM29.187 24.0367H28.437L28.437 24.0422L29.187 24.0367ZM29.937 17.9867C29.937 17.5725 29.6012 17.2367 29.187 17.2367C28.7728 17.2367 28.437 17.5725 28.437 17.9867H29.937ZM7.27046 15.5705L14.7802 10.1872L13.9063 8.96809L6.39653 14.3514L7.27046 15.5705ZM14.781 10.1866C17.6002 8.16 21.3986 8.16 24.2177 10.1866L25.0933 8.96868C21.751 6.56598 17.2477 6.56598 13.9055 8.96868L14.781 10.1866ZM24.2186 10.1873L31.7299 15.5706L32.6037 14.3514L25.0924 8.96805L24.2186 10.1873ZM9.06333 17.9867V24.0367H10.5633V17.9867H9.06333ZM9.06335 24.0311C9.05007 25.8228 9.74912 27.5464 11.0067 28.8227L12.0752 27.7699C11.0968 26.777 10.553 25.4361 10.5633 24.0422L9.06335 24.0311ZM11.0067 28.8227C12.2643 30.099 13.9774 30.8234 15.7691 30.8365L15.7801 29.3366C14.3862 29.3263 13.0535 28.7628 12.0752 27.7699L11.0067 28.8227ZM15.7746 30.8366H23.2257V29.3366H15.7746V30.8366ZM23.2313 30.8365C25.023 30.8234 26.7361 30.099 27.9936 28.8227L26.9252 27.7699C25.9468 28.7628 24.6141 29.3263 23.2202 29.3366L23.2313 30.8365ZM27.9936 28.8227C29.2512 27.5464 29.9503 25.8228 29.937 24.0311L28.437 24.0422C28.4473 25.4361 27.9035 26.777 26.9252 27.7699L27.9936 28.8227ZM29.937 24.0367V17.9867H28.437V24.0367H29.937Z" />
                   </svg>
                   Feed
-                </Link>
+                </Link> */}
 
-                <Link
+          {/* <Link
                   onClick={() => {
                     setActive('/messages')
                   }}
@@ -183,11 +186,9 @@ const MainHome = ({ children }: any) => {
                     <path d="M31.417 14.2804C31.4317 14.6944 31.7792 15.018 32.1932 15.0033C32.6071 14.9885 32.9308 14.641 32.916 14.227L31.417 14.2804ZM25.3803 7.92039V8.67039C25.3887 8.67039 25.397 8.67025 25.4054 8.66998L25.3803 7.92039ZM15.2027 7.92039L15.1776 8.66998C15.186 8.67025 15.1943 8.67039 15.2027 8.67039V7.92039ZM7.66698 14.227C7.65224 14.641 7.97586 14.9885 8.38981 15.0033C8.80377 15.018 9.15129 14.6944 9.16603 14.2804L7.66698 14.227ZM32.9165 14.2537C32.9165 13.8395 32.5807 13.5037 32.1665 13.5037C31.7523 13.5037 31.4165 13.8395 31.4165 14.2537H32.9165ZM32.1665 23.7537L32.916 23.7804C32.9163 23.7715 32.9165 23.7626 32.9165 23.7537L32.1665 23.7537ZM25.3803 30.0871L25.4054 29.3375C25.397 29.3372 25.3887 29.3371 25.3803 29.3371L25.3803 30.0871ZM15.2027 30.0871V29.3371C15.1943 29.3371 15.186 29.3372 15.1776 29.3375L15.2027 30.0871ZM8.4165 23.7537H7.6665C7.6665 23.7626 7.66666 23.7715 7.66698 23.7804L8.4165 23.7537ZM9.1665 14.2537C9.1665 13.8395 8.83072 13.5037 8.4165 13.5037C8.00229 13.5037 7.6665 13.8395 7.6665 14.2537H9.1665ZM32.5448 14.9013C32.9025 14.6924 33.023 14.2331 32.8141 13.8754C32.6052 13.5178 32.1459 13.3972 31.7882 13.6061L32.5448 14.9013ZM23.8318 19.1225L23.4535 18.4748L23.4473 18.4786L23.8318 19.1225ZM16.7512 19.1225L17.1357 18.4785L17.1295 18.4749L16.7512 19.1225ZM8.7948 13.6061C8.43714 13.3972 7.97783 13.5178 7.7689 13.8754C7.55997 14.2331 7.68054 14.6924 8.0382 14.9013L8.7948 13.6061ZM32.916 14.227C32.7724 10.1927 29.39 7.03596 25.3553 7.17081L25.4054 8.66998C28.6134 8.56275 31.3028 11.0727 31.417 14.2804L32.916 14.227ZM25.3803 7.17039H15.2027V8.67039H25.3803V7.17039ZM15.2277 7.17081C11.193 7.03596 7.81064 10.1927 7.66698 14.227L9.16603 14.2804C9.28025 11.0727 11.9696 8.56275 15.1776 8.66998L15.2277 7.17081ZM31.4165 14.2537V23.7537H32.9165V14.2537H31.4165ZM31.417 23.727C31.3028 26.9348 28.6134 29.4447 25.4054 29.3375L25.3553 30.8366C29.39 30.9715 32.7724 27.8148 32.916 23.7804L31.417 23.727ZM25.3803 29.3371H15.2027V30.8371H25.3803V29.3371ZM15.1776 29.3375C11.9696 29.4447 9.28025 26.9348 9.16603 23.727L7.66698 23.7804C7.81064 27.8148 11.193 30.9715 15.2277 30.8366L15.1776 29.3375ZM9.1665 23.7537V14.2537H7.6665V23.7537H9.1665ZM31.7882 13.6061L23.4535 18.4749L24.2101 19.7701L32.5448 14.9013L31.7882 13.6061ZM23.4473 18.4786C21.5036 19.6394 19.0795 19.6394 17.1357 18.4786L16.3666 19.7664C18.7841 21.2101 21.7989 21.2101 24.2164 19.7664L23.4473 18.4786ZM17.1295 18.4749L8.7948 13.6061L8.0382 14.9013L16.3729 19.7701L17.1295 18.4749Z" />
                   </svg>
                   Messages
-                  {/* <Badge className="ml-auto flex h-6 w-6 shrink-0 bg-primary dark:bg-backgruond items-center justify-center rounded-full">
-                    6
-                  </Badge> */}
-                </Link>
-                <Link
+                </Link> */}
+
+          {/* <Link
                   onClick={() => {
                     setActive('/groups')
                   }}
@@ -203,7 +204,8 @@ const MainHome = ({ children }: any) => {
 
                   Groups
                 </Link>
-                <Link
+                 */}
+          {/* <Link
                   onClick={() => {
                     setActive('/pages')
                   }}
@@ -215,7 +217,8 @@ const MainHome = ({ children }: any) => {
                   </svg>
                   Pages
                 </Link>
-                <Link
+                 */}
+          {/* <Link
                   onClick={() => {
                     setActive('/bookmarked')
                   }}
@@ -228,8 +231,9 @@ const MainHome = ({ children }: any) => {
 
                   Bookmarked
                 </Link>
-              </nav>
-              <div className="mt-auto ">
+                 */}
+          {/* </nav> */}
+          {/* <div className="mt-auto ">
                 <Link
                   onClick={() => {
                     setActive('/campaigns')
@@ -243,22 +247,27 @@ const MainHome = ({ children }: any) => {
                   </svg>
                   Campaigns
                 </Link>
-              </div>
-            </SheetContent>
-          </Sheet>
+              </div> */}
+          {/* </SheetContent> */}
+          {/* </Sheet> */}
+          {/* <h1 className="sm:hidden text-2xl font-bold "><img className="h-12" src={profile} alt="" /></h1> */}
+
           <div className="flex w-full items-center gap-3 md:gap-32 justify-between">
-            <div className="hidden sm:block">
+            {!searchState &&
+              <div className="block">
               <a href="#">
                 {/* logo */}
-                <h1 className="text-2xl font-bold "><img className="h-12" src={profile} alt="" /></h1>
+                <h1 className="text-2xl font-bold "><img className="h-10 sm:h-12" src={profile} alt="" /></h1>
               </a>
-            </div>
+            </div>}
             <div className="w-full flex-1">
               <form onSubmit={async (e) => {
+                console.log('searched')
                 e.preventDefault()
                 navigate(`/search?query=${searchQuery}&&type=default`)
               }}>
-                <div className="relative">
+{!searchState && 
+<div className="hidden sm:flex sm:relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     onChange={async (e) => {
@@ -277,37 +286,67 @@ const MainHome = ({ children }: any) => {
                     placeholder="Search..."
                     className="max-w-2xl appearance-none bg-background pl-8 shadow-none"
                   />
-                </div>
+                  <MdCancel size="24px" cursor="pointer" />
+                </div>}
+                {searchState &&
+                  <div className="flex relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    onChange={async (e) => {
+                      setSearchQuery(e.target.value)
+                    }}
+                    onKeyDown={async (e) => {
+                      console.log(e.key)
+                      if (e.key == "Enter") {
+                        // const { data } = await axiosClient.get(`/search?query=${searchQuery}&&type=default`)
+                        // console.log(data)
+                        // dispatch(setSearch('no maza yes maza'))
+                        // dispatch(setSearch(data))
+                      }
+                    }}
+                    type="search"
+                    placeholder="Search..."
+                    className="max-w-2xl appearance-none bg-background pl-8 shadow-none"
+                  />
+                </div>}
               </form>
             </div>
           </div>
 
           <div className="flex items-center gap-3 md:relative">
+            {!searchState 
+            &&
+            <MdSearch className="sm:hidden" size="24px" cursor="pointer" onClick={()=>{
+              setSearchState(true)
+              navigate(`/search`)
+
+            }} />
+            }
             <div className="relative" onClick={async () => {
               if (friendRequestState == false) {
                 setFriendRequestState(true)
               }
             }}>
-            <MdGroup size="24px" cursor="pointer"  />
-              {metrics?.data?.requests?.count && metrics?.data?.requests?.count > 0 ? (<span className="absolute cursor-pointer -top-1 -right-2 w-5 h-5 text-xs text-white flex items-center justify-center rounded-full bg-red-500">{metrics?.data?.requests?.count > 0 && metrics?.data?.requests?.count} </span>): null}
+              <MdGroup size="24px" cursor="pointer" />
+              {metrics?.data?.requests?.count && metrics?.data?.requests?.count > 0 ? (<span className="absolute cursor-pointer -top-1 -right-2 w-5 h-5 text-xs text-white flex items-center justify-center rounded-full bg-red-500">{metrics?.data?.requests?.count > 0 && metrics?.data?.requests?.count} </span>) : null}
             </div>
             {friendRequestState &&
               <FriendRequests setFriendRequestState={setFriendRequestState} />
             }
             <div className="relative" onClick={() => {
-                setNotificationsState(true)
-              }}>
-              <MdNotifications  size="24px" cursor="pointer" />
+              setNotificationsState(true)
+            }}>
+              <MdNotifications size="24px" cursor="pointer" />
               {metrics?.data?.notification?.count && metrics?.data?.notification?.count > 0 && <span className="absolute cursor-pointer -top-1 -right-2 w-5 h-5 text-white text-xs flex items-center justify-center rounded-full bg-red-500">{metrics?.data?.notification?.count} </span>}
             </div>
 
             {notificationsState && <Notifications setNotificationsState={setNotificationsState} />}
-            <ModeToggle />
+              {/* <ModeToggle /> */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild className="hidden sm:flex">
-                <Button variant="secondary" size="icon" className="rounded-full">
-                  <div className='flex w-9 h-9 items-center justify-center  rounded-full overflow-hidden'>
-                    <Avatar className="sm:flex">
+              <DropdownMenuTrigger asChild className="flex">
+                <Button variant="secondary"  size="icon" className="rounded-full w-7 h-7 sm:w-9 sm:h-9">
+                  <div className='flex w-7 h-7 sm:w-9 sm:h-9 bg-accent items-center justify-center  rounded-full overflow-hidden'>
+                    <Avatar className="">
                       <AvatarImage src={user?.profile} alt="Avatar" />
                       <AvatarFallback>{user?.firstname[0]?.toUpperCase() + user?.lastname[0]?.toUpperCase()}</AvatarFallback>
                     </Avatar>
@@ -317,14 +356,14 @@ const MainHome = ({ children }: any) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <Link to="/profile">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuItem>
+                      Profile
+                  </DropdownMenuItem>
                 </Link>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={async() => {
+                <DropdownMenuItem onClick={async () => {
                   let logout = await axiosClient.post("/user/logout")
-                  if(logout){
+                  if (logout) {
                     navigate('/login')
                     location.reload()
                     return

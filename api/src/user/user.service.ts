@@ -25,8 +25,8 @@ export class UserService {
 
     }
 
-    async createUser(user: { firstname: string, lastname: string, username: string, email: string, password: string, confirmPassword: string, address: { country?: string, city?: string, area?: string, }, phone: string, tempSecret: string }): Promise<any> {
-        const { firstname, lastname, username, email, password, confirmPassword, address, phone, tempSecret } = user
+    async createUser(user: { firstname: string, lastname: string, username: string, email?: string, password: string, confirmPassword: string, address: { country?: string, city?: string, area?: string, }, phone: string, tempSecret: string }): Promise<any> {
+        const { firstname, lastname, username, password, confirmPassword, address, phone, tempSecret } = user
 
         if (password !== confirmPassword) {
             throw new BadRequestException("provide correct username or password")
@@ -34,7 +34,7 @@ export class UserService {
 
         let hashedPassword = await this.cryptoService.hash(password, 16)
 
-        const _user = await this.userModel.create({ firstname, lastname, username, email, password: hashedPassword, phone, address, tempSecret })
+        const _user = await this.userModel.create({ firstname, lastname, username, password: hashedPassword, phone, address, tempSecret })
         return _user
     }
 
@@ -448,7 +448,7 @@ export class UserService {
                     lastname: 1,
                     followersCount: { $ifNull: ['$followersCount.count', 0] },
                     friendsCount: { $ifNull: ['$friendsCount.count', 0] },
-                    email: 1,
+                    // email: 1,
                     bio: 1,
                     address: 1,
                     phone: 1,
@@ -503,7 +503,7 @@ export class UserService {
     }
 
     async findUser(username: string): Promise<any> {
-        let user = await this.userModel.findOne({ $or: [{ username }, { email: username }], })
+        let user = await this.userModel.findOne({ $or: [{ username }, { phone: username }], })
         return user
     }
 }

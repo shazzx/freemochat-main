@@ -30,8 +30,8 @@ export class User {
     @Prop({type: String, default: null})
     cover: string
 
-    @Prop({ unique: true, validate: { validator: (email: string) => isEmail(email) } })
-    email: string;
+    // @Prop({ unique: true, validate: { validator: (email: string) => isEmail(email) } })
+    // email: string;
 
     @Prop()
     password: string;
@@ -61,8 +61,8 @@ export class User {
     @Prop({type: String, default: null})
     tempSecret: string
 
-    @Prop({type: Boolean, default: false})
-    isEmailVerified: boolean;
+    // @Prop({type: Boolean, default: false})
+    // isEmailVerified: boolean;
 
     @Prop({type: Boolean, default: false})
     isPhoneVerified: boolean;

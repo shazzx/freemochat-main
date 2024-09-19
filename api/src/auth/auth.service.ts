@@ -1,7 +1,6 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
-import { compare } from 'bcrypt'
 import { jwtConstants } from './constants';
 import { InjectModel } from '@nestjs/mongoose';
 import { OTP } from 'src/schema/otp';
@@ -34,52 +33,52 @@ export class AuthService {
         // }
 
         let verification = {
-            email: false,
             phone: false
         }
 
-        if (user.isEmailVerified) {
-            verification.email = true
-        }
+        // if (user.isEmailVerified) {
+        //     verification.email = true
+        // }
 
         if (user.isPhoneVerified) {
             verification.phone = true
         }
 
-        if (verification.email && verification.phone) {
+        if (verification.phone) {
             return user
         }
+
         if (!user.tempSecret) {
             let tempSecret = uuidv4()
-            let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+            // let emailOTP = await this.otpService.generateOtp(user._id, 'email')
             let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
-            console.log(emailOTP, phoneOTP)
+            console.log(phoneOTP)
 
-            await this.twilioService.sendEmail({
-                to: user.email,
-                from: 'freedombook99@gmail.com',
-                subject: "OTP Verification",
-                text: `Your email otp code is: ${emailOTP} `,
-                // html: emailData.html,
-            })
+            // await this.twilioService.sendEmail({
+            //     to: user.email,
+            //     from: 'freedombook99@gmail.com',
+            //     subject: "OTP Verification",
+            //     text: `Your email otp code is: ${emailOTP} `,
+            //     // html: emailData.html,
+            // })
 
-            await this.twilioService.sendSMS(user.phone, `Your email otp code is: ${phoneOTP}`)
+            await this.twilioService.sendSMS(user.phone, `Your phone otp code is: ${phoneOTP}`)
             await this.userService.updateUser(user._id, { tempSecret: tempSecret })
             throw new HttpException({ message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: { username, auth_id: user.tempSecret }, verification }, HttpStatus.BAD_REQUEST)
         }
-        let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+        // let emailOTP = await this.otpService.generateOtp(user._id, 'email')
         let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
-        await this.twilioService.sendEmail({
-            to: user.email,
-            from: 'freedombook99@gmail.com',
-            subject: "OTP Verification",
-            text: `Your email otp is: ${emailOTP} `,
-            // html: emailData.html,
-        })
+        // await this.twilioService.sendEmail({
+        //     to: user.email,
+        //     from: 'freedombook99@gmail.com',
+        //     subject: "OTP Verification",
+        //     text: `Your email otp is: ${emailOTP} `,
+        //     // html: emailData.html,
+        // })
 
-        await this.twilioService.sendSMS(user.phone, `Your phone otp is: ${phoneOTP}`)
+        await this.twilioService.sendSMS(user.phone, `Your phone otp code is: ${phoneOTP}`)
 
-        console.log(emailOTP, phoneOTP)
+        console.log( phoneOTP)
 
         throw new HttpException({ message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: { username, auth_id: user.tempSecret }, verification }, HttpStatus.BAD_REQUEST)
 
