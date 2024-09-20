@@ -389,61 +389,61 @@ export class PostsService {
                     as: 'pageTarget'
                 }
             },
-                {
-                  $addFields: {
+            {
+                $addFields: {
                     userObjectId: {
-                      $cond: {
-                        if: { $eq: ["$type", "group"] },
-                        then: {
-                          $cond: {
-                            if: { $eq: [{ $type: "$user" }, "string"] },
-                            then: { $toObjectId: "$user" },
-                            else: "$user"
-                          }
-                        },
-                        else: null
-                      }
+                        $cond: {
+                            if: { $eq: ["$type", "group"] },
+                            then: {
+                                $cond: {
+                                    if: { $eq: [{ $type: "$user" }, "string"] },
+                                    then: { $toObjectId: "$user" },
+                                    else: "$user"
+                                }
+                            },
+                            else: null
+                        }
                     }
-                  }
-                },
+                }
+            },
 
-                {
-                    $lookup: {
-                      from: "users",
-                      let: { userId: "$userObjectId", postType: "$type" },
-                      pipeline: [
+            {
+                $lookup: {
+                    from: "users",
+                    let: { userId: "$userObjectId", postType: "$type" },
+                    pipeline: [
                         {
-                          $match: {
-                            $expr: {
-                              $and: [
-                                { $eq: ["$$postType", "group"] },
-                                { $eq: ["$_id", "$$userId"] }
-                              ]
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$$postType", "group"] },
+                                        { $eq: ["$_id", "$$userId"] }
+                                    ]
+                                }
                             }
-                          }
                         },
                         { $limit: 1 }
-                      ],
-                      as: "userDetails"
-                    }
-                  },
-                  {
-                    $addFields: {
-                      user: {
+                    ],
+                    as: "userDetails"
+                }
+            },
+            {
+                $addFields: {
+                    user: {
                         $cond: {
-                          if: { $eq: ["$type", "group"] },
-                          then: {
-                            $cond: {
-                              if: { $gt: [{ $size: "$userDetails" }, 0] },
-                              then: { $arrayElemAt: ["$userDetails", 0] },
-                              else: null
-                            }
-                          },
-                          else: "$user"  // Keep the original user field for non-group posts
+                            if: { $eq: ["$type", "group"] },
+                            then: {
+                                $cond: {
+                                    if: { $gt: [{ $size: "$userDetails" }, 0] },
+                                    then: { $arrayElemAt: ["$userDetails", 0] },
+                                    else: null
+                                }
+                            },
+                            else: "$user"
                         }
-                      }
                     }
-                  },
+                }
+            },
             // {
             //     $lookup: {
             //         from: 'promotions',
@@ -562,7 +562,7 @@ export class PostsService {
                     media: 1,
                     user: 1,
                     promotion: 1,
-                    isUploaded:  1,
+                    isUploaded: 1,
                     target: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
@@ -1455,7 +1455,44 @@ export class PostsService {
                     as: 'pageTarget'
                 }
             },
-
+            {
+                $addFields: {
+                    userObjectId: {
+                        $toObjectId: "$post.user",
+                    }
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    let: { userId: "$userObjectId", postType: "$post.type" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$$postType", "group"] },
+                                        { $eq: ["$_id", "$$userId"] }
+                                    ]
+                                }
+                            }
+                        },
+                        { $limit: 1 }
+                    ],
+                    as: "userDetails"
+                }
+            },
+            {
+                $addFields: {
+                    user: {
+                        $cond: {
+                            if: { $gt: [{ $size: "$userDetails" }, 0] },
+                            then: { $arrayElemAt: ["$userDetails", 0] },
+                            else: null
+                        }
+                    },
+                }
+            },
 
             {
 
@@ -1545,6 +1582,7 @@ export class PostsService {
                 $project: {
                     post: 1,
                     target: 1,
+                    user: 1,
                     targetId: 1,
                     type: 1,
                     updatedAt: 1,
@@ -1640,9 +1678,9 @@ export class PostsService {
     }
 
     async reportPost(postId: string, { userId, type, reportMessage }) {
-        const alreadyReported = await  this.reportModel.findOne({ reportedBy: new Types.ObjectId(userId), postId: new Types.ObjectId(postId)})
+        const alreadyReported = await this.reportModel.findOne({ reportedBy: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) })
 
-        if (alreadyReported ) {
+        if (alreadyReported) {
             throw new BadRequestException("Already Reported")
         }
 
