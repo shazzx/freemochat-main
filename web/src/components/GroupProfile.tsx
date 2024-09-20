@@ -19,7 +19,6 @@ import ProfileMedia from './ProfileMedia'
 import { MediaOpenModel } from './MediaOpenModel'
 import { setMediaModelDetails } from '@/utils/mediaOpenModel'
 import MediaSection from './MediaSection'
-import { RiAdminLine, RiUserUnfollowLine } from 'react-icons/ri'
 import CustomTabList from './profile/CustomTabList'
 import { format } from 'date-fns'
 
@@ -130,7 +129,7 @@ function GroupProfile() {
                                                     <div className='w-12'>
                                                         <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
                                                             <Avatar >
-                                                                <AvatarImage src={!isLoading && data?.images?.profile} alt="Avatar" />
+                                                                <AvatarImage src={!isLoading && data?.profile} alt="Avatar" />
                                                                 <AvatarFallback>{firstname[0]?.toUpperCase() + lastname[0]?.toUpperCase()}</AvatarFallback>
                                                             </Avatar>
                                                         </div>

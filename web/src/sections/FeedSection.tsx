@@ -20,6 +20,7 @@ function FeedSection() {
     const { user } = useAppSelector((data) => data.user)
     const { inView, ref } = useInView()
     const { data, isLoading, fetchNextPage } = useFeed()
+    console.log(data)
 
     // useEffect(() => {
 

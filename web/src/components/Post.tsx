@@ -204,11 +204,11 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             <Card className="w-full border-muted" ref={scrollRef}>
                 <CardHeader className='p-3' >
                     <div className='flex items-center justify-between'>
-                        <Link to={`${domain}/${postData?.type}/${navigation}`}>
-                            <div className='flex gap-2'>
-                                {postData.type == 'group'
-                                    ?
-                                    <div className='relative'>
+                        <div className='flex gap-2'>
+                            {postData.type == 'group'
+                                ?
+                                <div className='relative'>
+                                    <Link to={`${domain}/${postData?.type}/${navigation}`}>
                                         <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
 
 
@@ -217,6 +217,9 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                                 <AvatarFallback>{(postData?.target?.name && postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                         </div>
+                                    </Link>
+                                    <Link to={`${domain}/user/${postData?.user?.username}`}>
+
                                         <div className='absolute -bottom-1 border border-accent -right-1 bg-accent w-8 h-8 flex items-center justify-center rounded-full overflow-hidden'>
 
 
@@ -226,9 +229,12 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                                 <AvatarFallback>{(postData?.user?.firstname && postData?.user?.firstname[0]?.toUpperCase())}</AvatarFallback>
                                             </Avatar>
                                         </div>
+                                    </Link>
 
-                                    </div>
-                                    :
+                                </div>
+                                :
+                                <Link to={`${domain}/${postData?.type}/${navigation}`}>
+
                                     <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
                                         {postData?.type !== 'user' ?
                                             <Avatar>
@@ -251,20 +257,25 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                                         }
                                     </div>
+                                </Link>
+
+                            }
+
+                            <div className='flex flex-col gap-1'>
+
+                                {postData.type == 'group' ?
+
+                                    <h3 className='text-card-foreground flex gap-2 text-sm'>{postData?.user?.username} ({postData?.target?.name}) </h3>
+                                    :
+                                    <Link to={`${domain}/${postData?.type}/${navigation}`}>
+
+                                        <h3 className='text-card-foreground flex gap-2 text-sm'>{postData?.target?.username || postData?.target?.name}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
+                                    </Link>
+
                                 }
-
-                                <div className='flex flex-col gap-1'>
-                                    
-                                    {postData.type == 'group' ?
-
-<h3 className='text-card-foreground flex gap-2 text-sm'>{postData?.user?.username} ({postData?.target?.name}) </h3>
-:
-                                    <h3 className='text-card-foreground flex gap-2 text-sm'>{postData?.target?.username || postData?.target?.name}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
-                                    }
-                                    <span className='text-muted-foreground text-xs'>{postData?.promotion?.length > 0 ? "sponsored" : date}</span>
-                                </div>
+                                <span className='text-muted-foreground text-xs'>{postData?.promotion?.length > 0 ? "sponsored" : date}</span>
                             </div>
-                        </Link>
+                        </div>
                         <DropdownMenuMain deletePost={deletePost} setConfirmModelState={setConfirmModelState} setReportModelState={setReportModelState} reportModelState={reportModelState} postPromotion={postPromotion} setPostPromotion={setPostPromotion} setEditPostModelState={setEditPostModelState} postBy={postData?.user == user._id} />
                     </div>
                 </CardHeader>
