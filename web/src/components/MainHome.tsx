@@ -23,7 +23,7 @@ import {
 
 import { Link, useNavigate } from "react-router-dom"
 import { ModeToggle } from "./Toggle"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 
 import { domain } from "@/config/domain"
 import { Notifications } from "./Notifications"
@@ -47,7 +47,7 @@ const MainHome = ({ children }: any) => {
   useSocket()
   const { user } = useAppSelector((state) => state.user)
   const navigate = useNavigate()
-  
+
   const [active, setActive] = useState(location.pathname)
   const [notificationsState, setNotificationsState] = useState(false)
   const [friendRequestState, setFriendRequestState] = useState(false)
@@ -60,6 +60,10 @@ const MainHome = ({ children }: any) => {
   const [searchState, setSearchState] = useState(false)
   // console.log(callDetails, callerState, onCall, recepientState, targetDetails, type)
   console.log(metrics.data)
+
+  const [searchSuggestions, setSearchSuggestions] = useState([])
+  const [searchSuggestionsState, setSearchSuggestionsState] = useState(false)
+  const searchRef = useRef()
 
   let cancelCall = async (type) => {
     try {
@@ -255,73 +259,93 @@ const MainHome = ({ children }: any) => {
           <div className="flex w-full items-center gap-3 md:gap-32 justify-between">
             {!searchState &&
               <div className="block">
-              <Link to="/">
-                {/* logo */}
-                <h1 className="text-2xl font-bold "><img className="h-10 sm:h-12" src={profile} alt="" /></h1>
-              </Link>
-            </div>}
+                <Link to="/">
+                  {/* logo */}
+                  <h1 className="text-2xl font-bold "><img className="h-10 sm:h-12" src={profile} alt="" /></h1>
+                </Link>
+              </div>}
             <div className="w-full flex-1">
               <form onSubmit={async (e) => {
                 console.log('searched')
                 e.preventDefault()
                 navigate(`/search?query=${searchQuery}&&type=default`)
               }}>
-{!searchState && 
-<div className="hidden sm:flex sm:relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    onChange={async (e) => {
-                      setSearchQuery(e.target.value)
-                    }}
-                    onKeyDown={async (e) => {
-                      console.log(e.key)
-                      // if (e.key == "Enter") {
-                        const { data } = await axiosClient.get(`/search/suggestions?query=${searchQuery}`)
-                        console.log(data)
-                        // console.log(data)
-                        // dispatch(setSearch('no maza yes maza'))
-                        // dispatch(setSearch(data))
-                      // }
-                    }}
-                    type="search"
-                    placeholder="Search..."
-                    className="max-w-2xl appearance-none bg-background pl-8 shadow-none"
-                  />
-                  {/* <MdCancel size="24px" cursor="pointer" /> */}
-                </div>}
+                {!searchState &&
+                  <div className="hidden sm:flex  sm:relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                    ref={searchRef}
+                      onChange={async (e) => {
+                        setSearchQuery(e.target.value)
+                      }}
+                      onKeyDown={async (e) => {
+                        console.log(e.key)
+                        if (searchQuery.length > 2) {
+                          const { data } = await axiosClient.get(`/search/suggestions?query=${searchQuery}`)
+                          setSearchSuggestions(data)
+                          setSearchSuggestionsState(true)
+                        } else {
+                          setSearchSuggestions([])
+                          setSearchSuggestionsState(false)
+                        }
+                      }}
+                      type="search"
+                      placeholder="Search..."
+                      className="max-w-2xl appearance-none bg-background pl-8 shadow-none"
+                    />
+
+                    
+                    {/* <MdCancel size="24px" cursor="pointer" /> */}
+                  {searchSuggestions.length > 0 && searchSuggestionsState && 
+                    <div className="absolute top-10 z-50 bg-card max-w-2xl w-full flex flex-col">
+                      {searchSuggestions.map((suggestion) => {
+                        return (
+                          <div className="px-4 py-2 flex justify-between cursor-pointer hover:bg-accent"  onClick={() => {
+                            setSearchSuggestionsState(false)
+                            searchRef.current.value = suggestion.value
+                            navigate(`/search?query=${suggestion.value}&&type=default`)
+                          }}>
+                            <span >{suggestion.value}</span>
+                        {/* <span className="px-2 py-1 bg-primary-active rounded-lg">{suggestion.type} </span> */}
+                          </div>
+                        )
+                      })}
+                    </div>
+                    }
+                  </div>}
                 {searchState &&
                   <div className="flex relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    onChange={async (e) => {
-                      setSearchQuery(e.target.value)
-                    }}
-                    onKeyDown={async (e) => {
-                      console.log(e.key)
-                      if (e.key == "Enter") {
-                        // const { data } = await axiosClient.get(`/search?query=${searchQuery}&&type=default`)
-                        // console.log(data)
-                        // dispatch(setSearch('no maza yes maza'))
-                        // dispatch(setSearch(data))
-                      }
-                    }}
-                    type="search"
-                    placeholder="Search..."
-                    className="max-w-2xl appearance-none bg-background pl-8 shadow-none"
-                  />
-                </div>}
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      onChange={async (e) => {
+                        setSearchQuery(e.target.value)
+                      }}
+                      onKeyDown={async (e) => {
+                        console.log(e.key)
+                        if (e.key == "Enter") {
+                          // const { data } = await axiosClient.get(`/search?query=${searchQuery}&&type=default`)
+                          // console.log(data)
+                          // dispatch(setSearch('no maza yes maza'))
+                          // dispatch(setSearch(data))
+                        }
+                      }}
+                      type="search"
+                      placeholder="Search..."
+                      className="max-w-2xl appearance-none bg-background pl-8 shadow-none"
+                    />
+                  </div>}
               </form>
             </div>
           </div>
 
           <div className="flex items-center gap-3 md:relative">
-            {!searchState 
-            &&
-            <MdSearch className="sm:hidden" size="24px" cursor="pointer" onClick={()=>{
-              setSearchState(true)
-              navigate(`/search`)
+            {!searchState
+              &&
+              <MdSearch className="sm:hidden" size="24px" cursor="pointer" onClick={() => {
+                setSearchState(true)
+                navigate(`/search`)
 
-            }} />
+              }} />
             }
             <div className="relative" onClick={async () => {
               if (friendRequestState == false) {
@@ -342,10 +366,10 @@ const MainHome = ({ children }: any) => {
             </div>
 
             {notificationsState && <Notifications setNotificationsState={setNotificationsState} />}
-              {/* <ModeToggle /> */}
+            {/* <ModeToggle /> */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild className="flex">
-                <Button variant="secondary"  size="icon" className="rounded-full w-7 h-7 sm:w-9 sm:h-9">
+                <Button variant="secondary" size="icon" className="rounded-full w-7 h-7 sm:w-9 sm:h-9">
                   <div className='flex w-7 h-7 sm:w-9 sm:h-9 bg-accent items-center justify-center  rounded-full overflow-hidden'>
                     <Avatar className="">
                       <AvatarImage src={user?.profile} alt="Avatar" />
@@ -358,7 +382,7 @@ const MainHome = ({ children }: any) => {
               <DropdownMenuContent align="end">
                 <Link to="/profile">
                   <DropdownMenuItem>
-                      Profile
+                    Profile
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
