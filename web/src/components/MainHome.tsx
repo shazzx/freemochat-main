@@ -255,10 +255,10 @@ const MainHome = ({ children }: any) => {
           <div className="flex w-full items-center gap-3 md:gap-32 justify-between">
             {!searchState &&
               <div className="block">
-              <a href="#">
+              <Link to="/">
                 {/* logo */}
                 <h1 className="text-2xl font-bold "><img className="h-10 sm:h-12" src={profile} alt="" /></h1>
-              </a>
+              </Link>
             </div>}
             <div className="w-full flex-1">
               <form onSubmit={async (e) => {
@@ -275,12 +275,13 @@ const MainHome = ({ children }: any) => {
                     }}
                     onKeyDown={async (e) => {
                       console.log(e.key)
-                      if (e.key == "Enter") {
-                        // const { data } = await axiosClient.get(`/search?query=${searchQuery}&&type=default`)
+                      // if (e.key == "Enter") {
+                        const { data } = await axiosClient.get(`/search/suggestions?query=${searchQuery}`)
+                        console.log(data)
                         // console.log(data)
                         // dispatch(setSearch('no maza yes maza'))
                         // dispatch(setSearch(data))
-                      }
+                      // }
                     }}
                     type="search"
                     placeholder="Search..."

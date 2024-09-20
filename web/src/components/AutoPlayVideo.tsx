@@ -8,7 +8,7 @@ const AutoPlayVideo = ({ src, type = 'video/mp4' }) => {
     const options = {
       root: null,
       rootMargin: '0px',
-      threshold: 0.5,
+      threshold: 1,
     };
 
     const observer = new IntersectionObserver((entries) => {
@@ -49,3 +49,78 @@ const AutoPlayVideo = ({ src, type = 'video/mp4' }) => {
 };
 
 export default AutoPlayVideo;
+
+// import React, { useRef, useEffect, useState } from 'react';
+
+// const TopmostVideoPlayer = ({ src, type = 'video/mp4' }) => {
+//   const videoRef = useRef(null);
+//   const [isPlaying, setIsPlaying] = useState(false);
+
+//   useEffect(() => {
+//     const options = {
+//       root: null,
+//       rootMargin: '0px',
+//       threshold: 1,
+//     };
+
+//     let currentlyPlayingVideo = null;
+
+//     const findTopmostVisibleVideo = (entries) => {
+//       let topmostVideo = null;
+//       let topmostPosition = Infinity;
+
+//       entries.forEach(entry => {
+//         if (entry.isIntersecting && entry.intersectionRatio === 1) {
+//           const position = entry.boundingClientRect.top;
+//           if (position < topmostPosition) {
+//             topmostPosition = position;
+//             topmostVideo = entry.target;
+//           }
+//         }
+//       });
+
+//       return topmostVideo;
+//     };
+
+//     const observer = new IntersectionObserver((entries) => {
+//       const topmostVideo = findTopmostVisibleVideo(entries);
+
+//       if (topmostVideo) {
+//         if (currentlyPlayingVideo && currentlyPlayingVideo !== topmostVideo) {
+//           currentlyPlayingVideo.pause();
+//         }
+//         topmostVideo.play();
+//         currentlyPlayingVideo = topmostVideo;
+//         setIsPlaying(videoRef.current === topmostVideo);
+//       } else {
+//         if (currentlyPlayingVideo) {
+//           currentlyPlayingVideo.pause();
+//           currentlyPlayingVideo = null;
+//         }
+//         setIsPlaying(false);
+//       }
+//     }, options);
+
+//     const videos = document.querySelectorAll('video');
+//     videos.forEach(video => observer.observe(video));
+
+//     return () => {
+//       videos.forEach(video => observer.unobserve(video));
+//     };
+//   }, []);
+
+//   return (
+//     <div className="video-container">
+//       <video
+//         ref={videoRef}
+//         src={src}
+//         loop
+//         playsInline
+//         controls
+//         className={`w-full max-h-[500px] h-full transition-opacity duration-300 ${isPlaying ? 'opacity-100' : 'opacity-50'}`}
+//       />
+//     </div>
+//   );
+// };
+
+// export default TopmostVideoPlayer;

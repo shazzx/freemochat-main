@@ -262,10 +262,15 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                             }
 
                             <div className='flex flex-col gap-1'>
-
                                 {postData.type == 'group' ?
-
-                                    <h3 className='text-card-foreground flex gap-2 text-sm'>{postData?.user?.username} ({postData?.target?.name}) </h3>
+                                    <h3 className='text-card-foreground flex gap-2 text-sm'>
+                                        <Link to={`${domain}/user/${postData?.user?.username}`}>
+                                            {postData?.user?.username}
+                                        </Link>
+                                        <Link to={`${domain}/${postData?.type}/${navigation}`}>
+                                            ({postData?.target?.name})
+                                        </Link>
+                                    </h3>
                                     :
                                     <Link to={`${domain}/${postData?.type}/${navigation}`}>
 

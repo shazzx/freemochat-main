@@ -18,4 +18,14 @@ export class SearchController {
         const results = await this.searchService.search({ type, query }, sub)
         response.json(results)
     }
+
+
+    @Get('suggestions')
+    async suggestions(@Query() searchDTO: SearchDTO, @Req() req: Request, @Res() response: Response) {
+        let { query } = searchDTO
+        
+        const results = await this.searchService.searchSuggestions( query )
+        console.log(results)
+        response.json(results)
+    }
 }

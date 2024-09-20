@@ -51,6 +51,47 @@ export class SearchService {
         }
     }
 
+    async searchSuggestions(query: string) {
+        const regexPattern = new RegExp(query, 'i');
+
+        const aggregationPipeline = [
+            {
+                $match: {
+                    $or: [
+                        { username: { $regex: regexPattern } },
+                        { handle: { $regex: regexPattern } },
+                    ],
+                },
+            },
+            {
+                $project: {
+                    _id: 0,
+                    value: { $ifNull: ['$username', '$handle'] },
+                    type: {
+                        $cond: {
+                            if: { $ifNull: ['$username', false] },
+                            then: 'user',
+                            else: { $cond: [{ $ifNull: ['$handle', false] }, 'group', 'page'] },
+                        },
+                    },
+                },
+            },
+            {
+                $limit: 10,
+            },
+        ];
+
+        const [userResults, groupResults, pageResults] = await Promise.all([
+            this.userModel.aggregate(aggregationPipeline),
+            this.groupModel.aggregate(aggregationPipeline),
+            this.pageModel.aggregate(aggregationPipeline),
+        ]);
+
+        return [...userResults, ...groupResults, ...pageResults]
+            .sort((a, b) => a.value.localeCompare(b.value))
+            .slice(0, 10);
+    }
+
 
     async searchPages(query: string) {
         const pattern = new RegExp(`^${query}`)
