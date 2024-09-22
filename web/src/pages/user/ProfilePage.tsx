@@ -31,6 +31,7 @@ import { domain } from '@/config/domain'
 import { useInView } from 'react-intersection-observer'
 import Friends from './tabs/profile/Friends'
 import Followers from './tabs/profile/Followers'
+import QuickChat from '@/components/QuickChat'
 const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const localUserData = useAppSelector(data => data.user)
     const isSelf = role === 'self'
@@ -122,6 +123,29 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
         console.log('yes')
     }, [inView])
 
+
+    const [openQuickChat, setOpenQuickChat] = useState(false)
+    const quickChatRef = useRef(null)
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (quickChatRef.current && !quickChatRef.current.contains(event.target)) {
+                setOpenQuickChat(false);
+            }
+        }
+
+        // Add event listener when dropdown is open
+        if (openQuickChat) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        // Clean up the event listener
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [openQuickChat])
+
+
     return (
         <>
             {query.isError &&
@@ -129,6 +153,11 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
             }
             {query.isLoading &&
                 <div className='w-full h-full flex items-center justify-center'>loading...</div>
+            }
+            {openQuickChat &&
+                <div ref={quickChatRef}>
+                    <QuickChat target={!isSelf && {data: user, type: 'User'}} />
+                </div>
             }
 
             {
@@ -198,6 +227,8 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                         }}>Accept</Button>
                                     </div>
                                 }
+                        {!isSelf && <Button className='bg-card hover:bg-accent active:bg-muted' onClick={() => setOpenQuickChat(!openQuickChat)}>Message</Button>}
+
                                 {!isSelf && !isOwn && areFriends &&
                                     <Button className='flex gap-2 *bg-card px-4' onClick={() => {
                                     }}>

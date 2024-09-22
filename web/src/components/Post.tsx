@@ -176,6 +176,33 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         )
     }
 
+    // let [isVisible, setIsVisible] = useState(false)
+
+    // useEffect(() => {
+    //     const options = {
+    //       root: null,
+    //       rootMargin: '0px',
+    //       threshold: 1,
+    //     };
+    
+    //     const observer = new IntersectionObserver((entries) => {
+    //       entries.forEach((entry) => {
+    //         if (entry.isIntersecting) {
+    //           setIsVisible(true);
+    //         } else {
+    //           setIsVisible(false);
+    //         }
+    //       });
+    //     }, options);
+    
+    //     return () => {
+    //         observer.unobserve(videoRef.current);
+    //     };
+    //   }, []);
+
+    //   useEffect(() => {
+    //     console.log(isVisible)
+    //   },[])
 
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} onClick={() => {

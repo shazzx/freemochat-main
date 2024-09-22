@@ -11,13 +11,15 @@ import { EllipsisIcon } from 'lucide-react';
 import { axiosClient } from '@/api/axiosClient';
 import { useQueryClient } from '@tanstack/react-query';
 import { produce } from 'immer';
+import { useSocket } from '@/hooks/useSocket';
 
 function QuickChat({ target }) {
     const { user } = useAppSelector(state => state.user)
-    const { socket } = useAppSelector((data) => data.socket) as { socket: Socket }
     const [messages, setMessages] = useState([])
     const [inputValue, setInputValue] = useState("")
-    const recepientDetails = { targetId: target?.data?._id, username: target?.data?.handle, type: "Page" }
+    const recepientDetails = target?.type == "User" ? { targetId: target?.data?._id, username: target?.data?.username, type: "User" } : { targetId: target?.data?._id, username: target?.data?.handle, type: "Page" }
+    const socket = useSocket(recepientDetails?.targetId)
+    console.log(recepientDetails)
     const chatContainerRef = useRef(null)
     const queryClient = useQueryClient()
     const [dropDownMessageIndex, setDropDownMessageIndex] = useState(null)
@@ -32,7 +34,7 @@ function QuickChat({ target }) {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
     }
 
-    const userMessages = useMessages(target?.data?._id)
+    const userMessages = useMessages({recepientId: target?.data?._id, isChatGroup: 0})
     console.log(userMessages)
 
     const deleteMessage = async (messageId) => {
@@ -77,21 +79,21 @@ function QuickChat({ target }) {
                     {/* praying man */}
                     <div className='w-10 h-10 rounded-full flex items-center justify-center bg-accent overflow-hidden'>
                         {recepientDetails?.type == "User" ? <Avatar className="h-9 w-9 flex items-center justify-center">
-                            <AvatarImage src={target?.data?.images?.profile} alt="Avatar" />
-                            <AvatarFallback>{target?.data?.firstname[0]?.toUpperCase() + target?.data?.lastname[0]?.toUpperCase()}</AvatarFallback>
+                            <AvatarImage src={target?.data?.profile} alt="Avatar" />
+                            <AvatarFallback>{target?.data?.firstname[0]?.toUpperCase()}</AvatarFallback>
                         </Avatar>
                             :
                             <Avatar className="h-10 w-10 flex items-center justify-center" onClick={() => {
                                 // setChatGroupInfo(true)
                             }}>
-                                <AvatarImage src={target?.data?.images?.profile} alt="Avatar" />
+                                <AvatarImage src={target?.data?.profile} alt="Avatar" />
                                 <AvatarFallback>{target?.data?.name[0]?.toUpperCase() + target?.data?.name[1]?.toUpperCase()}</AvatarFallback>
                             </Avatar>
                         }
                     </div>
                     <div className='flex flex-col gap-0'>
-                        <h3 className='text-card-foreground text-sm'>{target?.data?.type == "User" ? target?.data?.fullname : target?.data?.name}</h3>
-                        <span className='text-muted-foreground text-xs'>@{target?.data?.handle}</span>
+                        <h3 className='text-card-foreground text-sm'>{target?.type == "User" ? target?.data?.firstname + " " + target?.data?.lastname  : target?.data?.name}</h3>
+                        <span className='text-muted-foreground text-xs'>@{target?.type == "User" ? target?.data?.username : target?.data?.handle}</span>
                     </div>
                 </div>
             </div>
