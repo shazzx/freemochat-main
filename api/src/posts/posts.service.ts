@@ -62,16 +62,71 @@ export class PostsService {
                     as: "target"
                 }
             },
+            // {
+            //     $lookup: {
+            //         from: 'users',
+            //         localField: "user",
+            //         foreignField: "_id",
+            //         as: "user"
+            //     }
+            // },
+            // {
+            //     $unwind: "$user"
+            // },
+            {
+                $addFields: {
+                    userObjectId: {
+                        $cond: {
+                            if: { $eq: ["$type", "group"] },
+                            then: {
+                                $cond: {
+                                    if: { $eq: [{ $type: "$user" }, "string"] },
+                                    then: { $toObjectId: "$user" },
+                                    else: "$user"
+                                }
+                            },
+                            else: null
+                        }
+                    }
+                }
+            },
+
             {
                 $lookup: {
-                    from: 'users',
-                    localField: "user",
-                    foreignField: "_id",
-                    as: "user"
+                    from: "users",
+                    let: { userId: "$userObjectId", postType: "$type" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$$postType", "group"] },
+                                        { $eq: ["$_id", "$$userId"] }
+                                    ]
+                                }
+                            }
+                        },
+                        { $limit: 1 }
+                    ],
+                    as: "userDetails"
                 }
             },
             {
-                $unwind: "$user"
+                $addFields: {
+                    user: {
+                        $cond: {
+                            if: { $eq: ["$type", "group"] },
+                            then: {
+                                $cond: {
+                                    if: { $gt: [{ $size: "$userDetails" }, 0] },
+                                    then: { $arrayElemAt: ["$userDetails", 0] },
+                                    else: null
+                                }
+                            },
+                            else: "$user"
+                        }
+                    }
+                }
             },
             {
                 $unwind: "$target"

@@ -23,7 +23,7 @@ function Groups() {
                     <div className='flex w-full items-center  flex-col gap-2  '>
                         {!isLoading && data.length > 0 ? data.map((page, i) => {
                             return page.posts.map((post, postIndex) => (
-                                <Post useLikePost={useLikeGroupFeedPost} useBookmarkPost={useBookmarkGroupFeedPost} pageIndex={i} postIndex={postIndex} postData={post} userId={user?._id} username={user?.username} profile={user?.images?.profile} key={post?._id} type={'groupFeed'}/>
+                                <Post useLikePost={useLikeGroupFeedPost} useBookmarkPost={useBookmarkGroupFeedPost} pageIndex={i} postIndex={postIndex} postData={post} userId={user?._id} username={user?.username} profile={user?.profile} key={post?._id} type={'groupFeed'}/>
                             ))
 
                         })

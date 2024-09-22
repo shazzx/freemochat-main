@@ -51,10 +51,10 @@ export const router = createBrowserRouter([
                 path: "/bookmarked",
                 element: <MainHome children={<Bookmarked/>} />,
             },
-            {
-                path: "/campaigns",
-                element: <MainHome children={<CampaignSection/>} />,
-            },
+            // {
+            //     path: "/campaigns",
+            //     element: <MainHome children={<CampaignSection/>} />,
+            // },
             {
                 path: "/profile",
                 element: <MainHome children={<ProfilePage role={"self"} />} />,
