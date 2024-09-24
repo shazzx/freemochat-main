@@ -35,12 +35,12 @@ export function useBookamrks(): any {
 export const useLikeBookmarkedPost = () => {
     const queryClient = useQueryClient()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-        mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number }) => {
-            return likePost({ postId: postDetails.postId })
+        mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, reaction?: string }) => {
+            return likePost({ postId: postDetails.postId, reaction: postDetails?.reaction })
         },
 
 
-        onMutate: async ({ postId, postIndex, pageIndex, }) => {
+        onMutate: async ({ postId, postIndex, pageIndex, reaction}) => {
             await queryClient.cancelQueries({ queryKey: ['userBookmarks'] })
             const previousComments = queryClient.getQueryData(['userBookmarks'])
 
@@ -50,12 +50,14 @@ export const useLikeBookmarkedPost = () => {
                     if (draft.pages[pageIndex].bookmarks[postIndex].post && draft.pages[pageIndex].bookmarks[postIndex].post._id == postId && draft.pages[pageIndex].bookmarks[postIndex].post.isLikedByUser) {
                         draft.pages[pageIndex].bookmarks[postIndex].post.isLikedByUser = false
                         draft.pages[pageIndex].bookmarks[postIndex].post.likesCount = draft.pages[pageIndex].bookmarks[postIndex].post.likesCount - 1
+                        draft.pages[pageIndex].bookmarks[postIndex].post = {...draft.pages[pageIndex].bookmarks[postIndex].post, reaction: null}
 
                         return draft
                     }
 
                     if (draft.pages[pageIndex].bookmarks[postIndex].post && draft.pages[pageIndex].bookmarks[postIndex].post._id == postId && !draft.pages[pageIndex].bookmarks[postIndex].post.isLikedByUser) {
                         draft.pages[pageIndex].bookmarks[postIndex].post.isLikedByUser = true
+                        draft.pages[pageIndex].bookmarks[postIndex].post = {...draft.pages[pageIndex].bookmarks[postIndex].post, reaction}
                         draft.pages[pageIndex].bookmarks[postIndex].post.likesCount = draft.pages[pageIndex].bookmarks[postIndex].post.likesCount + 1
 
                         return draft

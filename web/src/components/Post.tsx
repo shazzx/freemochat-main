@@ -238,8 +238,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 <div className='relative'>
                                     <Link to={`${domain}/${postData?.type}/${navigation}`}>
                                         <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
-
-
                                             <Avatar >
                                                 <AvatarImage src={_profile} alt="Avatar" />
                                                 <AvatarFallback>{(postData?.target?.name && postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase()}</AvatarFallback>
@@ -293,7 +291,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 {postData.type == 'group' ?
                                     <h3 className='text-card-foreground flex gap-2 text-sm'>
                                         <Link to={`${domain}/user/${postData?.user?.username}`}>
-                                            {postData?.target?.firstname + " " + postData?.target?.firstname}
+                                            {postData?.user?.firstname + " " + postData?.user?.lastname}
                                         </Link>
                                         <Link to={`${domain}/${postData?.type}/${navigation}`}>
                                             ({postData?.target?.name})
@@ -302,7 +300,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                     :
                                     <Link to={`${domain}/${postData?.type}/${navigation}`}>
 
-                                        <h3 className='text-card-foreground flex gap-2 text-sm'>{postData?.target?.firstname + " " + postData?.target?.lastname || postData?.target?.name}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
+                                        <h3 className='text-card-foreground flex gap-2 text-sm'>{(postData?.target?.firstname ? (postData?.target?.firstname + " " + postData?.target?.lastname) : postData?.target?.name)}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
                                     </Link>
 
                                 }

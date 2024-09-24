@@ -1,6 +1,6 @@
 import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, ObjectId, Types } from 'mongoose';
 import { LocationService } from 'src/location/location.service';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 import { NotificationService } from 'src/notification/notification.service';
@@ -203,6 +203,7 @@ export class PostsService {
             },
             {
                 $addFields: {
+                    reaction: {$arrayElemAt: ['$userLike.reaction', 0]},
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                     likesCount: {
@@ -232,6 +233,7 @@ export class PostsService {
                     media: 1,
                     user: 1,
                     target: 1,
+                    reaction: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
@@ -341,6 +343,7 @@ export class PostsService {
             },
             {
                 $addFields: {
+                    reaction: {$arrayElemAt: ['$userLike.reaction', 0]},
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                     likesCount: {
@@ -370,6 +373,7 @@ export class PostsService {
                     media: 1,
                     user: 1,
                     target: 1,
+                    reaction: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
@@ -606,6 +610,7 @@ export class PostsService {
                     },
                     // promotion: '$promotion',
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
+                    reaction: {$arrayElemAt: ['$userLike.reaction', 0]},
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                 }
             },
@@ -619,6 +624,7 @@ export class PostsService {
                     promotion: 1,
                     isUploaded: 1,
                     target: 1,
+                    reaction: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
@@ -1228,6 +1234,7 @@ export class PostsService {
             },
             {
                 $addFields: {
+                    reaction: {$arrayElemAt: ['$userLike.reaction', 0]},
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                     likesCount: {
@@ -1279,6 +1286,7 @@ export class PostsService {
                     promotedId: '$_id',
                     targetAddress: 1,
                     media: 1,
+                    reaction: 1,
                     createdAt: 1,
                     updatedAt: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
@@ -1623,6 +1631,8 @@ export class PostsService {
                     },
                     "post.isLikedByUser": { $gt: [{ $size: '$userLike' }, 0] },
                     "post.isBookmarkedByUser": true,
+                    reaction: {$arrayElemAt: ['$userLike.reaction', 0]},
+
 
                 }
             },
@@ -1631,6 +1641,7 @@ export class PostsService {
                     "post.likesCount": { $ifNull: ['$likesCount.count', 0] },
                     "post.commentsCount": { $ifNull: ['$commentsCount.count', 0] },
                     "post.bookmarksCount": { $ifNull: ['$bookmarksCount.count', 0] },
+                    "post.reaction": "$reaction"
                 }
             },
             {
@@ -1657,13 +1668,24 @@ export class PostsService {
 
     }
 
-    async toggleLike(userId: string, targetId: string, type: 'post' | 'comment' | 'reply', authorId?: string, targetType?: string, _targetId?: string): Promise<boolean> {
-        // _targetId is account based (user | page | group)
-        const filter = {
+    async toggleLike(userId: string, targetId: string, type: 'post' | 'comment' | 'reply', authorId?: string, targetType?: string, _targetId?: string, reaction?: string): Promise<boolean> {
+
+        let filter: {
+            userId: Types.ObjectId, 
+            targetId: Types.ObjectId,
+            type: string,
+            reaction?: string
+         } = {
             userId: new Types.ObjectId(userId),
             targetId: new Types.ObjectId(targetId),
             type,
         };
+
+        
+
+        if(type == 'post' && reaction){
+            filter ={...filter, reaction}
+        }
 
         console.log(_targetId)
 

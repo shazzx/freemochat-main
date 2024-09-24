@@ -286,10 +286,10 @@ export class PostsController {
 
     @Post("like")
     async like(@Body(new ZodValidationPipe(LikePost)) body: LikePostDTO, @Req() req: Request, @Res() res: Response) {
-        const { postId, authorId, type, targetId } = body
+        const { postId, authorId, type, targetId, reaction } = body
         console.log('author', authorId, targetId)
         const { sub } = req.user as { sub: string, username: string }
-        res.json(await this.postService.toggleLike(sub, postId, "post", authorId, type, targetId))
+        res.json(await this.postService.toggleLike(sub, postId, "post", authorId, type, targetId, reaction))
     }
 
 
