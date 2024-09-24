@@ -13,7 +13,6 @@ import {
 import { MdDelete, MdEdit, MdReport, MdUpgrade } from "react-icons/md"
 
 export function DropdownMenuMain({ deletePost, setConfirmModelState, setReportModelState, reportModelState, postPromotion, setPostPromotion, postBy, setEditPostModelState }) {
-    console.log(location.pathname)
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>

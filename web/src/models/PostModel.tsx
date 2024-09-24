@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { MdSend } from 'react-icons/md'
 import { toast } from 'react-toastify'
 import { setClose } from '@/app/features/user/postModelSlice'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, postData, useLikePost, useBookmarkPost, type }: any) {
     const { user } = useAppSelector((data) => data.user)
@@ -34,7 +34,6 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
     const replyMutation = useReplyOnComment()
 
     const replies = useReplies(replyId)
-    console.log(params)
 
     useEffect(() => {
         scrollRef.current.scrollTop = postData?.media ? 600 : 200
@@ -108,6 +107,7 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
     const updateCommentRef = useRef<HTMLTextAreaElement>(null)
     const updateComment = useUpdateComment()
     const updateReply = useUpdateReply()
+    const [searchParams, setSearchParams] = useSearchParams()
 
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
@@ -120,7 +120,10 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
                     navigate("/", { replace: true })
                     return
                 }
-
+                if(location.pathname.startsWith('/search')){
+                    searchParams.delete("model", "post")
+                    return
+                }
                 navigate("", { replace: true })
 
             }}></div>

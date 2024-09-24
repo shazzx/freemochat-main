@@ -17,7 +17,7 @@ export function PostMediaCarousel({ media }) {
               {type == 'video' ?
                 <video className='w-full max-h-[500px] h-full' autoPlay={true} src={url} controls></video>
                 :
-                <img src={url} alt="" />
+                <img src={url} alt="" className="object-contain max-h-[500px]" />
               }
             </div>
           </CarouselItem>

@@ -20,6 +20,7 @@ import { domain } from "@/config/domain"
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 import { useAppSelector } from "@/app/hooks"
 import { useUserDefaultMetric } from "@/hooks/User/useUser"
+import { format } from "date-fns"
 
 const notifications = [
     {
@@ -100,15 +101,17 @@ export function Notifications({ setNotificationsState }) {
                                                     <AvatarFallback className='text-xl'>{notification?.sender?.firstname[0]?.toUpperCase()}</AvatarFallback>
                                                 </Avatar>
                                             </Link>
-
                                         </div>
                                         <div className="space-y-1 flex  justify-center flex-col">
                                             <Link onClick={() => setNotificationsState(false)} to={domain + "/user/" + notification?.sender?.username}>
                                                 <p className="text-md flex gap-2 font-medium leading-none">
                                                     {notification?.sender?.firstname + " " + notification?.sender?.lastname}
                                                     <span className="text-sm">({notification?.sender?.username})</span>
+                                        {/* <span className="text-xs">{format(notification.createdAt ?? Date.now(), 'MMM d, h:mm a')}</span> */}
                                                 </p>
+
                                             </Link>
+                                            
                                             <Link onClick={() => setNotificationsState(false)} to={getTarget(notification.targetType, notification.targetId,  notification?.handle, notification.type)}>
 
                                             <p className="text-sm text-muted-foreground">

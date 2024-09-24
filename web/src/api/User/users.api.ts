@@ -1,8 +1,11 @@
 import { axiosClient } from "../axiosClient"
 
 export const fetchUser = async (username) => {
-    console.log(username, 'username')
     const { data } = await axiosClient.get(`/user?username=${username}`)
+    console.log(data, 'fetched user')
+    if(data == null){
+        throw new Error('not found')
+    }
     return data
 }
 

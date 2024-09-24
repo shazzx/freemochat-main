@@ -1681,9 +1681,14 @@ export class PostsService {
             type,
         };
 
-        
+        const reactions = {
+            "Love":  '❤️',
+            'Haha': '😆',
+             'Angry' : '😠',
+             'Sad' : '😢',
+         }        
 
-        if(type == 'post' && reaction){
+         if(type == 'post' && reaction){
             filter ={...filter, reaction}
         }
 
@@ -1707,7 +1712,7 @@ export class PostsService {
                         targetId: new Types.ObjectId(targetId),
                         type,
                         targetType,
-                        value: type == "post" ? "liked your post" : type == "comment" ? "liked your commnet" : "liked your reply"
+                        value: type == "post" ? reaction ? `has reacted on your post (${reactions[reaction] || reaction})` : "liked your post" : type == "comment" ? "liked your commnet" : "liked your reply"
                     }
                 )
             }

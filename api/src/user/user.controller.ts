@@ -549,7 +549,7 @@ export class UserController {
 
         const username = query.username || userPayload.username
         const user = await this.userService.getUser(username, null, req.user.sub)
-        res.json(user[0])
+        res.json(user[0] || null)
     }
 
     @Post("request")

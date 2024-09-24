@@ -327,6 +327,10 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                             if (!model) {
                                 dispatch(setOpen({ click: 'comment', id: postData._id }))
                                 setModelTrigger(true)
+                                if(location.pathname.startsWith('/search')){
+                                    navigate(location.search+"&"+"model=post")
+                                    return
+                                }
                                 navigate("?model=post")
                             }
                         }}>
@@ -339,7 +343,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                                     // <video ref={videoRef} className='w-full max-h-[500px] h-full' autoPlay={false} src={postData?.media && postData?.media[0]?.url} controls></video>
                                     :
-                                    <img className='object-contain' src={postData?.media[0]?.url} alt="" />
+                                    <img className='object-contain max-h-[500px]' src={postData?.media[0]?.url} alt="" />
 
                             }
 

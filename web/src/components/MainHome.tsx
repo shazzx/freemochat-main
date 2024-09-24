@@ -268,7 +268,6 @@ const MainHome = ({ children }: any) => {
             <div className="w-full flex-1">
               {!searchState &&
                 <form onSubmit={async (e) => {
-                  console.log('searched')
                   e.preventDefault()
                   navigate(`/search?query=${searchQuery}&&type=default`)
                 }}>
@@ -278,14 +277,17 @@ const MainHome = ({ children }: any) => {
                       ref={searchRef}
                       onChange={async (e) => {
                         setSearchQuery(e.target.value)
-                      }}
-                      onKeyDown={async (e) => {
-                        console.log(e.key)
                         if (searchQuery.length > 2) {
                           const { data } = await axiosClient.get(`/search/suggestions?query=${searchQuery}`)
                           setSearchSuggestions(data)
                           setSearchSuggestionsState(true)
                         } else {
+                          setSearchSuggestions([])
+                          setSearchSuggestionsState(false)
+                        }
+                      }}
+                      onKeyDown={async (e) => {
+                        if(e.key == 'Enter'){
                           setSearchSuggestions([])
                           setSearchSuggestionsState(false)
                         }
@@ -319,7 +321,6 @@ const MainHome = ({ children }: any) => {
               }
               {searchParams.get('search') == 'active' &&
                 <form onSubmit={async (e) => {
-                  console.log('searched')
                   e.preventDefault()
                   navigate(`/search?query=${searchQuery}&&type=default`)
                 }}>
@@ -329,8 +330,6 @@ const MainHome = ({ children }: any) => {
                       ref={searchRef}
                       onChange={async (e) => {
                         setSearchQuery(e.target.value)
-                      }}
-                      onKeyDown={async (e) => {
                         if (searchQuery.length > 2) {
                           const { data } = await axiosClient.get(`/search/suggestions?query=${searchQuery}`)
                           setSearchSuggestions(data)
@@ -340,11 +339,17 @@ const MainHome = ({ children }: any) => {
                           setSearchSuggestionsState(false)
                         }
                       }}
+                      onKeyDown={async (e) => {
+                        if(e.key == 'Enter'){
+                          setSearchSuggestions([])
+                          setSearchSuggestionsState(false)
+                        }
+                      }}
                       type="search"
                       placeholder="Search..."
                       className="max-w-2xl appearance-none bg-background pl-8 shadow-none"
                     />
-                    {searchSuggestions.length > 0 && searchSuggestionsState &&
+                    {searchQuery.length > 0 &&  searchSuggestions.length > 0 && searchSuggestionsState &&
                       <div className="absolute top-10 z-50 bg-card max-w-2xl w-full flex flex-col">
                         {searchSuggestions.map((suggestion) => {
                           return (
