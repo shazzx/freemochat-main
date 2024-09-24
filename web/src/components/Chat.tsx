@@ -65,10 +65,10 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     useEffect(() => {
         if (online.isOnline[recepientDetails?.userId]) {
             setIsOnline(true)
-        }else{
+        } else {
             setIsOnline(false)
         }
-    },[online.isOnline])
+    }, [online.isOnline])
 
     // useEffect(() => {
     //     function handleClickOutside(event) {
@@ -281,7 +281,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
     const deleteChat = async () => {
         const { data } = await axiosClient.post("/chatlist/remove", { recepientId: recepientDetails?.type == "ChatGroup" ? recepientDetails?.groupId : recepientDetails?.userId, type: recepientDetails?.type })
-        console.log(data)
+        queryClient.invalidateQueries({ queryKey: ["chatlist"] })
         setChatOpen(false)
     }
 
@@ -289,12 +289,12 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         const media = event.currentTarget;
         // media.classList.remove('blur-md');
         // media.classList.add('blur-none');
-        
+
         // const loadingIndicator = media.parentElement?.querySelector('.loading-indicator');
         // if (loadingIndicator) {
         //   loadingIndicator.remove();
         // }
-      };
+    };
 
     const blockUser = async () => {
         alert('under development')
@@ -304,12 +304,12 @@ function Chat({ user, recepientDetails, setChatOpen }) {
 
     function emojiToImageUrl(emoji) {
         const canvas = document.createElement('canvas');
-        canvas.width = 32;  
+        canvas.width = 32;
         canvas.height = 32;
 
         const ctx = canvas.getContext('2d');
 
-        ctx.font = '24px Arial';  
+        ctx.font = '24px Arial';
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'center';
 
@@ -346,8 +346,8 @@ function Chat({ user, recepientDetails, setChatOpen }) {
         setChatGroupInfo(false)
     }
 
-  const { callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
-  const [alertDialog, setAlertDialog] = useState(false)
+    const { callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
+    const [alertDialog, setAlertDialog] = useState(false)
 
     return (
         <div className='flex flex-col min-w-[380px] h-full w-full' >
@@ -492,7 +492,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                             }
                                             {message?.media && message.media.type == "image" &&
                                                 <div className="relative aspect-auto max-w-64 sm:max-w-96">
-                                                    <img src={message.media.url} alt=""  onLoad={handleMediaLoad}/>
+                                                    <img src={message.media.url} alt="" onLoad={handleMediaLoad} />
                                                     {message.media.isUploaded == false &&
                                                         <div className='bg-card flex gap-4 p-2 w-full' >
                                                             <svg className="text-gray-700 animate-spin" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -538,7 +538,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                                                 </div>
                                             }
                                             <p className="" >{message?.content}</p>
-                                             {/* {
+                                            {/* {
                                                 (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) &&
                                                 <div className="cursor-pointer absolute top-0 -right-2" onClick={() => {
                                                     setOpenedDropDownMessageId(message?._id)

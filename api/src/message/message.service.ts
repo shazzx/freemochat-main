@@ -37,7 +37,7 @@ export class MessageService {
     if (!chatlist) {
       return { messages: [], nextCursor: null };
     }
-    const _cursor = cursor ? { createdAt: { $lt: new Date(cursor), $gt: chatlist.createdAt } } : {};
+    const _cursor = cursor ? { createdAt: { $lt: new Date(cursor), $gt: chatlist.createdAt } } : {createdAt: {$gt: chatlist.createdAt }};
     // let query = { ..._cursor, $or: [{ sender: userId, recepient: recepientId }, { sender: recepientId, recepient: userId }] }
     let query;
     let messages;
