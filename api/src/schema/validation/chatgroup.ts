@@ -43,6 +43,7 @@ export const JoinGroup = z.object({
     groupDetails: z.object({
         groupId: z.string(),
         userId: z.string().optional(),
+        type: z.string()
     }),
 })
 

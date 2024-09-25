@@ -19,7 +19,7 @@ function BottomNav() {
     }, [location.pathname])
 
     return (
-        <div className='sm:hidden flex justify-between absolute bg-card w-full bottom-0 z-50'>
+        <div className='sm:hidden flex justify-between  bg-card w-full  z-50'>
             <Link
                 onClick={() => {
                     if (active !== '/') {

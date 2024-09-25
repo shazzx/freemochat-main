@@ -20,7 +20,7 @@ export class UserChatListService {
         removeUser?: boolean,
         removeChat?: boolean,
     ): Promise<any> {
-        // console.log(userId, recepientId, type, lastMessage, 'inside chatlist')
+        console.log(userId, recepientId, type, lastMessage, 'inside chatlist')
 
         const userChat = await this.userChatListModel.findOne({
             user: userId,

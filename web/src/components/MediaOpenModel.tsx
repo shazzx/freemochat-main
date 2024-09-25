@@ -14,7 +14,7 @@ export const MediaOpenModel = ({ setMediaOpenModel, setMediaOpenDetails, mediaOp
             }} />
             <div className='flex items-center h-screen  justify-center aspect-auto  max-w-[100%] lg:max-w-[80%] md:max-w-[70%] max-h-[80%] rounded-md z-10'>
                 {mediaOpenDetails.type == 'video' ?
-                    <video src={mediaOpenDetails.url} controls className='w-full'></video>
+                    <video src={mediaOpenDetails.url} controls className='h-full object-contain'></video>
                     :
                     <img src={mediaOpenDetails.url} className="h-full object-contain" alt="" />
                 }

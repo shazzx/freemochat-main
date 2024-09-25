@@ -129,7 +129,6 @@ const MainHome = ({ children }: any) => {
       {/* {onCall && (recepientState == "ACCEPTED" || (callerState == "ACCEPTED" || callerState == "CALLING")) && callDetails?.type == "VIDEO" && callDetails?.channel &&
         <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} />
       } */}
-      <BottomNav />
 
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-2 lg:h-[60px] lg:px-6">
@@ -553,6 +552,7 @@ const MainHome = ({ children }: any) => {
         {/* main section */}
         {children}
       </div>
+      <BottomNav />
 
     </div >
   )
