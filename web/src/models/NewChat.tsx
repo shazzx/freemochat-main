@@ -34,14 +34,14 @@ function NewChat({ setChatOpen, setNewChatModelState, setRecepientDetails, frien
                     <TabsContent value="friends" className="h-full">
 
                         <Card x-chunk="dashboard-01-chunk-5" className="border-none">
-                            <CardContent className="grid gap-8 w-full p-0">
+                            <CardContent className="grid gap-8 w-full bg-background p-0">
 
                                 {friends.length > 0 ? friends?.map((page) => {
                                         return page.friends.map((friend) => {
                                             friend = friend.friend
                                             return (
 
-                                                <div className='flex flex-col gap-1 w-full bg-card' onClick={() => {
+                                                <div className='flex flex-col gap-1 w-full bg-card cursor-pointer' onClick={() => {
                                                     setRecepientDetails({ userId: friend?._id, username: friend?.username, profile: friend?.images?.profile, fullname: friend.firstname + " " + friend.lastname, firstname: friend.firstname, lastname: friend.lastname, type: "User" })
                                                     setChatOpen(true)
                                                 }}>

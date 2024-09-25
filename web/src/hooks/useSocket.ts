@@ -23,6 +23,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
     socket.on('chat', (message) => {
       console.log(message, 'new message')
       let newMessage = {
+        _id: message?._id,
         recepient: message?.recepientDetails?.userId,
         sender: message?.senderDetails?.userId,
         content: message?.body,
@@ -31,11 +32,28 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
       }
       queryClient.setQueryData(["messages", recepient], (pages: any) => {
         const updatedMessages = produce(pages, (draft: any) => {
-          console.log(pages)
           if (!draft) {
-            console.log('no draft ')
             return null
           }
+
+          let pageIndex = -1
+          let messageIndex = -1
+
+          draft.pages.forEach((page, _pageIndex) => {
+            page.messages.forEach((message, _messageIndex) => {
+              if (message._id == newMessage._id) {
+                pageIndex = _pageIndex
+                messageIndex = _messageIndex
+              }
+            })
+          })
+
+          console.log(pageIndex, 'pageindex', messageIndex, 'messageindex')
+
+          if (pageIndex > -1 && messageIndex > -1) {
+            return draft
+          }
+
           if (draft.pages[draft.pages.length - 1].messages) {
             draft.pages[draft.pages.length - 1].messages = [...draft.pages[draft.pages.length - 1].messages, newMessage]
             return draft
@@ -55,15 +73,6 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
 
     socket.on("getOnlineFriends", (onlineFriends) => {
       console.log(onlineFriends)
-    })
-
-    socket.on("friendOnlineStatusChange", (statusChange) => {
-      console.log(statusChange)
-    })
-
-
-    socket.on("friendStatus", (data) => {
-      console.log(data, 'friend status')
     })
 
     socket.on("upload-status", (data) => {
@@ -119,11 +128,12 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
 
 
     socket.on("friendStatus", (data) => {
-      console.log(data, 'friend status')
       if (data?.isOnline && data?.friendId) {
         dispatch(setOnline(data.friendId))
+        queryClient.invalidateQueries({ queryKey: ['chatlist'] })
       } else {
         dispatch(setOffline(data.friendId))
+        queryClient.invalidateQueries({ queryKey: ['chatlist'] })
       }
     })
 
@@ -135,7 +145,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
 
     socket.on("request", (data) => {
       queryClient.invalidateQueries({ queryKey: ['metrics'] })
-      queryClient.invalidateQueries({ queryKey: ['userRequests',user._id] })
+      queryClient.invalidateQueries({ queryKey: ['userRequests', user._id] })
     })
 
 
@@ -187,7 +197,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
     })
 
 
-    socket.on("disconnect", () => { 
+    socket.on("disconnect", () => {
       console.log("Socket disconnected");
     });
 

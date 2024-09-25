@@ -10,7 +10,7 @@ import VideoCallRecepient from "./Call/Video/VideoCallRecepient";
 import VideoCallCaller from "./Call/Video/VideoCallCaller";
 import AudioCallCaller from "./Call/Audio/AudioCallCaller";
 import { DropdownUser } from "./Dropdowns/DropdownUser";
-import { useChatGroup, useCreateMessage, useMessages, useUpdateChatGroup } from "@/hooks/Chat/main";
+import { useChatGroup, useCreateMessage, useMessages, useUpdateChatGroup, useUserChatlist } from "@/hooks/Chat/main";
 import { useInView } from "react-intersection-observer";
 import AudioRecorder from "./MediaRecorder";
 import AudioPlayer from "@/AudioPlayer";
@@ -28,7 +28,7 @@ import { AlertDialogC } from "./AlertDialog";
 import Agora from "./Call/agora/AgoraRTC";
 import VideoCall from "./Call/Video/VideoCall";
 
-function Chat({ user, recepientDetails, setChatOpen }) {
+function Chat({ user, recepientDetails, setChatOpen, isOnline }) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
     const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId)
     const group: any = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId) : {}
@@ -57,18 +57,18 @@ function Chat({ user, recepientDetails, setChatOpen }) {
     const textRef = useRef(null)
     const emojiPickerRef = useRef(null)
     const queryClient = useQueryClient()
-    const [isOnline, setIsOnline] = useState(null)
+    // const [isOnline, setIsOnline] = useState(null)
 
-    const online = useAppSelector((state) => state.online)
+    // const online = useAppSelector((state) => state.online)
 
+    // useEffect(() => {
 
-    useEffect(() => {
-        if (online.isOnline[recepientDetails?.userId]) {
-            setIsOnline(true)
-        } else {
-            setIsOnline(false)
-        }
-    }, [online.isOnline])
+    //     if (online.isOnline[recepientDetails?.userId]) {
+    //         setIsOnline(true)
+    //     } else {
+    //         setIsOnline(false)
+    //     }
+    // }, [online.isOnline])
 
     // useEffect(() => {
     //     function handleClickOutside(event) {
@@ -394,7 +394,7 @@ function Chat({ user, recepientDetails, setChatOpen }) {
                     </div>
                     <div className='flex flex-col gap-0'>
                         <h3 className='text-card-foreground text-sm'>{recepientDetails?.type == "User" ? recepientDetails?.fullname : recepientDetails?.name}</h3>
-                        <span className='text-muted-foreground text-xs'>{recepientDetails?.type == "ChatGroup" ? group?.data?.membersCount > 0 ? "members " + group?.data?.membersCount : "no members" : isOnline == null ? recepientDetails.onlineStatus ? "online" : "offline" : isOnline ? "online" : "offline"}</span>
+                        <span className='text-muted-foreground text-xs'>{recepientDetails?.type == "ChatGroup" ? group?.data?.membersCount > 0 ? "members " + group?.data?.membersCount : "no members" : isOnline ? "online" : "offline"}</span>
                     </div>
                 </div>
                 <div className="flex items-center justify-center gap-4 sm:mr-4">

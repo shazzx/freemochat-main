@@ -6,16 +6,17 @@ import { memo, useState } from "react"
 
 function MessagesSection() {
     const [chatOpen, setChatOpen] = useState(false)
-    const [recepientDetails, setRecepientDetails] = useState({ userId: "", username: "", type: "", fullname: "", name: "" })
+    const [recepientDetails, setRecepientDetails] = useState({ userId: "", username: "", type: "", fullname: "", name: "", chatIndex: -1 })
     const { user } = useAppSelector((data) => data.user)
     const { data, isLoading } = useUserChatlist()
-
+    const isOnline = !isLoading && recepientDetails.chatIndex > -1 && data.users[recepientDetails.chatIndex].onlineStatus
+    console.log(isOnline, 'isuser online')
     return (
         <div className="flex w-full bg-background-secondary">
             <div className="flex w-full">
                 <ChatSidebar setChatOpen={setChatOpen} chatOpen={chatOpen} setRecepientDetails={setRecepientDetails} chatList={!isLoading && data} />
                 {chatOpen && recepientDetails?.type !== "ChatGroup" &&
-                    <Chat user={user} recepientDetails={recepientDetails} setChatOpen={setChatOpen} />
+                    <Chat user={user} recepientDetails={recepientDetails} isOnline={isOnline} setChatOpen={setChatOpen} />
                 }
                 {chatOpen && recepientDetails?.type == "ChatGroup" && recepientDetails?.name?.length > 4 &&
                     <Chat user={user} recepientDetails={recepientDetails} setChatOpen={setChatOpen} />

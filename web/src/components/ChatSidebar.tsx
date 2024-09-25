@@ -97,12 +97,12 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                     <TabsContent value="general" className="h-full">
                         <Card x-chunk="dashboard-01-chunk-5" className="w-full bg-background-secondary h-full border-none ">
                             <CardContent className="flex flex-col gap-2 p-0">
-                                {chatList?.users?.length > 0 ? chatList?.users?.map((chat) => (
+                                {chatList?.users?.length > 0 ? chatList?.users?.map((chat, i) => (
                                     <div className="flex gap-4 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={() => {
                                         if (chat.type == "Page") {
-                                            setRecepientDetails({ userId: chat?.recepient?._id, username: chat?.recepient.handle, images: {profile: chat?.recepient?.profile, cover: chat?.recepient?.cover}, name: chat?.recepient?.name, type: "Page", onlineStatus: chat.onlineStatus })
+                                            setRecepientDetails({ userId: chat?.recepient?._id, username: chat?.recepient.handle, images: {profile: chat?.recepient?.profile, cover: chat?.recepient?.cover}, name: chat?.recepient?.name, type: "Page", chatIndex: i })
                                         } else {
-                                            setRecepientDetails({ userId: chat?.recepient?._id, username: chat?.recepient.username || chat?.recepient.handle, profile: chat?.recepient?.profile, fullname: (chat?.recepient?.firstname + " " + chat?.recepient.lastname) || chat?.recepient?.name, firstname: chat?.recepient?.firstname || chat?.recepient?.name, lastname: chat?.recepient.lastname, type: "User", onlineStatus: chat.onlineStatus })
+                                            setRecepientDetails({ userId: chat?.recepient?._id, username: chat?.recepient.username || chat?.recepient.handle, profile: chat?.recepient?.profile, fullname: (chat?.recepient?.firstname + " " + chat?.recepient.lastname) || chat?.recepient?.name, firstname: chat?.recepient?.firstname || chat?.recepient?.name, lastname: chat?.recepient.lastname, type: "User", chatIndex: i })
                                         }
                                         setChatOpen(true)
 
