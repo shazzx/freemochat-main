@@ -24,7 +24,7 @@ const MediaSection = ({media, setMediaOpenDetails, setMediaOpenModel }) => {
                                 setMediaOpenDetails({ type: 'image', url: image }, setMediaOpenDetails, setMediaOpenModel)
                                 setMediaOpenModel(true)
                             }}>
-                                <img className='absolute inset-0 w-full h-full object-cover' src={image} alt="" />
+                                <img className='absolute inset-0 w-full h-full object-cover cursor-pointer' src={image} alt="" />
                             </div>
                         )
                     })}
@@ -47,7 +47,7 @@ const MediaSection = ({media, setMediaOpenDetails, setMediaOpenModel }) => {
                                 setMediaOpenDetails({ type: 'video', url: video })
                                 setMediaOpenModel(true)
                             }}>
-                                <video src={video} className='absolute inset-0 w-full h-full object-cover' />
+                                <video src={video} className='absolute inset-0 w-full h-full object-cover cursor-pointer' />
                             </div>
                         )
                     })}

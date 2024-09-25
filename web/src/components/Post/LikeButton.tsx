@@ -88,7 +88,7 @@ function LikeButton({ postData, mutate, pageIndex, postIndex }) {
 
   return (
 
-    <div className='relative flex gap-1 items-center cursor-pointer'
+    <div className='relative select-none flex gap-1 items-center cursor-pointer'
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave} >
@@ -115,9 +115,9 @@ function LikeButton({ postData, mutate, pageIndex, postIndex }) {
       }
 
       {postData?.isLikedByUser && postData?.reaction &&
-        <div className='flex gap-1 text-center items-center  w-[94px]'>
-          <span className={`hidden text-xl sm:block`}>{reactions[reactionIndex]?.emoji}</span>
-          <span className={`text-sm ${postData?.isLikedByUser && "text-primary"}`}>{reactions[reactionIndex]?.name}</span>
+        <div className='flex gap-1 text-center items-center  sm:w-[94px]'>
+          <span className={`text-xl`}>{reactions[reactionIndex]?.emoji}</span>
+          <span className={`hidden sm:block text-sm ${postData?.isLikedByUser && "text-primary"}`}>{reactions[reactionIndex]?.name}</span>
         </div>
       }
 

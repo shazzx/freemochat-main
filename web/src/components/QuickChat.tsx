@@ -12,8 +12,9 @@ import { axiosClient } from '@/api/axiosClient';
 import { useQueryClient } from '@tanstack/react-query';
 import { produce } from 'immer';
 import { useSocket } from '@/hooks/useSocket';
+import { MdClose } from 'react-icons/md';
 
-function QuickChat({ target }) {
+function QuickChat({ target, setOpenQuickChat }) {
     const { user } = useAppSelector(state => state.user)
     const [messages, setMessages] = useState([])
     const [inputValue, setInputValue] = useState("")
@@ -95,6 +96,10 @@ function QuickChat({ target }) {
                         <span className='text-muted-foreground text-xs'>@{target?.type == "User" ? target?.data?.username : target?.data?.handle}</span>
                     </div>
                 </div>
+            <MdClose size={24} cursor="pointer" onClick={() => {
+                setOpenQuickChat(false)
+            }} />
+
             </div>
             <div className="h-full p-4 flex flex-col gap-4  overflow-y-scroll" onClick={() => {
 

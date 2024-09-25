@@ -159,7 +159,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
             }
             {openQuickChat &&
                 <div ref={quickChatRef}>
-                    <QuickChat target={!isSelf && { data: user, type: 'User' }} />
+                    <QuickChat target={!isSelf && { data: user, type: 'User' }} setOpenQuickChat={setOpenQuickChat} />
                 </div>
             }
 
