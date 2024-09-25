@@ -61,7 +61,6 @@ function PageProfile() {
     const isAdmin = _pageData?.data?.admins?.includes(user?._id)
     const pageMedia = useMedia("pageMedia", _pageData?.data?._id)
     const media = pageMedia?.data
-    console.log(_pageData.data)
     // useEffect(() => {
     //     let promotedPosts = async () => {
     //         const posts = await axiosClient.get("/posts/promotedPosts")
@@ -163,151 +162,163 @@ function PageProfile() {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [openQuickChat])
+    console.log(_pageData)
 
     return (
+        <>
+            {_pageData.isError &&
+                <div className='w-full h-full flex items-center justify-center pt-32 flex-col gap-2'>
 
-        <div className='w-full flex flex-col overflow-y-auto border-muted'>
-            {openQuickChat &&
-                <div ref={quickChatRef}>
-                    <QuickChat target={!_pageData.isLoading && _pageData} />
+                    <svg width="440" height="240" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="transparent" d="M0 0h900v600H0z" /><circle cx="451.426" cy="300" r="262.123" fill="url(#a)" /><path d="M708.475 240.202c-12.627 22.535-40.281 25.631-84.585 21.349-33.32-3.227-63.705-5.724-97.027-23.892-23.323-12.707-41.785-29.899-55.26-46.597-14.602-18.089-34.983-38.734-24.992-59.245 13.73-28.174 93.133-51.904 170.236-13.099 84.698 42.641 103.981 99.459 91.628 121.484z" fill="url(#b)" /><path d="M793.833 287.316c-23.788 11.8-55.36-3.373-55.36-3.373s7.016-34.297 30.817-46.081c23.787-11.8 55.347 3.356 55.347 3.356s-7.017 34.298-30.804 46.098z" fill="url(#c)" /><path d="M118.142 373.556c31.081 18.628 75.673 1.408 75.673 1.408s-5.831-47.416-36.931-66.023c-31.081-18.629-75.654-1.429-75.654-1.429s5.83 47.416 36.912 66.044z" fill="url(#d)" /><circle cx="747.028" cy="208.246" r="12.989" transform="rotate(180 747.028 208.246)" fill="#666AF6" /><circle cx="257.822" cy="281.817" r="14.612" transform="rotate(180 257.822 281.817)" fill="#666AF6" /><circle r="12.177" transform="matrix(-1 0 0 1 159.929 195.932)" fill="#666AF6" /><circle r="5.683" transform="matrix(-1 0 0 1 635.635 259.251)" fill="#666AF6" /><circle r="7.306" transform="matrix(-1 0 0 1 668.43 512.81)" fill="#E1E4E5" /><circle r="10.553" transform="matrix(-1 0 0 1 157.751 436.948)" fill="#E1E4E5" /><circle r="8.032" transform="matrix(-1 0 0 1 279.793 167.303)" fill="#E1E4E5" /><circle r="8.93" transform="matrix(-1 0 0 1 669.743 168.793)" fill="#E1E4E5" /><circle r="8.019" transform="scale(1 -1) rotate(-75 -85.053 -253.614)" fill="#E1E4E5" /><circle r="10.668" transform="matrix(-1 0 0 1 385.553 99.921)" fill="#E1E4E5" /><ellipse rx="8.206" ry="6.565" transform="matrix(-1 0 0 1 725.744 372.599)" fill="#E1E4E5" /><circle r="16.689" transform="scale(1 -1) rotate(-75 220.696 -421.766)" fill="#E1E4E5" /><path d="M787.973 327.261h.214c1.271 18.011 14.666 18.288 14.666 18.288s-14.77.288-14.77 21.1c0-20.812-14.771-21.1-14.771-21.1s13.389-.277 14.661-18.288zM248.445 502.359h.19c1.128 16.301 13.014 16.552 13.014 16.552s-13.106.261-13.106 19.096c0-18.835-13.106-19.096-13.106-19.096s11.88-.251 13.008-16.552z" fill="#E1E4E5" /><rect x="221.128" y="128.304" width="461.792" height="344.342" rx="4.194" fill="#fff" stroke="#E1E4E5" stroke-width="4" /><path d="M404.574 247.969v23.992m95.978-23.992v23.992m35.801 108.38s-31.442-30.145-83.879-30.145c-52.436 0-83.879 30.145-83.879 30.145" stroke="#666AF6" stroke-width="33.798" stroke-linecap="round" stroke-linejoin="round" /><rect x="221.128" y="128.304" width="461.792" height="40.04" rx="4.194" fill="#fff" stroke="#E1E4E5" stroke-width="4" /><rect x="237.144" y="141.65" width="13.347" height="13.347" rx="6.673" fill="#fff" stroke="#E1E4E5" stroke-width="4.194" /><rect x="261.168" y="141.65" width="13.347" height="13.347" rx="6.673" fill="#fff" stroke="#E1E4E5" stroke-width="4.194" /><rect x="285.191" y="141.65" width="13.347" height="13.347" rx="6.673" fill="#fff" stroke="#E1E4E5" stroke-width="4.194" /><defs><linearGradient id="a" x1="462.603" y1="856.045" x2="446.439" y2="-532.412" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" /><stop offset="1" stop-color="#EEE" /></linearGradient><linearGradient id="b" x1="623.412" y1="386.251" x2="510.865" y2="-119.486" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" /><stop offset="1" stop-color="#EEE" /></linearGradient><linearGradient id="c" x1="702.485" y1="324.123" x2="898.687" y2="168.927" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" /><stop offset="1" stop-color="#EEE" /></linearGradient><linearGradient id="d" x1="238.418" y1="433.519" x2="-11.673" y2="201.151" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" /><stop offset="1" stop-color="#EEE" /></linearGradient></defs></svg>
+                    <span>Not found</span>
                 </div>
             }
-            {/* media model (when you click any media in the profile main page this model will open) */}
-            {mediaOpenModel && mediaOpenDetails &&
-                <MediaOpenModel mediaOpenDetails={mediaOpenDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+            {_pageData.isLoading &&
+                <div className='w-full h-full flex items-center justify-center'>loading...</div>
             }
-            {profileSettingsModel && <QuickSettings user={user} setModelTrigger={setProfileSettingsModel} />}
-            {postModal && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
-            <div className='flex w-full flex-col items-center w-ful'>
-                <div className="flex max-w-5xl w-full flex-col justify-cente relative">
-                    <Cover cover={_pageData?.data?.cover} />
-                    <div className='flex justify-between'>
-                        <div className='flex-responsive gap-2 relative pl-4 sm:pl-6 left max-w-[90%] sm:w-full bottom-6'>
-
-                            <Profile image={_pageData?.data?.profile} fallbackName={!_pageData.isLoading && _pageData?.data?.name[0]?.toUpperCase() + _pageData?.data?.name[1]?.toUpperCase()} width={'w-24'} smWidth={'w-32'} height={'h-24'} smHeight={'h-32'} />
-                            <div className='flex gap-4 items-end mb-4'>
-                                <div>
-                                    <div className='flex flex-col'>
-                                        <div className='leading-5 text-xl'>{_pageData?.data?.name}</div>
-                                        <div className='text-gray-400 text-sm'>@{_pageData?.data?.handle}</div>
-                                    </div>
-                                    <div>
-                                        <p className='leading-tight text-sm'>{_pageData?.data?.bio}</p>
-                                    </div>
-                                    <div className='flex flex-col text-sm'>
-                                        <span>{!_pageData.isLoading && _pageData?.data?.followersCount == 1 ? _pageData?.data?.followersCount + " follower" : _pageData?.data?.followersCount > 1 ? _pageData?.data?.followersCount + " followers" : _pageData.isLoading ? "followers loading..." : "no followers"}</span>
-
-                                    </div>
-                                </div>
-                            </div>
+            {_pageData.isSuccess &&
+                <div className='w-full flex flex-col overflow-y-auto border-muted'>
+                    {openQuickChat &&
+                        <div ref={quickChatRef}>
+                            <QuickChat target={!_pageData.isLoading && _pageData} />
                         </div>
-                        {_pageData?.data?.isUploaded == false &&
+                    }
+                    {/* media model (when you click any media in the profile main page this model will open) */}
+                    {mediaOpenModel && mediaOpenDetails &&
+                        <MediaOpenModel mediaOpenDetails={mediaOpenDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                    }
+                    {profileSettingsModel && <QuickSettings user={user} setModelTrigger={setProfileSettingsModel} />}
+                    {postModal && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+                    <div className='flex w-full flex-col items-center w-ful'>
+                        <div className="flex max-w-5xl w-full flex-col justify-cente relative">
+                            <Cover cover={_pageData?.data?.cover} />
+                            <div className='flex justify-between'>
+                                <div className='flex-responsive gap-2 relative pl-4 sm:pl-6 left max-w-[90%] sm:w-full bottom-6'>
 
-                            <div className='relative bottom-6 min-w-fit right-6 z-10 flex  justify-center items-center gap-2' >
-                                <svg className="text-foreground animate-spin" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
-                                    width="20" height="20">
-                                    <path
-                                        d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
-                                        stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
-                                    <path
-                                        d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
-                                        stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" className="text-foreground">
-                                    </path>
-                                </svg>
-                                <div>In progress...</div>
-                            </div>
-
-                        }
-                    </div>
-
-                    <div className='flex justify-end px-4 sm:px-10 lg:px-24 gap-2'>
-
-                        {_pageData?.data && !isAdmin && <Button className='bg-card hover:bg-accent active:bg-muted' onClick={() => setOpenQuickChat(!openQuickChat)}>Message</Button>}
-                        {_pageData?.data && !isAdmin && (_pageData.data.isFollower ? <Button onClick={followPage}>Unfollow</Button> : <Button onClick={followPage}>Follow</Button>)}
-                    </div>
-                    <Tabs defaultValue="posts">
-                        <CustomTabList list={tabList} maxWidth={64} minWidth={200} />
-
-                        <TabsContent value="posts" className="">
-                            <div className='flex-responsive w-full items-center md:items-start p-2 flex gap-2  border-muted'>
-                                <div className='max-w-xl w-full flex flex-col gap-2 '>
-                                    {_pageData?.data?.admins?.includes(user?._id) && <div className='w-full flex items-center justify-center h-fit border border-muted p-3 bg-card'>
-                                        <div className="w-full flex-1">
-                                            <form onSubmit={async (e) => {
-                                                e.preventDefault()
-                                                // mutation.mutate({ title: 'shazz', content: postContent.current.value })
-                                                // console.log(mutation.data)
-                                            }}>
-                                                <div className="relative flex gap-2">
-                                                    <div className='w-12'>
-                                                        <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
-                                                            <Avatar >
-                                                                <AvatarImage src={_pageData?.data?.profile} alt="Avatar" />
-                                                                <AvatarFallback>{firstname[0]?.toUpperCase() + lastname[0]?.toUpperCase()}</AvatarFallback>
-                                                            </Avatar>
-                                                        </div>
-                                                    </div>
-                                                    <Input
-                                                        onClick={() => {
-                                                            setPostModal(true)
-                                                        }}
-                                                        ref={postContent}
-                                                        type="text"
-                                                        placeholder="Start writing a post"
-                                                        className="max-w-2xl appearance-none bg-background shadow-none"
-                                                    />
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>}
-                                    <div className='flex w-full items-center flex-col gap-2 '>
-                                        {!isLoading && data.length > 0 ? data?.map((page, pageIndex) => {
-                                            return page.posts.map((post, postIndex) => (
-                                                <Post useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} username={username} userId={user?._id} removePost={removePost} key={post?._id} type={'page'} />
-
-                                            ))
-                                        })
-                                            :
-                                            <div>
-                                                ...loading
+                                    <Profile image={_pageData?.data?.profile} fallbackName={!_pageData.isLoading && _pageData?.data?.name[0]?.toUpperCase() + _pageData?.data?.name[1]?.toUpperCase()} width={'w-24'} smWidth={'w-32'} height={'h-24'} smHeight={'h-32'} />
+                                    <div className='flex gap-4 items-end mb-4'>
+                                        <div>
+                                            <div className='flex flex-col'>
+                                                <div className='leading-5 text-xl'>{_pageData?.data?.name}</div>
+                                                <div className='text-gray-400 text-sm'>@{_pageData?.data?.handle}</div>
                                             </div>
-                                        }
+                                            <div>
+                                                <p className='leading-tight text-sm'>{_pageData?.data?.bio}</p>
+                                            </div>
+                                            <div className='flex flex-col text-sm'>
+                                                <span>{!_pageData.isLoading && _pageData?.data?.followersCount == 1 ? _pageData?.data?.followersCount + " follower" : _pageData?.data?.followersCount > 1 ? _pageData?.data?.followersCount + " followers" : _pageData.isLoading ? "followers loading..." : "no followers"}</span>
 
-                                        {!isLoading && (data && data[0]?.posts?.length == 0) &&
-                                            <HelperMessage message={"you don't have published posts"} svg={
-                                                <svg width="180" height="120" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="transparent" d="M0 0h900v600H0z" /><path d="M705.499 375.559h-49.367c-12.097 0-22.231-8.232-22.231-18.659 0-5.213 2.615-9.878 6.538-13.171 3.923-3.292 9.481-5.488 15.693-5.488h7.193c6.211 0 11.769-2.195 15.692-5.488 3.924-3.292 6.539-7.957 6.539-13.17 0-10.153-9.808-18.659-22.231-18.659H512.54c-3.939 0-6.471-4.842-6.471-8.781 0-9.878-9.481-17.836-21.251-17.836h-56.112a5.35 5.35 0 1 1 0-10.701h215.003c9.481 0 18.308-3.293 24.52-8.506 6.211-5.214 10.135-12.622 10.135-20.58 0-16.189-15.693-29.086-34.655-29.086H532.662c-17.423 0-34.67-13.445-52.094-13.445h-62c-9.093 0-16.464-7.371-16.464-16.464 0-9.092 7.371-16.463 16.464-16.463h138.83c6.539 0 12.75-2.196 17-5.763 4.251-3.567 6.866-8.506 6.866-14.268 0-10.976-10.789-20.031-23.866-20.031H237.329c-6.538 0-12.75 2.195-17 5.762-4.25 3.567-6.866 8.507-6.866 14.269 0 10.976 10.789 20.031 23.866 20.031h8.174c10.788 0 19.943 7.408 19.943 16.738 0 4.664-2.289 8.78-5.885 11.799-3.596 3.018-8.5 4.939-14.058 4.939h-39.559c-6.866 0-13.405 2.469-17.982 6.311-4.577 3.841-7.519 9.055-7.519 15.092 0 11.799 11.442 21.128 25.174 21.128h40.213c13.077 0 23.866 9.055 23.866 20.031 0 5.488-2.616 10.427-6.866 13.994s-10.135 5.762-16.674 5.762h-35.962c-5.885 0-11.116 1.921-15.039 5.214-3.923 3.292-6.212 7.683-6.212 12.622 0 9.878 9.481 17.836 21.251 17.836h29.097c16.674 0 30.078 11.25 30.078 25.244 0 6.86-3.27 13.445-8.827 17.835-5.558 4.665-13.078 7.409-21.251 7.409h-40.54c-8.173 0-15.693 2.744-20.924 7.409-5.558 4.39-8.827 10.701-8.827 17.561 0 13.72 13.404 24.97 29.751 24.97h125.18c13.825 0 27.405 7.683 41.23 7.683h22.8c8.714 0 15.778 7.064 15.778 15.778 0 8.713-7.064 15.777-15.778 15.777h-55.494c-7.192 0-13.404 2.47-17.981 6.311-4.577 3.842-7.52 9.33-7.52 15.092 0 11.799 11.443 21.403 25.501 21.403h340.012c7.192 0 13.404-2.47 17.981-6.311 4.577-3.842 7.52-9.33 7.52-15.092 0-11.799-11.443-21.403-25.501-21.403h-10.135c-10.462 0-18.635-7.134-18.635-15.64 0-4.39 1.961-8.232 5.557-10.976 3.27-2.744 8.174-4.665 13.405-4.665h42.828c7.193 0 13.404-2.469 17.982-6.311 4.577-3.841 7.519-9.329 7.519-15.091 0-12.348-11.443-21.952-25.501-21.952z" fill="url(#a)" /><path d="M596 169.612v285.435C596 475.869 579.137 493 558.059 493h-12.383c-7.641 0-13.965-4.217-19.234-9.752-8.432-9.224-12.911-21.348-12.911-33.999v-32.945c0-13.178-10.803-23.984-23.977-23.984H337V169.612c0-11.86 9.749-21.612 21.605-21.612h215.79c12.12 0 21.605 9.752 21.605 21.612z" fill="#1b374c" /><path d="M535 512H295.002C267.995 512 246 490.285 246 463.623v-31.61C246 418.27 257.415 407 271.336 407h204.639c13.921 0 25.336 11.27 25.336 25.013v34.359c0 12.919 4.733 25.837 13.643 35.458C520.244 507.602 526.926 512 535 512z" fill="#1b374c" /><circle cx="396.5" cy="224.5" r="15.5" fill="#fff" /><circle cx="396.5" cy="274.5" r="15.5" fill="#fff" /><circle cx="396.5" cy="324.5" r="15.5" fill="#fff" /><rect x="431" y="209" width="123" height="31" rx="15.5" fill="#fff" /><rect x="431" y="259" width="123" height="32" rx="16" fill="#fff" /><rect x="431" y="309" width="123" height="31" rx="15.5" fill="#fff" /><defs><linearGradient id="a" x1="461.983" y1="702.686" x2="454.308" y2="-287.923" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" /><stop offset="1" stop-color="#EEE" /></linearGradient></defs></svg>
-                                            } />
-                                        }
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <ProfileMedia media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                {_pageData?.data?.isUploaded == false &&
+
+                                    <div className='relative bottom-6 min-w-fit right-6 z-10 flex  justify-center items-center gap-2' >
+                                        <svg className="text-foreground animate-spin" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
+                                            width="20" height="20">
+                                            <path
+                                                d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
+                                                stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
+                                            <path
+                                                d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
+                                                stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" className="text-foreground">
+                                            </path>
+                                        </svg>
+                                        <div>In progress...</div>
+                                    </div>
+
+                                }
                             </div>
 
-                        </TabsContent>
-                        <TabsContent value="followers" className="">
-                            <div className='w-full items-center md:items-start p-2 flex gap-2 border-muted'>
-                                <div className='flex max-w-xl w-full items-center  flex-col gap-2 bg-card'>
-                                    {!pageFollowers.isLoading && pageFollowers.data && pageFollowers.data.map((page) => {
-                                        return page.followers.map((followerData) => {
-                                            return (
-                                                <div className='flex items-center p-2 gap-2 relative w-full '>
-                                                    <Link className='flex flex-col gap-1 w-full' to={domain + "/user/" + followerData?.follower?.username}>
+                            <div className='flex justify-end px-4 sm:px-10 lg:px-24 gap-2'>
 
-                                                        <div className='flex w-full gap-2'>
-                                                            <div className='w-16 h-16  rounded-md flex items-center justify-center  border-primary border-2 overflow-hidden'>
-                                                                <Avatar >
-                                                                    <AvatarImage src={followerData?.follower?.profile} alt="Avatar" />
-                                                                    <AvatarFallback className='text-2xl'>{followerData?.follower?.firstname[0]?.toUpperCase() + followerData?.follower?.lastname[0]?.toUpperCase()}</AvatarFallback>
-                                                                </Avatar>
-                                                            </div>
-                                                            <div className="flex flex-col justify-center">
-                                                                <div className=''>{followerData?.follower?.firstname + " " + followerData?.follower?.lastname}</div>
-                                                                <div className='text-gray-400 text-sm'>@{followerData?.follower?.username}</div>
+                                {_pageData?.data && !isAdmin && <Button className='bg-card hover:bg-accent active:bg-muted' onClick={() => setOpenQuickChat(!openQuickChat)}>Message</Button>}
+                                {_pageData?.data && !isAdmin && (_pageData.data.isFollower ? <Button onClick={followPage}>Unfollow</Button> : <Button onClick={followPage}>Follow</Button>)}
+                            </div>
+                            <Tabs defaultValue="posts">
+                                <CustomTabList list={tabList} maxWidth={64} minWidth={200} />
 
+                                <TabsContent value="posts" className="">
+                                    <div className='flex-responsive w-full items-center md:items-start p-2 flex gap-2  border-muted'>
+                                        <div className='max-w-xl w-full flex flex-col gap-2 '>
+                                            {_pageData?.data?.admins?.includes(user?._id) && <div className='w-full flex items-center justify-center h-fit border border-muted p-3 bg-card'>
+                                                <div className="w-full flex-1">
+                                                    <form onSubmit={async (e) => {
+                                                        e.preventDefault()
+                                                        // mutation.mutate({ title: 'shazz', content: postContent.current.value })
+                                                        // console.log(mutation.data)
+                                                    }}>
+                                                        <div className="relative flex gap-2">
+                                                            <div className='w-12'>
+                                                                <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
+                                                                    <Avatar >
+                                                                        <AvatarImage src={_pageData?.data?.profile} alt="Avatar" />
+                                                                        <AvatarFallback>{firstname[0]?.toUpperCase() + lastname[0]?.toUpperCase()}</AvatarFallback>
+                                                                    </Avatar>
+                                                                </div>
                                                             </div>
+                                                            <Input
+                                                                onClick={() => {
+                                                                    setPostModal(true)
+                                                                }}
+                                                                ref={postContent}
+                                                                type="text"
+                                                                placeholder="Start writing a post"
+                                                                className="max-w-2xl appearance-none bg-background shadow-none"
+                                                            />
                                                         </div>
-                                                    </Link>
-                                                    {/* 
+                                                    </form>
+                                                </div>
+                                            </div>}
+                                            <div className='flex w-full items-center flex-col gap-2 '>
+                                                {!isLoading && data.length > 0 ? data?.map((page, pageIndex) => {
+                                                    return page.posts.map((post, postIndex) => (
+                                                        <Post useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} pageIndex={pageIndex} postIndex={postIndex} postData={post} username={username} userId={user?._id} removePost={removePost} key={post?._id} type={'page'} />
+
+                                                    ))
+                                                })
+                                                    :
+                                                    <div>
+                                                        ...loading
+                                                    </div>
+                                                }
+
+                                                {!isLoading && (data && data[0]?.posts?.length == 0) &&
+                                                    <HelperMessage message={"you don't have published posts"} svg={
+                                                        <svg width="180" height="120" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="transparent" d="M0 0h900v600H0z" /><path d="M705.499 375.559h-49.367c-12.097 0-22.231-8.232-22.231-18.659 0-5.213 2.615-9.878 6.538-13.171 3.923-3.292 9.481-5.488 15.693-5.488h7.193c6.211 0 11.769-2.195 15.692-5.488 3.924-3.292 6.539-7.957 6.539-13.17 0-10.153-9.808-18.659-22.231-18.659H512.54c-3.939 0-6.471-4.842-6.471-8.781 0-9.878-9.481-17.836-21.251-17.836h-56.112a5.35 5.35 0 1 1 0-10.701h215.003c9.481 0 18.308-3.293 24.52-8.506 6.211-5.214 10.135-12.622 10.135-20.58 0-16.189-15.693-29.086-34.655-29.086H532.662c-17.423 0-34.67-13.445-52.094-13.445h-62c-9.093 0-16.464-7.371-16.464-16.464 0-9.092 7.371-16.463 16.464-16.463h138.83c6.539 0 12.75-2.196 17-5.763 4.251-3.567 6.866-8.506 6.866-14.268 0-10.976-10.789-20.031-23.866-20.031H237.329c-6.538 0-12.75 2.195-17 5.762-4.25 3.567-6.866 8.507-6.866 14.269 0 10.976 10.789 20.031 23.866 20.031h8.174c10.788 0 19.943 7.408 19.943 16.738 0 4.664-2.289 8.78-5.885 11.799-3.596 3.018-8.5 4.939-14.058 4.939h-39.559c-6.866 0-13.405 2.469-17.982 6.311-4.577 3.841-7.519 9.055-7.519 15.092 0 11.799 11.442 21.128 25.174 21.128h40.213c13.077 0 23.866 9.055 23.866 20.031 0 5.488-2.616 10.427-6.866 13.994s-10.135 5.762-16.674 5.762h-35.962c-5.885 0-11.116 1.921-15.039 5.214-3.923 3.292-6.212 7.683-6.212 12.622 0 9.878 9.481 17.836 21.251 17.836h29.097c16.674 0 30.078 11.25 30.078 25.244 0 6.86-3.27 13.445-8.827 17.835-5.558 4.665-13.078 7.409-21.251 7.409h-40.54c-8.173 0-15.693 2.744-20.924 7.409-5.558 4.39-8.827 10.701-8.827 17.561 0 13.72 13.404 24.97 29.751 24.97h125.18c13.825 0 27.405 7.683 41.23 7.683h22.8c8.714 0 15.778 7.064 15.778 15.778 0 8.713-7.064 15.777-15.778 15.777h-55.494c-7.192 0-13.404 2.47-17.981 6.311-4.577 3.842-7.52 9.33-7.52 15.092 0 11.799 11.443 21.403 25.501 21.403h340.012c7.192 0 13.404-2.47 17.981-6.311 4.577-3.842 7.52-9.33 7.52-15.092 0-11.799-11.443-21.403-25.501-21.403h-10.135c-10.462 0-18.635-7.134-18.635-15.64 0-4.39 1.961-8.232 5.557-10.976 3.27-2.744 8.174-4.665 13.405-4.665h42.828c7.193 0 13.404-2.469 17.982-6.311 4.577-3.841 7.519-9.329 7.519-15.091 0-12.348-11.443-21.952-25.501-21.952z" fill="url(#a)" /><path d="M596 169.612v285.435C596 475.869 579.137 493 558.059 493h-12.383c-7.641 0-13.965-4.217-19.234-9.752-8.432-9.224-12.911-21.348-12.911-33.999v-32.945c0-13.178-10.803-23.984-23.977-23.984H337V169.612c0-11.86 9.749-21.612 21.605-21.612h215.79c12.12 0 21.605 9.752 21.605 21.612z" fill="#1b374c" /><path d="M535 512H295.002C267.995 512 246 490.285 246 463.623v-31.61C246 418.27 257.415 407 271.336 407h204.639c13.921 0 25.336 11.27 25.336 25.013v34.359c0 12.919 4.733 25.837 13.643 35.458C520.244 507.602 526.926 512 535 512z" fill="#1b374c" /><circle cx="396.5" cy="224.5" r="15.5" fill="#fff" /><circle cx="396.5" cy="274.5" r="15.5" fill="#fff" /><circle cx="396.5" cy="324.5" r="15.5" fill="#fff" /><rect x="431" y="209" width="123" height="31" rx="15.5" fill="#fff" /><rect x="431" y="259" width="123" height="32" rx="16" fill="#fff" /><rect x="431" y="309" width="123" height="31" rx="15.5" fill="#fff" /><defs><linearGradient id="a" x1="461.983" y1="702.686" x2="454.308" y2="-287.923" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" /><stop offset="1" stop-color="#EEE" /></linearGradient></defs></svg>
+                                                    } />
+                                                }
+                                            </div>
+                                        </div>
+                                        <ProfileMedia media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                    </div>
+
+                                </TabsContent>
+                                <TabsContent value="followers" className="">
+                                    <div className='w-full items-center md:items-start p-2 flex gap-2 border-muted'>
+                                        <div className='flex max-w-xl w-full items-center  flex-col gap-2 bg-card'>
+                                            {!pageFollowers.isLoading && pageFollowers.data && pageFollowers.data.map((page) => {
+                                                return page.followers.map((followerData) => {
+                                                    return (
+                                                        <div className='flex items-center p-2 gap-2 relative w-full '>
+                                                            <Link className='flex flex-col gap-1 w-full' to={domain + "/user/" + followerData?.follower?.username}>
+
+                                                                <div className='flex w-full gap-2'>
+                                                                    <div className='w-16 h-16  rounded-md flex items-center justify-center  border-primary border-2 overflow-hidden'>
+                                                                        <Avatar >
+                                                                            <AvatarImage src={followerData?.follower?.profile} alt="Avatar" />
+                                                                            <AvatarFallback className='text-2xl'>{followerData?.follower?.firstname[0]?.toUpperCase() + followerData?.follower?.lastname[0]?.toUpperCase()}</AvatarFallback>
+                                                                        </Avatar>
+                                                                    </div>
+                                                                    <div className="flex flex-col justify-center">
+                                                                        <div className=''>{followerData?.follower?.firstname + " " + followerData?.follower?.lastname}</div>
+                                                                        <div className='text-gray-400 text-sm'>@{followerData?.follower?.username}</div>
+
+                                                                    </div>
+                                                                </div>
+                                                            </Link>
+                                                            {/* 
                                                     {_pageData?.data?.admins?.includes(user?._id) &&
 
                                                         <DropdownMenu>
@@ -322,98 +333,100 @@ function PageProfile() {
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
                                                     } */}
+                                                        </div>
+                                                    )
+                                                })
+                                            })}
+                                            {pageFollowers.isLoading && pageFollowers.data && pageFollowers.data[0]?.followers?.length! > 0 &&
+                                                <div className='flex flex-col w-full items-center justify-center'>
+                                                    <svg width="160" height="100" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="transparent" d="M0 0h900v600H0z" /><path fill-rule="evenodd" clip-rule="evenodd" d="M684.111 166.5H467.893a33.43 33.43 0 0 1-27.826-14.907l-46.923-70.652a33.428 33.428 0 0 0-27.926-14.94H215.889C178.947 66 149 95.996 149 133v335c0 37.003 29.947 67 66.889 67h468.222C721.053 535 751 505.003 751 468V233.5c0-37.003-29.947-67-66.889-67z" fill="#fff" stroke="#E1E4E5" stroke-width="4" /><rect x="201" y="370" width="114" height="114" rx="57" fill="#666AF6" /><path fill-rule="evenodd" clip-rule="evenodd" d="M284 450.58v3.71a3.713 3.713 0 0 1-3.714 3.71h-44.572a3.713 3.713 0 0 1-3.714-3.71v-3.769C232 439.294 244.844 432 258 432s26 7.298 26 18.521m-16.954-51.713c5.272 5.076 5.272 13.308 0 18.384-5.272 5.077-13.82 5.077-19.092 0-5.272-5.076-5.272-13.308 0-18.384 5.272-5.077 13.82-5.077 19.092 0z" fill="#fff" /><rect x="345" y="379" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="345" y="418" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="345" y="457" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="201" y="224" width="114" height="114" rx="57" fill="#666AF6" /><path fill-rule="evenodd" clip-rule="evenodd" d="M284 304.58v3.71a3.713 3.713 0 0 1-3.714 3.71h-44.572a3.713 3.713 0 0 1-3.714-3.71v-3.769C232 293.294 244.844 286 258 286s26 7.298 26 18.521m-16.954-51.713c5.272 5.076 5.272 13.308 0 18.384-5.272 5.077-13.82 5.077-19.092 0-5.272-5.076-5.272-13.308 0-18.384 5.272-5.077 13.82-5.077 19.092 0z" fill="#fff" /><rect x="345" y="233" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="345" y="272" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="345" y="311" width="347" height="16" rx="8" fill="#E1E4E5" /></svg>
+                                                    <span>No Followers</span>
                                                 </div>
-                                            )
-                                        })
-                                    })}
-                                    {pageFollowers.isLoading && pageFollowers.data && pageFollowers.data[0]?.followers?.length! > 0 &&
-                                        <div className='flex flex-col w-full items-center justify-center'>
-                                            <svg width="160" height="100" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="transparent" d="M0 0h900v600H0z" /><path fill-rule="evenodd" clip-rule="evenodd" d="M684.111 166.5H467.893a33.43 33.43 0 0 1-27.826-14.907l-46.923-70.652a33.428 33.428 0 0 0-27.926-14.94H215.889C178.947 66 149 95.996 149 133v335c0 37.003 29.947 67 66.889 67h468.222C721.053 535 751 505.003 751 468V233.5c0-37.003-29.947-67-66.889-67z" fill="#fff" stroke="#E1E4E5" stroke-width="4" /><rect x="201" y="370" width="114" height="114" rx="57" fill="#666AF6" /><path fill-rule="evenodd" clip-rule="evenodd" d="M284 450.58v3.71a3.713 3.713 0 0 1-3.714 3.71h-44.572a3.713 3.713 0 0 1-3.714-3.71v-3.769C232 439.294 244.844 432 258 432s26 7.298 26 18.521m-16.954-51.713c5.272 5.076 5.272 13.308 0 18.384-5.272 5.077-13.82 5.077-19.092 0-5.272-5.076-5.272-13.308 0-18.384 5.272-5.077 13.82-5.077 19.092 0z" fill="#fff" /><rect x="345" y="379" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="345" y="418" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="345" y="457" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="201" y="224" width="114" height="114" rx="57" fill="#666AF6" /><path fill-rule="evenodd" clip-rule="evenodd" d="M284 304.58v3.71a3.713 3.713 0 0 1-3.714 3.71h-44.572a3.713 3.713 0 0 1-3.714-3.71v-3.769C232 293.294 244.844 286 258 286s26 7.298 26 18.521m-16.954-51.713c5.272 5.076 5.272 13.308 0 18.384-5.272 5.077-13.82 5.077-19.092 0-5.272-5.076-5.272-13.308 0-18.384 5.272-5.077 13.82-5.077 19.092 0z" fill="#fff" /><rect x="345" y="233" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="345" y="272" width="347" height="16" rx="8" fill="#E1E4E5" /><rect x="345" y="311" width="347" height="16" rx="8" fill="#E1E4E5" /></svg>
-                                            <span>No Followers</span>
-                                        </div>
 
-                                    }
-                                </div>
-                                <ProfileMedia media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="media" className='flex flex-col gap-2'>
-                            <MediaSection media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
-
-                        </TabsContent>
-                        <TabsContent value="about" className="">
-                            <div className='p-4  flex-responsive w-full items-center flex gap-2 border-muted'>
-                                {!_pageData.isLoading &&
-
-                                    <div className="flex gap-4 flex-col w-full justify-center">
-                                        <div className="flex flex-col sm:flex-row gap-4 w-full">
-                                            {_pageData?.data?.name &&
-                                                <div className='flex flex-col w-full gap-2'>
-                                                    <div>
-                                                        Name
-                                                    </div>
-                                                    <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
-                                                        {_pageData.data.name}
-                                                    </div>
-                                                </div>
-                                            }
-                                            {_pageData?.data?.handle &&
-                                                <div className='flex w-full flex-col gap-2'>
-                                                    <div>
-                                                        Handle
-                                                    </div>
-                                                    <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>{lastname}</div>
-                                                </div>
-                                            }
-
-                                        </div>
-
-                                        <div className="flexflex-col sm:flex-row gap-4 w-full">
-                                            {_pageData?.data?.moto &&
-                                                <div className='flex flex-col w-full gap-2'>
-                                                    <div>
-                                                        Bio
-                                                    </div>
-                                                    <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
-                                                        {_pageData?.data?.bio}
-                                                    </div>
-                                                </div>
                                             }
                                         </div>
+                                        <ProfileMedia media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                    </div>
+                                </TabsContent>
+                                <TabsContent value="media" className='flex flex-col gap-2'>
+                                    <MediaSection media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
 
-                                        {_pageData?.data?.creationDate &&
-                                            <div className='flex w-full flex-col gap-2'>
-                                                <div>
-                                                    Creation Date
+                                </TabsContent>
+                                <TabsContent value="about" className="">
+                                    <div className='p-4  flex-responsive w-full items-center flex gap-2 border-muted'>
+                                        {!_pageData.isLoading &&
+
+                                            <div className="flex gap-4 flex-col w-full justify-center">
+                                                <div className="flex flex-col sm:flex-row gap-4 w-full">
+                                                    {_pageData?.data?.name &&
+                                                        <div className='flex flex-col w-full gap-2'>
+                                                            <div>
+                                                                Name
+                                                            </div>
+                                                            <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
+                                                                {_pageData.data.name}
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    {_pageData?.data?.handle &&
+                                                        <div className='flex w-full flex-col gap-2'>
+                                                            <div>
+                                                                Handle
+                                                            </div>
+                                                            <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>{lastname}</div>
+                                                        </div>
+                                                    }
+
                                                 </div>
-                                                <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
-                                                    <p className='text-sm'>{_pageData?.data?.creationDate}</p>
+
+                                                <div className="flexflex-col sm:flex-row gap-4 w-full">
+                                                    {_pageData?.data?.moto &&
+                                                        <div className='flex flex-col w-full gap-2'>
+                                                            <div>
+                                                                Bio
+                                                            </div>
+                                                            <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
+                                                                {_pageData?.data?.bio}
+                                                            </div>
+                                                        </div>
+                                                    }
                                                 </div>
-                                            </div>
-                                        }
+
+                                                {_pageData?.data?.creationDate &&
+                                                    <div className='flex w-full flex-col gap-2'>
+                                                        <div>
+                                                            Creation Date
+                                                        </div>
+                                                        <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
+                                                            <p className='text-sm'>{_pageData?.data?.creationDate}</p>
+                                                        </div>
+                                                    </div>
+                                                }
 
 
-                                        {_pageData?.data?.about &&
-                                            <div className='flex w-full flex-col gap-2'>
-                                                <div>
-                                                    About
-                                                </div>
-                                                <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
-                                                    <p className='text-sm'>{_pageData?.data?.about}</p>
-                                                </div>
+                                                {_pageData?.data?.about &&
+                                                    <div className='flex w-full flex-col gap-2'>
+                                                        <div>
+                                                            About
+                                                        </div>
+                                                        <div className='bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>
+                                                            <p className='text-sm'>{_pageData?.data?.about}</p>
+                                                        </div>
+                                                    </div>
+                                                }
+
                                             </div>
                                         }
 
                                     </div>
-                                }
+                                </TabsContent>
+                            </Tabs>
 
-                            </div>
-                        </TabsContent>
-                    </Tabs>
-
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
+            }
+        </>
     )
 }
 

@@ -5,6 +5,7 @@ import { GenericFormData } from "axios"
 
 export const fetchPage = async (handle: string) => {
     const { data } = await axiosClient.get(PAGE_ROUTES.GET.replace(":handle", handle))
+    console.log(data, 'page')
     return data
 }
 

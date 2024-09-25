@@ -269,7 +269,8 @@ const MainHome = ({ children }: any) => {
               {!searchState &&
                 <form onSubmit={async (e) => {
                   e.preventDefault()
-                  navigate(`/search?query=${searchQuery}&&type=default`)
+                  let val = searchQuery.split(' ')
+                  navigate(`/search?query=${val.join("")}&&type=default`)
                 }}>
                   <div className="hidden sm:flex  sm:relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -322,7 +323,7 @@ const MainHome = ({ children }: any) => {
               {searchParams.get('search') == 'active' &&
                 <form onSubmit={async (e) => {
                   e.preventDefault()
-                  navigate(`/search?query=${searchQuery}&&type=default`)
+                  navigate(`/search?query=${searchQuery.trim()}&&type=default`)
                 }}>
                   <div className="flex relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

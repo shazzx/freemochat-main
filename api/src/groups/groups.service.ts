@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
@@ -94,6 +94,9 @@ export class GroupsService {
                 },
             },
         ]);
+        if(group.length == 0){
+            throw new NotFoundException()
+        }
         const isSuperAdmin = group[0].user.toString() === userId;
         const isAdmin = group[0].admins.some(adminId => adminId.toString() === userId);
         console.log(group[0], isSuperAdmin, isAdmin)

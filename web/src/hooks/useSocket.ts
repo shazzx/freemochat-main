@@ -1,4 +1,4 @@
-import { acceptCall, incomingCall, startCall } from "@/app/features/user/callSlice";
+import { acceptCall, endCall, incomingCall, startCall } from "@/app/features/user/callSlice";
 import { setNewNotification } from "@/app/features/user/notificationSlice";
 import { setOffline, setOnline } from "@/app/features/user/onlineSlice";
 import { useAppSelector } from "@/app/hooks";
@@ -165,7 +165,8 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
 
 
     socket.on("call-decline", (data) => {
-      console.log(data)
+      console.log("decline")
+      dispatch(endCall())
     })
 
     socket.on("call-accept", (data) => {

@@ -1,12 +1,14 @@
 import { axiosClient } from "../axiosClient"
 
 export const fetchUser = async (username) => {
-    const { data } = await axiosClient.get(`/user?username=${username}`)
-    console.log(data, 'fetched user')
-    if(data == null){
-        throw new Error('not found')
+    if (username.length > 0) {
+        const { data } = await axiosClient.get(`/user?username=${username}`)
+        console.log(data, 'fetched user')
+        if (data == null) {
+            throw new Error('not found')
+        }
+        return data
     }
-    return data
 }
 
 export const fetchUserStories = async () => {
@@ -21,8 +23,8 @@ export const uploadStory = async (formData: FormData) => {
 }
 
 
-export const removeStory = async (_data: {storyId: string, url: string}) => {
-     const { data } = await axiosClient.post("/stories/delete", _data)
+export const removeStory = async (_data: { storyId: string, url: string }) => {
+    const { data } = await axiosClient.post("/stories/delete", _data)
     return data
 }
 
@@ -102,6 +104,6 @@ export const fetchUserMetrics = async () => {
 
 export const defaultMetric = async (name) => {
     console.log(name)
-    const { data } = await axiosClient.post("metrics-aggregator/user/metrics/default", {  name  })
+    const { data } = await axiosClient.post("metrics-aggregator/user/metrics/default", { name })
     return data
 }

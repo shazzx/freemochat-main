@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 
 export function useGroup(handle: string): any {
 
-  const { data, isLoading, isFetching, isSuccess, error } = useQuery({
+  const { data, isLoading, isFetching, isSuccess, error, isError } = useQuery({
     queryKey: ['group'],
     queryFn: () => fetchGroup(handle),
 
@@ -17,6 +17,7 @@ export function useGroup(handle: string): any {
     data: data ?? [],
     isLoading,
     isSuccess,
+    isError,
     isFetching,
     error,
   };

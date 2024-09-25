@@ -72,8 +72,7 @@ function QuickChat({ target }) {
     };
 
     return (
-        <div className='absolute z-50 bg-background flex flex-col max-w-[560px] h-full max-h-[440px] border-2 border-accent bottom-12 right-12 ' >
-
+        <div className='absolute z-50 bg-background flex flex-col sm:max-w-[400px]  sm:max-h-[440px] h-full w-full border-2 border-accent bottom-0 sm:bottom-12 sm:right-12 ' >
             <div className='flex items-center justify-between p-3 border border-muted'>
                 <div className='flex gap-2 items-center justify-center'>
                     {/* praying man */}
@@ -100,10 +99,9 @@ function QuickChat({ target }) {
             <div className="h-full p-4 flex flex-col gap-4  overflow-y-scroll" onClick={() => {
 
             }} ref={chatContainerRef}>
-                <div className="w-full text-center pb-4">
-                    <span>Today</span>
-                </div>
-                {/* user */}
+                {userMessages?.data[0]?.messages?.length == 0 && <div className="w-full text-center pb-4">
+                    No Messages
+                </div>}
 
                 {!userMessages.isLoading && userMessages?.data?.map((page, pageIndex) => {
                     return page.messages.map((message, messageIndex) => {

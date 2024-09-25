@@ -17,42 +17,43 @@ export class SearchService {
     ) { }
 
     async search({ query, type }: { query: string, type: string }, userId: string) {
-
+        let _query = query.split(" ")
         if (type == "default") {
-            let users = await this.searchUsers(query)
-            let posts = await this.searchPosts(query, userId)
-            let groups = await this.searchGroups(query)
-            let pages = await this.searchPages(query)
+            let users = await this.searchUsers(_query.join(""))
+            let posts = await this.searchPosts(_query.join(""), userId)
+            let groups = await this.searchGroups(_query.join(""))
+            let pages = await this.searchPages(_query.join(""))
             return { users, posts, groups, pages }
         }
 
 
         if (type == "users") {
-            let users = await this.searchUsers(query)
+            let users = await this.searchUsers(_query.join(""))
             return { users }
         }
 
 
         if (type == "posts") {
-            let posts = await this.searchPosts(query, userId)
+            let posts = await this.searchPosts(_query.join(""), userId)
             return { posts }
         }
 
         if (type == "groups") {
-            let groups = await this.searchGroups(query)
+            let groups = await this.searchGroups(_query.join(""))
             return { groups }
         }
 
 
 
         if (type == 'pages') {
-            let pages = await this.searchPages(query)
+            let pages = await this.searchPages(_query.join(""))
             return { pages }
         }
     }
 
     async searchSuggestions(query: string) {
-        const regexPattern = new RegExp(query, 'i');
+        let _query = query.split(" ")
+        const regexPattern = new RegExp(_query.join(""), 'i');
 
         const aggregationPipeline = [
             {

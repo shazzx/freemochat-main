@@ -8,7 +8,7 @@ import { toast } from "react-toastify"
 
 export function usePage(handle: string): any {
 
-  const { data, isLoading, isFetching, fetchStatus, isSuccess, error } = useQuery({
+  const { data, isLoading, isFetching, fetchStatus, isSuccess, error, isError } = useQuery({
     queryKey: [PageKeys.PAGE],
     queryFn: ({ pageParam, }) => fetchPage(handle),
     staleTime: 0,
@@ -17,15 +17,11 @@ export function usePage(handle: string): any {
     refetchOnReconnect: false,
   });
 
-
-  if (error) {
-    toast(error.message)
-  }
-
   return {
     data: data ?? [],
     isLoading,
     isSuccess,
+    isError,
     isFetching,
     error,
   };

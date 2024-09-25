@@ -5,8 +5,9 @@ import { produce } from "immer"
 import { toast } from "react-toastify"
 
 export const useUser = (username, shouldFetch) => {
-    const { data, isLoading, isError, isFetched, isSuccess } = useQuery({
+    const { data, isLoading, isError, isFetched, isSuccess, error } = useQuery({
         queryKey: ['user', username],
+        enabled: !!username,
         queryFn: () => {
             return fetchUser(username)
         },

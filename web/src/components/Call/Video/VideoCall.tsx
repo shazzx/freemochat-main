@@ -14,15 +14,16 @@ import {
 import { useSocket } from "@/hooks/useSocket";
 import { Mic } from "lucide-react";
 import { MdPhone } from "react-icons/md";
-import { useAppSelector } from "@/app/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Button } from "@/components/ui/button";
 import { join } from "path";
+import { endCall } from "@/app/features/user/callSlice";
 
 
 const VideoCall = ({ channel, _callDetails, cancelCall }) => {
-  const { callDetails, callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
-  const {user}=useAppSelector((state)=>state.user )
+    const { callDetails, callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
+    const { user } = useAppSelector((state) => state.user)
 
     console.log(callDetails)
     const socket = useSocket()
@@ -53,14 +54,14 @@ const VideoCall = ({ channel, _callDetails, cancelCall }) => {
     };
     console.log(callDetails)
 
-        useJoin(
-            {
-                appid: appId,
-                channel: user._id ,
-                token: null,
-            },
-            activeConnection,
-        );
+    useJoin(
+        {
+            appid: appId,
+            channel: user._id,
+            token: null,
+        },
+        activeConnection,
+    );
 
     usePublish([localMicrophoneTrack, localCameraTrack]);
 
@@ -69,51 +70,56 @@ const VideoCall = ({ channel, _callDetails, cancelCall }) => {
     const { audioTracks } = useRemoteAudioTracks(remoteUsers);
     // play the remote user audio tracks
     audioTracks.forEach((track) => track.play());
+    const dispatch = useAppDispatch()
 
     useEffect(() => {
         console.log(localMicrophoneTrack, localCameraTrack)
     }, [localMicrophoneTrack, localCameraTrack])
     const callDecline = () => {
         socket.emit('call-decline', { recepientDetails: callDetails.userDetails })
+        cancelCall()
+        dispatch(endCall())
         // dispatch(endCall())
     }
 
     const callAccept = () => {
-        socket.emit('call-accept', { type: "VIDEO",  recepientDetails: callDetails.userDetails, userDetails: {
-            userId: user._id,
-            username: user.username,
-            fullname: user.firstname + " " + user?.lastname,
-            profile: user?.profile
-        }})
+        socket.emit('call-accept', {
+            type: "VIDEO", recepientDetails: callDetails.userDetails, userDetails: {
+                userId: user._id,
+                username: user.username,
+                fullname: user.firstname + " " + user?.lastname,
+                profile: user?.profile
+            }
+        })
     }
 
     return (
         <div className="mainContainer absolute left-0 top-0 overflow-hidden flex items-center justify-center z-50">
-            {targetDetails ? 
-            <div className="flex gap-12 absolute bottom-12 z-30">
-            <button className="rounded-full p-[14px] bg-red-500 hover:bg-red-400 active:bg-red-600"
-                onClick={async () => {
-                    setActiveConnection(false)
-                    socket.emit("call-end", callDetails)
-                    cancelCall("VIDEO")
-                }}>
-                <MdPhone size={32} color="white" />
-            </button>
-
+            {targetDetails ?
+                <div className="flex gap-12 absolute bottom-12 z-30">
+                    <button className="rounded-full p-[14px] bg-red-500 hover:bg-red-400 active:bg-red-600"
+                        onClick={callDecline}>
+                        <MdPhone size={32} color="white" />
+                    </button>
+                    {/* 
             <button className="rounded-full p-[14px] bg-red-500" onClick={() => setMic(a => !a)}>
                 <Mic color="white" size={32} />
-            </button>
-        </div>:
-                        <div className="flex gap-12 absolute bottom-32">
-                        <Button type="button" className="rounded-full p-4 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={callDecline}>
-                            <MdPhone size={32} color="white" />
-                        </Button>
-    
-                        <Button className="rounded-full p-4 bg-green-500 hover:bg-green-400 active:bg-green-600" type="button" onClick={callAccept} >
-                            <MdPhone size={32} color="white" />
-                        </Button>
-                    </div>
-        }
+            </button> */}
+                </div> :
+                <div className="flex gap-12 absolute bottom-32 z-30">
+                    <Button type="button" className="rounded-full p-4 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={async () => {
+                        setActiveConnection(false)
+                        socket.emit("call-end", callDetails)
+                        cancelCall("VIDEO")
+                    }}>
+                        <MdPhone size={32} color="white" />
+                    </Button>
+
+                    <Button className="rounded-full p-4 bg-green-500 hover:bg-green-400 active:bg-green-600" type="button" onClick={callAccept} >
+                        <MdPhone size={32} color="white" />
+                    </Button>
+                </div>
+            }
             <div className="remoteVideoContainer">
                 {
                     // Initialize each remote stream using RemoteUser component
@@ -127,19 +133,19 @@ const VideoCall = ({ channel, _callDetails, cancelCall }) => {
                     )
 
                 }
-                {remoteUsers.length  == 0 && 
-                <div className='flex flex-col gap-4 items-center justify-center'>
-                <div className='w-28 h-28 border-2 border-accent rounded-full flex items-center justify-center bg-accent overflow-hidden'>
-                  <Avatar className="flex  items-center justify-center">
-                    <AvatarImage src={callDetails?.userDetails?.profile || targetDetails?.profile} alt="Avatar" />
-                    <AvatarFallback className='text-4xl'>{callDetails?.userDetails?.fullname[0]?.toUpperCase() || targetDetails?.fullname[0]?.toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className='flex flex-col  items-center justify-center'>
-                  <span className='text-lg'>{callDetails?.userDetails?.fullname || targetDetails?.fullname}</span>
-                  <span>@{callDetails?.userDetails?.username || targetDetails?.username}</span>
-                </div>
-              </div>
+                {remoteUsers.length == 0 &&
+                    <div className='flex flex-col gap-4 items-center justify-center'>
+                        <div className='w-28 h-28 border-2 border-accent rounded-full flex items-center justify-center bg-accent overflow-hidden'>
+                            <Avatar className="flex  items-center justify-center">
+                                <AvatarImage src={callDetails?.userDetails?.profile || targetDetails?.profile} alt="Avatar" />
+                                <AvatarFallback className='text-4xl'>{callDetails?.userDetails?.fullname[0]?.toUpperCase() || targetDetails?.fullname[0]?.toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                        </div>
+                        <div className='flex flex-col  items-center justify-center'>
+                            <span className='text-lg'>{callDetails?.userDetails?.fullname || targetDetails?.fullname}</span>
+                            <span>@{callDetails?.userDetails?.username || targetDetails?.username}</span>
+                        </div>
+                    </div>
                 }
             </div>
             <div id='localVideo'>

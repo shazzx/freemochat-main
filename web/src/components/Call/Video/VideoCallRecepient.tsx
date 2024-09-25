@@ -50,7 +50,7 @@ const callAccept = () => {
                 <div >
                     <span>Calling...</span>
                 </div>
-                <div className='flex gap-2'>
+                <div className='flex gap-2 z-50'>
                     <Button onClick={callDecline} className='bg-destructive'>Decline</Button>
                     <Button onClick={callAccept} >Attend</Button>
                 </div>
