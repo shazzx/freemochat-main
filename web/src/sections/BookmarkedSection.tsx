@@ -12,7 +12,7 @@ function Bookmarked() {
     console.log(data)
 
     return (
-        <div className='w-full flex sm:px-24 px-4 overflow-y-auto border-muted'>
+        <div className='w-full flex md:px-6 lg:px-24 overflow-y-auto border-muted'>
             <div className='max-w-xl w-full flex flex-col gap-2'>
                 <div className='flex gap-3 items-center border border-muted p-4 bg-card rounded-md'>
                     <BookmarkIcon />

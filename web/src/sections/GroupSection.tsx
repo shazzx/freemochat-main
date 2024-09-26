@@ -14,7 +14,7 @@ function Groups() {
     const [modalState, setModalState] = useState(false)
     console.log('hello')
     return (
-        <div className='w-full sm:px-24 flex  overflow-y-auto border-muted'>
+        <div className='w-full md:px-6 lg:px-24 flex  overflow-y-auto border-muted'>
             <div className='max-w-xl w-full flex flex-col gap-2'>
                 <div className='flex justify-between gap-3 items-center border border-muted p-4 bg-card'>
                     <Link to="/manage/groups"><Button>Manage Groups</Button></Link>

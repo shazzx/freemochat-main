@@ -271,7 +271,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                             <Tabs defaultValue="posts">
                                 <CustomTabList list={tabList} minWidth={306} maxWidth={80} />
                                 <TabsContent value="posts" className="">
-                                    {<div className='flex-responsive w-full items-center md:items-start p-2 flex gap-2  border-muted'>
+                                    {<div className='flex-responsive w-full items-center md:items-start sm:p-2 flex gap-2  border-muted'>
                                         <div className='max-w-xl w-full flex flex-col gap-2 '>
                                             {isSelf &&
                                                 <div className='w-full flex rounded-md items-center justify-center h-fit border border-accent p-3 bg-card'>

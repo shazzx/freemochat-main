@@ -240,7 +240,7 @@ function PageProfile() {
                                 <CustomTabList list={tabList} maxWidth={64} minWidth={200} />
 
                                 <TabsContent value="posts" className="">
-                                    <div className='flex-responsive w-full items-center md:items-start p-2 flex gap-2  border-muted'>
+                                    <div className='flex-responsive w-full items-center md:items-start sm:p-2 flex gap-2  border-muted'>
                                         <div className='max-w-xl w-full flex flex-col gap-2 '>
                                             {_pageData?.data?.admins?.includes(user?._id) && <div className='w-full flex items-center justify-center h-fit border border-muted p-3 bg-card'>
                                                 <div className="w-full flex-1">

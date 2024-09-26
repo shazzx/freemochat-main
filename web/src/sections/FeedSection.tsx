@@ -58,7 +58,7 @@ function FeedSection() {
             {searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
 
             <div className='max-w-xl w-full flex flex-col gap-2'>
-                <div className='w-full flex items-center  border border-muted px-2 bg-card'>
+                <div className='w-full flex items-center  border border-muted p-2 bg-card'>
                     <Stories />
                 </div>
 

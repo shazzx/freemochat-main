@@ -91,7 +91,12 @@ function LikeButton({ postData, mutate, pageIndex, postIndex }) {
     <div className='relative select-none flex gap-1 items-center cursor-pointer'
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave} >
+      onMouseLeave={handleMouseLeave}
+      
+      onTouchStart={handleMouseDown}
+      onTouchEnd={handleMouseUp}
+      onTouchCancel={handleMouseLeave}
+      >
       {/* <svg width="40" height="40" className={`${postData?.isLikedByUser ? 'fill-red-500 stroke-red-500' : 'stroke-foreground dark:stroke-foreground'} `} viewBox="0 0 39 38" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M19.4994 30.0692L14.8713 25.3192L10.2796 20.5692C7.79547 17.944 7.79547 13.8353 10.2796 11.2101C11.496 10.0411 13.1435 9.4302 14.828 9.52358C16.5125 9.61696 18.0824 10.4062 19.1621 11.7026L19.4994 12.0335L19.8334 11.6883C20.9132 10.392 22.4831 9.60271 24.1675 9.50933C25.852 9.41595 27.4996 10.0269 28.7159 11.1959C31.2001 13.8211 31.2001 17.9298 28.7159 20.555L24.1243 25.305L19.4994 30.0692Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
         </svg> */}

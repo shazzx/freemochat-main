@@ -44,7 +44,7 @@ function PagesSection() {
     console.log('hello')
 
     return (
-        <div className='w-full flex justify-center md:justify-normal overflow-y-auto border-muted px-4 md:px-6 lg:px-24'>
+        <div className='w-full flex justify-center md:justify-normal overflow-y-auto border-muted md:px-6 lg:px-24'>
             {postModal && <CPostModal setModelTrigger={setPostModal} />}
             <div className='max-w-xl w-full flex flex-col gap-2'>
                 <div className='flex justify-between gap-3 items-center border border-muted p-4 bg-card'>

@@ -435,8 +435,10 @@ const MainHome = ({ children }: any) => {
 
         </header>
       </div >
-      <div className="flex h-full overflow-hidden w-full">
 
+      <BottomNav />
+
+      <div className="flex h-full overflow-hidden w-full">
         {/* sidebar - desktop */}
         <div className="hidden border-r py-2 w-full max-w-72 h-full bg-card md:block">
           <div className="flex h-full max-h-screen flex-col gap-2">
@@ -555,11 +557,6 @@ const MainHome = ({ children }: any) => {
         {/* main section */}
         {children}
       </div>
-
-      {!location.pathname.startsWith("/messages")
-      &&
-      <BottomNav />
-      }
 
     </div >
   )

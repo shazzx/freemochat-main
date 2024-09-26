@@ -18,8 +18,12 @@ function BottomNav() {
         }
     }, [location.pathname])
 
+    if (location.pathname.startsWith('/user') || location.pathname.startsWith('/messages') || location.pathname.startsWith('/group/') || location.pathname.startsWith('/page/') || location.pathname.startsWith('/search') || location.pathname.startsWith('/profile')) {
+        return 
+    }
+
     return (
-        <div className='sm:hidden flex justify-between  bg-card w-full  z-50'>
+        <div className='sm:hidden flex justify-between  bg-card w-full border-b-background border'>
             <Link
                 onClick={() => {
                     if (active !== '/') {
