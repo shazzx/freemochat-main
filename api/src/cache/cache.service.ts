@@ -26,9 +26,11 @@ export class CacheService {
   }
 
   async setForgetPassword(userId: string, authId: string): Promise<boolean> {
+    console.log(userId)
     try {
       // 5 minutes expiration
-    await this.redis.set(`authId:${userId}`, authId, 'EX', 600); 
+    let token = await this.redis.set(`authId:${userId}`, authId, 'EX', 600); 
+    console.log(token)
     return true
     } catch (error) {
       console.log(error)
@@ -37,8 +39,8 @@ export class CacheService {
   }
 
 
-
   async getForgetPassword(userId: string): Promise<string> {
+    console.log(userId)
     try {
       // 5 minutes expiration
     return await this.redis.get(`authId:${userId}`); 

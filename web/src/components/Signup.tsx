@@ -51,7 +51,7 @@ export function Signup() {
             const response = await signupUser(data)
             return response
         },
-        onError: (e) => {
+        onError: (e: any) => {
             if (e.response.data.message.startsWith('E11000')) {
                 showToast("Account Already Exists", "info")
                 setSignupButtonState(false)
@@ -69,7 +69,7 @@ export function Signup() {
     }
 
     if (isSuccess) {
-        // dispatchData(data)
+        dispatchData(data)
         navigate("/auth/" + data?.username + "?auth_id=" + data?.tempSecret)
     }
 
@@ -99,12 +99,12 @@ export function Signup() {
         return phone(_phone, { country })
     }
     const onSubmit = (_data) => {
+        console.log(_data)
         if (!country || !city) {
             setSignupButtonState(false)
             toast.info("please select country and city")
             return
         }
-
 
         let phone = valdatePhone(`${_data.phone}`, country["iso3"])
 
@@ -118,9 +118,8 @@ export function Signup() {
         toast.info("phone number is not valid")
     }
 
-
     useEffect(() => {
-        if(errors){
+        if(Object.keys(errors).length !== 0){
             console.log(errors)
             setSignupButtonState(false)
         }
@@ -282,7 +281,7 @@ export function Signup() {
                             <div >
                                 <CustomCheckbox message={"Accept terms and conditions"} setAgreementCondition={setAgreementCondition} />
                             </div>
-                            <Button disabled={!agreementCondition} onClick={() => {
+                            <Button type="submit" disabled={!agreementCondition} onClick={() => {
                                 setSignupButtonState(true)
                             }}>
                                 {signupButtonState ?

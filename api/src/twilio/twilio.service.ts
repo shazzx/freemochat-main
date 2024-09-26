@@ -23,7 +23,7 @@ export class TwilioService {
   async sendSMS(to: string, body: string): Promise<MessageInstance> {
     try {
     const from = this.configService.get<string>('TWILIO_PHONE_NUMBER');
-    console.log(to)
+    console.log('sending sms to ',to)
     
     if (!from) {
       throw new Error('Twilio phone number is not configured.');

@@ -8,7 +8,7 @@ import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
 import { Public } from 'src/auth/public.decorator';
-import { ChangePassword, ChangePasswordDTO, CreateUser, CreateUserDTO, ForgetPassword, ForgetPasswordDTO, ForgetPasswordRequest, ForgetPasswordRequestDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, resendOTP, resendOTPDTO, resendOTPUser, resendOTPUserDTO, UpdateUser, UpdateUserDTO, usernameExists, usernameExistsDTO, verificationStatus, verificationStatusDTO, VerifyOTP, VerifyOTPDTO, VerifyOTPUser, VerifyOTPUserDTO } from 'src/schema/validation/user';
+import { ChangePassword, ChangePasswordDTO, CreateUser, CreateUserDTO, ForgetPassword, ForgetPasswordDTO, ForgetPasswordPub, ForgetPasswordPubDTO, ForgetPasswordRequest, ForgetPasswordRequestDTO, FriendGeneral, FriendGeneralDTO, GetFriends, GetFriendsDTO, GetUser, GetUserDTO, LoginUser, LoginUserDTO, resendOTP, resendOTPDTO, resendOTPUser, resendOTPUserDTO, UpdateUser, UpdateUserDTO, usernameExists, usernameExistsDTO, verificationStatus, verificationStatusDTO, VerifyOTP, VerifyOTPDTO, VerifyOTPUser, VerifyOTPUserDTO } from 'src/schema/validation/user';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import { OtpService } from 'src/otp/otp.service';
@@ -317,9 +317,12 @@ export class UserController {
 
             const authId = uuidv4()
 
-            await this.cacheService.setForgetPassword(user.userId, authId)
-            console.log(`http://localhost:5173/forget-password/${authId}?username=${user.username}`)
-            return res.json({ success: true, message: "otp has been sent to your email" })
+            await this.cacheService.setForgetPassword(user._id, authId)
+            const link = `http://ec2-15-206-203-226.ap-south-1.compute.amazonaws.com:5173/reset-password/${authId}?username=${user.username}`
+            const message = messageGenerator(user.firstname + " " + user.lastname, link, 'reset-password')
+            await this.twilioService.sendSMS(user.phone, message)
+
+            return res.json({ success: true, message: "otp has been sent to your phone" })
 
         } catch (error) {
             res.status(400).json({ success: false, error: { message: error.message } })
@@ -330,10 +333,10 @@ export class UserController {
     @Public()
     @Post('forget-password-open')
     async forgetPasswordPub(
-        @Body(new ZodValidationPipe(ForgetPassword)) changePasswordDTO: ForgetPasswordDTO,
+        @Body(new ZodValidationPipe(ForgetPasswordPub)) changePasswordDTO: ForgetPasswordPubDTO,
         @Req() req: Request,
         @Res() res: Response) {
-        const { username, authId, otp, type, changePassword } = changePasswordDTO
+        const { username, authId, changePassword } = changePasswordDTO
 
         try {
             const user = await this.userService.findUser(username)
@@ -341,25 +344,26 @@ export class UserController {
                 throw new BadRequestException()
             }
 
-            if (!otp || !type || !changePassword) {
-                throw new BadRequestException()
-            }
+            // if (!otp || !type || !changePassword) {
+            //     throw new BadRequestException()
+            // }
 
-            let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
+            // let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
             // let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
 
-            if (!isValidPhoneSecret) {
-                throw new BadRequestException("OTP is not valid")
-            }
+            // if (!isValidPhoneSecret) {
+            //     throw new BadRequestException("OTP is not valid")
+            // }
 
             let _authId = await this.cacheService.getForgetPassword(user._id)
+            console.log(authId, _authId)
 
             if (authId !== _authId) {
-                throw new BadRequestException("OTP is not valid")
+                throw new BadRequestException("Link has been expired")
             }
 
 
-            if (type == 'phone') {
+            if (_authId) {
                 let hashedPassword = await this.cryptoService.hash(changePassword.password, 16)
                 await this.userService.updateUser(user._id, { password: hashedPassword })
                 res.json({ success: true })
@@ -453,8 +457,7 @@ export class UserController {
                 console.log(phoneOTP, 'phone')
                 console.log(user.phone)
                 const message = messageGenerator(user.firstname + " " + user.lastname, phoneOTP)
-                console.log(message)
-                // await this.twilioService.sendSMS(user.phone, message)
+                await this.twilioService.sendSMS(user.phone, message)
                 return res.json({ success: true, message: "otp has been sent to your phone" })
             }
 
@@ -497,7 +500,7 @@ export class UserController {
                 console.log(phone || user.phone)
                 const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP)
                 console.log(message)
-                // await this.twilioService.sendSMS(user.phone, message)
+                await this.twilioService.sendSMS(user.phone, message)
                 return res.json({ success: true, message: "otp has been sent to your phone" })
             }
 

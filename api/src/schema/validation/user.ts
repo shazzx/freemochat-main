@@ -29,7 +29,6 @@ export const UpdateUser = z.object({
     lastname: z.string().optional(),
     username: z.string().optional(),
     bio: z.string().optional(),
-    email: z.string().optional(),
     phone: z.number().optional(),
     address: z.object({
         country: z.string().optional(),
@@ -121,6 +120,20 @@ export const ForgetPassword = z.object({
 })
 
 
+export const ForgetPasswordPub = z.object({
+    username: z.string(),
+    authId: z.string().refine(
+        (val) => isUUID(val),
+        {
+            message: 'Invalid UUID',
+        }
+    ).optional(),
+    changePassword: z.object({
+        password: z.string(),
+    }),
+})
+
+
 export const ForgetPasswordRequest = z.object({
     username: z.string().optional(),
 })
@@ -169,6 +182,7 @@ export type VerifyOTPDTO = z.infer<typeof VerifyOTP>
 export type VerifyOTPUserDTO = z.infer<typeof VerifyOTPUser>
 export type ChangePasswordDTO = z.infer<typeof ChangePassword>
 export type ForgetPasswordDTO = z.infer<typeof ForgetPassword>
+export type ForgetPasswordPubDTO = z.infer<typeof ForgetPasswordPub>
 export type ForgetPasswordRequestDTO = z.infer<typeof ForgetPasswordRequest>
 export type resendOTPDTO = z.infer<typeof resendOTP>
 export type resendOTPUserDTO = z.infer<typeof resendOTPUser>

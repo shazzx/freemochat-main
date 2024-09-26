@@ -8,11 +8,13 @@ import {  useAppSelector } from '@/app/hooks'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { Button } from './ui/button'
+import { FaCheckCircle } from 'react-icons/fa'
 
 function YourAccount() {
     const [usernameOrEmail, setUsernameOrEmail] = useState(null)
     const [buttonState, setButtonState] = useState(true)
     const [loader, setLoader] = useState(false)
+    const [otpSent, setOtpSent] = useState(false)
 
     const navigate = useNavigate()
 
@@ -20,8 +22,8 @@ function YourAccount() {
         try {
 
             const response = await axiosClient.post("/user/forget-password-request", data, { timeout: 30000 })
-            toast.success('OTP Has Been Sent To Your Emal')
-            navigate('')
+            console.log(response.data)
+            setOtpSent(true)
 
         } catch (error) {
             if (!error.response.data.success) {
@@ -60,13 +62,13 @@ function YourAccount() {
     const resetPasswordRequest = async () => {
 
         if (!usernameOrEmail) {
-            toast.info("Username or email can't be empty")
+            toast.info("Username can't be empty")
             return
         }
 
 
         if (usernameOrEmail.length < 5) {
-            toast.info("Username or email must be greater than 5 characters")
+            toast.info("Username  must be greater than 5 characters")
             return
         }
 
@@ -81,7 +83,7 @@ function YourAccount() {
     return (
         <div className='fixed inset-0 z-50  w-screen overflow-hidden h-screen flex items-center justify-center top-0 right-0'>
             <Card className='z-10 p-6 border border-accent'>
-                <form  action="" onSubmit={(e) => {
+                {!otpSent && <form  action="" onSubmit={(e) => {
                     e.preventDefault()
                 }}>
 
@@ -89,10 +91,10 @@ function YourAccount() {
                         <div className="flex w-full flex-col justify-start items-start gap-4">
                             <div className="w-full ">
                                 <Label className='mb-1' >
-                                    Username/Email
+                                    Username
                                 </Label>
                                 <Input
-                                    placeholder="Enter Username or email"
+                                    placeholder="Enter Username"
                                     // ref={newPasswordRef}
                                     id="new-password"
                                     onChange={(e) => setUsernameOrEmail(e.target.value)}
@@ -114,7 +116,11 @@ function YourAccount() {
                                 </path>
                             </svg>
                             : 'Change Password'}</Button>
-                </form>
+                </form>}
+                {otpSent &&  <div className="flex gap-2 items-center justify-center">
+              <FaCheckCircle className="text-green-500 text-xl" />
+              <span>Reset password link has been sent to your phone number.</span>
+            </div> }
             </Card>
         </div>
     )
