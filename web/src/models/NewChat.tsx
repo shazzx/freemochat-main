@@ -14,13 +14,15 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs"
+import { useNavigate } from "react-router-dom"
 
 function NewChat({ setChatOpen, setNewChatModelState, setRecepientDetails, friends, groups, setCurrentTab }) {
+    const navigate = useNavigate()
     console.log(friends)
     return (
         <div className='absolute top-0 right-0 w-screen z-10 sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
-                setNewChatModelState(false)
+                navigate('', {replace: true})
             }}></div>
             <div className='relative h-full w-full sm:w-[400px] lg:w-[560px] bg-background border-2 border-accent shadow-md '>
                 <div className="p-4 font-medium text-xl pb-5">

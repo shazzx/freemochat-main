@@ -25,12 +25,14 @@ import { BiSolidMessageSquareAdd } from "react-icons/bi";
 import { useSocket } from "@/hooks/useSocket"
 import { useAppSelector } from "@/app/hooks"
 import { format } from "date-fns"
+import { useNavigate, useSearchParams } from "react-router-dom"
 
 
 function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
     const { data } = useChatGroups()
     const {user} = useAppSelector(state => state.user)
     const userFriends = useUserFriends(user._id)
+    const navigate = useNavigate()
 
     const [chatOptions, setChatOptions] = useState(false)
     const [groupModelState, setGroupModelState] = useState(false)
@@ -57,6 +59,8 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
           setGroupModelState(false)
     }
 
+    const[ searchParams] =useSearchParams()
+
     useEffect(() => {
         function handleClickOutside(event) {
             if (newChatRef.current && !newChatRef.current.contains(event.target)) {
@@ -76,10 +80,10 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
     
     return (
         <div className={`min-w-[260px] sm:max-w-[460px] w-full flex h-full ${chatOpen && "hidden lg:flex"}`}>
-            {groupModelState &&
+            {searchParams.get("model") == "newgroup" &&
                 <CreateChatGroup setCurrentTab={setCurrentTab} currentTab={currentTab} setModelTrigger={setGroupModelState} createGroup={createGroup} />
             }
-            {newChatModelState &&
+            {searchParams.get("model") == "newchat" &&
                 <NewChat setChatOpen={setChatOpen} setNewChatModelState={setNewChatModelState} groups={data} friends={userFriends.data} setRecepientDetails={setRecepientDetails} setCurrentTab={setCurrentTab} />
             }
             <div className='relative h-full w-full border border-muted '>
@@ -199,13 +203,17 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                         </div>
                         <div className="flex rounded-md flex-col gap-2 z-50">
                             <div className="flex gap-2 p-2 hover:bg-accent cursor-pointer" onClick={() => {
-                                setNewChatModelState(true)
-                                // setFriendListState(true)
+                                navigate("?model=newchat")
                                 setChatOptions(false)
-                            }}><MdMessage size={26} /> <span>New Chat</span></div>
+                            }}>
+                                <MdMessage size={26} /> <span>New Chat</span>
+                            </div>
+                            
                             <div className="flex gap-2 p-2 hover:bg-accent cursor-pointer" onClick={() => {
-                                setGroupModelState(true)
-                            }}><MdGroups size={26} /> <span>New Group</span></div>
+                                navigate("?model=newgroup")
+                                setChatOptions(false)
+                            }}>
+                                <MdGroups size={26} /> <span>New Group</span></div>
                         </div>
 
                     </div>

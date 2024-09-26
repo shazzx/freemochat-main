@@ -14,6 +14,7 @@ import { Camera, ChevronLeft, EllipsisVertical } from "lucide-react"
 import { FC, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { RiAdminLine, RiUserUnfollowLine } from "react-icons/ri"
+import { useNavigate } from "react-router-dom"
 
 
 const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, createGroup, editGroup, editState, groupDetails }) => {
@@ -28,6 +29,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
         resolver: yupResolver(ChatGroupCreate),
         mode: 'onChange',
     });
+    const navigate = useNavigate()
 
     console.log(groupDetails)
     const groupName = useRef<HTMLInputElement>()
@@ -55,7 +57,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
     return (
         <div className='absolute top-0 right-0 w-screen z-10 sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
-                setModelTrigger(false)
+                navigate('', {replace: true})
             }}></div>
             {
                 imageUpload && cropperModel &&

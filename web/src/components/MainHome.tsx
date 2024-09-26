@@ -552,7 +552,11 @@ const MainHome = ({ children }: any) => {
         {/* main section */}
         {children}
       </div>
+
+      {!location.pathname.startsWith("/messages")
+      &&
       <BottomNav />
+      }
 
     </div >
   )

@@ -26,9 +26,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   // <BrowserRouter>
   <Provider store={store}>
     <QueryClientProvider client={queryClient}>
-      <GoogleOAuthProvider clientId='58656245774-9rsnoa29otlo6nkt86rcshqiihd1shoj.apps.googleusercontent.com'>
         <App />
-      </GoogleOAuthProvider>
     </QueryClientProvider>
   </Provider>
   // </BrowserRouter>
