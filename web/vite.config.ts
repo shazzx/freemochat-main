@@ -13,6 +13,10 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.env': env
     },
+    server: {
+      host: '0.0.0.0',
+      port: 5173
+    },
     resolve: {
       
       alias: {
