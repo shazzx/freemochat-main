@@ -18,6 +18,7 @@ import { TwilioService } from 'src/twilio/twilio.service';
 import { compare } from 'bcrypt';
 import { CryptoService } from 'src/crypto/crypto.service';
 import { CacheService } from 'src/cache/cache.service';
+import { messageGenerator } from 'src/utils/messageGenerator';
 
 @Controller('user')
 export class UserController {
@@ -66,7 +67,8 @@ export class UserController {
             //     // html: emailData.html,
             // })
 
-            await this.twilioService.sendSMS(phone, `Your phone otp code is: ${phoneOTP}`)
+            const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP, 'register')
+            await this.twilioService.sendSMS(phone, message)
             res.json({ success: true, tempSecret, username: user.username, message: "account created successfully", verification: "pending" })
 
         } catch (error) {
@@ -96,6 +98,7 @@ export class UserController {
             const user = await this.userService.findUser(username)
             console.log(user, authId)
             if (!user) {
+                console.log('no user')
                 throw new BadRequestException()
             }
 
@@ -113,7 +116,9 @@ export class UserController {
             // }
 
 
+
             if (!isValidPhoneSecret) {
+                console.log('otp is not valid')
                 throw new BadRequestException("OTP is not valid")
             }
 
@@ -161,6 +166,14 @@ export class UserController {
             const user = await this.userService.findUser(username)
             if (!user) {
                 throw new BadRequestException()
+            }
+
+            if (updatedData['address'] && user.address.country == updatedData.address.country) {
+                console.log('updating address')
+
+                await this.userService.updateUser(user._id, { address: updatedData.address })
+                res.json({ success: true })
+                return
             }
 
             console.log("username, updatedData, otp, type", username, updatedData, otp, type)
@@ -366,7 +379,7 @@ export class UserController {
         @Req() req: Request,
         @Res() res: Response) {
         const { username } = usernameExists
-         
+
         if (username == req.user.username) {
             return res.json({ success: true })
         }
@@ -420,17 +433,17 @@ export class UserController {
             }
 
             // if (type == 'email') {
-                // let secret = this.otpService.generateSecret()
-                // let emailOTP = await this.otpService.generateOtp(user._id, 'email')
-                // console.log(emailOTP, 'email')
+            // let secret = this.otpService.generateSecret()
+            // let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+            // console.log(emailOTP, 'email')
 
-                // await this.twilioService.sendEmail({
-                //     to: user.email,
-                //     from: 'freedombook99@gmail.com',
-                //     subject: "OTP Verification",
-                //     text: `Your email otp code is: ${emailOTP} `,
-                //     // html: emailData.html,
-                // })
+            // await this.twilioService.sendEmail({
+            //     to: user.email,
+            //     from: 'freedombook99@gmail.com',
+            //     subject: "OTP Verification",
+            //     text: `Your email otp code is: ${emailOTP} `,
+            //     // html: emailData.html,
+            // })
             //     return res.json({ success: true, message: "otp has been sent to your email" })
             // }
 
@@ -439,7 +452,9 @@ export class UserController {
                 let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
                 console.log(phoneOTP, 'phone')
                 console.log(user.phone)
-                await this.twilioService.sendSMS(user.phone, `Your phone otp code is: ${phoneOTP}`)
+                const message = messageGenerator(user.firstname + " " + user.lastname, phoneOTP)
+                console.log(message)
+                // await this.twilioService.sendSMS(user.phone, message)
                 return res.json({ success: true, message: "otp has been sent to your phone" })
             }
 
@@ -448,7 +463,7 @@ export class UserController {
             res.status(err.statusCode || 500).json({ success: false, message: err.message })
         }
     }
-    
+
 
     @Post('resend-otp-user')
     async resendOTPUser(
@@ -480,7 +495,9 @@ export class UserController {
                 let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
                 console.log(phoneOTP, 'phone send to', (phone || user.phone))
                 console.log(phone || user.phone)
-                await this.twilioService.sendSMS(user.phone, `Your phone otp code is: ${phoneOTP}`)
+                const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP)
+                console.log(message)
+                // await this.twilioService.sendSMS(user.phone, message)
                 return res.json({ success: true, message: "otp has been sent to your phone" })
             }
 

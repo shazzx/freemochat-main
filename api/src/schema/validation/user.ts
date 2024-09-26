@@ -13,7 +13,6 @@ export const CreateUser = z.object({
     firstname: z.string(),
     lastname: z.string().optional(),
     username: z.string(),
-    email: z.string(),
     phone: z.string(),
     password: z.string(),
     confirmPassword: z.string(),
@@ -80,14 +79,13 @@ export const VerifyOTP = z.object({
 
 export const VerifyOTPUser = z.object({
     username: z.string().min(5),
-    otp: z.string(),
-    type: z.string(),
+    otp: z.string().optional(),
+    type: z.string().optional(),
     updatedData: z.object({
         changePassword: z.object({
             password: z.string(),
             currentPassword: z.string(),
         }).optional(),
-        email: z.string().optional(),
         phone: z.string().optional(),
         address: z.object({
             country: z.string(),
@@ -116,7 +114,7 @@ export const ForgetPassword = z.object({
         {
             message: 'Invalid UUID',
         }
-    ),
+    ).optional(),
     changePassword: z.object({
         password: z.string(),
     }),

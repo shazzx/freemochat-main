@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/select"
 import { useState } from "react"
 
-export function SelectScrollable({ placeholder, selectData, setCity, setCountry, areCities, countryName, cityName, areAreas, setArea }: any) {
+export function SelectScrollable({ placeholder, selectData, setCity, defaultValue, setCountry, areCities, countryName, cityName, areAreas, setArea }: any) {
     let disable= true
     if(areCities && !countryName){
         disable = true
@@ -16,6 +16,8 @@ export function SelectScrollable({ placeholder, selectData, setCity, setCountry,
     }else {
         disable = false
     }
+
+    console.log(defaultValue, 'defaultvalue')
 
     return (
         <Select onValueChange={(value) => {
@@ -30,7 +32,7 @@ export function SelectScrollable({ placeholder, selectData, setCity, setCountry,
         }} disabled={disable}
         >
             <SelectTrigger >
-                <SelectValue placeholder={placeholder} />
+                <SelectValue placeholder={defaultValue ?? placeholder} />
             </SelectTrigger>
             <SelectContent className="w-[280px]">
                 {selectData?.length > 0 && selectData.map((data) => {

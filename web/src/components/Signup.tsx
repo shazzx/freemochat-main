@@ -120,7 +120,10 @@ export function Signup() {
 
 
     useEffect(() => {
-        setSignupButtonState(false)
+        if(errors){
+            console.log(errors)
+            setSignupButtonState(false)
+        }
     }, [errors])
 
     return (

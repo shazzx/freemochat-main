@@ -20,7 +20,7 @@ import { produce } from "immer";
 import { useSocket } from "@/hooks/useSocket";
 import CreateChatGroup from "@/models/CreateChatGroup";
 import { toast } from "react-toastify";
-import { handleFile } from "@/lib/formatChec";
+import { handleFile } from "@/lib/formatCheck";
 import { startCall } from "@/app/features/user/callSlice";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { format } from "date-fns";
@@ -237,7 +237,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }) {
 
 
         if (recepientDetails.type == "ChatGroup") {
-            socket.emit("groupchat", { senderDetails: { targetId: user?._id, username: user?.username }, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, targetId: messageData.recepeint } });
+            socket.emit("groupchat", { senderDetails: { targetId: user?._id, username: user?.username, firstname: user.firstname, profile: user?.profile, lastname: user.lastname }, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, targetId: messageData.recepeint } });
             setInputValue("");
             return
         }
@@ -571,11 +571,11 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }) {
                                             <Avatar className="h-9 w-9 flex items-center justify-center">
                                                 <AvatarImage src={message?.sender?.profile || recepientDetails?.profile} alt="Avatar" />
                                                 <AvatarFallback>
-                                                    {message?.sender?.firstname ? message?.sender?.firstname[0]?.toUpperCase()
+                                                    { message?.sender?.firstname ? message?.sender?.firstname[0]?.toUpperCase()
                                                         ||
-                                                        recepientDetails?.firstname[0]?.toUpperCase()
+                                                        (recepientDetails?.firstname && recepientDetails?.firstname[0]?.toUpperCase())
                                                         :
-                                                        recepientDetails?.firstname[0]?.toUpperCase() || recepientDetails?.firstname[0]?.toUpperCase()
+                                                        (recepientDetails?.firstname && recepientDetails?.firstname[0]?.toUpperCase())
 
                                                     }</AvatarFallback>
                                             </Avatar>

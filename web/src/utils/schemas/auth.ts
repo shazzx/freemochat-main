@@ -145,7 +145,7 @@ export const SignupSchema = yup.object().shape({
     // city: yup.string().required('city is required'),
     area: yup.string().required("area is required")
   }),
-  bio: yup.string().max(160, "bio should not exceed 160 characters"),
+  bio: yup.string().max(160, "bio should not exceed 160 characters").optional(),
   password: yup.string().min(8, "password atleast be 8 characters long"),
   confirmPassword: yup.string().required().oneOf([yup.ref('password'), null], "Passwords Must Match")
 });

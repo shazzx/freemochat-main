@@ -1,11 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit"
 
 const initialState: {
-    verificationStatus: {isPhoneVerified: boolean, isEmailVerified: boolean, success: boolean}
+    verificationStatus: {isPhoneVerified: boolean, success: boolean}
 } = {
     verificationStatus: {
         isPhoneVerified: false,
-        isEmailVerified: false,
         success: false,
     }
 }

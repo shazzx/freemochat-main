@@ -142,10 +142,10 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                 changePhoneModel &&
                 <ChangePhoneModel setModelTrigger={setChangePhoneModel} />
             }
-            {
+            {/* {
                 changeEmailModel &&
                 <ChangeEmailModel setModelTrigger={setChangeEmailModel} />
-            }
+            } */}
                         {
                 changePasswordModel &&
                 <ChangePasswordModel setModelTrigger={setChangePasswordModel} setForgetPasswordModel={setForgetPasswordModel}/>
@@ -370,28 +370,28 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                 </div>
 
                                 <div className="flex gap-4 w-full">
-                                    <div className="w-full">
-                                        <div className="flex gap-2 items-center">
+                                    {/* <div className="w-full"> */}
+                                        {/* <div className="flex gap-2 items-center">
                                             <Label className="mb-1">
                                                 Email
                                             </Label>
                                             <PencilIcon size="16" className="cursor-pointer" onClick={() => {
                                                 setChangeEmailModel(true)
                                             }} />
-                                        </div>
+                                        </div> */}
 
-                                        <Input
+                                        {/* <Input
                                             disabled
                                             name="email"
                                             // ref={emailRef}
                                             placeholder="Enter your email"
                                             id="email"
                                             defaultValue={email}
-                                            className="max-w-96 w-full"
-                                        // {...register("email")}
-                                        />
+                                            className="max-w-96 w-full" */}
+                                        {/* // {...register("email")} */}
+                                        {/* /> */}
                                         {/* {errors.email && <p>{errors.email.message}</p>} */}
-                                    </div>
+                                    {/* </div> */}
                                     <div className="w-full">
                                         <div className="flex gap-2 items-center">
                                             <Label className="mb-1">

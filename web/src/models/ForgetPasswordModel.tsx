@@ -113,7 +113,7 @@ function ForgetPasswordModel({ setModelTrigger }) {
         setButtonState(false)
 
         mutation.mutate({
-            otp, type: 'email', changePassword: {
+            otp, type: 'phone', changePassword: {
                 password: newPassword
             }
         })
@@ -158,7 +158,7 @@ function ForgetPasswordModel({ setModelTrigger }) {
                                 />
                             </div>
                         </div>
-                        <InputOTPForm loader={loader} changeData={changePassword} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changePassword} buttonTitle={"Change Password"} data={!confirmPassword || !confirmPassword || !otpSent || !buttonState ? true : false} type="email" label="Password Verification" description={otpSent ? "Please enter the one-time password sent to your email." : "Click on send to get an OTP for verification."} />
+                        <InputOTPForm loader={loader} changeData={changePassword} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changePassword} buttonTitle={"Change Password"} data={!confirmPassword || !confirmPassword || !otpSent || !buttonState ? true : false} type="phone" label="Password Verification" description={otpSent ? "Please enter the one-time password sent to your email." : "Click on send to get an OTP for verification."} />
 
                     </div>
 

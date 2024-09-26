@@ -9,6 +9,8 @@ import { v4 as uuidv4 } from 'uuid'
 import { USER } from 'src/utils/enums/user.c';
 import { OtpService } from 'src/otp/otp.service';
 import { TwilioService } from 'src/twilio/twilio.service';
+import { compare } from 'bcrypt';
+import { messageGenerator } from 'src/utils/messageGenerator';
 
 @Injectable()
 export class AuthService {
@@ -26,11 +28,11 @@ export class AuthService {
             throw new UnauthorizedException(USER.WRONG_DATA)
         }
 
-        // let isValidPassword = await compare(password, user.password)
+        let isValidPassword = await compare(password, user.password)
 
-        // if (!isValidPassword) {
-        //     throw new HttpException({ message: USER.WRONG_DATA, type: 'invalid credentials' }, HttpStatus.BAD_REQUEST)
-        // }
+        if (!isValidPassword) {
+            throw new HttpException({ message: USER.WRONG_DATA, type: 'invalid credentials' }, HttpStatus.BAD_REQUEST)
+        }
 
         let verification = {
             phone: false
@@ -61,10 +63,11 @@ export class AuthService {
             //     text: `Your email otp code is: ${emailOTP} `,
             //     // html: emailData.html,
             // })
-
-            await this.twilioService.sendSMS(user.phone, `Your phone otp code is: ${phoneOTP}`)
+            const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP)
+            console.log(message)
+            await this.twilioService.sendSMS(user.phone, message)
             await this.userService.updateUser(user._id, { tempSecret: tempSecret })
-            throw new HttpException({ message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: { username, auth_id: user.tempSecret }, verification }, HttpStatus.BAD_REQUEST)
+            throw new HttpException({ message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: { username, auth_id: tempSecret }, verification }, HttpStatus.BAD_REQUEST)
         }
         // let emailOTP = await this.otpService.generateOtp(user._id, 'email')
         let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
@@ -75,8 +78,9 @@ export class AuthService {
         //     text: `Your email otp is: ${emailOTP} `,
         //     // html: emailData.html,
         // })
-
-        await this.twilioService.sendSMS(user.phone, `Your phone otp code is: ${phoneOTP}`)
+        const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP)
+        console.log(message)
+        await this.twilioService.sendSMS(user.phone, message)
 
         console.log( phoneOTP)
 

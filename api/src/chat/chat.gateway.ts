@@ -75,7 +75,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       console.log('sending to : ', payload.recepientDetails.targetId)
       this.server.to(payload.recepientDetails.targetId).emit('groupchat', {...payload, _id: message._id});
-      this.server.emit('chatlist', { users: chatlist })
+      this.server.emit('chatlist', { groups: chatlist })
       return payload;
     } catch (error) {
       this.logger.error(error)

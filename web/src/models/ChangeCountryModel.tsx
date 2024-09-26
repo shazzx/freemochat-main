@@ -15,11 +15,11 @@ import { updateUser } from '@/app/features/user/userSlice'
 function ChangeCountryModel({ setModelTrigger }) {
 
     const { user } = useAppSelector((state) => state.user)
-
-    const [country, setCountry] = useState(null)
+console.log(user.address)
+    const [country, setCountry] = useState({name: user.address.country})
     const [cities, setCities] = useState(null)
     const [countries, setCountries] = useState(null)
-    const [city, setCity] = useState(null)
+    const [city, setCity] = useState(user.address.city)
     const [_phone, setPhone] = useState(null)
     const [otp, setOtp] = useState(null)
     const areaRef = useRef<HTMLInputElement>()
@@ -130,8 +130,8 @@ function ChangeCountryModel({ setModelTrigger }) {
 
     const mutation = useMutation({
         mutationFn: async (data: {
-            otp: string, type: string, updatedData: {
-                phone: string, address: {
+            otp?: string, type?: string, updatedData: {
+                phone?: string, address: {
                     country: string,
                     city: string,
                     area: string
@@ -156,6 +156,18 @@ function ChangeCountryModel({ setModelTrigger }) {
 
 
     const changeCountry = async () => {
+        if(country.name == user.address.country){
+            mutation.mutate({
+                 updatedData: {
+                     address: {
+                        country: country.name,
+                        city,
+                        area: areaRef.current.value
+                    }
+                }
+            })
+            return 
+        }
         let phone = validatePhone(`${_phone}`, country["iso3"])
 
         if (phone.isValid) {
@@ -199,7 +211,7 @@ function ChangeCountryModel({ setModelTrigger }) {
                                     />
                                     {errors.address?.country && <p>{errors.address.country.message}</p>} */}
                             <div className="flex gap-2 ">
-                                <SelectScrollable placeholder={"Select country"} selectData={countries} setCity={setCity} setCountry={setCountry} />
+                                <SelectScrollable placeholder={"Select country"} defaultValue={user?.address?.country} selectData={countries} setCity={setCity} setCountry={setCountry} />
                             </div>
 
                         </div>
@@ -210,12 +222,31 @@ function ChangeCountryModel({ setModelTrigger }) {
                             <SelectScrollable
                                 placeholder={"Select city"}
                                 selectData={cities}
+                                defaultValue={country?.name == user.address.country ? user?.address?.city : null}
                                 setCity={setCity}
                                 setCountry={setCountry}
                                 areCities={true}
                                 countryName={country} />
                         </div>
+
                         <div className="w-full">
+                            <div className="w-full">
+                                <Label >
+                                    Area
+                                </Label>
+                                <Input
+                                    disabled={!country || !city ? true : false}
+                                    name="area"
+                                    placeholder="Enter your area name"
+                                    ref={areaRef}
+                                    id="area"
+                                    defaultValue={country?.name == user.address.country ? user.address.area : null}
+                                    className="max-w-96 w-full"
+                                />
+                            </div>
+                        </div>
+                        {country.name !== user.address.country && 
+                         <div className="w-full">
                             <Label >
                                 Phone
                             </Label>
@@ -224,35 +255,17 @@ function ChangeCountryModel({ setModelTrigger }) {
                                 disabled={!country || !city ? true : false}
                                 name="phone"
                                 type='number'
-                                // ref={phoneRef}
                                 placeholder="Enter your phone number"
                                 id="phone"
-                                // defaultValue={phone}
                                 className="max-w-96 w-full"
-                            // {...register("phone")}
                             />
-                            {/* {errors.phone && <p>{errors.phone.message}</p>} */}
-                        </div>
-                        <div className="w-full">
-                            <div className="w-full">
-                                <Label >
-                                    Area
-                                </Label>
-                                <Input
-                                    disabled={!country || !city ? true : false}
-
-                                    name="area"
-                                    placeholder="Enter your area name"
-                                    ref={areaRef}
-                                    id="area"
-                                    // defaultValue={address?.area}
-                                    className="max-w-96 w-full"
-                                // {...register("address.area")}
-                                />
-                                {/* {errors.address?.area && <p>{errors.address.area.message}</p>} */}
-                            </div>
-                        </div>
-                        <InputOTPForm changeData={changeCountry} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeCountry} buttonTitle={"Change Address"} data={!country || !city || !_phone || !otpSent ? true : false} type="phone" label="Phone Verification" description={otpSent ? "Please enter the one-time password sent to your phone." : "Click on send to get an OTP for verification."} />
+                        </div>}
+                        {
+                            (country?.name == user.address.country) ?
+                            <Button type='button' onClick={changeCountry}>Change Address</Button>
+                            :
+                            <InputOTPForm changeData={changeCountry} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeCountry} buttonTitle={"Change Address"} data={!country || !city || !_phone || !otpSent ? true : false} type="phone" label="Phone Verification" description={otpSent ? "Please enter the one-time password sent to your phone." : "Click on send to get an OTP for verification."} />
+                    }
 
                     </div>
 

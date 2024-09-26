@@ -43,28 +43,23 @@ function AuthVerificationForm() {
     const dispatch = useAppDispatch()
 
     const verifyOTP = async (data: any) => {
-try {
-    
-    const response = await axiosClient.post("/user/verify-otp", data, { timeout: 20000 })
-    console.log(response.data)
-    if(response.data.email && !response.data.phone){
-        dispatch(setVerificationStatus({isEmailVerified: true}))
-        toast.success('Email Verified')
-    }
-    if(!response.data.email && response.data.phone){
-        dispatch(setVerificationStatus({isPhoneVerified: true}))
-        toast.success('Phone Verified')
-    }
-    console.log(response.data)
-    if(response.data.email && response.data.phone){
-        toast.success("Verified successfully")
-        navigate("/login")
-        dispatch(setVerificationStatus({isPhoneVerified: false, isEmailVerified: false}))
-    }
-} catch (error) {
-    toast.info(error.message)
-}
-        // return response.data
+        try {
+            const response = await axiosClient.post("/user/verify-otp", data, { timeout: 20000 })
+            console.log(response.data)
+
+            if (response.data.phone) {
+                dispatch(setVerificationStatus({ isPhoneVerified: true, success: true }))
+                toast.success("Verified successfully")
+                navigate("/login")
+            }
+        } catch (error) {
+            if(error.message.startsWith('Request failed with')){
+                toast.info('Bad Request')
+                return
+            }
+            toast.info(error.message)
+
+        }
     }
     const mutation = useMutation({
         mutationFn: async (data: { pin: string, type: string }): Promise<any> => {
@@ -117,7 +112,7 @@ try {
                     <CardTitle className="text-2xl">Verification</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-12 max-w-96 p-4">
-                    {verificationStatus.isEmailVerified ?
+                    {/* {verificationStatus.isEmailVerified ?
                         <div className="flex gap-2 items-center justify-center">
                             <FaCheckCircle className="text-green-500 text-3xl" />
                             <span>EmailIsVerified</span>
@@ -126,7 +121,7 @@ try {
                         :
                         <InputOTPForm otpResend={otpResend} onSubmit={onSubmit} type="email" label="Email Verification" description="Please enter the one-time password sent to your email." />
 
-                    }
+                    } */}
                     {verificationStatus.isPhoneVerified ?
                         <div className="flex gap-2 items-center justify-center">
                             <FaCheckCircle className="text-green-500 text-3xl" />

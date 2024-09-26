@@ -164,6 +164,7 @@ function ChangePhoneModel({ setModelTrigger }) {
                             </Label>
                             <Input
                                 onChange={(e) => setPhone(e.target.value)}
+                                disabled={otpSent}
                                 name="phone"
                                 type='number'
                                 // ref={phoneRef}

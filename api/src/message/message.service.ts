@@ -52,10 +52,16 @@ export class MessageService {
 
     }
     if (isChatGroup == 1) {
+    const _cursor = 
+    (cursor && chatlist.chatRemovedAt) ? { createdAt: { $lt: new Date(cursor), $gt: chatlist.chatRemovedAt } } 
+    : 
+    cursor ?  {createdAt: { $lt: new Date(cursor)}} : chatlist.chatRemovedAt ?  {createdAt: {$gt: chatlist.chatRemovedAt}} : {};
+
       query = { ..._cursor, recepient: new Types.ObjectId(recepientId) }
       
       messages = await this.messageModel.aggregate([
-        { $match: { ...query, createdAt: { $gt: chatlist.createdAt } } },
+        { $match: { ...query}},
+        { $sort: { createdAt: -1 } },
         { $limit: limit + 1 },
         {
           $addFields: {
@@ -119,7 +125,7 @@ export class MessageService {
         },
         { $unwind: '$allMessages' },
         { $replaceRoot: { newRoot: '$allMessages' } },
-      ]).sort({ createdAt: -1 });
+      ])
 
     }
 

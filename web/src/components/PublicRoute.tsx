@@ -1,10 +1,9 @@
 import { axiosClient } from '@/api/axiosClient'
 import { logout, setAccessToken } from '@/app/features/user/authSlice'
-import { setUser } from '@/app/features/user/userSlice'
 import { setVerificationStatus } from '@/app/features/user/verificationStatusSlice'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import React, { useEffect, useState } from 'react'
-import { Navigate, Outlet, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import {  Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 
 function PublicRoute() {
@@ -25,11 +24,11 @@ function PublicRoute() {
             }
             try {
                 if (location.pathname.startsWith("/auth")) {
-                    const { data: { isPhoneVerified, isEmailVerified } } = await axiosClient.post("user/verification-status", {
+                    const { data: { isPhoneVerified } } = await axiosClient.post("user/verification-status", {
                         authId,
                         username: params.username,
                     })
-                    dispatch(setVerificationStatus({ isPhoneVerified, isEmailVerified, success: true }))
+                    dispatch(setVerificationStatus({ isPhoneVerified, success: true }))
                 }
                 const { data } = await axiosClient.post("user/refresh-token")
                 dispatch(setAccessToken(data?.accessToken))
@@ -52,7 +51,7 @@ function PublicRoute() {
 
                 if (error.response.data.message.startsWith('already verified')) {
                     toast.error(error.response.data.message)
-                    dispatch(setVerificationStatus({ isPhoneVerified: false, isEmailVerified: false, success: false }))
+                    dispatch(setVerificationStatus({ isPhoneVerified: false, success: false }))
                     navigate('/login')
                     return
                 }

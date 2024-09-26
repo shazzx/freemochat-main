@@ -19,7 +19,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
 
   useEffect(() => {
     const socket = socketRef.current;
-
+    
     socket.on('chat', (message) => {
       console.log(message, 'new message')
       let newMessage = {
@@ -30,6 +30,58 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
         media: message?.media,
         type: message?.type
       }
+      queryClient.setQueryData(["messages", recepient], (pages: any) => {
+        const updatedMessages = produce(pages, (draft: any) => {
+          if (!draft) {
+            return null
+          }
+
+          let pageIndex = -1
+          let messageIndex = -1
+
+          draft.pages.forEach((page, _pageIndex) => {
+            page.messages.forEach((message, _messageIndex) => {
+              if (message._id == newMessage._id) {
+                pageIndex = _pageIndex
+                messageIndex = _messageIndex
+              }
+            })
+          })
+
+          console.log(pageIndex, 'pageindex', messageIndex, 'messageindex')
+
+          if (pageIndex > -1 && messageIndex > -1) {
+            return draft
+          }
+
+          if (draft.pages[draft.pages.length - 1].messages) {
+            draft.pages[draft.pages.length - 1].messages = [...draft.pages[draft.pages.length - 1].messages, newMessage]
+            return draft
+          }
+          console.log(pages)
+          throw new Error()
+        })
+        return updatedMessages
+      });
+
+    });
+
+    socket.on('groupchat', (message) => {
+      console.log(message, 'new message')
+      let newMessage = {
+        _id: message?._id,
+        recepient: message?.recepientDetails?.groupId,
+        sender: message?.senderDetails,
+        content: message?.body,
+        media: message?.media,
+        type: message?.type
+      }
+      console.log(newMessage)
+      if(newMessage.sender.username == user.username){
+        return
+      }
+      queryClient.invalidateQueries({ queryKey: ['chatlist'] })
+
       queryClient.setQueryData(["messages", recepient], (pages: any) => {
         const updatedMessages = produce(pages, (draft: any) => {
           if (!draft) {
@@ -121,9 +173,8 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
       queryClient.invalidateQueries({ queryKey: ['userMedia', user._id] })
     })
 
-    socket.on("chatlist", (chatlists) => {
+    socket.on("chatlist", () => {
       queryClient.invalidateQueries({ queryKey: ['chatlist'] })
-      // console.log(chatlists)
     })
 
 
