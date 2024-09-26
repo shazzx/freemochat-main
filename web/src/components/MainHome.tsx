@@ -417,7 +417,6 @@ const MainHome = ({ children }: any) => {
                     Profile
                   </DropdownMenuItem>
                 </Link>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuItem onClick={async () => {
                   let logout = await axiosClient.post("/user/logout")
                   if (logout) {
@@ -426,6 +425,10 @@ const MainHome = ({ children }: any) => {
                     return
                   }
                 }}>Logout</DropdownMenuItem>
+                <DropdownMenuItem>
+            <ModeToggle />
+                </DropdownMenuItem>
+                
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

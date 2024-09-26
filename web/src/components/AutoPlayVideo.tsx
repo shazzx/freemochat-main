@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useState } from 'react';
-
 const AutoPlayVideo = ({ src, type = 'video/mp4' }) => {
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -41,6 +40,8 @@ const AutoPlayVideo = ({ src, type = 'video/mp4' }) => {
         src={src}
         loop
         controls
+        disablePictureInPicture
+        controlsList="nodownload noplaybackrate"
         playsInline
         className={`w-full ${isVisible ? 'opacity-100' : 'opacity-50'} w-full max-h-[500px] h-full transition-opacity duration-300`}
       />

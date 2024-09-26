@@ -59,7 +59,7 @@ export class SearchService {
             {
                 $match: {
                     $or: [
-                        { username: { $regex: regexPattern } },
+                        { username: { $regex: regexPattern }, isActive: true },
                         { handle: { $regex: regexPattern } },
                     ],
                 },
@@ -468,7 +468,7 @@ export class SearchService {
 
     }
     async searchUsers(query: string) {
-        const users = await this.userModel.find({ username: { $regex: new RegExp(`^${query}`, 'i') } })
+        const users = await this.userModel.find({ username: { $regex: new RegExp(`^${query}`, 'i') }, isActive: true })
         return users
     }
 }

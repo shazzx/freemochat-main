@@ -276,7 +276,7 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
                                 {!isRecording && <Button className="m-0 bg-transparent  py-5 px-2 border-[2px] border-primary" onClick={() => {
                                     replyOnPost()
                                 }} >
-                                    <MdSend size={24} className=""></MdSend>
+                                    <MdSend size={24} className="text-foreground"></MdSend>
                                 </Button>}
                             </div>
                         </div>
@@ -319,7 +319,7 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
                             <Button className="m-0 bg-transparent  py-5 px-2 border-[2px] border-primary" onClick={() => {
                                 commentOnPost()
                             }} >
-                                <MdSend size={24} className=""></MdSend>
+                                <MdSend size={24} className="text-foreground"></MdSend>
                             </Button>
                         }
                     </div>}

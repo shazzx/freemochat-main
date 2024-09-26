@@ -294,12 +294,12 @@ export class UserService {
         console.log(username)
 
         if (populate) {
-            let user = await this.userModel.find({ username }).populate(populate)
+            let user = await this.userModel.find({ username, isActive: true }).populate(populate)
             return user
         }
 
         let user = await this.userModel.aggregate([
-            { $match: { username } },
+            { $match: { username, isActive: true } },
             {
 
                 $lookup: {
@@ -503,7 +503,7 @@ export class UserService {
     }
 
     async findUser(username: string): Promise<any> {
-        let user = await this.userModel.findOne({ $or: [{ username }, { phone: username }], })
+        let user = await this.userModel.findOne({ username })
         return user
     }
 }
