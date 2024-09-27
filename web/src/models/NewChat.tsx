@@ -25,7 +25,7 @@ function NewChat({ setChatOpen, setNewChatModelState, setRecepientDetails, frien
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
                 navigate('', {replace: true})
             }}></div>
-            <div className='relative h-full w-full sm:w-[400px] lg:w-[560px] bg-background border-2 border-accent shadow-md '>
+            <div className='relative h-full w-full sm:w-[400px] lg:w-[560px] bg-background-secondary dark:bg-background border-2 border-accent shadow-md '>
                 <div className="flex justify-between p-4 font-medium text-xl pb-5">
                     <h2>New Chat</h2>
                     <MdClose cursor="pointer" onClick={() => {

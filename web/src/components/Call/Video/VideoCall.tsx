@@ -26,6 +26,7 @@ const VideoCall = ({ channel, _callDetails, cancelCall }) => {
     const { user } = useAppSelector((state) => state.user)
 
     console.log(callDetails)
+    console.log(_callDetails)
     const socket = useSocket()
 
     useEffect(() => {
@@ -98,7 +99,11 @@ const VideoCall = ({ channel, _callDetails, cancelCall }) => {
             {targetDetails ?
                 <div className="flex gap-12 absolute bottom-12 z-30">
                     <button className="rounded-full p-[14px] bg-red-500 hover:bg-red-400 active:bg-red-600"
-                        onClick={callDecline}>
+                        onClick={() => {
+                            setActiveConnection(false)
+                            socket.emit("call-end", {userDetails: user, recepientDetails: targetDetails})
+                            cancelCall("VIDEO")
+                        }}>
                         <MdPhone size={32} color="white" />
                     </button>
                     {/* 

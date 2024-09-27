@@ -682,7 +682,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }) {
                                     </svg>
                                 </Button>
                             </div>
-                            {fileSelectDropDownState && <div className='absolute -left-2 bottom-12 flex w-44 flex-col bg-card p-1 rounded-md'>
+                            {fileSelectDropDownState && <div className='absolute border border-accent shadow-lg -left-2 bottom-12 flex w-44 flex-col bg-card p-1 rounded-md'>
                                 <label className="hover:bg-accent cursor-pointer  p-2" htmlFor="text-image">
                                     <div className="flex items-center gap-2" >
                                         <Image /> Image

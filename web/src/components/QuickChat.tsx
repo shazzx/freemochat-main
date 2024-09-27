@@ -73,7 +73,7 @@ function QuickChat({ target, setOpenQuickChat }) {
     };
 
     return (
-        <div className='absolute z-50 bg-background flex flex-col sm:max-w-[400px]  sm:max-h-[440px] h-full w-full border-2 border-accent bottom-0 sm:bottom-12 sm:right-12 ' >
+        <div className='absolute z-50 bg-background flex flex-col sm:max-w-[400px]  sm:max-h-[440px] h-full w-full border-2 border-accent bottom-0 sm:bottom-12 sm:right-12 sm:border sm:border-accent sm:shadow-md' >
             <div className='flex items-center justify-between p-3 border border-muted'>
                 <div className='flex gap-2 items-center justify-center'>
                     {/* praying man */}

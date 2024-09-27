@@ -201,7 +201,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                             setChatOptions(false)
                         }}>
                         </div>
-                        <div className="flex rounded-md flex-col gap-2 z-50">
+                        <div className="flex rounded-md  border border-accent shadow-lg flex-col gap-2 z-50">
                             <div className="flex gap-2 p-2 hover:bg-accent cursor-pointer" onClick={() => {
                                 navigate("?model=newchat")
                                 setChatOptions(false)

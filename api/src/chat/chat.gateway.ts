@@ -172,15 +172,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage("call-end")
   async cancelCall(@MessageBody() payload) {
-    if(payload.recepientDetails && !payload.recepientDetails.userId){
+    console.log(payload, 'call end payload')
+    if(!payload?.recepientDetails && !payload.recepientDetails.userId){
       throw new BadRequestException('recepient id required')
     }
+    
+    console.log(payload, 'call end payload')
+    let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload?.recepientDetails?.userId))
+    let user = JSON.parse(await this.cacheService.getOnlineUser(payload?.userDetails?.userId))
 
-    console.log(payload)
-    let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
-    let user = JSON.parse(await this.cacheService.getOnlineUser(payload.userDetails.userId))
-    console.log(user, 'accepted')
-
+    console.log(user, 'user')
+    console.log(recepient, 'recepient')
 
     this.server.to(user?.socketId).emit("call-end", { status: "END", })
     this.server.to(recepient?.socketId).emit("call-end", { status: "END", })

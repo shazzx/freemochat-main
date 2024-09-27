@@ -157,9 +157,10 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
             {query.isLoading &&
                 <div className='w-full h-full flex items-center justify-center'>loading...</div>
             }
-            {openQuickChat &&
+            {console.log(localUserData.user.username, user.username)}
+            {openQuickChat  && !isSelf  &&
                 <div ref={quickChatRef}>
-                    <QuickChat target={!isSelf && { data: user, type: 'User' }} setOpenQuickChat={setOpenQuickChat} />
+                    <QuickChat target={  { data: user, type: 'User' }} setOpenQuickChat={setOpenQuickChat} />
                 </div>
             }
 
@@ -230,7 +231,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                         }}>Accept</Button>
                                     </div>
                                 }
-                                {!isSelf && <Button className='bg-card hover:bg-accent active:bg-muted' onClick={() => setOpenQuickChat(!openQuickChat)}>Message</Button>}
+                                {!isSelf && localUserData.user.username !== user.username && <Button className='bg-background dark:bg-card  text-foreground hover:bg-accent active:bg-muted' onClick={() => setOpenQuickChat(!openQuickChat)}>Message</Button>}
 
                                 {!isSelf && !isOwn && areFriends &&
                                     <Button className='flex gap-2 *bg-card px-4' onClick={() => {

@@ -23,6 +23,7 @@ import { setOpen } from '@/app/features/user/postModelSlice'
 import AutoPlayVideo from './AutoPlayVideo'
 import ShareModel from '@/models/ShareModel'
 import LikeButton from './Post/LikeButton'
+import BottomComments from '@/models/BottomComments'
 
 interface PostProps {
     postData: any,
@@ -229,6 +230,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 postPromotion &&
                 <PostPromotionModel postId={postData?._id} setPostPromotion={setPostPromotion} />
             }
+            {/* <BottomComments/> */}
             <Card className="w-full border-muted" ref={scrollRef}>
                 <CardHeader className='p-3' >
                     <div className='flex items-center justify-between'>
