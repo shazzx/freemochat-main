@@ -18,11 +18,11 @@ function ShareModel({ postId, postType, setModelTrigger }) {
                 }
                 navigate("", { replace: true })
             }}></div>
-            <div className='rounded-sm flex flex-col justify-center items-center z-10 w-96 h-40 bg-card border border-accent shadow-lg'>
+            <div className='rounded-md flex flex-col justify-center items-center z-10 max-w-80 sm:max-w-96 w-full h-40 bg-card border border-accent shadow-lg'>
             <div className='p-4'>
                 <span className='text-2xl text-center'>Share</span>
             </div>
-            <div className='flex justify-center items-center p-2 gap-4 z-10 w-96 h-40 bg-card border border-accent'>
+            <div className='flex justify-center items-center p-2 gap-4 z-10 max-w-80 sm:max-w-96 w-full h-40 bg-card border border-accent'>
 
             <WhatsappShareButton url={`${domain}/post/${postId}?type=${postType}`} >
                 <div className='flex flex-col gap-1 items-center justify-center p-4 '>

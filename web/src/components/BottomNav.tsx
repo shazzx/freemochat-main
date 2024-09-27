@@ -1,25 +1,23 @@
-import { useAppSelector } from '@/app/hooks'
 import { domain } from '@/config/domain'
-import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
-import { Bell, UsersIcon } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
-import { MdGroup } from 'react-icons/md'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 function BottomNav() {
-    const { user } = useAppSelector((state => state.user))
     const [active, setActive] = useState(location.pathname)
 
     useEffect(() => {
         console.log(location.pathname)
-        if (location.pathname.startsWith('/user') || location.pathname.startsWith('/search') || location.pathname.startsWith('/profile')) {
+        if(location.pathname == '/'){
+            setActive('/')
+        }
+        if (location.pathname.startsWith('/user') || location.pathname.startsWith('/search') || location.pathname.startsWith('/profile') || location.pathname.startsWith('/messages')) {
             console.log('yes path exists')
             setActive('')
         }
     }, [location.pathname])
 
     if (location.pathname.startsWith('/user') || location.pathname.startsWith('/messages') || location.pathname.startsWith('/group/') || location.pathname.startsWith('/page/') || location.pathname.startsWith('/search') || location.pathname.startsWith('/profile')) {
-        return 
+        return
     }
 
     return (

@@ -57,6 +57,13 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }) {
     const textRef = useRef(null)
     const emojiPickerRef = useRef(null)
     const queryClient = useQueryClient()
+    const [width, setWidth] = useState(window.innerWidth)
+    useEffect(() => {
+        window.addEventListener("resize", () => {
+            setWidth(window.innerWidth)
+            console.log(window.innerWidth)
+        })
+    },[])
     // const [isOnline, setIsOnline] = useState(null)
 
     // const online = useAppSelector((state) => state.online)
@@ -350,7 +357,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }) {
     const [alertDialog, setAlertDialog] = useState(false)
 
     return (
-        <div className='flex flex-col min-w-[380px] h-full w-full' >
+        <div className='flex flex-col min-w-[300px] h-full w-full' >
             {chatGroupInfo &&
                 <CreateChatGroup setModelTrigger={setChatGroupInfo} groupDetails={recepientDetails} editState={true} editGroup={editGroup} />
             }
@@ -760,7 +767,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }) {
                             handleSendMessage(e)
                         }}
                         type="search"
-                        placeholder="Type your message..."
+                        placeholder="Start writing..."
                         className="w-full appearance-none bg-background-secondary pl-2 sm:pl-8 shadow-none border-none focus:outline-none"
                     />
 
@@ -770,13 +777,15 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }) {
                         }}>
                             <img src="https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f604.png" height="26px" width="26px" alt="" />
                         </div>}
-
-                        {emojiPickerState && <div ref={emojiPickerRef} className="absolute bottom-12 -right-12">
-                            <MdCancel onClick={() => {
+                        {emojiPickerState && <div ref={emojiPickerRef} className={width < 500 ? "fixed inset-0 z-50  w-screen sm:p-8 overflow-hidden h-screen flex flex-col  justify-center items-center sm:bottom-12 sm:-right-12" : "absolute bottom-12 -right-12"} >
+                            <div className="w-[300px]">
+                            <MdCancel  size={24} onClick={() => {
                                 setEmojiPickerState(false)
                             }} />
+                            </div>
 
-                            <EmojiPicker categories={[
+                            <EmojiPicker width={300} 
+                            categories={[
                                 { category: Categories.SUGGESTED, name: 'suggested' },
                                 { category: Categories.CUSTOM, name: "Freedom" },
                                 { category: Categories.SMILEYS_PEOPLE, name: 'smileys_people' },

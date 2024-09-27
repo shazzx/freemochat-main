@@ -14,6 +14,7 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs"
+import { MdCancel, MdClose } from "react-icons/md"
 import { useNavigate } from "react-router-dom"
 
 function NewChat({ setChatOpen, setNewChatModelState, setRecepientDetails, friends, groups, setCurrentTab }) {
@@ -25,8 +26,11 @@ function NewChat({ setChatOpen, setNewChatModelState, setRecepientDetails, frien
                 navigate('', {replace: true})
             }}></div>
             <div className='relative h-full w-full sm:w-[400px] lg:w-[560px] bg-background border-2 border-accent shadow-md '>
-                <div className="p-4 font-medium text-xl pb-5">
+                <div className="flex justify-between p-4 font-medium text-xl pb-5">
                     <h2>New Chat</h2>
+                    <MdClose cursor="pointer" onClick={() => {
+                        navigate('', {replace: true})
+                    }} />
                 </div>
                 <Tabs defaultValue="friends" className="w-full sm:w-full lg:w-full h-full">
                     <TabsList className="grid w-full grid-cols-2">

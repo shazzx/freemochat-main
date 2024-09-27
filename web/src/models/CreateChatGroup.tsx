@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Camera, ChevronLeft, EllipsisVertical } from "lucide-react"
 import { FC, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
+import { MdClose } from "react-icons/md"
 import { RiAdminLine, RiUserUnfollowLine } from "react-icons/ri"
 import { useNavigate } from "react-router-dom"
 
@@ -42,6 +43,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
             return
         }
         createGroup(groupData, imageUpload, coverImageUpload)
+        navigate('', {replace: true})
     }
     const { user } = useAppSelector(state => state.user)
 
@@ -81,6 +83,9 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                     <div className="flex flex-col items-center justify-center relative">
                         {/* cover image */}
                         <div className='relative w-full max-h-72 roundd-md  overflow-hidden'>
+                        <MdClose className="sm:hidden float-end" size={24} cursor="pointer" onClick={() => {
+                        navigate('', {replace: true})
+                    }} />
                             <div className="w-full">
                                 <label htmlFor="image-cover" className="cursor-pointer">
                                     <div className="flex items-center justify-center w-full h-56 bg-muted">
@@ -187,7 +192,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                                     setCurrentTab("groups")
                                 }
                             }}>
-                                <Button type="submit">{editState ? "Update" : "Create"}</Button>
+                                <Button type="submit" >{editState ? "Update" : "Create"}</Button>
                             </div>
                         </div>
 
