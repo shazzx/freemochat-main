@@ -29,7 +29,7 @@ function Friends({ userFriends, isSelf, removeFriend, media, setMediaModelDetail
                                         <Link to={domain + "/user/" + friend?.username} className='cursor-pointer flex w-full gap-2'>
                                             <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                                 <Avatar >
-                                                    <AvatarImage src={friend?.images?.profile} alt="Avatar" />
+                                                    <AvatarImage src={friend?.profile} alt="Avatar" />
                                                     <AvatarFallback className='text-2xl'>{friend?.firstname[0]?.toUpperCase() + friend?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                                 </Avatar>
                                             </div>
@@ -58,12 +58,12 @@ function Friends({ userFriends, isSelf, removeFriend, media, setMediaModelDetail
                             }
                             return (
 
-                                <div className='flex flex-col gap-1 w-full bg-card' key={friend._id}>
+                            <div className='flex flex-col gap-1 w-full bg-card' key={friend._id}>
                                     <div className='flex items-center p-2 gap-2 relative w-full '>
                                         <Link to={domain + "/user/" + friend?.username} className='cursor-pointer flex w-full gap-2'>
                                             <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                                 <Avatar >
-                                                    <AvatarImage src={friend?.images?.profile} alt="Avatar" />
+                                                    <AvatarImage src={friend?.profile} alt="Avatar" />
                                                     <AvatarFallback className='text-2xl'>{friend?.firstname[0]?.toUpperCase() + friend?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                                 </Avatar>
                                             </div>

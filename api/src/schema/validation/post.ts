@@ -39,6 +39,12 @@ export const LikePost = z.object({
     reaction: z.string().optional(),
 })
 
+
+export const GetPostLikes = z.object({
+    cursor: Cursor.optional(),
+    postId: ValidMongoId,
+})
+
 export const LikeCommentOrReply = z.object({
     targetId: ValidMongoId,
 })
@@ -98,6 +104,7 @@ export type UpdatePostDTO = z.infer<typeof UpdatePost>
 export type DeletePostDTO = z.infer<typeof DeletePost>
 export type GetPostDTO = z.infer<typeof GetPost>
 export type LikePostDTO = z.infer<typeof LikePost>
+export type GetPostLikestDTO = z.infer<typeof GetPostLikes>
 export type LikeCommentOrReplyDTO = z.infer<typeof LikeCommentOrReply>
 export type BookmarkPostDTO = z.infer<typeof BookmarkPost>
 export type GetPromotionsDTO = z.infer<typeof GetPromotions>

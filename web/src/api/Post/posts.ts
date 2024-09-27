@@ -15,6 +15,15 @@ export async function fetchFeed(pageParam) {
   });
   return response.data;
 }
+
+
+export async function fetchPostLikes(pageParam, postId) {
+  const response = await axiosClient.get("posts/likes", {
+    params: { cursor: pageParam, postId }
+  });
+  return response.data;
+}
+
 export async function promotePost(postId, promotionDetails){
   let { data } = await axiosClient.post("posts/promotion", { postId, promotionDetails, isApp: '0' }, {timeout: 20000})
 return data

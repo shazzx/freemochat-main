@@ -42,6 +42,7 @@ export class PostsService {
     async getPosts(cursor, userId, targetId, type) {
         let model = type + 's'
         const limit = 5
+
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
         let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type } : { ..._cursor, type }
         console.log(
@@ -203,7 +204,7 @@ export class PostsService {
             },
             {
                 $addFields: {
-                    reaction: {$arrayElemAt: ['$userLike.reaction', 0]},
+                    reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                     likesCount: {
@@ -247,8 +248,6 @@ export class PostsService {
             },
         ]);
 
-
-
         const hasNextPage = posts.length > limit;
         const _posts = hasNextPage ? posts.slice(0, -1) : posts;
         const nextCursor = hasNextPage ? _posts[_posts.length - 1].createdAt.toISOString() : null;
@@ -258,6 +257,56 @@ export class PostsService {
         // let promotedPosts = await this.getPromotedPosts(userId, { country: string, city: string, area: string })
         // const results = { posts: [..._posts, ...promotedPosts], nextCursor };
         // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
+    }
+
+    async getPostLikes(cursor, postId) {
+        console.log(postId, 'post id')
+        const limit = 12
+        const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
+        let query = { ..._cursor, targetId: new Types.ObjectId(postId) }
+
+        const likedBy = await this.likeModel.aggregate([
+            { $match: query },
+            { $sort: { createdAt: -1 } },
+            { $limit: limit + 1 },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'userId',
+                    foreignField: '_id',
+                    as: 'userArray'
+                }
+            },
+            {
+                $addFields: {
+                    user: {
+                        $arrayElemAt: ['$userArray', 0]
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    type: 1,
+                    reaction: 1,
+                    targetId: 1,
+                    user: {
+                        username: '$user.username',
+                        firstname: '$user.firstname',
+                        lastname: '$user.lastname',
+                        profile: '$user.profile',
+                    },
+                }
+            }
+        ])
+
+
+        const hasNextPage = likedBy.length > limit;
+        const _likedBy = hasNextPage ? likedBy.slice(0, -1) : likedBy;
+        const nextCursor = hasNextPage ? _likedBy[_likedBy.length - 1].createdAt.toISOString() : null;
+
+        const results = { likedBy: _likedBy, nextCursor };
+        return results
     }
 
 
@@ -343,7 +392,7 @@ export class PostsService {
             },
             {
                 $addFields: {
-                    reaction: {$arrayElemAt: ['$userLike.reaction', 0]},
+                    reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                     likesCount: {
@@ -610,7 +659,7 @@ export class PostsService {
                     },
                     // promotion: '$promotion',
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
-                    reaction: {$arrayElemAt: ['$userLike.reaction', 0]},
+                    reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                 }
             },
@@ -1234,7 +1283,7 @@ export class PostsService {
             },
             {
                 $addFields: {
-                    reaction: {$arrayElemAt: ['$userLike.reaction', 0]},
+                    reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                     likesCount: {
@@ -1631,7 +1680,7 @@ export class PostsService {
                     },
                     "post.isLikedByUser": { $gt: [{ $size: '$userLike' }, 0] },
                     "post.isBookmarkedByUser": true,
-                    reaction: {$arrayElemAt: ['$userLike.reaction', 0]},
+                    reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
 
 
                 }
@@ -1671,25 +1720,25 @@ export class PostsService {
     async toggleLike(userId: string, targetId: string, type: 'post' | 'comment' | 'reply', authorId?: string, targetType?: string, _targetId?: string, reaction?: string): Promise<boolean> {
 
         let filter: {
-            userId: Types.ObjectId, 
+            userId: Types.ObjectId,
             targetId: Types.ObjectId,
             type: string,
             reaction?: string
-         } = {
+        } = {
             userId: new Types.ObjectId(userId),
             targetId: new Types.ObjectId(targetId),
             type,
         };
 
         const reactions = {
-            "Love":  '❤️',
+            "Love": '❤️',
             'Haha': '😆',
-             'Angry' : '😠',
-             'Sad' : '😢',
-         }        
+            'Angry': '😠',
+            'Sad': '😢',
+        }
 
-         if(type == 'post' && reaction){
-            filter ={...filter, reaction}
+        if (type == 'post' && reaction) {
+            filter = { ...filter, reaction }
         }
 
         console.log(_targetId)

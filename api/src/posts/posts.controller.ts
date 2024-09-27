@@ -14,7 +14,7 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, DeletePost, DeletePostDTO, GetPost, GetPostDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, DeletePost, DeletePostDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import Stripe from 'stripe';
@@ -290,6 +290,14 @@ export class PostsController {
         console.log('author', authorId, targetId)
         const { sub } = req.user as { sub: string, username: string }
         res.json(await this.postService.toggleLike(sub, postId, "post", authorId, type, targetId, reaction))
+    }
+
+
+    @Get("likes")
+    async getPostLikes(@Query(new ZodValidationPipe(GetPostLikes)) query: GetPostLikestDTO, @Req() req: Request, @Res() res: Response) {
+        const { postId, cursor } = query
+        console.log(postId, cursor)
+        res.json(await this.postService.getPostLikes(cursor, postId))
     }
 
 

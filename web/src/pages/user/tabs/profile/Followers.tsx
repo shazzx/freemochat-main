@@ -31,7 +31,7 @@ function Followers({isSelf, userFollowers, followUserToggle, media, recepientId,
                                         
                                         <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                             <Avatar >
-                                                <AvatarImage src={follower?.images?.profile} alt="Avatar" />
+                                                <AvatarImage src={follower?.profile} alt="Avatar" />
                                                 <AvatarFallback className='text-2xl'>{follower?.firstname[0]?.toUpperCase() + follower?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                         </div>
@@ -70,7 +70,7 @@ function Followers({isSelf, userFollowers, followUserToggle, media, recepientId,
 
                                         <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
                                             <Avatar >
-                                                <AvatarImage src={follower?.images?.profile} alt="Avatar" />
+                                                <AvatarImage src={follower?.profile} alt="Avatar" />
                                                 <AvatarFallback className='text-2xl'>{follower?.firstname[0]?.toUpperCase() + follower?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                         </div>

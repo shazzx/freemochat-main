@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useAppSelector } from '@/app/hooks';
 import { toast } from 'react-toastify';
 import { produce } from 'immer'
-import { bookmarkPost, createPost, fetchFeed, fetchPost, fetchPosts, likePost, promotePost, removePost, updatePost } from '@/api/Post/posts';
+import { bookmarkPost, createPost, fetchFeed, fetchPost, fetchPostLikes, fetchPosts, likePost, promotePost, removePost, updatePost } from '@/api/Post/posts';
 import { UrlObject } from 'url';
 import { axiosClient } from '@/api/axiosClient';
 import { useEffect } from 'react';
@@ -189,6 +189,34 @@ export const useCreatePost = (key: string, targetId?: string) => {
     mutate
   }
 }
+
+export function usePostLikes(postId): any {
+
+  const { data, refetch, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
+    queryKey: ['likes', postId],
+    queryFn: ({ pageParam }) => fetchPostLikes(pageParam, postId),
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor
+  });
+
+  return {
+    data: data?.pages ?? [],
+    isLoading,
+    isSuccess,
+    refetch,
+    isFetching,
+    fetchPreviousPage,
+    isFetchingNextPage,
+    fetchStatus,
+    fetchNextPage,
+    error,
+  };
+}
+
 
 export const usePromotePost = () => {
   const { user } = useAppSelector((state) => state.user)
