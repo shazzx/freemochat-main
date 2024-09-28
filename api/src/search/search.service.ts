@@ -389,6 +389,64 @@ export class SearchService {
 
             {
                 $addFields: {
+                    userObjectId: {
+                        $cond: {
+                            if: { $eq: ["$type", "group"] },
+                            then: {
+                                $cond: {
+                                    if: { $eq: [{ $type: "$user" }, "string"] },
+                                    then: { $toObjectId: "$user" },
+                                    else: "$user"
+                                }
+                            },
+                            else: null
+                        }
+                    }
+                }
+            },
+
+            
+            {
+                $lookup: {
+                    from: "users",
+                    let: { userId: "$userObjectId", postType: "$type" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$$postType", "group"] },
+                                        { $eq: ["$_id", "$$userId"] }
+                                    ]
+                                }
+                            }
+                        },
+                        { $limit: 1 }
+                    ],
+                    as: "userDetails"
+                }
+            },
+            {
+                $addFields: {
+                    user: {
+                        $cond: {
+                            if: { $eq: ["$type", "group"] },
+                            then: {
+                                $cond: {
+                                    if: { $gt: [{ $size: "$userDetails" }, 0] },
+                                    then: { $arrayElemAt: ["$userDetails", 0] },
+                                    else: null
+                                }
+                            },
+                            else: "$user"
+                        }
+                    }
+                }
+            },
+
+            {
+                $addFields: {
+                    reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                     target: {
@@ -439,6 +497,7 @@ export class SearchService {
                     isBookmarkedByUser: 1,
                     target: 1,
                     media: 1,
+                    reaction: 1,
                     user: 1,
                     type: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },

@@ -84,7 +84,7 @@ function LikeButton({ postData, mutate, pageIndex, postIndex }) {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showReactions])
-  console.log(postData?.reaction)
+  console.log(postData)
 
   return (
 
@@ -118,6 +118,7 @@ function LikeButton({ postData, mutate, pageIndex, postIndex }) {
       {((!postData?.isLikedByUser) || (postData.isLikedByUser && !postData?.reaction)) && 
       <span className={`text-xs sm:text-sm ${postData?.isLikedByUser && "text-primary"}`}>Freedom</span>
       }
+      
 
       {postData?.isLikedByUser && postData?.reaction &&
         <div className='flex flex-col sm:flex-row justfy-center gap-1 text-center items-center  sm:w-[94px]'>

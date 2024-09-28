@@ -543,12 +543,12 @@ export const useLikePageFeedPost = () => {
 export const useLikeSinglePost = (postId: string) => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (postDetails: { postId: string, authorId: string, type?: string, targetId?: string }) => {
-      return likePost({ postId: postDetails.postId, authorId: postDetails.authorId, type: postDetails?.type, targetId: postDetails?.targetId })
+    mutationFn: (postDetails: { postId: string, authorId: string, type?: string, targetId?: string , reaction: string}) => {
+      return likePost({ postId: postDetails.postId, authorId: postDetails.authorId, type: postDetails?.type, targetId: postDetails?.targetId, reaction: postDetails?.reaction })
     },
 
 
-    onMutate: async ({ postId }) => {
+    onMutate: async ({ postId, reaction }) => {
       await queryClient.cancelQueries({ queryKey: ['post'] })
 
       queryClient.setQueryData(['post'], (pages: any) => {
@@ -556,12 +556,14 @@ export const useLikeSinglePost = (postId: string) => {
           if (draft[0] && draft[0]._id == postId && draft[0].isLikedByUser) {
             draft[0].isLikedByUser = false
             draft[0].likesCount = draft[0].likesCount - 1
+            draft[0] = {...draft[0], reaction: null}
             return draft
           }
 
           if (draft[0] && draft[0]._id == postId && !draft[0].isLikedByUser) {
             draft[0].isLikedByUser = true
             draft[0].likesCount = draft[0].likesCount + 1
+            draft[0] = {...draft[0], reaction}
             return draft
           }
 
@@ -672,12 +674,12 @@ export const useLikeSearchFeedPost = () => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, authorId: string }) => {
-      return likePost({ postId: postDetails.postId, authorId: postDetails.authorId })
+    mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, authorId: string, reaction }) => {
+      return likePost({ postId: postDetails.postId, authorId: postDetails.authorId, reaction: postDetails?.reaction })
     },
 
 
-    onMutate: async ({ postId, postIndex, pageIndex, }) => {
+    onMutate: async ({ postId, postIndex, pageIndex, reaction }) => {
       await queryClient.cancelQueries({ queryKey: ['pageFeed'] })
       const previousComments = queryClient.getQueryData(['pageFeed'])
 
@@ -688,11 +690,14 @@ export const useLikeSearchFeedPost = () => {
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
+            draft.pages[pageIndex].posts[postIndex] = {...draft.pages[pageIndex].posts[postIndex], reaction: null}
+
             return draft
           }
 
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
+            draft.pages[pageIndex].posts[postIndex] = {...draft.pages[pageIndex].posts[postIndex], reaction}
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
 
             return draft
@@ -965,13 +970,13 @@ export const useLikeSearchPost = (query: string) => {
   console.log(query)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, authorId: string }) => {
-      return likePost({ postId: postDetails.postId, authorId: postDetails.authorId })
+    mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, authorId: string, reaction: string }) => {
+      return likePost({ postId: postDetails.postId, authorId: postDetails.authorId, reaction: postDetails?.reaction })
     },
 
 
-    onMutate: async ({ postId, postIndex, pageIndex, }) => {
-      console.log(postId, postIndex, pageIndex)
+    onMutate: async ({ postId, postIndex, pageIndex, reaction}) => {
+      console.log(postId, postIndex, pageIndex, reaction, 'uselikesearch')
       await queryClient.cancelQueries({ queryKey: ["search", query] })
       const previousComments = queryClient.getQueryData(["search", query])
 
@@ -981,11 +986,17 @@ export const useLikeSearchPost = (query: string) => {
 
           if (draft.data.posts[postIndex] && draft.data.posts[postIndex]._id == postId && draft.data.posts[postIndex].isLikedByUser) {
             draft.data.posts[postIndex].isLikedByUser = false
+            draft.data.posts[postIndex] = {...draft.data.posts[postIndex], reaction: null}
+            draft.data.posts[postIndex].likesCount = draft.data.posts[postIndex].likesCount - 1
+
             return draft
           }
 
           if (draft.data.posts[postIndex] && draft.data.posts[postIndex]._id == postId && !draft.data.posts[postIndex].isLikedByUser) {
             draft.data.posts[postIndex].isLikedByUser = true
+            draft.data.posts[postIndex] = {...draft.data.posts[postIndex], reaction}
+            draft.data.posts[postIndex].likesCount = draft.data.posts[postIndex].likesCount + 1
+
             return draft
           }
 
@@ -1080,7 +1091,7 @@ export const useLikePost = (type: string, targetId: string) => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
     mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, authorId: string, type?: string, targetId: string, reaction?: string }) => {
-      return likePost({ postId: postDetails.postId, authorId: postDetails.authorId, type: postDetails?.type, targetId: postDetails.targetId })
+      return likePost({ postId: postDetails.postId, authorId: postDetails.authorId, type: postDetails?.type, targetId: postDetails.targetId, reaction: postDetails?.reaction })
     },
 
 
