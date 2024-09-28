@@ -107,7 +107,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
             setWidth(window.innerWidth)
             console.log(window.innerWidth)
         })
-    },[])
+    }, [])
 
     useEffect(() => {
         let viewPost = async () => {
@@ -221,6 +221,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     //     console.log(isVisible)
     //   },[])
 
+    const params = isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }
+
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} onClick={() => {
             if (shareState) {
@@ -231,12 +233,12 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 editPostModelState &&
                 <CPostModal setModelTrigger={setEditPostModelState} editPost={true} postDetails={postData} updatePost={_updatePost} />
             }
-            {searchParams.get("model") == "post" && width > 700 &&
+            {searchParams.get("model") == "post" && width > 540 &&
                 modelTrigger &&
-                <PostModel params={isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }} useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} postId={postData?._id} postData={postData} setModelTrigger={setModelTrigger} type={type} />
+                <PostModel params={params} useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} postId={postData?._id} postData={postData} setModelTrigger={setModelTrigger} type={type} />
             }
             {likesModelState &&
-            <LikesModel postId={postData?._id} setLikesModelState={setLikesModelState} />
+                <LikesModel postId={postData?._id} setLikesModelState={setLikesModelState} />
             }
 
             {
@@ -249,9 +251,9 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 <PostPromotionModel postId={postData?._id} setPostPromotion={setPostPromotion} />
             }
 
-            {bottomCommentsState && width < 700 &&
-                <BottomComments isOpen={bottomCommentsState} setOpen={setBottomCommentsState} />
-                }
+            {bottomCommentsState && width < 540 &&
+                <BottomComments pageIndex={pageIndex} params={params} postData={postData} postId={postData?._id} isOpen={bottomCommentsState} setOpen={setBottomCommentsState} />
+            }
             <Card className="w-full border-muted" ref={scrollRef}>
                 <CardHeader className='p-3' >
                     <div className='flex items-center justify-between'>
@@ -347,7 +349,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                     {
                         postData && postData.media &&
                         <div className=' overflow-hidden aspect-auto max-w-xl flex items-center justify-center bg-background' onClick={() => {
-                            if (!model && width > 700) {
+                            if (!model && width > 540) {
                                 dispatch(setOpen({ click: 'comment', id: postData._id }))
                                 setModelTrigger(true)
                                 if (location.pathname.startsWith('/search')) {
@@ -357,31 +359,41 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 navigate("?model=post")
                             }
                         }}>
-                            {model ?
-                                <PostMediaCarousel media={postData?.media} />
-                                :
-                                postData.media[0]?.type == 'video' ?
+                            {width > 540 &&
+                                <>
+                                    {model ?
+                                        <PostMediaCarousel media={postData?.media} />
+                                        :
+                                        postData.media[0]?.type == 'video' ?
 
-                                    <AutoPlayVideo src={postData?.media && postData?.media[0]?.url} />
+                                            <AutoPlayVideo src={postData?.media && postData?.media[0]?.url} />
 
-                                    // <video ref={videoRef} className='w-full max-h-[500px] h-full' autoPlay={false} src={postData?.media && postData?.media[0]?.url} controls></video>
-                                    :
-                                    <img className='object-contain max-h-[500px]' src={postData?.media[0]?.url} alt="" />
+                                            // <video ref={videoRef} className='w-full max-h-[500px] h-full' autoPlay={false} src={postData?.media && postData?.media[0]?.url} controls></video>
+                                            :
+                                            <img className='object-contain max-h-[500px]' src={postData?.media[0]?.url} alt="" />
 
+                                    }                                </>
                             }
+
+                            {width < 540 &&
+                                <>
+                                        <PostMediaCarousel mobile={true} media={postData?.media} />
+                                    </>
+                            }
+
 
                         </div>
                     }
                 </CardContent>
                 <CardFooter className='py-2 gap-2 px-3 md:p-4 select-none flex flex-col'>
-                    {/* {postData?.media?.length > 1 &&
+                    {postData?.media?.length > 1 &&
                         <div className='flex gap-2 p-2'>
                             {postData?.media.map(() => (
                                 <div className='w-[6px] h-[6px] sm:w-2 sm:h-2 rounded-full bg-foreground'>
                                 </div>
                             ))}
                         </div>
-                    } */}
+                    }
                     <div className='flex gap-2 w-full flex-start'>
                         <span className='text-sm cursor-pointer' onClick={() => {
                             setLikesModelState(true)
@@ -408,7 +420,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                             }
                         </div> */}
                         <div className='flex gap-0 items-center cursor-pointer' onClick={() => {
-                            if (!model && width > 700) {
+                            if (!model && width > 540) {
                                 dispatch(setOpen({ click: '', id: postData._id }))
                                 navigate("?model=post")
                                 setModelTrigger(true)
@@ -418,12 +430,12 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                         }}>
                             <div className='flex flex-col items-center justify-center sm:flex-row'>
-                            <svg className="w-[28px] h-[28px] sm:w-[34px] sm:h-[34px] stroke-foreground dark:stroke-foreground" viewBox="0 0 39 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" clip-rule="evenodd" d="M13.8829 7.91666H24.4517C27.6778 7.94105 30.2735 10.5758 30.2498 13.8019V20.9475C30.2612 22.497 29.6566 23.9876 28.5689 25.0913C27.4812 26.195 25.9996 26.8214 24.4501 26.8327H13.8829L8.08317 30.0833V13.8019C8.07179 12.2524 8.67645 10.7618 9.76412 9.65807C10.8518 8.55436 12.3334 7.92795 13.8829 7.91666Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
+                                <svg className="w-[28px] h-[28px] sm:w-[34px] sm:h-[34px] stroke-foreground dark:stroke-foreground" viewBox="0 0 39 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M13.8829 7.91666H24.4517C27.6778 7.94105 30.2735 10.5758 30.2498 13.8019V20.9475C30.2612 22.497 29.6566 23.9876 28.5689 25.0913C27.4812 26.195 25.9996 26.8214 24.4501 26.8327H13.8829L8.08317 30.0833V13.8019C8.07179 12.2524 8.67645 10.7618 9.76412 9.65807C10.8518 8.55436 12.3334 7.92795 13.8829 7.91666Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
 
-                            <span className='text-xs sm:text-sm'>Comment</span>
-                            
+                                <span className='text-xs sm:text-sm'>Comment</span>
+
                             </div>
                             {/* {postData?.commentsCount && postData?.commentsCount > 0 ?
                                 <div className="flex flex-col items-center justify-center sm:hidden">
@@ -431,20 +443,20 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                         <path fill-rule="evenodd" clip-rule="evenodd" d="M13.8829 7.91666H24.4517C27.6778 7.94105 30.2735 10.5758 30.2498 13.8019V20.9475C30.2612 22.497 29.6566 23.9876 28.5689 25.0913C27.4812 26.195 25.9996 26.8214 24.4501 26.8327H13.8829L8.08317 30.0833V13.8019C8.07179 12.2524 8.67645 10.7618 9.76412 9.65807C10.8518 8.55436 12.3334 7.92795 13.8829 7.91666Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
                                     {/* <span className='text-sm sm:hidden'>{postData?.commentsCount}</span> */}
-                                    {/* <span className='text-sm sm:hidden'>Comment</span> */}
-                                {/* </div> : <span></span> */}
-                            {/* } */} 
+                            {/* <span className='text-sm sm:hidden'>Comment</span> */}
+                            {/* </div> : <span></span> */}
+                            {/* } */}
                         </div>
                         <div className='flex gap-0 items-center cursor-pointer' onClick={async () => {
                             bookmarkMutation.mutate({ postId: postData._id, pageIndex, postIndex, targetId: postData?.targetId, type })
                         }}>
                             <div className='flex flex-col sm:flex-row items-center justify-center'>
 
-                            <svg className={`w-[28px] h-[28px] sm:w-[34px] sm:h-[34px] ${postData?.isBookmarkedByUser ? " fill-black dark:fill-white" : "stroke-foreground"} dark:stroke-foreground`} viewBox="0 0 39 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" clip-rule="evenodd" d="M29.3447 28.1251V8.54816C29.3518 7.79031 29.0222 7.06097 28.4283 6.52057C27.8345 5.98018 27.025 5.67302 26.178 5.66666H13.5113C12.6643 5.67302 11.8548 5.98018 11.261 6.52057C10.6671 7.06097 10.3375 7.79031 10.3447 8.54816V28.1251C10.2694 28.6903 10.5796 29.241 11.1322 29.5231C11.6847 29.8053 12.3724 29.764 12.878 29.4185L18.8947 24.7704C19.437 24.3324 20.2618 24.3324 20.8042 24.7704L26.8113 29.4199C27.3172 29.7657 28.0053 29.8069 28.558 29.5244C29.1108 29.2418 29.4207 28.6906 29.3447 28.1251Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
+                                <svg className={`w-[28px] h-[28px] sm:w-[34px] sm:h-[34px] ${postData?.isBookmarkedByUser ? " fill-black dark:fill-white" : "stroke-foreground"} dark:stroke-foreground`} viewBox="0 0 39 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M29.3447 28.1251V8.54816C29.3518 7.79031 29.0222 7.06097 28.4283 6.52057C27.8345 5.98018 27.025 5.67302 26.178 5.66666H13.5113C12.6643 5.67302 11.8548 5.98018 11.261 6.52057C10.6671 7.06097 10.3375 7.79031 10.3447 8.54816V28.1251C10.2694 28.6903 10.5796 29.241 11.1322 29.5231C11.6847 29.8053 12.3724 29.764 12.878 29.4185L18.8947 24.7704C19.437 24.3324 20.2618 24.3324 20.8042 24.7704L26.8113 29.4199C27.3172 29.7657 28.0053 29.8069 28.558 29.5244C29.1108 29.2418 29.4207 28.6906 29.3447 28.1251Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
 
-                            <span className='text-xs sm:text-sm'>Bookmark</span>
+                                <span className='text-xs sm:text-sm'>Bookmark</span>
                             </div>
 
                             {/* {postData?.bookmarksCount && postData?.bookmarksCount > 0 ?
@@ -457,12 +469,12 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         }}>
                             <div className='flex flex-col gap-1 sm:flex-row items-center justify-center'>
                                 <PiShareFatLight className='size-[28px] sm:size-[34px]' />
-                            {/* <svg width="34" height="34" className="stroke-foreground  dark:stroke-foreground" viewBox="0 0 39 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                {/* <svg width="34" height="34" className="stroke-foreground  dark:stroke-foreground" viewBox="0 0 39 34" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path fill-rule="evenodd" clip-rule="evenodd" d="M25.4095 27.8205L33.26 21.2405C33.5699 20.9872 33.7496 20.6082 33.7496 20.208C33.7496 19.8078 33.5699 19.4288 33.26 19.1755L25.4095 12.5955C24.9908 12.2376 24.4046 12.1498 23.8994 12.3695C23.3942 12.5891 23.0586 13.0777 23.0347 13.628V16.2233C12.0132 14.314 9.25 24.177 9.25 29.7455C11.8067 25.5035 18.4322 17.814 23.0347 24.177V26.7793C23.0554 27.3312 23.3898 27.8227 23.8956 28.0445C24.4015 28.2663 24.9896 28.1793 25.4095 27.8205Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg> */}
 
-                            <span className='text-xs sm:text-sm' >Share</span>
-                            
+                                <span className='text-xs sm:text-sm' >Share</span>
+
                             </div>
                             {shareState &&
                                 <ShareModel postId={postData?._id} postType={postData?.type} setModelTrigger={setShareState} />

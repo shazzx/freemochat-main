@@ -9,8 +9,8 @@ import { Link } from 'react-router-dom'
 import { domain } from '@/config/domain'
 
 const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, setEditCommentModelState, editCommentModelState, setCommentDetails }) => {
-    const { mutate } = useLikeReply()
-    const deleteReply = useDeleteReply()
+    const { mutate } = useLikeReply(reply?.parentId)
+    const deleteReply = useDeleteReply(reply?.parentId)
     return (
         <div>
             {

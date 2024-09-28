@@ -40,7 +40,7 @@ interface DeleteComment {
 export function useComments(postId: string) {
 
   const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery<CommentsResponse>({
-    queryKey: [CommentKeys.COMMENTS],
+    queryKey: [CommentKeys.COMMENTS, postId],
     queryFn: ({ pageParam }) => fetchComments(postId, pageParam),
     staleTime: 0,
     refetchOnWindowFocus: false,
@@ -67,7 +67,7 @@ export function useComments(postId: string) {
 export function useReplies(commentId): any {
 
   const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery<CommentsResponse>({
-    queryKey: [CommentKeys.REPLIES],
+    queryKey: [CommentKeys.REPLIES, commentId],
     queryFn: ({ pageParam }) => fetchReplies(commentId, pageParam),
     staleTime: 0,
     enabled: !!commentId,
@@ -137,10 +137,10 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
       }
 
 
-      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS] })
-      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS, postId] })
+      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS, postId ])
 
-      queryClient.setQueryData([CommentKeys.COMMENTS], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.COMMENTS, postId], (pages: any) => {
         const firstPage = pages.pages[0]
         const updatedComments = produce(pages, (draft: any) => {
           console.log(newComment)
@@ -182,13 +182,13 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData([CommentKeys.COMMENTS], context?.previousComments)
+      queryClient.setQueryData([CommentKeys.COMMENTS, postId], context?.previousComments)
     },
     onSettled: async (data) => {
 
-      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS] })
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS, postId] })
 
-      queryClient.setQueryData([CommentKeys.COMMENTS], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.COMMENTS, postId], (pages: any) => {
         const firstPage = pages.pages[0]
         const updatedComments = produce(pages, (draft: any) => {
           draft.pages[0].comments[0] = { ...data, ...draft.pages[0].comments[0] }
@@ -210,17 +210,17 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
   }
 }
 
-export const useUpdateComment = () => {
+export const useUpdateComment = (postId) => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate } = useMutation({
     mutationFn: (commentDetails: UpdateComment) => {
       return updateComment(commentDetails.formData)
     },
     onMutate: async ({ commentDetails, pageIndex, commentId, commentIndex }) => {
-      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS] })
-      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS, postId] })
+      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS, postId])
 
-      queryClient.setQueryData([CommentKeys.COMMENTS], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.COMMENTS, postId], (pages: any) => {
         const updatedComments = produce(pages, (draft: any) => {
 
           if (draft.pages[pageIndex].comments[commentIndex] && draft.pages[pageIndex].comments[commentIndex]._id == commentId) {
@@ -238,10 +238,10 @@ export const useUpdateComment = () => {
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData([CommentKeys.COMMENTS], context.previousComments)
+      queryClient.setQueryData([CommentKeys.COMMENTS, postId], context.previousComments)
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [CommentKeys.COMMENTS] })
+      queryClient.invalidateQueries({ queryKey: [CommentKeys.COMMENTS, postId] })
     }
   })
 
@@ -253,17 +253,17 @@ export const useUpdateComment = () => {
   }
 }
 
-export const useDeleteComment = () => {
+export const useDeleteComment = (postId) => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate } = useMutation({
     mutationFn: (commentDetails: DeleteComment) => {
       return deleteComment({ commentId: commentDetails.commentId, postId: commentDetails.postId, audio: commentDetails?.audio ?? null })
     },
     onMutate: async ({ commentId, pageIndex, commentIndex }) => {
-      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS] })
-      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS, postId] })
+      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS, postId])
 
-      queryClient.setQueryData([CommentKeys.COMMENTS], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.COMMENTS, postId], (pages: any) => {
         const updatedComments = produce(pages, (draft: any) => {
 
           if (draft.pages[pageIndex].comments[commentIndex] && draft.pages[pageIndex].comments[commentIndex]._id == commentId) {
@@ -281,7 +281,7 @@ export const useDeleteComment = () => {
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData([CommentKeys.COMMENTS], context.previousComments)
+      queryClient.setQueryData([CommentKeys.COMMENTS, postId], context.previousComments)
     },
     onSettled: () => {
       // queryClient.invalidateQueries({ queryKey: [CommentKeys.COMMENTS] })
@@ -306,10 +306,10 @@ export const useReplyOnComment = () => {
     },
     onMutate: async ({ replyDetails, commentId, postId, audio }) => {
       console.log(replyDetails, commentId, postId)
-      await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES] })
-      const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
+      const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES, commentId])
 
-      queryClient.setQueryData([CommentKeys.REPLIES], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.REPLIES, commentId], (pages: any) => {
         const updatedReplies = produce(pages, (draft: any) => {
           console.log(pages)
           if (audio) {
@@ -342,13 +342,13 @@ export const useReplyOnComment = () => {
       return { previousReplies }
     },
 
-    onError: (err, newReply, context) => {
+    onError: (err, {commentId}, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData([CommentKeys.REPLIES, newReply.commentId], context.previousReplies)
+      queryClient.setQueryData([CommentKeys.REPLIES, commentId], context.previousReplies)
     },
     onSettled: (data, reply, { commentId }) => {
-      queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES] })
+      queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
     }
   })
 
@@ -364,14 +364,14 @@ export const useReplyOnComment = () => {
 export const useUpdateReply = () => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate } = useMutation({
-    mutationFn: (replyDetails: { replyDetails, pageIndex: number, replyId: string, replyIndex: number, formData }) => {
+    mutationFn: (replyDetails: { replyDetails, pageIndex: number, replyId: string, replyIndex: number, formData, commentId: string }) => {
       return updateReply(replyDetails.formData)
     },
-    onMutate: async ({ replyDetails, pageIndex, replyId, replyIndex }) => {
-      await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES] })
-      const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES])
+    onMutate: async ({ replyDetails, pageIndex, replyId, replyIndex, commentId }) => {
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
+      const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES, commentId])
 
-      queryClient.setQueryData([CommentKeys.REPLIES], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.REPLIES, commentId], (pages: any) => {
         const updatedReplies = produce(pages, (draft: any) => {
 
           if (draft.pages[pageIndex].replies[replyIndex] && draft.pages[pageIndex].replies[replyIndex]._id == replyId) {
@@ -386,13 +386,13 @@ export const useUpdateReply = () => {
       return { previousReplies }
     },
 
-    onError: (err, newComment, context) => {
+    onError: (err, {commentId}, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData([CommentKeys.REPLIES], context.previousReplies)
+      queryClient.setQueryData([CommentKeys.REPLIES, commentId], context.previousReplies)
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES] })
+    onSettled: (data, err, {commentId}) => {
+      queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
     }
   })
 
@@ -405,17 +405,17 @@ export const useUpdateReply = () => {
 }
 
 
-export const useDeleteReply = () => {
+export const useDeleteReply = (commentId) => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate } = useMutation({
     mutationFn: (replyDetails: { replyId: string, audio: { src: string, duration: string }, pageIndex: number, replyIndex: number }) => {
       return deleteReply({ replyId: replyDetails.replyId, audio: replyDetails?.audio ?? null })
     },
     onMutate: async ({ replyId, pageIndex, replyIndex }) => {
-      await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES] })
-      const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
+      const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES, commentId])
 
-      queryClient.setQueryData([CommentKeys.REPLIES], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.REPLIES, commentId], (pages: any) => {
         const updatedReplies = produce(pages, (draft: any) => {
 
           if (draft.pages[pageIndex].replies[replyIndex] && draft.pages[pageIndex].replies[replyIndex]._id == replyId) {
@@ -433,10 +433,10 @@ export const useDeleteReply = () => {
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData([CommentKeys.REPLIES], context.previousReplies)
+      queryClient.setQueryData([CommentKeys.REPLIES, commentId], context.previousReplies)
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES] })
+      queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
     }
   })
 
@@ -449,7 +449,7 @@ export const useDeleteReply = () => {
 }
 
 
-export const useLikeComment = () => {
+export const useLikeComment = (postId) => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
@@ -459,10 +459,10 @@ export const useLikeComment = () => {
 
 
     onMutate: async ({ commentId, commentIndex, pageIndex, userId }) => {
-      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS] })
-      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS, postId] })
+      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS, postId])
 
-      queryClient.setQueryData([CommentKeys.COMMENTS], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.COMMENTS, postId], (pages: any) => {
         const updatedComments = produce(pages, (draft: any) => {
 
           if (draft.pages[pageIndex].comments[commentIndex] && draft.pages[pageIndex].comments[commentIndex]._id == commentId && draft.pages[pageIndex].comments[commentIndex].isLikedByUser) {
@@ -486,7 +486,7 @@ export const useLikeComment = () => {
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData([CommentKeys.COMMENTS], context.previousComments)
+      queryClient.setQueryData([CommentKeys.COMMENTS, postId], context.previousComments)
     },
     onSettled: (e) => {
       // uncommeting this will refetch the comments again from the server to be in sync
@@ -504,7 +504,7 @@ export const useLikeComment = () => {
 }
 
 
-export const useLikeReply = () => {
+export const useLikeReply = (commentId) => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
@@ -514,10 +514,10 @@ export const useLikeReply = () => {
 
 
     onMutate: async ({ replyId, replyIndex, commentId, pageIndex, userId }) => {
-      await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES] })
-      const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES])
+      await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
+      const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES, commentId])
 
-      queryClient.setQueryData([CommentKeys.REPLIES], (pages: any) => {
+      queryClient.setQueryData([CommentKeys.REPLIES, commentId], (pages: any) => {
         const updatedReplies = produce(pages, (draft: any) => {
           console.log(draft.pages[pageIndex].replies[replyIndex])
 
@@ -542,10 +542,10 @@ export const useLikeReply = () => {
     onError: (err, newReply, context) => {
       console.log(err)
       toast.error("something went wrong")
-      queryClient.setQueryData([CommentKeys.REPLIES], context.previousReplies)
+      queryClient.setQueryData([CommentKeys.REPLIES, commentId], context.previousReplies)
     },
     onSettled: (e) => {
-      queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES] })
+      queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
     }
   })
 

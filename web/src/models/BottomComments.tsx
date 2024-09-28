@@ -19,7 +19,7 @@ import { setClose } from '@/app/features/user/postModelSlice'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 
-function BottomComments({isOpen, setOpen}) {
+function BottomComments({isOpen, setOpen, params, postId, postData, pageIndex}) {
   const { user } = useAppSelector((data) => data.user)
   const [isRecording, setIsRecording] = useState(false)
   const [replyState, setReplyState] = useState<{ _id: string, content: string, user: any, commentIndex: number }>()
@@ -106,7 +106,7 @@ function BottomComments({isOpen, setOpen}) {
   const [editCommentModelState, setEditCommentModelState] = useState(false)
   const [commentDetails, setCommentDetails] = useState(null)
   const updateCommentRef = useRef<HTMLTextAreaElement>(null)
-  const updateComment = useUpdateComment()
+  const updateComment = useUpdateComment(postId)
   const updateReply = useUpdateReply()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -123,9 +123,9 @@ function BottomComments({isOpen, setOpen}) {
       >
         
         <Sheet.Container>
-          <Sheet.Header />
-          <Sheet.Content>
-          <div ref={scrollRef} className='z-10 max-w-xl w-full h-full flex flex-col bg-background relative rounded-lg sm:h-fit max-h-full scroll-smooth overflow-auto border-2 border-accent shadow-md'>
+          <Sheet.Header className='bg-background-secondary dark:bg-background' />
+          <Sheet.Content >
+          <div ref={scrollRef} className='z-10 max-w-xl w-full h-full flex flex-col bg-background relative sm:h-fit max-h-full scroll-smooth overflow-auto'>
                 {editCommentModelState &&
                     <div className='absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[1.5px] z-50 '>
                         <div className='absolute w-full h-full top-0 left-0 z-10' onClick={() => {
@@ -152,7 +152,7 @@ function BottomComments({isOpen, setOpen}) {
                                     let formData = new FormData()
                                     formData.append('replyData', JSON.stringify(replyDetails))
 
-                                    updateReply.mutate({ ...replyDetails, formData })
+                                    updateReply.mutate({ ...replyDetails, formData, commentId: commentDetails.commentId })
                                 }
 
                                 setEditCommentModelState(false)
@@ -165,17 +165,19 @@ function BottomComments({isOpen, setOpen}) {
                     </div>
                 }
 
-                <div className='relative bg-card w-full flex p-2'>
-                    <ChevronLeft size={24} z={12} className='z-20' cursor="pointer" onClick={() => {
-                        setModelTrigger(false)
-                        if (location.pathname == '/') {
-                            navigate("/", { replace: true })
-                            return
-                        }
-                        navigate("", { replace: true })
-
+                <div className='relative w-full items-center justify-center flex p-2'>
+                    {replyState ?
+                    <div className='relative w-full flex justify-center items-center'>
+                        <ChevronLeft className='absolute left-2 flex-initial cursor-pointer' onClick={() => {
+                        setReplyState(null)
+                        setReplyTo(null)
+                    }} />
+                    <span>Replies</span>
+                    </div>
+                    :
+                    <span>Comments</span>
                     }
-                    } /> <span className='w-full text-center text-lg relative right-[5%]'>Post</span>
+
                 </div>
                 <div className='relative p-4 flex h-full flex-col gap-2'>
                     {/* comment section */}
@@ -221,13 +223,13 @@ function BottomComments({isOpen, setOpen}) {
                     {replyState && replyState?.content &&
                         <div className='absolute bg-background gap-4 w-full h-full flex justify-between flex-col top-0 left-0 z-10'>
                             <div className='p-4 flex flex-col gap-4'>
-                                <div className='flex gap-2'>
+                                {/* <div className='flex gap-2'>
                                     <ChevronLeft className='cursor-pointer' onClick={() => {
                                         setReplyState(null)
                                         setReplyTo(null)
                                     }} />
                                     <span>Replies</span>
-                                </div>
+                                </div> */}
                                 <Comment reply={setReplyState} commentIndex={replyState.commentIndex} comment={replyState} pageIndex={pageIndex} postId={postData?._id} userId={user._id} commentRef={commentRef} key={replyState._id} isParent={true} />
                                 <div className='pl-8 flex flex-col gap-2'>
 

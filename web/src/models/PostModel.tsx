@@ -105,7 +105,7 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
     const [editCommentModelState, setEditCommentModelState] = useState(false)
     const [commentDetails, setCommentDetails] = useState(null)
     const updateCommentRef = useRef<HTMLTextAreaElement>(null)
-    const updateComment = useUpdateComment()
+    const updateComment = useUpdateComment(postId)
     const updateReply = useUpdateReply()
     const [searchParams, setSearchParams] = useSearchParams()
 
@@ -154,7 +154,7 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
                                     let formData = new FormData()
                                     formData.append('replyData', JSON.stringify(replyDetails))
 
-                                    updateReply.mutate({ ...replyDetails, formData })
+                                    updateReply.mutate({ ...replyDetails, formData, commentId: commentDetails?.commentId })
                                 }
 
                                 setEditCommentModelState(false)

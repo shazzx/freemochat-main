@@ -9,8 +9,9 @@ import { Link } from 'react-router-dom'
 import { domain } from '@/config/domain'
 
 const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentIndex, userId, ref, editCommentModelState, setEditCommentModelState, setCommentDetails, isParent }) => {
-    const { mutate } = useLikeComment()
-    const deleteComment = useDeleteComment()
+    const { mutate } = useLikeComment(comment?.post)
+    const deleteComment = useDeleteComment(comment?.post)
+
 
     let [likeParentComment, setLikeParentComment] = useState(comment?.isLikedByUser)
     // if (inView) {
