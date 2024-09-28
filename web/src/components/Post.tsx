@@ -72,6 +72,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
     const [likesModelState, setLikesModelState] = useState(false)
+    const [bottomCommentsState, setBottomCommentsState] = useState(false)
 
     const { mutate } = useLikePost(isSearch ? query : type + "Posts", postData?.targetId)
     const bookmarkMutation = useBookmarkPost(isSearch ? query : type + "Posts", postData?.targetId, isSearch)
@@ -98,8 +99,16 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     }
 
     const dispatch = useDispatch()
-
     const [postPromotion, setPostPromotion] = useState(false)
+    const [width, setWidth] = useState(window.innerWidth)
+
+    useEffect(() => {
+        window.addEventListener("resize", () => {
+            setWidth(window.innerWidth)
+            console.log(window.innerWidth)
+        })
+    },[])
+
     useEffect(() => {
         let viewPost = async () => {
             const { data } = await axiosClient.post("/posts/view", {
@@ -222,7 +231,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 editPostModelState &&
                 <CPostModal setModelTrigger={setEditPostModelState} editPost={true} postDetails={postData} updatePost={_updatePost} />
             }
-            {searchParams.get("model") == "post" &&
+            {searchParams.get("model") == "post" && width > 700 &&
                 modelTrigger &&
                 <PostModel params={isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }} useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} postId={postData?._id} postData={postData} setModelTrigger={setModelTrigger} type={type} />
             }
@@ -239,7 +248,10 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 postPromotion &&
                 <PostPromotionModel postId={postData?._id} setPostPromotion={setPostPromotion} />
             }
-            {/* <BottomComments/> */}
+
+            {bottomCommentsState && width < 700 &&
+                <BottomComments isOpen={bottomCommentsState} setOpen={setBottomCommentsState} />
+                }
             <Card className="w-full border-muted" ref={scrollRef}>
                 <CardHeader className='p-3' >
                     <div className='flex items-center justify-between'>
@@ -335,7 +347,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                     {
                         postData && postData.media &&
                         <div className=' overflow-hidden aspect-auto max-w-xl flex items-center justify-center bg-background' onClick={() => {
-                            if (!model) {
+                            if (!model && width > 700) {
                                 dispatch(setOpen({ click: 'comment', id: postData._id }))
                                 setModelTrigger(true)
                                 if (location.pathname.startsWith('/search')) {
@@ -396,11 +408,14 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                             }
                         </div> */}
                         <div className='flex gap-0 items-center cursor-pointer' onClick={() => {
-                            if (!model) {
+                            if (!model && width > 700) {
                                 dispatch(setOpen({ click: '', id: postData._id }))
                                 navigate("?model=post")
                                 setModelTrigger(true)
+                                return
                             }
+                            setBottomCommentsState(true)
+
                         }}>
                             <div className='flex flex-col items-center justify-center sm:flex-row'>
                             <svg className="w-[28px] h-[28px] sm:w-[34px] sm:h-[34px] stroke-foreground dark:stroke-foreground" viewBox="0 0 39 38" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -120,7 +120,7 @@ function LikeButton({ postData, mutate, pageIndex, postIndex }) {
       }
 
       {postData?.isLikedByUser && postData?.reaction &&
-        <div className='flex gap-1 text-center items-center  sm:w-[94px]'>
+        <div className='flex flex-col sm:flex-row justfy-center gap-1 text-center items-center  sm:w-[94px]'>
           <span className={`text-xl`}>{reactions[reactionIndex]?.emoji}</span>
           <span className={`text-xs sm:text-sm ${postData?.isLikedByUser && "text-primary"}`}>{reactions[reactionIndex]?.name}</span>
         </div>
