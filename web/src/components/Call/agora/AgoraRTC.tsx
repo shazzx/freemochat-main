@@ -1,5 +1,4 @@
 import AgoraRTC, { AgoraRTCProvider, useRTCClient } from 'agora-rtc-react';
-import AudioCall from '../Audio/AudioCall';
 
 function Agora({channel, callDetails, cancelCall, Call}: any) {
   try {

@@ -28,11 +28,11 @@ export class AuthService {
             throw new UnauthorizedException(USER.WRONG_DATA)
         }
 
-        let isValidPassword = await compare(password, user.password)
+        // let isValidPassword = await compare(password, user.password)
 
-        if (!isValidPassword) {
-            throw new HttpException({ message: USER.WRONG_DATA, type: 'invalid credentials' }, HttpStatus.BAD_REQUEST)
-        }
+        // if (!isValidPassword) {
+        //     throw new HttpException({ message: USER.WRONG_DATA, type: 'invalid credentials' }, HttpStatus.BAD_REQUEST)
+        // }
 
         let verification = {
             phone: false

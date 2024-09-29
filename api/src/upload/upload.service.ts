@@ -23,18 +23,19 @@ export class UploadService {
     private rekognitionClient: RekognitionClient;
     private s3Client: S3Client;
     private textractClient: TextractClient;
+    private bucketName: string;
 
     constructor(
         private readonly configService: ConfigService, private readonly userService: UserService,
         @InjectModel(Media.name) private mediaModel: Model<Media>) {
-
+        this.bucketName = this.configService.get('AWS_S3_BUCKET_NAME');
         const awsConfig = {
             region: process.env.AWS_S3_REGION,
             credentials: {
                 accessKeyId: process.env.AWS_ACCESS_KEY_ID,
                 secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-                endpoint: "https://bucketshazz.s3.us-east-1.amazonaws.com",
-                region: 'us-east-1',
+                endpoint: process.env.AWS_BUCKET_ENDPOINT,
+                region: process.env.AWS_S3_REGION,
                 maxAttempts: 5,
                 retryMode: 'adaptive',
             },
@@ -46,11 +47,11 @@ export class UploadService {
     }
 
     async processAndUploadContent(
-        file: Buffer, 
-        fileName: string, 
-        contentType: string, 
-        originalname?: string, 
-        ) {
+        file: Buffer,
+        fileName: string,
+        contentType: string,
+        originalname?: string,
+    ) {
         let processedContent: Buffer;
         let moderationResult: { isSafe: boolean; labels: string[] } | string;
 
@@ -69,17 +70,17 @@ export class UploadService {
             }
             // processedContent = await this.optimizeVideo(file, inputInfo);
             moderationResult = await this.moderateVideo(file, fileName);
-            return {url: moderationResult, fileName, fileType: contentType, originalname};
+            return { url: moderationResult, fileName, fileType: contentType, originalname };
 
         } else if (contentType == 'pdf') {
             processedContent = file; // No optimization for PDF
             moderationResult = await this.moderatePdf(file);
         } else if (contentType == 'audio') {
             const uploadResult = await this.uploadToS3(file, fileName, contentType);
-            return {url: uploadResult, fileName, fileType: contentType};
+            return { url: uploadResult, fileName, fileType: contentType };
         }
 
-        
+
         else {
             console.log(contentType, 'contenttype')
             throw new Error('Unsupported file type');
@@ -88,7 +89,7 @@ export class UploadService {
 
         if (moderationResult.isSafe) {
             const uploadResult = await this.uploadToS3(file, fileName, contentType);
-            return {url: uploadResult, fileName, fileType: contentType, originalname};
+            return { url: uploadResult, fileName, fileType: contentType, originalname };
         } else {
             throw new Error('Content violates moderation policies');
         }
@@ -108,16 +109,16 @@ export class UploadService {
             inputStream.push(null);
 
             ffmpeg(inputStream).ffprobe((err, data) => {
-                    if (err) {
-                        reject(err);
-                        return;
-                    }
-                    const videoStream = data.streams.find(stream => stream.codec_type === 'video');
-                    resolve({
-                        format: data.format.format_name,
-                        codec: videoStream ? videoStream.codec_name : 'unknown'
-                    });
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                const videoStream = data.streams.find(stream => stream.codec_type === 'video');
+                resolve({
+                    format: data.format.format_name,
+                    codec: videoStream ? videoStream.codec_name : 'unknown'
                 });
+            });
         });
     }
 
@@ -203,7 +204,6 @@ export class UploadService {
 
 
     private async moderateVideo(file: Buffer, fileName: string): Promise<string> {
-        const bucketName = this.configService.get('AWS_S3_BUCKET_NAME');
         const s3Key = `${fileName}`;
 
         // Upload video to S3
@@ -213,7 +213,7 @@ export class UploadService {
         const startCommand = new StartContentModerationCommand({
             Video: {
                 S3Object: {
-                    Bucket: "bucketshazz",
+                    Bucket: this.bucketName,
                     Name: s3Key,
                 },
             },
@@ -231,7 +231,7 @@ export class UploadService {
                 moderationResult = await this.rekognitionClient.send(getCommand);
                 jobComplete = moderationResult.JobStatus === 'SUCCEEDED';
                 console.log(moderationResult)
-                if (moderationResult.JobStatus === "FAILED" && moderationResult.StatusMessage){
+                if (moderationResult.JobStatus === "FAILED" && moderationResult.StatusMessage) {
                     throw new UnsupportedMediaTypeException("Unsupported Format")
                 }
                 if (!jobComplete) await new Promise(resolve => setTimeout(resolve, 3000));
@@ -239,7 +239,7 @@ export class UploadService {
 
             const labels = moderationResult.ModerationLabels?.map(label => label.ModerationLabel.Name) || [];
 
-            if ( labels.length === 0) {
+            if (labels.length === 0) {
                 return url
             } else {
                 throw new Error('Content violates moderation policies');
@@ -258,7 +258,7 @@ export class UploadService {
         let fileName = encodeURIComponent(key)
         console.log(file)
         const command = new PutObjectCommand({
-            Bucket: "bucketshazz",
+            Bucket: this.bucketName,
             Key: fileName,
             Body: file,
             // ContentType: contentType,
@@ -266,7 +266,7 @@ export class UploadService {
 
         try {
             await this.s3Client.send(command);
-            return `https://${"bucketshazz"}.s3.amazonaws.com/${fileName}`
+            return `https://${this.bucketName}.s3.amazonaws.com/${fileName}`
         } catch (error) {
             console.error('Error uploading to S3:', error);
             throw error;
@@ -276,7 +276,7 @@ export class UploadService {
     async deleteFromS3(key: string) {
         const bucketName = this.configService.get('AWS_S3_BUCKET_NAME');
         const command = new DeleteObjectCommand({
-            Bucket: "bucketshazz",
+            Bucket: this.bucketName,
             Key: key,
         });
 
@@ -291,11 +291,11 @@ export class UploadService {
     async uploadFile(filename: string, file: Buffer) {
         let fileName = encodeURIComponent(filename)
         let uploadedFile = await this.s3Client.send(new PutObjectCommand({
-            Bucket: "bucketshazz",
+            Bucket: this.bucketName,
             Key: fileName,
             Body: file,
         }))
 
-        return `https://${"bucketshazz"}.s3.amazonaws.com/${fileName}`
+        return `https://${this.bucketName}.s3.amazonaws.com/${fileName}`
     }
 }

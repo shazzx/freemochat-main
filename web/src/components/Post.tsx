@@ -222,6 +222,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     //   },[])
 
     const params = isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }
+    
 
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} onClick={() => {

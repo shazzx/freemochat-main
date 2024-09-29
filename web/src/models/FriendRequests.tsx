@@ -36,7 +36,7 @@ function FriendRequests({ setFriendRequestState }) {
                                         <div className="flex gap-1">
                                             <div className='w-14 h-14 flex flex-col items-center justify-center rounded-lg border-primary border-2 bg-card overflow-hidden'>
                                                 <Avatar>
-                                                    <AvatarImage src={request?.images?.profile} alt="Avatar" />
+                                                    <AvatarImage src={request?.profile} alt="Avatar" />
                                                     <AvatarFallback className='text-xl'>{request?.firstname[0]?.toUpperCase() + request?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                                 </Avatar>
                                             </div>
