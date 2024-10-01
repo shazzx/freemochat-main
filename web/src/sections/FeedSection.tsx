@@ -6,6 +6,7 @@ import Stories from '@/components/Stories'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useBookmarkFeedPost, useCreatePost, useFeed, useLikeFeedPost } from '@/hooks/Post/usePost'
+import BottomCreatePost from '@/models/BottomCreatePost'
 import CPostModal from '@/models/CPostModal'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -52,10 +53,18 @@ function FeedSection() {
     //     fetchNextPage()
     // }, [inView])
 
+    const [width, setWidth] = useState(window.innerWidth)
+
+    useEffect(() => {
+        window.addEventListener("resize", () => {
+            setWidth(window.innerWidth)
+            console.log(window.innerWidth)
+        })
+    }, [])
 
     return (
         <div className='w-full z-10 flex justify-center md:justify-normal overflow-y-auto border-muted md:px-6 lg:px-24'>
-            {searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+            {searchParams.get("createpost") && ( width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
 
             <div className='max-w-xl w-full flex flex-col gap-2'>
                 <div className='w-full flex items-center  border border-muted p-2 bg-card'>

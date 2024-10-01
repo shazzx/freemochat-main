@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { domain } from '@/config/domain'
-import { useBookmarkPagePost, useBookmarkPost, useCreatePost, useLikePagePost, useLikePost, usePagePosts } from '@/hooks/Post/usePost'
+import { useBookmarkPagePost, useBookmarkPost, useCreatePost, useLikePagePost, useLikePost, usePagePosts, useSearch } from '@/hooks/Post/usePost'
 import CPostModal from '@/models/CPostModal'
 import QuickSettings from '@/models/QuickSettings'
 import { getToken } from '@/utils/getToken'
@@ -14,7 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsContent, } from '@radix-ui/react-tabs'
 import { EllipsisVertical, PencilIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import HelperMessage from './HelperMessage'
 import Cover from './profile/Cover'
 import Profile from './profile/Profile'
@@ -29,6 +29,7 @@ import MediaSection from './MediaSection'
 import EmojiPicker from 'emoji-picker-react'
 import { Socket } from 'socket.io-client'
 import QuickChat from './QuickChat'
+import BottomCreatePost from '@/models/BottomCreatePost'
 
 function PageProfile() {
 
@@ -163,6 +164,17 @@ function PageProfile() {
         };
     }, [openQuickChat])
     console.log(_pageData)
+    const [searchParams] = useSearchParams()
+    const navigate = useNavigate()
+    const [width, setWidth] = useState(window.innerWidth)
+
+    useEffect(() => {
+        window.addEventListener("resize", () => {
+            setWidth(window.innerWidth)
+            console.log(window.innerWidth)
+        })
+    }, [])
+
 
     return (
         <>
@@ -188,7 +200,9 @@ function PageProfile() {
                         <MediaOpenModel mediaOpenDetails={mediaOpenDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                     }
                     {profileSettingsModel && <QuickSettings user={user} setModelTrigger={setProfileSettingsModel} />}
-                    {postModal && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+                    {/* {postModal && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />} */}
+                    {searchParams.get("createpost") && ( width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+
                     <div className='flex w-full flex-col items-center w-ful'>
                         <div className="flex max-w-5xl w-full flex-col justify-cente relative">
                             <Cover cover={_pageData?.data?.cover} />
@@ -260,7 +274,7 @@ function PageProfile() {
                                                             </div>
                                                             <Input
                                                                 onClick={() => {
-                                                                    setPostModal(true)
+                                                                    navigate("?createpost=true")
                                                                 }}
                                                                 ref={postContent}
                                                                 type="text"

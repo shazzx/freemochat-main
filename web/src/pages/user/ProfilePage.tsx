@@ -32,6 +32,7 @@ import { useInView } from 'react-intersection-observer'
 import Friends from './tabs/profile/Friends'
 import Followers from './tabs/profile/Followers'
 import QuickChat from '@/components/QuickChat'
+import BottomCreatePost from '@/models/BottomCreatePost'
 const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const localUserData = useAppSelector(data => data.user)
     const isSelf = role === 'self'
@@ -145,6 +146,15 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
         };
     }, [openQuickChat])
 
+    const [width, setWidth] = useState(window.innerWidth)
+
+    useEffect(() => {
+        window.addEventListener("resize", () => {
+            setWidth(window.innerWidth)
+            console.log(window.innerWidth)
+        })
+    }, [])
+
     return (
         <>
             {query.isError &&
@@ -174,7 +184,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
                     {/* profile settings model */}
                     {searchParams.get("settings") && <QuickSettings user={localUserData.user} setModelTrigger={setProfileSettingsModel} uploadSingle={uploadSingle} />}
-                    {searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+                    {searchParams.get("createpost") && ( width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
 
                     <div className='flex w-full flex-col items-center w-ful'>
                         <div className="flex max-w-5xl w-full flex-col justify-cente relative">

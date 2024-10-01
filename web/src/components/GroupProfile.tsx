@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsContent } from '@radix-ui/react-tabs'
 import { EllipsisVertical } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Profile from './profile/Profile'
 import Cover from './profile/Cover'
 import { useMedia } from '@/hooks/useMedia'
@@ -21,6 +21,7 @@ import { setMediaModelDetails } from '@/utils/mediaOpenModel'
 import MediaSection from './MediaSection'
 import CustomTabList from './profile/CustomTabList'
 import { format } from 'date-fns'
+import BottomCreatePost from '@/models/BottomCreatePost'
 
 function GroupProfile() {
 
@@ -70,6 +71,19 @@ function GroupProfile() {
     const [mediaOpenDetails, setMediaOpenDetails] = useState({ type: '', url: '' })
     console.log(groupMembers?.data)
 
+    const [searchParams] = useSearchParams()
+    const [width, setWidth] = useState(window.innerWidth)
+
+    useEffect(() => {
+        window.addEventListener("resize", () => {
+            setWidth(window.innerWidth)
+            console.log(window.innerWidth)
+        })
+    }, [])
+
+    const navigate = useNavigate()
+
+
     return (
         <>
             {isError &&
@@ -90,7 +104,8 @@ function GroupProfile() {
                         <MediaOpenModel mediaOpenDetails={mediaOpenDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                     }
                     {profileSettingsModel && <QuickSettings user={user} setModelTrigger={setProfileSettingsModel} />}
-                    {postModal && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+                    {searchParams.get("createpost") && ( width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+
                     <div className='flex w-full flex-col items-center'>
                         <div className="flex max-w-5xl w-full flex-col justify-cente relative">
                             <Cover cover={data?.cover} />
@@ -150,7 +165,7 @@ function GroupProfile() {
                                                             </div>
                                                             <Input
                                                                 onClick={() => {
-                                                                    setPostModal(true)
+                                                                    navigate("?createpost=true")
                                                                 }}
                                                                 ref={postContent}
                                                                 type="text"

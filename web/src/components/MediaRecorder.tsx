@@ -77,7 +77,7 @@ const AudioRecorder = ({ onRecordingComplete, setIsRecordingMain }) => {
         <div>
             {isRecording ?
                 <div className="flex px-4 py-1 flex-grow items-center justify-between bottom-0 bg-card max-w-4xl w-full">
-                    <div className="w-56 sm:w-80 flex-grow h-3 bg-red-500 animate-pulse rounded-full"></div>
+                    <div className="w-40 sm:w-80 flex-grow h-3 bg-red-500 animate-pulse rounded-full"></div>
                     <div className="text-lg font-semibold mx-4">
                         {formatTime(_recordingTime)}
                     </div>

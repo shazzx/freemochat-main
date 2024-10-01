@@ -21,7 +21,7 @@ import { MemberService } from 'src/member/member.service';
 
 let connectedUsers = new Map()
 
-@WebSocketGateway({ cors: { origin: '*' } },)
+@WebSocketGateway({ cors: { origin: '*' }, path: "/api/socket" },)
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     @Inject(forwardRef(() => UserService))
