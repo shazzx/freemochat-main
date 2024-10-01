@@ -200,7 +200,7 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
                     </div>
                     } */}
                     {data.length > 0 && data[0]?.comments?.length > 0 ? data.map((page, pageIndex) => {
-                        return (page.comments.map((comment, i) => {
+                        return (page.comments.map((comment: any, i) => {
                             if (i == page.comments.length - 1) {
                                 return (
                                     <div ref={ref}>

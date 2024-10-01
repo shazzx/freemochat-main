@@ -7,20 +7,22 @@ import { AllExceptionsFilter } from './global.exceptions.filter';
 declare const module: any
 
 async function bootstrap() {
+  // const httpsOptions = process.env.ENV == "PRODUCTION" ? {
+  //   key: fs.readFileSync('/etc/letsencrypt/live/freedombook.co/privkey.pem'),
+  //   cert: fs.readFileSync('/etc/letsencrypt/live/freedombook.co/fullchain.pem'),
+  // } : {};
+
   const app = await NestFactory.create(AppModule);
-  // app.enableCors({
-  //   origin: 'http://freedombook.s3-website-us-east-1.amazonaws.com',
-  //   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  //   allowedHeaders: ['Content-Type', 'Authorization'],
-  //   credentials: true,
-  // });
-  const origin = process.env.ENV == "PRODUCTION" ? "http://ec2-15-206-203-226.ap-south-1.compute.amazonaws.com:5173" : "http://localhost:5173"
+
+  const origin = process.env.ENV == "PRODUCTION" ? process.env.APP_URL_PROD : process.env.APP_URL_DEV
+
   app.enableCors({ origin, credentials: true })
   app.use(cookieParser())
   app.useGlobalFilters(new AllExceptionsFilter())
 
   const redisIoAdapter = new RedisIoAdapter()
   await redisIoAdapter.connectToRedis()
+
 
   app.setGlobalPrefix('api')
   await app.listen(process.env.PORT || 3000, '0.0.0.0');
@@ -31,3 +33,10 @@ async function bootstrap() {
   }
 }
 bootstrap();
+
+// app.enableCors({
+//   origin: 'http://freedombook.s3-website-us-east-1.amazonaws.com',
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   credentials: true,
+// });

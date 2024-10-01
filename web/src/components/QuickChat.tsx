@@ -14,7 +14,7 @@ import { produce } from 'immer';
 import { useSocket } from '@/hooks/useSocket';
 import { MdClose } from 'react-icons/md';
 
-function QuickChat({ target, setOpenQuickChat }) {
+function QuickChat({ target, setOpenQuickChat }: any) {
     const { user } = useAppSelector(state => state.user)
     const [messages, setMessages] = useState([])
     const [inputValue, setInputValue] = useState("")

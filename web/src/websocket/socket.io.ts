@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client'
-const url = process.env.ENV == 'PRODUCTION' ? 'http://ec2-15-206-203-226.ap-south-1.compute.amazonaws.com:3000' : 'http://localhost:3000'
+const url = import.meta.env.VITE_ENV == 'PRODUCTION' ? import.meta.env.VITE_APP_BASE_URL_PROD : import.meta.env.VITE_APP_BASE_URL_DEV
 let socket = io(url, { autoConnect: false })
 
 export const socketConnect = (username: string) => {

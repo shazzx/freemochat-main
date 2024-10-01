@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/carousel"
 import AutoPlayVideo from "../AutoPlayVideo"
 
-export function PostMediaCarousel({ media, mobile }) {
+export function PostMediaCarousel({ media, mobile }: {media: any, mobile?:boolean}) {
   console.log(media)
   return (
     <Carousel className="relative">

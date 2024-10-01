@@ -64,7 +64,7 @@ const MainHome = ({ children }: any) => {
 
   const [searchSuggestions, setSearchSuggestions] = useState([])
   const [searchSuggestionsState, setSearchSuggestionsState] = useState(false)
-  const searchRef = useRef()
+  const searchRef = useRef<HTMLInputElement>()
 
   let cancelCall = async (type) => {
     try {

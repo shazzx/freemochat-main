@@ -6,32 +6,32 @@ import { useDashboardData } from '@/hooks/Admin/useAdmin'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
 import { MoreHorizontal } from 'lucide-react'
 
-const users: User[] = [
-  {
-    id: 'asdfewer',
-    username: 'shazz',
-    fullname: "shahzad ali",
-    email: "shazz@gmail.com",
-    accountStatus: "terminated" || "deactivated" || "active",
-    accountCreationDate: "12 april 2024"
-  },
-  {
-    id: 'asdfewer',
-    username: 'shazz',
-    fullname: "shahzad ali",
-    email: "shazz@gmail.com",
-    accountStatus: "terminated" || "deactivated" || "active",
-    accountCreationDate: "12 april 2024"
-  },
-  {
-    id: 'asdfewer',
-    username: 'shazz',
-    fullname: "shahzad ali",
-    email: "shazz@gmail.com",
-    accountStatus: "terminated" || "deactivated" || "active",
-    accountCreationDate: "12 april 2024"
-  },
-]
+// const users: User[] = [
+//   {
+//     id: 'asdfewer',
+//     username: 'shazz',
+//     fullname: "shahzad ali",
+//     email: "shazz@gmail.com",
+//     accountStatus: "terminated" || "deactivated" || "active",
+//     accountCreationDate: "12 april 2024"
+//   },
+//   {
+//     id: 'asdfewer',
+//     username: 'shazz',
+//     fullname: "shahzad ali",
+//     email: "shazz@gmail.com",
+//     accountStatus: "terminated" || "deactivated" || "active",
+//     accountCreationDate: "12 april 2024"
+//   },
+//   {
+//     id: 'asdfewer',
+//     username: 'shazz',
+//     fullname: "shahzad ali",
+//     email: "shazz@gmail.com",
+//     accountStatus: "terminated" || "deactivated" || "active",
+//     accountCreationDate: "12 april 2024"
+//   },
+// ]
 
 const columns = [
   {
@@ -132,8 +132,8 @@ function DashboardSection() {
 
 
       </div>
-      <AdminDataTable title={"Recent Campaigns"} filter={false} columns={columns} data={users} />
-      <AdminDataTable title={"Recent Reports"} filter={false} columns={columns} data={users} />
+      {/* <AdminDataTable title={"Recent Campaigns"} filter={false} columns={columns} data={users} /> */}
+      {/* <AdminDataTable title={"Recent Reports"} filter={false} columns={columns} data={users} /> */}
     </main>
   )
 }

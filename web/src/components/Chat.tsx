@@ -25,10 +25,8 @@ import { startCall } from "@/app/features/user/callSlice";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { format } from "date-fns";
 import { AlertDialogC } from "./AlertDialog";
-import Agora from "./Call/agora/AgoraRTC";
-import VideoCall from "./Call/Video/VideoCall";
 
-function Chat({ user, recepientDetails, setChatOpen, isOnline }) {
+function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
     const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId)
     const group: any = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId) : {}
@@ -213,7 +211,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }) {
     };
 
 
-    const handleSendMessage = (e?: KeyboardEvent) => {
+    const handleSendMessage: any = (e?: KeyboardEvent) => {
         if (inputValue.trim().length === 0) {
             return;
         }

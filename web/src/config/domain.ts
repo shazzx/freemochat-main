@@ -1,1 +1,1 @@
-export const domain = process.env.ENV == 'PRODUCTION' ? "http://ec2-15-206-203-226.ap-south-1.compute.amazonaws.com:5173" : 'http://localhost:5173'
+export const domain = import.meta.env.VITE_ENV == 'PRODUCTION' ? import.meta.env.VITE_APP_BASE_URL_PROD : import.meta.env.VITE_APP_BASE_URL_DEV

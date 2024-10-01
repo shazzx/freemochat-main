@@ -410,7 +410,7 @@ export const useAcceptFriendRequest = () => {
             console.log(err)
             toast.error("something went wrong")
             queryClient.setQueryData(['userRequests', user._id], context?.previousRequests)
-            queryClient.setQueryData(['user',username], context?.previousUsersss)
+            queryClient.setQueryData(['user',username], context?.previousUser)
         },
         onSettled: (data, err) => {
             console.log(data)
