@@ -76,6 +76,7 @@
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^9.0.1",
     "vite-plugin-checker": "^0.7.2",
+    "vite-plugin-commonjs": "^0.10.3",
     "yup": "^1.4.0",
     "zod": "^3.23.8"
   },

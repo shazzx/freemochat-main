@@ -12,7 +12,7 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { updateUser } from '@/app/features/user/userSlice'
-import { countryToAlpha3 } from "country-to-iso";
+import {countryToAlpha3} from 'country-to-iso'
 
 function ChangePhoneModel({ setModelTrigger }) {
 
@@ -34,7 +34,7 @@ function ChangePhoneModel({ setModelTrigger }) {
 
 
     const validatePhone = (_phone, country) => {
-        let data  =countryToAlpha3(user.address.country)
+        let data  = countryToAlpha3(user.address.country)
         console.log(_phone, data)
         return phone(_phone, { country: countryToAlpha3(user.address.country) })
     }

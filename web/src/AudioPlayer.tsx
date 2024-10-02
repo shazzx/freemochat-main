@@ -20,6 +20,14 @@ const AudioPlayer = ({ src, duration }) => {
     };
   }, []);
 
+  useEffect(() => {
+    console.log(currentTime, duration)
+    if((currentTime > duration) || (currentTime > (duration - 0.05))){
+      setCurrentTime(0)
+      setIsPlaying(false)
+    }
+  },[currentTime])
+
   // const onLoadedMetadata = () => {
   //   setDuration(audioRef.current.duration);
   // };

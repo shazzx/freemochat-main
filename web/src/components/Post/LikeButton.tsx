@@ -6,6 +6,8 @@ const reactions = [
   { emoji: '😢', name: 'Sad' },
 ];
 
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
 function LikeButton({ postData, mutate, pageIndex, postIndex }) {
   const [showReactions, setShowReactions] = useState(false);
   const [selectedReaction, setSelectedReaction] = useState(null);
@@ -32,7 +34,7 @@ function LikeButton({ postData, mutate, pageIndex, postIndex }) {
     handleMouseLeave(e.changedTouches[0]);
   };
 
-  const handleMouseDown = () => {
+  const handleMouseDown = (e) => {
     if (postData.isLikedByUser) {
       return
     }
@@ -41,7 +43,7 @@ function LikeButton({ postData, mutate, pageIndex, postIndex }) {
     }, 500);
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -76,7 +78,7 @@ function LikeButton({ postData, mutate, pageIndex, postIndex }) {
     };
   }, []);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (e) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }

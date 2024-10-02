@@ -10,7 +10,7 @@ import PostCarousel from '@/components/Carousel';
 import { Combobox } from '@/components/Comboxbox';
 
 
-function BottomCreatePost({ setModelTrigger, createPost, editPost, postDetails, updatePost}) {
+function BottomCreatePost({ setModelTrigger, createPost, editPost, postDetails, updatePost}: any) {
     const [selectedMedia, setSelectedMedia] = useState([])
     const [emojiPickerState, setEmojiPickerState] = useState(false)
     const [selected, setSelected] = useState("public")
@@ -19,7 +19,7 @@ function BottomCreatePost({ setModelTrigger, createPost, editPost, postDetails, 
     const [postMedia, setPostMedia] = useState<{ remove: string, url: string, file: string, filename: string }[]>((postDetails && postDetails?.media) ? [...postDetails?.media] : [])
     const [uploading, setUploading] = useState(false)
     const [searchParams] = useSearchParams()
-    const isOpen = searchParams.get("createpost")
+    const isOpen = searchParams.get("createpost") == 'true' ? true : false
 
     const content = useRef<HTMLTextAreaElement>()
 

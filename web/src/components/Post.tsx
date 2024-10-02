@@ -341,7 +341,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                         {expanded ?
                             postData?.content :
-                            <p>
+                            <p className='break-words'>
                                 {expandable}
                                 {expandable?.length > 40 && <>...{' '} <span className='text-primary text-sm cursor-pointer' onClick={() => setExpanded(true)}>Show more</span></>}
                             </p>
