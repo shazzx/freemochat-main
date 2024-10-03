@@ -4,6 +4,7 @@ import { setUser } from '@/app/features/user/userSlice'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import React, { useEffect, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 function ProtectedRoute() {
     const dispatch = useAppDispatch()
@@ -44,6 +45,12 @@ function ProtectedRoute() {
 
             } catch (error) {
                 console.log(error)
+
+                if (error.response.data.message.startsWith('Your account')) {
+                    toast.error(error.response.data.message)
+                    navigate('/login')
+                    return
+                }
                 setIsFetched(true)
                 return navigate('/login')
             }

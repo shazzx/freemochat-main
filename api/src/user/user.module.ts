@@ -18,6 +18,8 @@ import { LocationModule } from 'src/location/location.module';
 import { TwilioModule } from 'src/twilio/twilio.module';
 import { CacheModule } from 'src/cache/cache.module';
 import { ChatModule } from 'src/chat/chat.module';
+import { AccountManagementModule } from 'src/account-management/account-management.module';
+import { AccountManagementService } from 'src/account-management/account-management.service';
 
 @Module({
   imports: [

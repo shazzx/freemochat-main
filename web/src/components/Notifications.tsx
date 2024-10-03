@@ -48,15 +48,15 @@ const getTarget = (targetType, targetId, handle, type) => {
         return url
     }
 
-    if(type == 'post' || type == 'comment' || type == 'reply'){
-        let url =  `${domain}/post/${targetId}?type=${targetType}`
+    if (type == 'post' || type == 'comment' || type == 'reply') {
+        let url = `${domain}/post/${targetId}?type=${targetType}`
         return url
     }
 }
 
 export function Notifications({ setNotificationsState }) {
     const [notifications, setNotifications] = useState([])
-    const {notification} = useAppSelector((state) => state.notification)
+    const { notification } = useAppSelector((state) => state.notification)
     const defaultMetric = useUserDefaultMetric()
 
     useEffect(() => {
@@ -77,15 +77,20 @@ export function Notifications({ setNotificationsState }) {
                         <CardTitle>Notifications </CardTitle>
                         <BellRing size={26} />
                     </div>
-                    <div className="flex gap-2 items-center">
-                        <Button onClick={() =>{
-                            defaultMetric.mutate('notification')
-                        }}>Mark as Read</Button>
-                    </div>
+                    {notifications?.length > 0 &&
+                        <div className="flex gap-2 items-center">
+                            <Button onClick={() => {
+                                defaultMetric.mutate('notification')
+                            }}>Mark as Read</Button>
+                        </div>
+                    }
                     {/* <CardDescription>{notifications?.length > 0 ? "You have " + notifications?.length + " unread messages." : " You have no notifications"} </CardDescription> */}
                 </CardHeader>
                 <CardContent className="grid gap-4 p-1 ">
                     <div>
+                        {notifications && notifications.length == 0 &&
+                        <div className="text-center">No Notifications</div>
+                        }
                         {notifications && notifications?.map((notification, index) => {
                             if (notification?.value) {
                                 return (
@@ -107,16 +112,16 @@ export function Notifications({ setNotificationsState }) {
                                                 <p className="text-md flex gap-2 font-medium leading-none">
                                                     {notification?.sender?.firstname + " " + notification?.sender?.lastname}
                                                     <span className="text-sm">({notification?.sender?.username})</span>
-                                        {/* <span className="text-xs">{format(notification.createdAt ?? Date.now(), 'MMM d, h:mm a')}</span> */}
+                                                    {/* <span className="text-xs">{format(notification.createdAt ?? Date.now(), 'MMM d, h:mm a')}</span> */}
                                                 </p>
 
                                             </Link>
-                                            
-                                            <Link onClick={() => setNotificationsState(false)} to={getTarget(notification.targetType, notification.targetId,  notification?.handle, notification.type)}>
 
-                                            <p className="text-sm text-muted-foreground">
-                                                {notification?.value}
-                                            </p>
+                                            <Link onClick={() => setNotificationsState(false)} to={getTarget(notification.targetType, notification.targetId, notification?.handle, notification.type)}>
+
+                                                <p className="text-sm text-muted-foreground">
+                                                    {notification?.value}
+                                                </p>
                                             </Link>
 
                                         </div>

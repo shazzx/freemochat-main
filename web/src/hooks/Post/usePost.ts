@@ -5,7 +5,6 @@ import { produce } from 'immer'
 import { bookmarkPost, createPost, fetchFeed, fetchPost, fetchPostLikes, fetchPosts, likePost, promotePost, removePost, updatePost } from '@/api/Post/posts';
 import { UrlObject } from 'url';
 import { axiosClient } from '@/api/axiosClient';
-import { useEffect } from 'react';
 import { redirectToCheckout } from '@/utils/redirectToCheckout';
 
 export function useFeed(): any {

@@ -46,23 +46,19 @@ export class AdminController {
         }
 
         console.log(refreshToken, 'refresh')
-        const accessToken = +await this.authService.refreshToken(refreshToken)
+        const accessToken = await this.authService.refreshToken(refreshToken)
         return response.json({ accessToken })
     }
 
 
     @IsAdminRoute()
-    // @UseGuards(JwtAuthGuard)
     @Get()
     async admin(@Req() req: Request, @Res() response: Response) {
-        // const { admin }: any = req
-        // const { username } = admin
-        // console.log(username)
-        response.json(await this.adminService.getAdmin("shazzx"))
+        const {admin} = req as any
+        console.log(admin)
+        response.json(await this.adminService.getAdmin("shazzadmin"))
     }
 
-    // @Public()
-    // @Get('create')
     @IsAdminRoute()
     @Post('create')
     async createAdmin(@Req() req: Request, @Res() response: Response) {

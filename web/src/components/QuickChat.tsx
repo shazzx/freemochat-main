@@ -12,7 +12,7 @@ import { axiosClient } from '@/api/axiosClient';
 import { useQueryClient } from '@tanstack/react-query';
 import { produce } from 'immer';
 import { useSocket } from '@/hooks/useSocket';
-import { MdClose } from 'react-icons/md';
+import { MdClose, MdSend } from 'react-icons/md';
 
 function QuickChat({ target, setOpenQuickChat }: any) {
     const { user } = useAppSelector(state => state.user)
@@ -49,7 +49,13 @@ function QuickChat({ target, setOpenQuickChat }: any) {
 
 
     const handleSendMessage = (e) => {
-        if (e.key !== "Enter" || inputValue.trim().length === 0) return;
+        if (inputValue.trim().length === 0) {
+            return;
+        }
+
+        if (e?.type !== "click" && e?.key !== "Enter") {
+            return
+        }
 
         // send a message to the server
         // setMessages((previousMessages) => [...previousMessages, { recepeint: target?.data?._id, sender: user?._id, content: inputValue, type: "Page" }]);
@@ -144,10 +150,10 @@ function QuickChat({ target, setOpenQuickChat }: any) {
                         }
                         return (
                             message?.sender == user?._id?.toString() ?
-                                <div className="flex gap-2 justify-end" key={message?._id}>
+                                <div className="  flex gap-2 justify-end" key={message?._id}>
                                     {userMessages.data.length - 1 == pageIndex && userMessages.data[userMessages.data.length - 1].messages.length - 1 == messageIndex && <div ref={ref}></div>}
                                     <div className="relative max-w-80 w-fit">
-                                        <div className={`relative ${!message?.media ? "p-2 pr-3" : "p-0"} border border-muted text-sm  text-primary-foreground rounded-lg `}
+                                        <div className={`relative ${!message?.media ? "p-2 pr-3" : "p-0"} border border-muted text-sm bg-primary text-primary-foreground rounded-lg `}
                                             onMouseEnter={() => {
                                                 setDropDownMessageIndex(messageIndex)
                                                 setDropDownMessagePageIndex(pageIndex)
@@ -193,17 +199,17 @@ function QuickChat({ target, setOpenQuickChat }: any) {
                                                     <video src={message.media.url} controls />
                                                 </div>
                                             }
-                                            <p className="" >{message?.content}</p>
-                                            {
-                                                (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) &&
-                                                <div className="cursor-pointer absolute top-0 -right-2" onClick={() => {
-                                                    setOpenedDropDownMessageId(message?._id)
-                                                }}>
-                                                    <EllipsisIcon />
-                                                </div>
+                                            <p>{message?.content}</p>
+                                            {/* { */}
+                                                {/* // (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) && */}
+                                                {/* // <div className="cursor-pointer absolute top-0 -right-2" onClick={() => { */}
+                                                {/* //     setOpenedDropDownMessageId(message?._id) */}
+                                                {/* // }}> */}
+                                                    {/* // <EllipsisIcon /> */}
+                                                {/* // </div> */}
 
-                                            }
-                                            {
+                                            {/* // } */}
+                                            {/* {
                                                 dropDownMessagePageIndex == pageIndex && dropDownMessageIndex && message?._id && message?._id == openedDropDownMessageId &&
                                                 <div className="absolute top-10 right-0 z-20">
                                                     <Button onClick={() => {
@@ -211,7 +217,7 @@ function QuickChat({ target, setOpenQuickChat }: any) {
                                                         deleteMessage(message?._id)
                                                     }}>Delete</Button>
                                                 </div>
-                                            }
+                                            } */}
                                         </div>
                                     </div>
                                     <div className='max-w-10 max-h-10 rounded-full overflow-hidden'>
@@ -409,12 +415,9 @@ function QuickChat({ target, setOpenQuickChat }: any) {
 
                     </div>
                 </div>
-
-                < svg width="47" className="stroke-white dark:stroke-white" cursor="pointer" height="50" viewBox="0 0 47 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="0.5" y="1" width="46" height="48" rx="4" fill="#433FFA" />
-                    <rect x="0.5" y="1" width="46" height="48" rx="4" stroke="#433FFA" stroke-linejoin="bevel" />
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M30.8814 24.0836L15.786 17.1726C15.3915 16.963 14.9089 16.9431 14.4952 17.1194C14.0815 17.2957 13.7897 17.6456 13.7148 18.0552C13.72 18.1913 13.7561 18.3249 13.8209 18.4477L16.695 24.7566C16.8392 25.1756 16.9177 25.6109 16.9282 26.0497C16.9178 26.4886 16.8393 26.9239 16.695 27.3428L13.8209 33.6518C13.7561 33.7746 13.72 33.9082 13.7148 34.0443C13.7902 34.4533 14.0819 34.8025 14.4952 34.9785C14.9085 35.1545 15.3905 35.1347 15.7846 34.9256L30.8814 28.0147C31.7233 27.6594 32.2618 26.8926 32.2618 26.0491C32.2618 25.2057 31.7233 24.4389 30.8814 24.0836V24.0836Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
+                <Button className="m-0 bg-transparent  py-5 px-2 border-[2px] border-primary" onClick={handleSendMessage} >
+                        <MdSend size={24} className="text-foreground"></MdSend>
+                    </Button>
             </div>
         </div>
     )

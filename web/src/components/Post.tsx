@@ -222,7 +222,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     //   },[])
 
     const params = isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }
-    
+
 
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} onClick={() => {
@@ -262,47 +262,42 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                             {postData.type == 'group'
                                 ?
                                 <div className='relative'>
-                                    <Link to={`${domain}/${postData?.type}/${navigation}`}>
+                                    <Link to={navigation && `${domain}/${postData?.type}/${navigation}`}>
                                         <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
                                             <Avatar >
                                                 <AvatarImage src={_profile} alt="Avatar" />
-                                                <AvatarFallback>{(postData?.target?.name && postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase()}</AvatarFallback>
+                                                <AvatarFallback>{(postData?.target?.name ? (postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
                                             </Avatar>
                                         </div>
                                     </Link>
-                                    <Link to={`${domain}/user/${postData?.user?.username}`}>
-
+                                    <Link to={postData?.user?.username && `${domain}/user/${postData?.user?.username}`}>
                                         <div className='absolute -bottom-1 border border-accent -right-1 bg-accent w-8 h-8 flex items-center justify-center rounded-full overflow-hidden'>
-
-
-
                                             <Avatar >
                                                 <AvatarImage src={postData.user.profile} alt="Avatar" />
-                                                <AvatarFallback>{(postData?.user?.firstname && postData?.user?.firstname[0]?.toUpperCase())}</AvatarFallback>
+                                                <AvatarFallback>{(postData?.user?.firstname ? postData?.user?.firstname[0]?.toUpperCase() : "D")}</AvatarFallback>
                                             </Avatar>
                                         </div>
                                     </Link>
-
                                 </div>
                                 :
-                                <Link to={`${domain}/${postData?.type}/${navigation}`}>
+                                <Link to={navigation && `${domain}/${postData?.type}/${navigation}`}>
 
                                     <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
                                         {postData?.type !== 'user' ?
                                             <Avatar>
                                                 <AvatarImage src={_profile} alt="Avatar" />
-                                                <AvatarFallback>{(postData?.target?.name && postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase()}</AvatarFallback>
+                                                <AvatarFallback>{(postData?.target?.name ? (postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase(): "D")}</AvatarFallback>
                                             </Avatar>
                                             :
                                             <>
                                                 {self ?
                                                     <Avatar >
                                                         <AvatarImage src={profile} alt="Avatar" />
-                                                        <AvatarFallback>{(postData?.target?.firstname && postData?.target?.firstname[0]?.toUpperCase()) + (postData?.target?.lastname && postData?.target?.lastname[0]?.toUpperCase())}</AvatarFallback>
+                                                        <AvatarFallback>{(postData?.target?.firstname ? (postData?.target?.firstname[0]?.toUpperCase()) + (postData?.target?.lastname && postData?.target?.lastname[0]?.toUpperCase()) : "D")}</AvatarFallback>
                                                     </Avatar> :
                                                     <Avatar >
                                                         <AvatarImage src={_profile} alt="Avatar" />
-                                                        <AvatarFallback>{(postData?.target?.firstname && postData?.target?.firstname[0]?.toUpperCase()) + (postData?.target?.lastname && postData?.target?.lastname[0]?.toUpperCase())}</AvatarFallback>
+                                                        <AvatarFallback>{(postData?.target?.firstname ? (postData?.target?.firstname[0]?.toUpperCase()) + (postData?.target?.lastname && postData?.target?.lastname[0]?.toUpperCase()) : "D")}</AvatarFallback>
                                                     </Avatar>
                                                 }
                                             </>
@@ -316,18 +311,24 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                             <div className='flex flex-col gap-1'>
                                 {postData.type == 'group' ?
                                     <h3 className='text-card-foreground flex gap-2 text-sm'>
-                                        <Link to={`${domain}/user/${postData?.user?.username}`}>
-                                            {postData?.user?.firstname + " " + postData?.user?.lastname}
-                                        </Link>
-                                        <Link to={`${domain}/${postData?.type}/${navigation}`}>
-                                            ({postData?.target?.name})
-                                        </Link>
+                                                <Link to={postData?.user?.username && `${domain}/user/${postData?.user?.username}`}>
+                                                    {postData?.user?.firstname + " " + postData?.user?.lastname}
+                                                </Link>
+                                                <Link to={navigation && `${domain}/${postData?.type}/${navigation}`}>
+                                                    ({postData?.target?.name || "Deleted"})
+                                                </Link>
                                     </h3>
                                     :
-                                    <Link to={`${domain}/${postData?.type}/${navigation}`}>
+                                    navigation ?
+                                        <Link to={` ${domain}/${postData?.type}/${navigation}`}>
 
-                                        <h3 className='text-card-foreground flex gap-2 text-sm'>{(postData?.target?.firstname ? (postData?.target?.firstname + " " + postData?.target?.lastname) : postData?.target?.name)}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
-                                    </Link>
+                                            <h3 className='text-card-foreground flex gap-2 text-sm'>{(postData?.target?.firstname ? (postData?.target?.firstname + " " + postData?.target?.lastname) : postData?.target?.name)}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
+                                        </Link>
+                                        :
+                                        <div>
+
+                                            <h3 className='text-card-foreground flex gap-2 text-sm'>{(postData?.target?.firstname ? (postData?.target?.firstname + " " + postData?.target?.lastname) : postData?.target?.name || 'Deleted')}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
+                                        </div>
 
                                 }
                                 <span className='text-muted-foreground text-xs'>{postData?.promotion?.length > 0 ? "sponsored" : date}</span>
@@ -378,8 +379,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                             {width < 540 &&
                                 <>
-                                        <PostMediaCarousel mobile={true} media={postData?.media} />
-                                    </>
+                                    <PostMediaCarousel mobile={true} media={postData?.media} />
+                                </>
                             }
 
 

@@ -1489,6 +1489,7 @@ export class PostsService {
     async promotionPaymentSuccess(promotionId: string, totalAmount: string, paymentIntentId: string) {
         console.log(paymentIntentId, 'paymentintent id')
         const promotion = await this.promotionModel.findByIdAndUpdate(promotionId, { $set: { active: 1, paymentDetails: { totalAmount, status: PAYMENT_STATES.PAID, paymentProvider: PAYMENT_PROVIDERS.STRIPE, paymentIntentId }, reachStatus: ReachStatus.IN_PROGRESS } })
+        await this.metricsAggregatorService.incrementCount(null, "count", "campaigns")
         return promotion
     }
 
@@ -1872,6 +1873,8 @@ export class PostsService {
         }
 
         const report = await this.reportModel.create({ reportedBy: new Types.ObjectId(userId), type, postId: new Types.ObjectId(postId), reportMessage })
+        await this.metricsAggregatorService.incrementCount(null, "count", "reports")
+
         return report
     }
 

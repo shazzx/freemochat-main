@@ -18,6 +18,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { UploadModule } from 'src/upload/upload.module';
 import { AccountManagementModule } from 'src/account-management/account-management.module';
 import { PaymentModule } from 'src/payment/payment.module';
+import { MetricsAggregatorModule } from 'src/metrics-aggregator/metrics-aggregator.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PaymentModule } from 'src/payment/payment.module';
       { name: Counter.name, schema: counterSchema },
       { name: Promotion.name, schema: promotionSchema }]),
     PostModule,
+    MetricsAggregatorModule,
     GroupModule,
     PageModule,
     PaymentModule,

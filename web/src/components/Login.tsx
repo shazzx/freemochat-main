@@ -45,6 +45,12 @@ export function LoginForm() {
             if (error.response.data.type == 'not verified') {
                 dispatch(setVerificationStatus(error.response.data.verification))
                 navigate("/auth/" + error.response.data.user.username + "?auth_id=" + error.response.data.user.auth_id)
+                return
+            }
+
+            if (error.response.data.message.startsWith('Your account')) {
+                toast.error(error.response.data.message)
+                return
             }
             toast.error(error.response.data.message)
             setLoginButtonState(false)

@@ -10,6 +10,7 @@ import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
 import { UploadService } from 'src/upload/upload.service';
 import { PaymentService } from 'src/payment/payment.service';
+import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 
 @Injectable()
 export class AdminService {
@@ -18,12 +19,12 @@ export class AdminService {
         @InjectModel(Report.name) private readonly reportModel: Model<Report>,
         @InjectModel(Promotion.name) private readonly campaignModel: Model<Promotion>,
         @InjectModel(Counter.name) private readonly counterModel: Model<Counter>,
+        private readonly metricsAggregatorService: MetricsAggregatorService,
         private readonly uploadService: UploadService,
         private readonly paymentService: PaymentService
     ) { }
 
     async getAdmin(username: string) {
-        console.log(await this.adminModel.find())
         return await this.adminModel.findOne({ username })
     }
 
@@ -58,7 +59,7 @@ export class AdminService {
                     from: "users",
                     let: { userId: { $toObjectId: "$reportedBy" } },
                     pipeline: [
-                      { $match: { $expr: { $eq: ["$_id", "$$userId"] } } }
+                        { $match: { $expr: { $eq: ["$_id", "$$userId"] } } }
                     ],
                     as: "reportedBy"
                 }
@@ -118,34 +119,69 @@ export class AdminService {
 
     async removeReport(reportId) {
         const report = await this.reportModel.findByIdAndDelete(reportId)
+        await this.metricsAggregatorService.incrementCount(null, "count", "reports")
         return report
     }
 
     async getDashboardData() {
         try {
-            const [counters, latestCampaigns, latestReports] = await Promise.all([
-                this.counterModel.find({
-                    name: { $in: ['users', 'campaigns', 'reports'] }
-                }).lean(),
+            const [latestCampaigns, latestReports] = await Promise.all([
+                // this.counterModel.find({
+                //     type: { $in: ['users', 'campaigns', 'reports'] }
+                // }).lean(),
 
                 this.campaignModel.find()
                     .sort({ createdAt: -1 })
-                    .limit(6)
+                    .limit(4)
                     .lean(),
 
                 this.reportModel.find()
                     .sort({ createdAt: -1 })
-                    .limit(6)
+                    .limit(4)
                     .lean()
             ]);
 
-            const counts = counters.reduce((acc, counter) => {
-                acc["counter.name"] = counter.count;
-                return acc;
-            }, {});
+            const result = await this.counterModel.aggregate([
+                {
+                    $match: {
+                        type: { $in: ['users', 'campaigns', 'reports'] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        users: {
+                            $push: {
+                                $cond: [{ $eq: ['$type', 'users'] }, '$$ROOT', '$$REMOVE']
+                            }
+                        },
+                        campaigns: {
+                            $push: {
+                                $cond: [{ $eq: ['$type', 'campaigns'] }, '$$ROOT', '$$REMOVE']
+                            }
+                        },
+                        reports: {
+                            $push: {
+                                $cond: [{ $eq: ['$type', 'reports'] }, '$$ROOT', '$$REMOVE']
+                            }
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        users: 1,
+                        campaigns: 1,
+                        reports: 1
+                    }
+                }
+            ]);
+
+
+            const formattedResult = result[0] || { users: [], campaigns: [], reports: [] };
 
             return {
-                counts,
+                counters: formattedResult,
                 latestCampaigns,
                 latestReports
             };

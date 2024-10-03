@@ -221,7 +221,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
                                 {/* profile edit */}
                                 {isSelf && <div className='p-4'>
-                                    <PencilIcon size="25" onClick={() => {
+                                    <PencilIcon className='cursor-pointer' size="25" onClick={() => {
                                         navigate("?settings=true")
                                     }} />
                                 </div>}

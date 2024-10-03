@@ -8,7 +8,7 @@ import { Follower } from 'src/schema/followers';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 import { CryptoService } from 'src/crypto/crypto.service';
 import { ChatGateway } from 'src/chat/chat.gateway';
-
+import { AccountManagementService } from 'src/account-management/account-management.service';
 
 @Injectable()
 export class UserService {
@@ -19,6 +19,7 @@ export class UserService {
         @InjectModel(Friend.name) private readonly friendModel: Model<Friend>,
         @InjectModel(Follower.name) private readonly followerModel: Model<Follower>,
         private readonly metricsAggregatorService: MetricsAggregatorService,
+        // private readonly accountManagementService: AccountManagementService,
         private readonly notificationGateway: ChatGateway,
         private readonly cryptoService: CryptoService
     ) {
@@ -35,6 +36,8 @@ export class UserService {
         let hashedPassword = await this.cryptoService.hash(password, 16)
 
         const _user = await this.userModel.create({ firstname, lastname, username, password: hashedPassword, phone, address, tempSecret })
+        await this.metricsAggregatorService.incrementCount(null, "count", "users")
+
         return _user
     }
 
@@ -293,6 +296,12 @@ export class UserService {
     async getUser(username: string, populate?: string, userId?: string) {
         console.log(username)
 
+        // let accountStatus = await this.accountManagementService.getAccountStatus(userId)
+
+        // if(accountStatus.isSuspended){
+        //     return null
+        // }
+
         if (populate) {
             let user = await this.userModel.find({ username, isActive: true }).populate(populate)
             return user
@@ -499,6 +508,7 @@ export class UserService {
 
     async deleteUser(userId: string) {
         let deletedUser = await this.userModel.findByIdAndDelete(userId)
+        await this.metricsAggregatorService.decrementCount(null, "count", "users")
         return deletedUser
     }
 

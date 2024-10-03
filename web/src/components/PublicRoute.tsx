@@ -62,10 +62,6 @@ function PublicRoute() {
                 //     navigate('/login')
                 //     return
                 // }
-
-                if (error.response.data.message.startsWith('Your Account')) {
-                    return
-                }
             }
         }
         getUser()

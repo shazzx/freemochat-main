@@ -19,7 +19,7 @@ export const axiosClient = axios.create({
 axiosClient.interceptors.request.use(
     (config) => {
         const access_token = store.getState().auth.access_token
-        console.log(access_token, "access_token")
+        // console.log(access_token, "access_token")
         if (access_token) {
             config.headers.Authorization = `Bearer ${access_token}`
         }
