@@ -2,6 +2,7 @@ import { useAppSelector } from "@/app/hooks";
 import Chat from "@/components/Chat"
 import ChatSidebar from "@/components/ChatSidebar"
 import { useUserChatlist } from "@/hooks/Chat/main";
+import { format } from "date-fns";
 import { memo, useState } from "react"
 
 function MessagesSection() {
@@ -10,6 +11,7 @@ function MessagesSection() {
     const { user } = useAppSelector((data) => data.user)
     const { data, isLoading } = useUserChatlist()
     const isOnline = !isLoading && recepientDetails.chatIndex > -1 && data.users[recepientDetails.chatIndex]?.onlineStatus
+    // data && console.log(format(data?.users[0]?.createdAt, 'MMM d, yyy h:mm:ss a'))
 
     return (
         <div className="flex w-full bg-background-secondary">

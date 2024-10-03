@@ -1,6 +1,6 @@
 import dayjs from "dayjs"
 
-export const getTime = (): {
+export const getTime = (time?): {
     year: string,
     month: string,
     date: string,
@@ -9,7 +9,7 @@ export const getTime = (): {
     minutes: string,
     meridiam: string
 } => {
-    let createDate = dayjs().format("YYYY/MMM/DD/ddd/hh/mm/a")
+    let createDate = dayjs(time).format("YYYY/MMM/DD/ddd/hh/mm/a")
     let date = createDate.split('/')
     return {
         year: date[0],

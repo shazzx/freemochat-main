@@ -57,8 +57,7 @@ import { PaymentModule } from './payment/payment.module';
     PostsModule,
     ConfigModule.forRoot({ isGlobal: true }),
     // MongooseModule.forRoot('mongodb+srv://Shahzad:2clPrfXPP2iAUILk@cluster0.ldazyvx.mongodb.net/SMA?retryWrites=true&w=majority'),
-    MongooseModule.forRoot("mongodb://localhost:27017/freedombook"),
-  
+    MongooseModule.forRoot("mongodb://localhost:27017/sma-diginotive-app"),
     StoriesModule,
     SearchModule,
     PagesModule,

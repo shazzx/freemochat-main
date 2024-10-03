@@ -3,11 +3,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, PopulateOptions } from 'mongoose';
 import { CacheService } from 'src/cache/cache.service';
 import { ChatItem, MessageType } from 'src/schema/chatlist.schema';
+import { MessageSoftDelete } from 'src/schema/chatsoftdelete';
 
 @Injectable()
 export class UserChatListService {
     constructor(
         @InjectModel(ChatItem.name) private userChatListModel: Model<ChatItem>,
+        @InjectModel(MessageSoftDelete.name) private messageSoftDelete: Model<MessageSoftDelete>,
         private readonly cacheService: CacheService
     ) { }
 
@@ -21,7 +23,7 @@ export class UserChatListService {
         removeChat?: boolean,
     ): Promise<any> {
         console.log(userId, recepientId, type, lastMessage, 'inside chatlist')
-        
+
 
         const userChat = await this.userChatListModel.findOne({
             user: userId,
@@ -98,9 +100,30 @@ export class UserChatListService {
     //     return removedChat
     // }
 
-    async removeChat(userId: string, recepientId: string) {
+    async removeChat(userId: string, recepientId: string, lastDeletedId: string) {
         let removedChat = await this.userChatListModel.findOneAndDelete({ user: userId, recepient: recepientId });
-        console.log(removedChat)
+
+        console.log('removechat')
+
+        const result = await this.messageSoftDelete.findOneAndUpdate(
+            {
+                user: new Types.ObjectId(userId),
+                recepient: new Types.ObjectId(recepientId)
+            },
+            {
+                $set: {
+                    lastDeletedId: new Types.ObjectId(lastDeletedId),
+                    user: new Types.ObjectId(userId),
+                    recepient: new Types.ObjectId(recepientId)
+                }
+            },
+            {
+                upsert: true,
+                new: true, // This is equivalent to returnDocument: 'after' in the Node.js driver
+                runValidators: true // This ensures that any schema validators are run on insert
+            }
+        );
+        console.log(result)
         return removedChat
     }
 

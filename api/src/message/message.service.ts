@@ -2,12 +2,15 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { UserChatListService } from 'src/chatlist/chatlist.service';
+import { MessageSoftDelete } from 'src/schema/chatsoftdelete';
 import { Message } from 'src/schema/message';
+import { getTime } from 'src/utils/getTime';
 
 @Injectable()
 export class MessageService {
   constructor(
     @InjectModel(Message.name) private readonly messageModel: Model<Message>,
+    @InjectModel(MessageSoftDelete.name) private messageSoftDelete: Model<MessageSoftDelete>,
     private readonly chatlistService: UserChatListService,
   ) { }
 
@@ -37,7 +40,11 @@ export class MessageService {
     if (!chatlist) {
       return { messages: [], nextCursor: null };
     }
-    const _cursor = cursor ? { createdAt: { $lt: new Date(cursor), $gt: chatlist.createdAt } } : {createdAt: {$gt: chatlist.createdAt }};
+
+    const softDelete = await this.messageSoftDelete.findOne({user: new Types.ObjectId(userId), recepient: new Types.ObjectId(recepientId)})
+console.log(softDelete)
+    const _cursor = cursor && softDelete ? { createdAt: { $lt: new Date(cursor) }, _id: {$gt: softDelete.lastDeletedId} } : cursor ? {createdAt: { $lt: new Date(cursor)}} : softDelete ? {_id: {$gt: softDelete.lastDeletedId}} : {}
+    
     // let query = { ..._cursor, $or: [{ sender: userId, recepient: recepientId }, { sender: recepientId, recepient: userId }] }
     let query;
     let messages;

@@ -285,7 +285,8 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
     }
 
     const deleteChat = async () => {
-        const { data } = await axiosClient.post("/chatlist/remove", { recepientId: recepientDetails?.type == "ChatGroup" ? recepientDetails?.groupId : recepientDetails?.userId, type: recepientDetails?.type })
+        const lastMessageId = userMessages.data[userMessages.data.length - 1].messages[userMessages.data[userMessages.data.length - 1].messages.length - 1]._id
+        const { data } = await axiosClient.post("/chatlist/remove", { recepientId: recepientDetails?.type == "ChatGroup" ? recepientDetails?.groupId : recepientDetails?.userId, type: recepientDetails?.type, lastMessageId })
         queryClient.invalidateQueries({ queryKey: ["chatlist"] })
         setChatOpen(false)
     }
