@@ -293,6 +293,15 @@ export class UserService {
         return await this.userModel.findById(userId)
     }
 
+
+    async userExists(userId) {
+        let user = await this.userModel.findById(userId)
+        if(user){
+            return true
+        }
+        return false
+    }
+
     async getUser(username: string, populate?: string, userId?: string) {
         console.log(username)
 

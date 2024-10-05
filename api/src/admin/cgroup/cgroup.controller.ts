@@ -13,7 +13,7 @@ export class CGroupController {
   @IsAdminRoute()
   @Get("chatgroups")
   async getPages(@Req() req: Request, @Res() response: Response) {
-    const { cursor, search } = req.params
+    const { cursor, search } = req.query as {cursor: string, search: string}
     response.json(await this.cgroupService.getChatGroups(cursor, search))
   }
 
@@ -22,7 +22,7 @@ export class CGroupController {
   @IsAdminRoute()
   @Post("chatgroup/remove")
   async removePage(@Req() req: Request, @Res() response: Response) {
-    const { chatGroupId } = req.body
-    response.json(await this.userChatGroupService.deleteGroup(chatGroupId))
+    const { groupId } = req.body
+    response.json(await this.userChatGroupService.deleteGroup(groupId))
   }
 }

@@ -17,7 +17,7 @@ export class PageController {
   @IsAdminRoute()
   @Get("pages")
   async getPages(@Req() req: Request, @Res() response: Response) {
-    const { cursor, search } = req.params
+    const { cursor, search } = req.query as {cursor: string, search: string}
     response.json(await this.pageService.getPages(cursor, search))
   }
 

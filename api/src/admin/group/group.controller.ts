@@ -17,7 +17,7 @@ export class GroupController {
   @IsAdminRoute()
   @Get("groups")
   async getPages(@Req() req: Request, @Res() response: Response) {
-    const { cursor, search } = req.params
+    const { cursor, search } = req.query as {cursor: string, search: string}
     console.log('groups')
     response.json(await this.groupService.getGroups(cursor, search))
   }

@@ -7,9 +7,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { EllipsisVertical } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { domain } from '@/config/domain'
+import { useAppSelector } from '@/app/hooks'
 
 const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, setEditCommentModelState, editCommentModelState, setCommentDetails }) => {
     const { mutate } = useLikeReply(reply?.parentId)
+    const {user} = useAppSelector((state) => state.user)
     const deleteReply = useDeleteReply(reply?.parentId)
     return (
         <div>
@@ -30,6 +32,8 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                             </div>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-muted text-sm rounded-lg ">
                                 <AudioPlayer src={reply.audio.src} duration={reply.audio.duration} />
+                                {user._id == reply?.user?._id 
+                                && 
 
                                 < DropdownMenu >
                                     <DropdownMenuTrigger asChild className='cursor-pointer'>
@@ -41,6 +45,7 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                                         }}>Remove</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+                                }
                             </div>
                             <div className='flex px-2 gap-4 text-xs'>
                                 <span className={`cursor-pointer ${reply?.isLikedByUser && "text-primary"}`} onClick={async () => {
@@ -69,6 +74,8 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-muted text-sm rounded-lg ">
                                 <p >{reply?.content}</p>
 
+                                {user._id == reply?.user?._id
+                                && 
                                 < DropdownMenu >
                                     <DropdownMenuTrigger asChild className='cursor-pointer'>
                                         <EllipsisVertical size="16px" />
@@ -84,7 +91,7 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
 
                                         }}>Remove</DropdownMenuItem>
                                     </DropdownMenuContent>
-                                </DropdownMenu>
+                                </DropdownMenu>}
                             </div>
                             <div className='flex px-2 gap-4 text-xs'>
                                 <span className={`cursor-pointer ${reply?.isLikedByUser && "text-primary"}`} onClick={async () => {

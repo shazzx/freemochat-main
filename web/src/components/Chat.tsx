@@ -25,6 +25,7 @@ import { startCall } from "@/app/features/user/callSlice";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { format } from "date-fns";
 import { AlertDialogC } from "./AlertDialog";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
@@ -352,12 +353,14 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
         setChatGroupInfo(false)
     }
 
-    const { callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
     const [alertDialog, setAlertDialog] = useState(false)
+
+    const [searchParams] = useSearchParams()
+    const navigate = useNavigate()
 
     return (
         <div className='flex flex-col min-w-[300px] h-full w-full' >
-            {chatGroupInfo &&
+            { searchParams.get("model") == "settings" &&
                 <CreateChatGroup setModelTrigger={setChatGroupInfo} groupDetails={recepientDetails} editState={true} editGroup={editGroup} />
             }
 
@@ -391,7 +394,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                         </Avatar>
                             :
                             <Avatar className="h-10 w-10 flex items-center justify-center" onClick={() => {
-                                setChatGroupInfo(true)
+                                navigate("?model=settings")
                             }}>
                                 <AvatarImage src={recepientDetails?.images?.profile} alt="Avatar" />
                                 <AvatarFallback>{recepientDetails?.name[0]?.toUpperCase()}</AvatarFallback>

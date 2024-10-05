@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
@@ -94,7 +94,7 @@ export class CommentService {
                     createdAt: 1,
                 },
             },
-        ]).sort({createdAt: -1});
+        ]).sort({ createdAt: -1 });
 
         const hasNextPage = comments.length > limit;
         const _comments = hasNextPage ? comments.slice(0, -1) : comments;
@@ -186,7 +186,7 @@ export class CommentService {
                     createdAt: 1,
                 },
             },
-        ]).sort({createdAt: -1});
+        ]).sort({ createdAt: -1 });
 
         const hasNextPage = replies.length > limit;
         const _replies = hasNextPage ? replies.slice(0, -1) : replies;
@@ -222,21 +222,28 @@ export class CommentService {
         return comment
     }
 
-    async updateComment(commentDetails, commentId: string) {
-        const comment = await this.commentModel.findByIdAndUpdate(commentId, { content: commentDetails.content })
+    async updateComment(commentDetails, commentId: string, userId: string) {
+        const comment = await this.commentModel.findOneAndUpdate({_id: new Types.ObjectId(commentId), user: new Types.ObjectId(userId)}, { content: commentDetails.content })
+
+        if (!comment) {
+            throw new BadRequestException('Comment not found or you do not have permission to update it.');
+        }
         return comment
     }
 
-    async removeComment(commentDetails) {
+    async removeComment(commentDetails, userId: string) {
+        const deletedComment = await this.commentModel.findOneAndDelete({ _id: new Types.ObjectId(commentDetails.commentId), user: new Types.ObjectId(userId) })
+
+        if (!deletedComment) {
+            throw new BadRequestException('Comment not found or you do not have permission to delete it.');
+        }
+        await this.metricsAggregatorService.decrementCount(new Types.ObjectId(commentDetails.postId), "post", "comments")
+
         if (commentDetails?.audio) {
-            let deleted = await this.uploadService.deleteFromS3(commentDetails.audio.src)
-            console.log(deleted, 'deleted')
+            await this.uploadService.deleteFromS3(commentDetails.audio.src)
         }
 
-        const comment = await this.commentModel.findByIdAndDelete(commentDetails.commentId)
-        console.log(commentDetails)
-        await this.metricsAggregatorService.decrementCount(new Types.ObjectId(commentDetails.postId), "post", "comments")
-        return comment
+        return deletedComment
     }
 
     async replyOnComment(replyDetails, postId: string, commentId: string, userId: string, file) {
@@ -268,21 +275,31 @@ export class CommentService {
     }
 
 
-    async updateReply(replyDetails, replyId: string) {
-        const comment = await this.commentModel.findByIdAndUpdate(replyId, { content: replyDetails.content })
-        return comment
+    async updateReply(replyDetails, replyId: string, userId: string) {
+        const reply = await this.commentModel.findOneAndUpdate({_id: new Types.ObjectId(replyId), user: new Types.ObjectId(userId)}, { content: replyDetails.content })
+
+        if (!reply) {
+            throw new BadRequestException('reply not found or you do not have permission to update it.');
+        }
+        return reply
     }
 
 
 
-    async removeReply(replyDetails) {
-        if (replyDetails.audio) {
-            let deleted = await this.uploadService.deleteFromS3(replyDetails.audio.src)
-            console.log(deleted, 'deleted')
+    async removeReply(replyDetails, userId: string) {
+
+        const deletedReply = await this.commentModel.findOneAndDelete({ _id: new Types.ObjectId(replyDetails.replyId), user: new Types.ObjectId(userId) })
+
+        if (!deletedReply) {
+            throw new BadRequestException('Reply not found or you do not have permission to delete it.');
         }
-        console.log(replyDetails)
-        const reply = await this.commentModel.findByIdAndDelete(replyDetails.replyId)
-        return reply
+
+        if (replyDetails.audio) {
+            await this.uploadService.deleteFromS3(replyDetails.audio.src)
+        }
+
+        return deletedReply
+
     }
 
 

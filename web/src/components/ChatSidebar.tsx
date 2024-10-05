@@ -146,19 +146,20 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
                             <CardContent className="flex flex-col gap-2 p-0">
                                 {chatList?.groups?.length > 0 ? chatList?.groups?.map((chat) => (
                                     <div className="flex gap-2 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={() => {
-                                        console.log(chat?.recepient?.images)
-                                        setRecepientDetails({ userId: chat?.recepient?._id, groupId: chat?.recepient?._id, images: {profile: chat?.recepient?.profile, cover: chat?.recepient?.cover}, name: chat?.recepient?.name, description: chat?.recepient?.description, type: "ChatGroup" })
-                                        setChatOpen(true)
+                                        if(chat?.recepient?._id){
+                                            setRecepientDetails({ userId: chat?.recepient?._id, groupId: chat?.recepient?._id, images: {profile: chat?.recepient?.profile, cover: chat?.recepient?.cover}, name: chat?.recepient?.name, description: chat?.recepient?.description, type: "ChatGroup" })
+                                            setChatOpen(true)
+                                        }
                                     }}>
                                         <div>
                                         </div>
                                         <Avatar className="hidden h-12 w-12  sm:flex">
                                             <AvatarImage src={chat?.recepient?.profile} alt="Avatar" />
-                                            <AvatarFallback>{chat?.recepient?.name[0]?.toUpperCase() + chat?.recepient?.name[1]?.toUpperCase()}</AvatarFallback>
+                                            <AvatarFallback>{(chat?.recepient?.name[0]?.toUpperCase() + chat?.recepient?.name[1]?.toUpperCase()) || "D"}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col gap-2 justify-center">
                                             <p className="text-sm font-medium leading-none">
-                                                {chat?.recepient?.name}
+                                                {chat?.recepient?.name || "Deleted"}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
                                                 {chat?.lastMessage?.encryptedContent}...

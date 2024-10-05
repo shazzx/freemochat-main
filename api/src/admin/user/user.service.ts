@@ -12,46 +12,65 @@ export class UserService {
         let limit = 10
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
 
-        const query = search
-            ? { username: { $regex: search, $options: 'i' }, ...cursor }
-            : _cursor;
+        // const query = search
+        //     ? { username: { $regex: search, $options: 'i' }, ...cursor }
+        //     : _cursor;
+        try {
 
+            const query: any = search
+                ?
+                { $or: [{ username: { $regex: search, $options: 'i' } }], ..._cursor }
+                : _cursor;
 
-        const users = await this.userModel.aggregate([
-            { $match: query },
-            { $sort: { createdAt: -1 } },
-            { $limit: limit + 1 },
-            {
+            try {
+                const objectId = new Types.ObjectId(search);
+                if (search) {
+                    query.$or.push({ _id: objectId });
+                }
+            } catch (error) {
+                console.log(error)
+            }
+            console.log(search, query)
 
-                $lookup: {
-                    from: 'suspensions',
-                    localField: "_id",
-                    foreignField: "userId",
-                    as: 'suspension',
+            const users = await this.userModel.aggregate([
+                { $match: query },
+                { $sort: { createdAt: -1 } },
+                { $limit: limit + 1 },
+                {
+
+                    $lookup: {
+                        from: 'suspensions',
+                        localField: "_id",
+                        foreignField: "userId",
+                        as: 'suspension',
+                    },
                 },
-            },
-            {
-                $addFields: {
-                    isSuspended: {
-                        $cond: {
-                            if: { $gt: [{ $size: "$suspension" }, 0] },
-                            then: true,
-                            else: false
+                {
+                    $addFields: {
+                        isSuspended: {
+                            $cond: {
+                                if: { $gt: [{ $size: "$suspension" }, 0] },
+                                then: true,
+                                else: false
+                            }
                         }
                     }
+                },
+                {
+                    $project: {
+                        suspension: 0
+                    }
                 }
-            },
-            {
-                $project: {
-                    suspension: 0
-                }
-            }
-        ])
+            ])
 
-        const hasNextPage = users.length > limit
-        const _users = hasNextPage ? users.slice(0, -1) : users
-        const nextCursor = hasNextPage ? _users[_users.length - 1].createdAt.toISOString() : null
-        const results = { users: _users, nextCursor };
-        return results
+            const hasNextPage = users.length > limit
+            const _users = hasNextPage ? users.slice(0, -1) : users
+            const nextCursor = hasNextPage ? _users[_users.length - 1].createdAt.toISOString() : null
+            const results = { users: _users, nextCursor };
+            return results
+
+        } catch (error) {
+            return { users: [], nextCursor: null }
+        }
     }
 }

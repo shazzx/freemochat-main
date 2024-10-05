@@ -21,6 +21,11 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
     const socket = socketRef.current;
     
     socket.on('chat', (message) => {
+
+      if(message?.success == false){
+        toast.error(message?.message)
+      }
+
       console.log(message, 'new message')
       let newMessage = {
         _id: message?._id,
@@ -67,6 +72,11 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
     });
 
     socket.on('groupchat', (message) => {
+console.log(message, 'groupmessage')
+      if(message?.success == false){
+        toast.error(message?.message)
+      }
+
       console.log(message, 'new message')
       let newMessage = {
         _id: message?._id,

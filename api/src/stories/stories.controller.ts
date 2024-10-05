@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Res, UseInterceptors, Body, Req, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Res, UseInterceptors, Body, Req, UploadedFile, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { Request, Response } from 'express';
 import { UploadService } from 'src/upload/upload.service';
@@ -37,18 +37,19 @@ export class StoriesController {
     // }
 
     @Post("delete")
-    async deleteStory(@Body(new ZodValidationPipe(DeleteStory)) deleteStoryDTO: DeleteStoryDTO, @Res() res: Response) {
+    async deleteStory(@Body(new ZodValidationPipe(DeleteStory)) deleteStoryDTO: DeleteStoryDTO, @Req() req: Request, @Res() res: Response) {
+        const {sub} = req.user as {sub: string}
         const { storyId, url } = deleteStoryDTO
-        let imageUrlSplit = url.split("/")
-        console.log(url)
-        let filename = imageUrlSplit[imageUrlSplit.length - 1]
-        let deleted = await this.uploadService.deleteFromS3(filename)
-        console.log(deleted)
+        const deleted =  await this.storiesService.deleteStory(storyId, sub)
 
         if(deleted){
-            return res.json(await this.storiesService.deleteStory(storyId))
+        let imageUrlSplit = url.split("/")
+        let filename = imageUrlSplit[imageUrlSplit.length - 1]
+        await this.uploadService.deleteFromS3(filename)
+        res.json(deleted)
+        return 
         }
 
-        res.status(500).json({success: false, message: 'something  went wrong'})
+        throw new BadRequestException("something went wrong")
     }
 }

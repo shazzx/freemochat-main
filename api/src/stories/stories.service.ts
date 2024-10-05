@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { FriendService } from 'src/friend/friend.service';
@@ -75,7 +75,13 @@ export class StoriesService {
     // }
 
 
-    async deleteStory(storyId: string) {
-        return await this.storyModel.findByIdAndDelete(storyId)
+    async deleteStory(storyId: string, userId) {
+        const deletedStory =  await this.storyModel.findOneAndDelete({_id: new Types.ObjectId(storyId), user: new Types.ObjectId(userId)})
+
+        if (!deletedStory) {
+            throw new BadRequestException('Story not found or you do not have permission to delete it.');
+        }
+
+        return deletedStory
     }
 }

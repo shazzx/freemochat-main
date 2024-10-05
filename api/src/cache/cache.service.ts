@@ -135,7 +135,7 @@ export class CacheService {
 
 
 
-  async getOnlineUser(userId: string): Promise<any> {
+  async getOnlineUser(userId: any): Promise<any> {
     return await this.redis.hget("online_users", userId);
   }
 }

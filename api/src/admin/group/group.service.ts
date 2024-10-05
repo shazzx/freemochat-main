@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Group } from 'src/schema/group';
 
 @Injectable()
@@ -11,30 +11,51 @@ export class GroupService {
         let limit = 10
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
 
-        const query = search
-            ? { handle: { $regex: search, $options: 'i' }, ..._cursor }
-            : _cursor;
+        // const query = search
+        //     ? { handle: { $regex: search, $options: 'i' }, ..._cursor }
+        //     : _cursor;
+        try {
 
-        const groups = await this.groupModel.aggregate([
-            { $match: query },
-            { $sort: { createdAt: -1 } },
-            { $limit: limit },
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "user",
-                    foreignField: "_id",
-                    as: "user"
+            const query: any = search
+                ?
+                { $or: [{ handle: { $regex: search, $options: 'i' } }], ..._cursor }
+                : _cursor;
+
+            try {
+                const objectId = new Types.ObjectId(search);
+                if (search) {
+                    query.$or.push({ _id: objectId });
                 }
+            } catch (error) {
+                console.log(error)
             }
-        ])
 
-        const hasNextPage = groups.length > limit
-        const _groups = hasNextPage ? groups.slice(0, -1) : groups
-        const nextCursor = hasNextPage ? _groups[_groups.length - 1].createdAt.toISOString() : null
+            console.log(search, query)
 
-        const results = { groups: _groups, nextCursor };
-        return results
+
+            const groups = await this.groupModel.aggregate([
+                { $match: query },
+                { $sort: { createdAt: -1 } },
+                { $limit: limit },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "user",
+                        foreignField: "_id",
+                        as: "user"
+                    }
+                }
+            ])
+
+            const hasNextPage = groups.length > limit
+            const _groups = hasNextPage ? groups.slice(0, -1) : groups
+            const nextCursor = hasNextPage ? _groups[_groups.length - 1].createdAt.toISOString() : null
+
+            const results = { groups: _groups, nextCursor };
+            return results
+        } catch (error) {
+            return { groups: [], nextCursor: null }
+        }
 
     }
 

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Counter } from 'src/schema/Counter';
 import { Promotion } from 'src/schema/promotion';
 import { Report } from 'src/schema/report';
@@ -47,8 +47,10 @@ export class AdminService {
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
 
         const query = search
-            ? { username: { $regex: search, $options: 'i' }, ..._cursor }
+            ? { $or: [{_id: new Types.ObjectId(search)}, {postId: new Types.ObjectId(search)}], ..._cursor }
             : _cursor;
+
+            console.log(search)
 
         const reports = await this.reportModel.aggregate([
             { $match: query },
@@ -119,7 +121,7 @@ export class AdminService {
 
     async removeReport(reportId) {
         const report = await this.reportModel.findByIdAndDelete(reportId)
-        await this.metricsAggregatorService.incrementCount(null, "count", "reports")
+        await this.metricsAggregatorService.decrementCount(null, "count", "reports")
         return report
     }
 

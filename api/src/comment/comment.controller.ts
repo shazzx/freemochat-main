@@ -47,8 +47,8 @@ export class CommentController {
     @Body("replyData") replyData: string,
     @Res() response: Response) {
     const { replyDetails, replyId } = JSON.parse(replyData)
-    console.log(replyDetails, replyId)
-    response.json(await this.commentService.updateReply(replyDetails, replyId))
+    const {sub} = req.user as {sub: string}
+    response.json(await this.commentService.updateReply(replyDetails, replyId, sub))
   }
 
   @UseInterceptors(FileInterceptor('file'))
@@ -58,20 +58,22 @@ export class CommentController {
     @Res() response: Response) {
     const { commentDetails, commentId } = JSON.parse(commentData)
     const { sub } = req.user as { sub: string }
-    response.json(await this.commentService.updateComment(commentDetails, commentId))
+    response.json(await this.commentService.updateComment(commentDetails, commentId, sub))
   }
 
   @Delete("comment")
-  async deleteComment(@Req() req) {
+  async deleteComment(@Req() req: Request) {
+    const {sub} = req.user as {sub: string}
     const { commentDetails } = req.query
     
-    return await this.commentService.removeComment(commentDetails)
+    return await this.commentService.removeComment(commentDetails, sub)
   }
 
   @Delete("comment/reply")
-  async deleteReply(@Req() req) {
+  async deleteReply(@Req() req: Request) {
+    const {sub} = req.user as {sub: string}
     const { replyDetails } = req.query
-    return await this.commentService.removeReply(replyDetails)
+    return await this.commentService.removeReply(replyDetails, sub)
   }
 
 }

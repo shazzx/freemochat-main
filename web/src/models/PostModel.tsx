@@ -63,13 +63,8 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
 
     const commentOnPost = async (recordingUrl?, recordingTime?) => {
 
-        if (!recordingUrl && !recordingTime && commentRef.current?.value.length == 0) {
+        if (!recordingUrl && !recordingTime && commentRef.current?.value?.trim()?.length == 0) {
             toast.info("Comment can't be empty")
-            return
-        }
-
-        if(commentRef.current.value.trim().length == 0){
-            toast.info("Comment can't be emptys")
             return
         }
 
@@ -253,14 +248,10 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
 
                             <div className="flex gap-2 items-center justify-center p-2 sticky bottom-0  bg-card w-full">
                                 {!isRecording && <div className="flex items-center justify-center border border-primary h-11 rounded-md p-2 w-full">
-                                    <svg width="25" className="fill-white dark:fill-white" cursor="pointer" height="22" viewBox="0 0 25 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <rect x="0.5" width="24" height="22" rx="4" fill="#433FFA" />
-                                        <path d="M11.4545 16.3068V5.05682H13.3636V16.3068H11.4545ZM6.78409 11.6364V9.72727H18.0341V11.6364H6.78409Z" />
-                                    </svg>
                                     <input
                                         ref={replyRef}
                                         type="search"
-                                        placeholder="Start writing your comment..."
+                                        placeholder="Start writing your reply..."
                                         className="w-full appearance-none bg-card pl-8 shadow-none border-none focus:outline-none"
                                     />
                                     {/* <svg width="29" className="stroke-foreground dark:stroke-foreground" cursor="pointer" height="28" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg">

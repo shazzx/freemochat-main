@@ -16,14 +16,13 @@ export const CreateChatGroup = z.object({
 export const UpdateChatGroup = z.object({
     groupDetails: z.object({
         name: z.string(),
-        handle: z.string(),
         description: z.string()
     }),
     groupId: z.string(),
     images: z.array(z.object({
         url: z.string(),
         fileName: z.string().optional()
-    })).optional(),
+    })).optional().or(z.object({})),
 })
 
 

@@ -49,10 +49,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Message received: ${payload.senderDetails.targetId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.targetId + " - " + payload.recepientDetails.username + " - " + payload.body}`);
 
     try {
+      let user = await this.userService.userExists(payload.recepientDetails.targetId)
+
+      if (!user) {
+        throw new BadRequestException("User has been deleted")
+      }
+
       let message = await this.messageService.createMessage({ type: payload.recepientDetails.type, sender: new Types.ObjectId(payload.senderDetails.targetId), recepient: new Types.ObjectId(payload.recepientDetails.targetId), content: payload.body, gateway: true, messageType: payload.messageType, })
       const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body }, "Text")
 
-      this.server.to(recepient?.socketId).emit('chat', {...payload, _id: message._id});
+      this.server.to(recepient?.socketId).emit('chat', { ...payload, _id: message._id });
       this.server.emit('chatlist', { users: chatlist })
       return payload;
     } catch (error) {
@@ -70,19 +76,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Group Message received: ${payload.senderDetails.targetId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.targetId + " - Group Name: " + payload.recepientDetails.name + " - " + payload.body}`);
 
     try {
+      let group = await this.chatGroupService.groupExist(payload.recepientDetails.targetId)
+      if (!group) {
+        throw new BadRequestException("Group has been deleted")
+      }
+
       const message = await this.messageService.createMessage({ type: payload.recepientDetails.type, sender: new Types.ObjectId(payload.senderDetails.targetId), recepient: new Types.ObjectId(payload.recepientDetails.targetId), content: payload.body, gateway: true, messageType: payload.messageType, })
       const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body }, "Text")
 
       console.log('sending to : ', payload.recepientDetails.targetId)
-      this.server.to(payload.recepientDetails.targetId).emit('groupchat', {...payload, _id: message._id});
+      this.server.to(payload.recepientDetails.targetId).emit('groupchat', { ...payload, _id: message._id });
       this.server.emit('chatlist', { groups: chatlist })
       return payload;
     } catch (error) {
+      
       this.logger.error(error)
     }
   }
 
-  async sendMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number, isUploaded: boolean} }) {
+  async sendMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number, isUploaded: boolean } }) {
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(String(messageDetails.recepient)))
     this.server.to(recepient?.socketId).emit('chat', messageDetails);
   }
@@ -132,20 +144,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage("initiate-call")
   async handleCallInitiation(@MessageBody() payload) {
     console.log(payload)
-    if(payload.recepientDetails && !payload.recepientDetails.userId){
+    if (payload.recepientDetails && !payload.recepientDetails.userId) {
       throw new BadRequestException('recepient id required')
     }
     console.log(payload)
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
     let user = await this.userService.getRawUser(payload.userDetails.userId)
     let _recepient = await this.userService.getRawUser(payload.recepientDetails.userId)
-    this.server.to(recepient?.socketId).emit("initiate-call", { userDetails: payload?.userDetails, recepientDetails: {..._recepient, userId: _recepient._id} , type: payload?.type })
+    this.server.to(recepient?.socketId).emit("initiate-call", { userDetails: payload?.userDetails, recepientDetails: { ..._recepient, userId: _recepient._id }, type: payload?.type })
   }
 
   @SubscribeMessage("call-decline")
   async handleCallDecline(@MessageBody() payload) {
     console.log(payload, 'decline payload')
-    if(payload.recepientDetails && !payload.recepientDetails.userId){
+    if (payload.recepientDetails && !payload.recepientDetails.userId) {
       throw new BadRequestException('recepient id required')
     }
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
@@ -157,7 +169,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage("call-accept")
   async handleCallAccept(@MessageBody() payload) {
-    if(payload.recepientDetails && !payload.recepientDetails.userId){
+    if (payload.recepientDetails && !payload.recepientDetails.userId) {
       throw new BadRequestException('recepient id required')
     }
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
@@ -173,10 +185,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage("call-end")
   async cancelCall(@MessageBody() payload) {
     console.log(payload, 'call end payload')
-    if(!payload?.recepientDetails && !payload.recepientDetails.userId){
+    if (!payload?.recepientDetails && !payload.recepientDetails.userId) {
       throw new BadRequestException('recepient id required')
     }
-    
+
     console.log(payload, 'call end payload')
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload?.recepientDetails?.userId))
     let user = JSON.parse(await this.cacheService.getOnlineUser(payload?.userDetails?.userId))

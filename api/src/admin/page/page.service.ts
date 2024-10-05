@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Page } from 'src/schema/pages';
 
 @Injectable()
@@ -10,40 +10,57 @@ export class PageService {
     async getPages(cursor: string, search: string) {
         let limit = 10
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
+        try {
 
-        const query = search
-            ? { username: { $regex: search, $options: 'i' }, ..._cursor }
-            : _cursor;
+            const query: any = search
+                ? 
+                { $or: [{ handle: { $regex: search, $options: 'i' } }], ..._cursor }
+                : _cursor;
 
-        const pages = await this.pageModel.aggregate([
-            { $match: query },
-            { $sort: { createdAt: -1 } },
-            { $limit: limit },
-            {
-                $lookup: {
-                    from: "users",
-                    let: { userId: { $toObjectId: "$user" } },
-                    pipeline: [
-                      { $match: { $expr: { $eq: ["$_id", "$$userId"] } } }
-                    ],
-                    as: "user"
+                try {
+                    const objectId = new Types.ObjectId(search);
+                    if(search){
+                        query.$or.push({ _id: objectId });
+                    }
+                  } catch (error) {
+                    console.log(error)
+                  }
+                
+
+            console.log(search, query)
+
+            const pages = await this.pageModel.aggregate([
+                { $match: query },
+                { $sort: { createdAt: -1 } },
+                { $limit: limit },
+                {
+                    $lookup: {
+                        from: "users",
+                        let: { userId: { $toObjectId: "$user" } },
+                        pipeline: [
+                            { $match: { $expr: { $eq: ["$_id", "$$userId"] } } }
+                        ],
+                        as: "user"
+                    }
                 }
-            }
-        ])
+            ])
 
-        const hasNextPage = pages.length > limit
-        const _pages = hasNextPage ? pages.slice(0, -1) : pages
-        const nextCursor = hasNextPage ? _pages[_pages.length - 1].createdAt.toISOString() : null
+            const hasNextPage = pages.length > limit
+            const _pages = hasNextPage ? pages.slice(0, -1) : pages
+            const nextCursor = hasNextPage ? _pages[_pages.length - 1].createdAt.toISOString() : null
 
-        const results = { pages: _pages, nextCursor };
-        return results
+            const results = { pages: _pages, nextCursor };
+            return results
+        } catch (error) {
+            return { pages: [], nextCursor: null }
+        }
     }
-    async getPage(pageId: string){
+    async getPage(pageId: string) {
         let page = await this.pageModel.findById(pageId)
         return page
     }
 
-    async deletePage(pageId: string){
+    async deletePage(pageId: string) {
         let page = await this.pageModel.findByIdAndDelete(pageId)
         return page
     }

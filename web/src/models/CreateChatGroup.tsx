@@ -37,7 +37,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
     const groupDescription = useRef<HTMLTextAreaElement>()
 
     const onSubmit = async (groupData) => {
-        console.log(groupData)
+        console.log(editState, 'editstate')
         if (editState) {
             editGroup({ groupData, imageUpload, coverImageUpload })
             return
@@ -60,6 +60,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
         <div className='absolute top-0 right-0 w-screen z-10 sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
                 navigate('', {replace: true})
+                // setModelTrigger(false)
             }}></div>
             {
                 imageUpload && cropperModel &&
@@ -189,7 +190,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                             </div>
                             <div className="w-full flex justify-end" onClick={() => {
                                 if (currentTab !== "groups") {
-                                    setCurrentTab("groups")
+                                    // setCurrentTab("groups")
                                 }
                             }}>
                                 <Button type="submit" >{editState ? "Update" : "Create"}</Button>

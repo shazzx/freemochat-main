@@ -21,6 +21,14 @@ export class CGroupsService {
         return groups
     }
 
+    async groupExist(groupId) {
+        let group = await this.chatGroupModel.findById(groupId)
+        if(group){
+            return true
+        }
+        return false
+    }
+
     async getGroup(userId, groupId) {
         let group = await this.chatGroupModel.aggregate([
             { $match: { _id: new Types.ObjectId(groupId) } },
