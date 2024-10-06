@@ -59,7 +59,7 @@ const MainHome = ({ children }: any) => {
   const metrics = useUserMetrics()
   const [searchState, setSearchState] = useState(false)
   // console.log(callDetails, callerState, onCall, recepientState, targetDetails, type)
-  console.log(metrics.data)
+  // console.log(metrics.data)
   const [searchParams] = useSearchParams()
 
   const [searchSuggestions, setSearchSuggestions] = useState([])

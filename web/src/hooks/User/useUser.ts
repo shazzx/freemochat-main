@@ -224,7 +224,7 @@ export function useUserFollowers(userId?: string): any {
 
 // groupId can be of community group or chat group id. it's an optional id when provided an extra field will be returned with user object which is isGroupMember.
 export function useUserFriends(userId?: string, groupId?: string): any {
-    console.log(userId, groupId, 'fetchn friend')
+    // console.log(userId, groupId, 'fetchn friend')
     const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
         queryKey: ['userFriends', userId],
         queryFn: ({ pageParam, }) => userFriends(pageParam, userId, groupId),

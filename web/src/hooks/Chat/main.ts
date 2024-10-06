@@ -12,7 +12,7 @@ export const useUserChatlist = () => {
         },
 
     })
-    console.log(data)
+    // console.log(data)
 
     return {
         data,
@@ -25,7 +25,7 @@ export const useUserChatlist = () => {
 
 
 export const useGroupMemberToggle = (_userId: string, groupId: string) => {
-    console.log(groupId, 'groupid')
+    // console.log(groupId, 'groupid')
     const queryClient = useQueryClient()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
         mutationFn: (data: { userId: string, userIndex?: number, pageIndex?: number, type: string, toggleState?: string }) => {
@@ -39,7 +39,7 @@ export const useGroupMemberToggle = (_userId: string, groupId: string) => {
             const previousGroup = queryClient.getQueryData([ 'chatgroup', groupId])
             queryClient.setQueryData([ 'chatgroup', groupId], (data: any) => {
                 const updatedUser = produce(data, (draft: any) => {
-                    console.log(data)
+                    // console.log(data)
                     if (toggleState == 'add') {
                         draft.membersCount = draft.membersCount + 1
                     }
@@ -56,7 +56,7 @@ export const useGroupMemberToggle = (_userId: string, groupId: string) => {
             const previousUser = queryClient.getQueryData(['userFriends', _userId])
             queryClient.setQueryData(['userFriends', _userId], (data: any) => {
                 const updatedUser = produce(data, (draft: any) => {
-                    console.log(data)
+                    // console.log(data)
                     if (draft.pages[pageIndex].friends[userIndex].friend.isGroupMember) {
                         draft.pages[pageIndex].friends[userIndex].friend.isGroupMember = false 
                         toast.success('Member Removed')
@@ -105,7 +105,7 @@ export const useChatGroups = () => {
         },
 
     })
-    console.log(data)
+    // console.log(data)
 
     return {
         data,
@@ -227,7 +227,7 @@ export const useUpdateChatGroup = () => {
 }
 
 export function useMessages({recepientId, isChatGroup}: {recepientId: string, isChatGroup: number}): any {
-console.log(recepientId, isChatGroup, 'recepient id')
+// console.log(recepientId, isChatGroup, 'recepient id')
     const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
         queryKey: ['messages', recepientId],
         queryFn: ({ pageParam, }) => fetchMessages(pageParam, recepientId, isChatGroup),
@@ -239,12 +239,11 @@ console.log(recepientId, isChatGroup, 'recepient id')
         initialPageParam: null,
         getNextPageParam: (lastPage) => lastPage.nextCursor,
         getPreviousPageParam: (firstpage) => {
-            console.log(firstpage)
             return firstpage.nextCursor
         },
 
     });
-    console.log(data)
+    // console.log(data)
 
     return {
         data: data?.pages ?? [],

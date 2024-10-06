@@ -72,12 +72,12 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
     });
 
     socket.on('groupchat', (message) => {
-console.log(message, 'groupmessage')
+// console.log(message, 'groupmessage')
       if(message?.success == false){
         toast.error(message?.message)
       }
 
-      console.log(message, 'new message')
+      // console.log(message, 'new message')
       let newMessage = {
         _id: message?._id,
         recepient: message?.recepientDetails?.groupId,
@@ -86,7 +86,7 @@ console.log(message, 'groupmessage')
         media: message?.media,
         type: message?.type
       }
-      console.log(newMessage)
+      // console.log(newMessage)
       if(newMessage.sender.username == user.username){
         return
       }

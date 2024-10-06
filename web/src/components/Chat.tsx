@@ -60,9 +60,9 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
     useEffect(() => {
         window.addEventListener("resize", () => {
             setWidth(window.innerWidth)
-            console.log(window.innerWidth)
+            // console.log(window.innerWidth)
         })
-    },[])
+    }, [])
     // const [isOnline, setIsOnline] = useState(null)
 
     // const online = useAppSelector((state) => state.online)
@@ -175,9 +175,9 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
     // }, [inView])
 
     const scrollToBottom = () => {
-        console.log(userMessages.data.length, 'length')
+        // console.log(userMessages.data.length, 'length')
         if (userMessages.data.length == 1) {
-            console.log('scrolling...')
+            // console.log('scrolling...')
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
         }
@@ -218,18 +218,20 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
         }
 
         queryClient.invalidateQueries({ queryKey: ['chatlist'] })
-        console.log(e)
+        // console.log(e)
 
         if (e?.type !== "click" && e?.key !== "Enter") {
             return
         }
         const messageData = { recepeint: recepientDetails.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, type: recepientDetails?.type, messageType: "Text" }
 
-        queryClient.setQueryData(["messages", recepientDetails.userId], (pages: any) => {
+        queryClient.setQueryData(["messages", recepientDetails.type == 'ChatGroup' ? recepientDetails.groupId : recepientDetails.userId], (pages: any) => {
             const updatedMessages = produce(pages, (draft: any) => {
                 console.log(pages)
                 if (!pages) {
-                    draft = { pages: [{ messages: [messageData] }], nextCursor: null }
+                    let data = { pages: [{ messages: [messageData], nextCursor: null }], pageParams: null }
+                    console.log(data)
+                    draft = data
                     return draft
                 }
                 if (draft.pages[draft.pages.length - 1].messages) {
@@ -241,7 +243,6 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
             return updatedMessages
         });
 
-console.log(recepientDetails, 'message details')
         if (recepientDetails.type == "ChatGroup") {
             socket.emit("groupchat", { senderDetails: { targetId: user?._id, username: user?.username, firstname: user.firstname, profile: user?.profile, lastname: user.lastname }, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, targetId: messageData.recepeint } });
             setInputValue("");
@@ -360,7 +361,7 @@ console.log(recepientDetails, 'message details')
 
     return (
         <div className='flex flex-col min-w-[300px] h-full w-full' >
-            { searchParams.get("model") == "settings" &&
+            {searchParams.get("model") == "settings" &&
                 <CreateChatGroup setModelTrigger={setChatGroupInfo} groupDetails={recepientDetails} editState={true} editGroup={editGroup} />
             }
 
@@ -437,6 +438,7 @@ console.log(recepientDetails, 'message details')
 
                 {/* user */}
 
+                {console.log(userMessages?.data)}
                 {!userMessages.isLoading && userMessages.data?.map((page, pageIndex) => {
                     return page.messages.map((message, messageIndex) => {
                         if (message?.deletedFor?.length > 0) {
@@ -480,7 +482,7 @@ console.log(recepientDetails, 'message details')
                                 <div className="flex gap-2 justify-end" key={message?._id}>
                                     {/* {userMessages.data.length - 1 == pageIndex && (pageIndex == 0 && messageIndex == 0) && <div ref={ref}></div>} */}
                                     <div className="relative max-w-80 w-fit">
-                                        <div className={`relative ${!message?.media ? selectedMessageId == message._id ? "bg-card p-2 pr-3" : "p-2 pr-3 bg-primary" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
+                                        <div className={`relative ${!message?.media ? selectedMessageId == message._id ? "bg-primary p-2 pr-3" : "p-2 pr-3 bg-primary" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
                                             onTouchStart={() => handleTouchStart(message._id)}
                                             onTouchEnd={handleTouchEnd}
                                             onMouseDown={() => handleTouchStart(message._id)}
@@ -580,7 +582,7 @@ console.log(recepientDetails, 'message details')
                                             <Avatar className="h-9 w-9 flex items-center justify-center">
                                                 <AvatarImage src={message?.sender?.profile || recepientDetails?.profile} alt="Avatar" />
                                                 <AvatarFallback>
-                                                    { message?.sender?.firstname ? message?.sender?.firstname[0]?.toUpperCase()
+                                                    {message?.sender?.firstname ? message?.sender?.firstname[0]?.toUpperCase()
                                                         ||
                                                         (recepientDetails?.firstname && recepientDetails?.firstname[0]?.toUpperCase())
                                                         :
@@ -749,7 +751,7 @@ console.log(recepientDetails, 'message details')
                             const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, messageType: "Video", type: recepientDetails?.type, mediaDetails: { type: "video", } }
                             formData.append("messageData", JSON.stringify(messageData))
                             formData.append("file", file, 'video')
-                            console.log(messageData, recepientDetails)
+                            // console.log(messageData, recepientDetails)
 
 
                             createMessage.mutate({ messageData: { ...messageData, media: { type: "video", url: URL.createObjectURL(file), isUploaded: false } }, formData })
@@ -779,31 +781,31 @@ console.log(recepientDetails, 'message details')
                         </div>}
                         {emojiPickerState && <div ref={emojiPickerRef} className={width < 500 ? "fixed inset-0 z-50  w-screen sm:p-8 overflow-hidden h-screen flex flex-col  justify-center items-center sm:bottom-12 sm:-right-12" : "absolute bottom-12 -right-12"} >
                             <div className="w-[300px]">
-                            <MdCancel  size={24} onClick={() => {
-                                setEmojiPickerState(false)
-                            }} />
+                                <MdCancel size={24} onClick={() => {
+                                    setEmojiPickerState(false)
+                                }} />
                             </div>
 
-                            <EmojiPicker width={300} 
-                            categories={[
-                                { category: Categories.SUGGESTED, name: 'suggested' },
-                                { category: Categories.CUSTOM, name: "Freedom" },
-                                { category: Categories.SMILEYS_PEOPLE, name: 'smileys_people' },
-                                { category: Categories.ANIMALS_NATURE, name: 'animals_nature' },
-                                { category: Categories.FOOD_DRINK, name: 'food_drink' },
-                                { category: Categories.TRAVEL_PLACES, name: 'travel_places' },
-                                { category: Categories.ACTIVITIES, name: 'activities' },
-                                { category: Categories.OBJECTS, name: 'objects' },
-                                { category: Categories.SYMBOLS, name: 'symbols' },
-                                { category: Categories.FLAGS, name: 'flags' },
-                            ]}
+                            <EmojiPicker width={300}
+                                categories={[
+                                    { category: Categories.SUGGESTED, name: 'suggested' },
+                                    { category: Categories.CUSTOM, name: "Freedom" },
+                                    { category: Categories.SMILEYS_PEOPLE, name: 'smileys_people' },
+                                    { category: Categories.ANIMALS_NATURE, name: 'animals_nature' },
+                                    { category: Categories.FOOD_DRINK, name: 'food_drink' },
+                                    { category: Categories.TRAVEL_PLACES, name: 'travel_places' },
+                                    { category: Categories.ACTIVITIES, name: 'activities' },
+                                    { category: Categories.OBJECTS, name: 'objects' },
+                                    { category: Categories.SYMBOLS, name: 'symbols' },
+                                    { category: Categories.FLAGS, name: 'flags' },
+                                ]}
                                 customEmojis={[
                                     { id: '12rwtfadfasdf', names: ['freedom'], imgUrl: emojiToImageUrl('🪽') },
                                     // { id: '1adf2asfsdf4', names: ['freedom'], imgUrl: emojiToImageUrl('𓆩𓆪') },
                                     { id: '1asftujyyiz2623', names: ['freedom'], imgUrl: emojiToImageUrl('🕊️') }
                                 ]} open={emojiPickerState} onEmojiClick={({ emoji, names }) => {
                                     let selection = textRef.current.selectionStart
-                                    console.log(emoji)
+                                    // console.log(emoji)
                                     let _emoji = emoji
                                     if (emoji == "1asftujyyiz2623") {
                                         _emoji = '🕊️'
@@ -811,7 +813,7 @@ console.log(recepientDetails, 'message details')
                                     if (emoji == "12rwtfadfasdf") {
                                         _emoji = '🪽'
                                     }
-                                    console.log(selection)
+                                    // console.log(selection)
 
 
                                     if (selection == 0 && inputValue.length == 0) {
@@ -825,7 +827,7 @@ console.log(recepientDetails, 'message details')
                                         setInputValue(textBefore + _emoji + textAfter)
 
                                         const newCursorPos = selection + emoji.length;
-                                        console.log(newCursorPos)
+                                        // console.log(newCursorPos)
                                         textRef.current.setSelectionRange(newCursorPos, newCursorPos);
 
                                     }
@@ -835,7 +837,7 @@ console.log(recepientDetails, 'message details')
                     </div>
                 </div>}
                 <AudioRecorder setIsRecordingMain={setIsRecording} onRecordingComplete={async (audioBlob, uploadState, recordingTime) => {
-                    console.log(audioBlob, uploadState, recordingTime)
+                    // console.log(audioBlob, uploadState, recordingTime)
                     if (uploadState) {
                         const formData = new FormData()
                         const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, type: recepientDetails?.type, messageType: "Voice", mediaDetails: { type: "audio", duration: recordingTime } }

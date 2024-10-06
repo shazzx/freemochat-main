@@ -24,12 +24,12 @@ export const createChatGroup = async (formData) => {
 
 export const updateChatGroup = async (formData) => {
     const { data } = await axiosClient.post("/chatgroups/update", formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-    console.log(data)
+    // console.log(data)
 }
 
 export const fetchMessages = async (pageParam: Date, recepientId: string, isChatGroup: number) => {
     const { data } = await axiosClient.get("/messages", { params: { cursor: pageParam, recepientId, isChatGroup } })
-    console.log(data)
+    // console.log(data)
     return data
 }
 

@@ -54,7 +54,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
         imageUpload && formData.append("files", imageUpload, 'profile')
         coverImageUpload && formData.append("files", coverImageUpload, 'cover')
         formData.append("groupData", JSON.stringify({ groupDetails }))
-        console.log(groupDetails, 'details')
+        // console.log(groupDetails, 'details')
           await mutate({ groupDetails, formData, images })
           setGroupModelState(false)
     }
@@ -76,7 +76,7 @@ function ChatSidebar({ setChatOpen, setRecepientDetails, chatList, chatOpen }) {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [chatOptions])
-    console.log(userFriends)
+    // console.log(userFriends)
     
     return (
         <div className={`min-w-[260px] sm:max-w-[460px] w-full flex h-full ${chatOpen && "hidden lg:flex"}`}>
