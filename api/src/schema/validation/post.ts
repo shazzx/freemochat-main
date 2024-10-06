@@ -6,12 +6,14 @@ export const CreatePost = z.object({
     targetId: ValidMongoId.optional(),
     content: z.string(),
     type: z.string(),
+    visibility: z.string()
 })
 
 export const UpdatePost = z.object({
     postId: ValidMongoId,
     content: z.string(),
     type: z.string(),
+    visibility: z.string(),
     media: z.array(z.object({
         url: z.string(),
         remove: z.boolean().optional(),

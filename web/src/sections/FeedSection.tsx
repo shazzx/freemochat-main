@@ -39,8 +39,8 @@ function FeedSection() {
 
     const createPost = useCreatePost("userPosts", user?._id)
 
-    const _createPost = async ({ content, selectedMedia, formData }) => {
-        let postDetails = { content, type: "user", targetId: user?._id }
+    const _createPost = async ({ visibility, content, selectedMedia, formData }) => {
+        let postDetails = { content, type: "user", targetId: user?._id, visibility }
         formData.append("postData", JSON.stringify(postDetails))
         createPost.mutate({ content, formData, selectedMedia, type: "user", target: user })
         setPostModal(false)

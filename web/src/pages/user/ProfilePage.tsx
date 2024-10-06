@@ -43,6 +43,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const acceptFriendRequest = useAcceptFriendRequest()
     // const rejectFriendRequest = useRejectFriendRequest()
     let user = isSelf ? localUserData.user : query.isFetched && query?.data
+    console.log(query)
 
     const { _id, firstname, lastname, username, email, bio, areFriends, isFollowed, friendRequest, followersCount, friendsCount, address, profile, cover } = !isSelf ? query.isFetched && !query.isError && user : user
 
@@ -64,7 +65,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const navigate = useNavigate()
 
     const [searchParams, setSearchParams] = useSearchParams()
-    const { data, isLoading, fetchNextPage } = useUserPosts("user", _id)
+    const { data, isLoading, fetchNextPage } = useUserPosts("user", _id, role == 'self' ? true : false)
     const userMedia = useMedia("userMedia", _id)
     const media = userMedia?.data
 
@@ -167,7 +168,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
             {query.isLoading &&
                 <div className='w-full h-full flex items-center justify-center'>loading...</div>
             }
-            {console.log(localUserData.user.username, user.username)}
+
             {openQuickChat  && !isSelf  &&
                 <div ref={quickChatRef}>
                     <QuickChat target={  { data: user, type: 'User' }} setOpenQuickChat={setOpenQuickChat} />
@@ -175,7 +176,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
             }
 
             {
-                (query.isSuccess || isSelf) &&
+                (query.isSuccess || isSelf) && !query.isLoading &&
                 <div className='w-full flex flex-col overflow-y-auto border-muted bg-background-secondary'>
                     {/* media model (when you click any media in the profile main page this model will open) */}
                     {mediaOpenModel && mediaOpenDetails &&

@@ -39,11 +39,12 @@ export class PostsService {
         private readonly paymentService: PaymentService,
     ) { }
 
-    async getPosts(cursor, userId, targetId, type) {
+    async getPosts(cursor: string | null, userId: string, targetId: string, type: string, self: string) {
         let model = type + 's'
         const limit = 5
 
-        const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
+        const visibility = self == 'true' ? {} : {}
+        const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility } : {...visibility};
         let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type } : { ..._cursor, type }
         console.log(
             "userId: ", userId,
@@ -51,6 +52,7 @@ export class PostsService {
             "targetId: ", targetId,
             "query: ", query,
             "type: ", type)
+            console.log('is self', self, visibility)
         const posts = await this.postModel.aggregate([
             { $match: query },
             { $sort: { createdAt: -1 } },
@@ -501,7 +503,7 @@ export class PostsService {
     async feed(userId, cursor) {
         console.log(userId, cursor)
         const limit = 12
-        const query = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
+        const query = cursor ? { createdAt: { $lt: new Date(cursor) }, visibility: 'public' } : {visibility: 'public'};
 
         const posts = await this.postModel.aggregate([
             { $match: query },

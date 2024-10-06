@@ -29,6 +29,7 @@ export class JwtAuthGuard implements CanActivate {
         ]);
 
         if (isAdminRoute) {
+            console.log('yes true admin route')
             return true;
         }
 

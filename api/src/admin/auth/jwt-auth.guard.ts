@@ -17,6 +17,8 @@ export class JwtAuthGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
         const token = this.extractTokenFromHeader(request);
+        console.log('yes true admin route admin')
+
         if (!token) {
             console.log('not token - unauthorized')
             throw new UnauthorizedException();

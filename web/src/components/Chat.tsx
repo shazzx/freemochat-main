@@ -241,7 +241,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
             return updatedMessages
         });
 
-
+console.log(recepientDetails, 'message details')
         if (recepientDetails.type == "ChatGroup") {
             socket.emit("groupchat", { senderDetails: { targetId: user?._id, username: user?.username, firstname: user.firstname, profile: user?.profile, lastname: user.lastname }, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, targetId: messageData.recepeint } });
             setInputValue("");
@@ -660,9 +660,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                         </div>
                                     </div>
                                 </div>
-
                         )
-
                     })
                 })}
             </div>

@@ -40,13 +40,17 @@ export class AdminController {
     @IsAdminRoute()
     @Post("refresh-token")
     async refreshToken(@Req() @Req() req: Request, @Res() response: Response) {
+        console.log('i got the request')
         const refreshToken = req.cookies['admin-rf-token']
         if (!refreshToken) {
             return new BadRequestException("something went wrong")
         }
 
+        console.log('refreshtoken request')
+
         console.log(refreshToken, 'refresh')
         const accessToken = await this.authService.refreshToken(refreshToken)
+        console.log('after refresh token')
         return response.json({ accessToken })
     }
 
@@ -56,7 +60,7 @@ export class AdminController {
     async admin(@Req() req: Request, @Res() response: Response) {
         const {admin} = req as any
         console.log(admin)
-        response.json(await this.adminService.getAdmin("shazzadmin"))
+        response.json(await this.adminService.getAdmin("freedombook@admin"))
     }
 
     @IsAdminRoute()

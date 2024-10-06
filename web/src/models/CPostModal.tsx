@@ -84,14 +84,14 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
                             }
                         }
                         if ((content.current.value.length > 12 || selectedMedia.length > 0) && !editPost) {
-                            createPost({ content: content.current.value, formData, selectedMedia })
+                            createPost({visibility: selected, content: content.current.value, formData, selectedMedia })
                             setUploading(true)
                             navigate('', { replace: true })
                             return
                         }
 
                         if (content.current.value.length > 12 || selectedMedia.length > 0 && editPost) {
-                            updatePost({ content: content.current.value, formData, selectedMedia, media: postMedia, setModelTrigger })
+                            updatePost({ visibility: selected, content: content.current.value, formData, selectedMedia, media: postMedia, setModelTrigger })
                             setUploading(true)
                             navigate('', { replace: true })
                             return

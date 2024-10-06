@@ -92,6 +92,7 @@ console.log(message, 'groupmessage')
       }
       queryClient.invalidateQueries({ queryKey: ['chatlist'] })
 
+      // queryClient.invalidateQueries({queryKey: ['messages', recepient]})
       queryClient.setQueryData(["messages", recepient], (pages: any) => {
         const updatedMessages = produce(pages, (draft: any) => {
           if (!draft) {

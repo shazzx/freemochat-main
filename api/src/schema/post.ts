@@ -34,7 +34,7 @@ export class Post {
     @Prop({type: String})
     content: String;
     
-    @Prop({type: String})
+    @Prop({type: String, default: "public"})
     visibility: String;
     
     @Prop({type: Array<Media>})

@@ -60,9 +60,9 @@ console.log(softDelete)
     }
     if (isChatGroup == 1) {
     const _cursor = 
-    (cursor && chatlist.chatRemovedAt) ? { createdAt: { $lt: new Date(cursor), $gt: chatlist.chatRemovedAt } } 
+    (cursor && softDelete) ? { createdAt: { $lt: new Date(cursor), _id: {$gt: softDelete.lastDeletedId }} } 
     : 
-    cursor ?  {createdAt: { $lt: new Date(cursor)}} : chatlist.chatRemovedAt ?  {createdAt: {$gt: chatlist.chatRemovedAt}} : {};
+    cursor ?  {createdAt: { $lt: new Date(cursor)}} : softDelete.lastDeletedId ?  {_id: {$gt: softDelete.lastDeletedId}} : {};
 
       query = { ..._cursor, recepient: new Types.ObjectId(recepientId) }
       

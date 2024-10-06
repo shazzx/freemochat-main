@@ -29,10 +29,10 @@ export async function promotePost(postId, promotionDetails){
 return data
 }
 
-export async function fetchPosts(pageParam, type, targetId?) {
-  console.log(type, targetId)
+export async function fetchPosts(pageParam: string | null, type: string, targetId?: string, isSelf?: boolean) {
+  console.log(type, targetId, isSelf, 'isself')
   const response = await axiosClient.get("posts", {
-    params: { cursor: pageParam, type, targetId }
+    params: { cursor: pageParam, type, targetId, isSelf }
   });
   return response.data;
 }

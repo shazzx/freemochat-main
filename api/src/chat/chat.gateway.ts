@@ -213,12 +213,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 
   async uploadSuccess(data) {
-    this.server.emit('upload-status', data)
+    let user = JSON.parse(await this.cacheService.getOnlineUser(data?.target?.targetId))
+    this.server.to(user?.socketId).emit('upload-status', data)
     console.log('listener called')
     // this.server.to(recepientId).emit('notification', event)
   }
 
-  // it will be handled when a client connects to the server
   async handleConnection(socket: Socket) {
     const username = socket.handshake.auth.username
     this.logger.log(`Socket connected: ${socket.id}, username: ${username}`);

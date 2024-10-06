@@ -54,11 +54,11 @@ export function usePost(postId: string, type: string): any {
 }
 
 
-export function useUserPosts(type: string, targetId: string): any {
+export function useUserPosts(type: string, targetId: string, isSelf): any {
 
   const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
     queryKey: ['userPosts', targetId],
-    queryFn: ({ pageParam, }) => fetchPosts(pageParam, type, targetId),
+    queryFn: ({ pageParam, }) => fetchPosts(pageParam, type, targetId, isSelf),
     enabled: !!targetId,
     refetchInterval: false,
     refetchOnWindowFocus: true,

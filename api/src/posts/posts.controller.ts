@@ -93,9 +93,9 @@ export class PostsController {
     @Get()
     async getPosts(@Req() req: Request, @Res() response: Response) {
         const { sub } = req.user
-        const { type, cursor, targetId } = req.query
+        const { type, cursor, targetId, isSelf } = req.query as {type: string, cursor: string, targetId: string, isSelf: string}
         console.log(targetId, 'targetid')
-        response.json(await this.postService.getPosts(cursor, sub, targetId, type))
+        response.json(await this.postService.getPosts(cursor, sub, targetId, type, isSelf))
     }
 
     @Get("post")
@@ -116,7 +116,7 @@ export class PostsController {
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
     async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
-
+console.log(createPostDTO)
         const uploadPromise = files.map((file) => {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
@@ -125,7 +125,7 @@ export class PostsController {
 
         const { sub } = req.user
         let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId)
-        console.log(Date.now().toLocaleString())
+        
         let uploadedPost = await this.postService.createPost(
             {
                 ...createPostDTO,

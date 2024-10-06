@@ -1,10 +1,9 @@
-import { PipeTransform, Injectable, BadRequestException, UnprocessableEntityException } from '@nestjs/common';
+import { PipeTransform, Injectable, UnprocessableEntityException } from '@nestjs/common';
 
 const supportedVideoFormats = [
   'video/mp4',
   'video/quicktime',
 ];
-
 
 const supportedAudioFormats = [
   'audio/webm',
