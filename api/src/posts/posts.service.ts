@@ -503,7 +503,7 @@ export class PostsService {
     async feed(userId, cursor) {
         console.log(userId, cursor)
         const limit = 12
-        const query = cursor ? { createdAt: { $lt: new Date(cursor) }, visibility: 'public' } : {visibility: 'public'};
+        const query = cursor ? { createdAt: { $lt: new Date(cursor) }} : {};
 
         const posts = await this.postModel.aggregate([
             { $match: query },

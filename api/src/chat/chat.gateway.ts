@@ -77,8 +77,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       let group = await this.chatGroupService.groupExist(payload.recepientDetails.targetId)
+      let isMember = await this.memberService.isMember(payload.senderDetails.targetId, payload.recepientDetails.targetId)
+
+      console.log(isMember,'ismember')
+
       if (!group) {
         throw new BadRequestException("Group has been deleted")
+      }
+
+      if(!isMember){
+        throw new BadRequestException("You're no longer part of the group")
       }
 
       const message = await this.messageService.createMessage({ type: payload.recepientDetails.type, sender: new Types.ObjectId(payload.senderDetails.targetId), recepient: new Types.ObjectId(payload.recepientDetails.targetId), content: payload.body, gateway: true, messageType: payload.messageType, })
@@ -89,7 +97,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.emit('chatlist', { groups: chatlist })
       return payload;
     } catch (error) {
-      
+      const user = await this.cacheService.getOnlineUser(payload.senderDetails.targetId)
+      console.log(user)
+      this.server.to(user?.socketId).emit("group-error", {message: "You are no longer part of the group"})
       this.logger.error(error)
     }
   }
@@ -104,8 +114,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage("toggleJoin")
-  async handleJoinGroup(client: Socket, payload: { userId: string, groupId: string }) {
-    const result = await this.memberService.toggleJoin(payload.userId, {groupId: payload.groupId, type: "chatgroup"}, )
+  async handleJoinGroup(client: Socket, payload: { userId: string, groupId: string, memberUsername: string, adminUsername: string }) {
+    const result = await this.memberService.toggleJoin(payload.userId, {groupId: payload.groupId, type: "chatgroup"}, payload.memberUsername, payload.adminUsername)
     console.log(result, 'togglejoin')
     const user = await this.cacheService.getOnlineUser(payload.userId)
     console.log(user, 'toggle joing member')

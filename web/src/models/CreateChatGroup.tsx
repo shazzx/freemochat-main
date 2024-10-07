@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom"
 
 
 const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editState, groupDetails }) => {
-    
+
     const socket = useSocket()
 
     let [imageSrc, setImageSrc] = useState(null)
@@ -46,7 +46,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
             return
         }
         createGroup(groupData, imageUpload, coverImageUpload)
-        navigate('', {replace: true})
+        navigate('', { replace: true })
     }
     const { user } = useAppSelector(state => state.user)
 
@@ -58,11 +58,12 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
     const groupMemberToggle = useGroupMemberToggle(user._id, groupDetails?.groupId)
     const groupAdminToggle = useToggleAdmin()
     const chatGroup: any = editState ? useChatGroup(groupDetails?.groupId) : {}
+    
 
     return (
         <div className='absolute top-0 right-0 w-screen z-10 sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
-                navigate('', {replace: true})
+                navigate('', { replace: true })
                 // setModelTrigger(false)
             }}></div>
             {
@@ -87,9 +88,9 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                     <div className="flex flex-col items-center justify-center relative">
                         {/* cover image */}
                         <div className='relative w-full max-h-72 roundd-md  overflow-hidden'>
-                        <MdClose className="absolute right-1 top-1" size={24} cursor="pointer" onClick={() => {
-                        navigate('', {replace: true})
-                    }} />
+                            <MdClose className="absolute right-1 top-1" size={24} cursor="pointer" onClick={() => {
+                                navigate('', { replace: true })
+                            }} />
                             <div className="w-full">
                                 <label htmlFor="image-cover" className="cursor-pointer">
                                     <div className="flex items-center justify-center w-full h-56 bg-muted">
@@ -196,7 +197,10 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                     // setCurrentTab("groups")
                                 }
                             }}>
-                                <Button type="submit" >{editState ? "Update" : "Create"}</Button>
+
+                                {!editState && <Button type="submit" >Create</Button>}
+                                {editState && chatGroup?.data?.user == user._id && 
+                                <Button type="submit" >Update</Button>}
                             </div>
                         </div>
 
@@ -320,10 +324,10 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md'>
                                                         <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' onClick={() => {
-                                                                groupMemberToggle.mutate({ userId: memberData.user._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'remove' })
-                                                                socket.emit("toggleJoin", {userId: memberData.user._id, groupId: chatGroup.data._id})
-                                                                console.log('user remove')
-                                                            }}  >
+                                                            groupMemberToggle.mutate({ userId: memberData.user._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'remove' })
+                                                            socket.emit("toggleJoin", { userId: memberData.user._id, groupId: chatGroup.data._id, memberUsername: memberData.user.username, adminUsername: user.username })
+                                                            console.log('user remove')
+                                                        }}  >
                                                             <RiUserUnfollowLine size={22} />
                                                             <span>Remove User</span>
                                                         </DropdownMenuItem>
@@ -351,6 +355,12 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                             Add Friends
                         </Button>
                     </div>
+                    }
+                    {chatGroup?.data?.user !== user._id
+                        &&
+                        <div>
+                            <Button>Leave</Button>
+                        </div>
                     }
 
                     {editState && addMemberState && <div className="absolute top-0 w-full h-full bg-background">
@@ -391,9 +401,9 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                             <div>
                                                 {friend.isGroupMember ? <span className="p-3 bg-card border border-accent">Member</span> :
                                                     <Button onClick={() => {
-                                                        
+
                                                         groupMemberToggle.mutate({ userId: friend._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'add' })
-                                                        socket.emit("toggleJoin", {userId: friend._id, groupId: chatGroup.data._id})
+                                                        socket.emit("toggleJoin", { userId: friend._id, groupId: chatGroup.data._id, memberUsername: friend.username, adminUsername: user.username })
                                                         console.log('adding')
                                                     }}>
                                                         Add
@@ -406,6 +416,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                         })}
                     </div>
                     }
+
                 </div>
             </div>
         </div>

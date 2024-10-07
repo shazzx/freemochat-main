@@ -94,14 +94,14 @@ export class MemberService {
 
     async getGroupIds(userId) {
         let query = { member: new Types.ObjectId(userId), type: 'chatgroup' }
-        const groups = await this.memberModel.find( query );
-        const _groups = await this.chatGroupModel.find({admins: query.member})
+        const groups = await this.memberModel.find(query);
+        const _groups = await this.chatGroupModel.find({ admins: query.member })
 
-        return [...groups.map((group) => group.groupId.toString()), ..._groups.map((group,i) => group._id.toString())]
+        return [...groups.map((group) => group.groupId.toString()), ..._groups.map((group, i) => group._id.toString())]
     }
 
-    async toggleJoin(_userId, groupDetails) {
-        let userId = groupDetails?.userId || _userId 
+    async toggleJoin(_userId, groupDetails, memberUsername?, adminUsername?) {
+        let userId = groupDetails?.userId || _userId
 
         // console.log('yes yes', groupDetails)
         // console.log('joiner', userId, 'user', _userId)
@@ -111,9 +111,9 @@ export class MemberService {
             groupId: new Types.ObjectId(groupDetails.groupId),
         };
 
-        const member = await this.memberModel.findOne({member: filter.member})
+        const member = await this.memberModel.findOne({ member: filter.member })
 
-        if(member && member.isAdmin == 1){
+        if (member && member.isAdmin == 1) {
             // console.log('deleting')
             let _member = await this.chatGroupModel.updateOne(
                 { _id: filter.groupId },
@@ -125,11 +125,11 @@ export class MemberService {
         const deleteResult = await this.memberModel.deleteOne(filter);
 
         if (deleteResult.deletedCount === 0) {
-            await this.memberModel.create({...filter, type: groupDetails.type});
-            if(groupDetails.type == 'chatgroup'){
-                let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content: "added in group", messageType: "Info", isGroup: true })
+            await this.memberModel.create({ ...filter, type: groupDetails.type });
+            if (groupDetails.type == 'chatgroup') {
+                let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content: `@${adminUsername} added @${memberUsername}`, messageType: "Info", isGroup: true })
             }
-                // await this.notificationService.createNotification(
+            // await this.notificationService.createNotification(
             //     {
             //         from: new Types.ObjectId(userId),
             //         user: new Types.ObjectId(authorId),
@@ -141,15 +141,24 @@ export class MemberService {
             // )
 
             await this.metricsAggregatorService.incrementCount(filter.groupId, "members", "group")
-            
+
             return true;
         }
-        if(groupDetails.type == 'chatgroup'){
-            let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content: "removed from group", messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
+        if (groupDetails.type == 'chatgroup') {
+            let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content: `@${adminUsername} removed @${memberUsername}`, messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
             await this.chatlistService.removeUser(filter.member, filter.groupId)
         }
         await this.metricsAggregatorService.decrementCount(filter.groupId, "members", "group")
         return false;
+    }
+
+    async isMember(userId, groupId) {
+        const member = await this.memberModel.findOne({ member: new Types.ObjectId(userId), groupId: new Types.ObjectId(groupId) })
+        console.log(member)
+        if (member) {
+            return true
+        }
+        return false
     }
 
     async toggleAdmin(_superAdminId: string, _userId: string, _groupId: string, isChatGroup: boolean) {

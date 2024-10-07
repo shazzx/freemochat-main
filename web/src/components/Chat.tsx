@@ -10,7 +10,7 @@ import VideoCallRecepient from "./Call/Video/VideoCallRecepient";
 import VideoCallCaller from "./Call/Video/VideoCallCaller";
 import AudioCallCaller from "./Call/Audio/AudioCallCaller";
 import { DropdownUser } from "./Dropdowns/DropdownUser";
-import { useChatGroup, useCreateMessage, useMessages, useUpdateChatGroup, useUserChatlist } from "@/hooks/Chat/main";
+import { useChatGroup, useCreateMessage, useGroupMemberToggle, useMessages, useUpdateChatGroup, useUserChatlist } from "@/hooks/Chat/main";
 import { useInView } from "react-intersection-observer";
 import AudioRecorder from "./MediaRecorder";
 import AudioPlayer from "@/AudioPlayer";
@@ -287,6 +287,9 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
         const { data } = await axiosClient.post("/messages/remove", { messageId })
         console.log(data)
     }
+    // const lastMessage = userMessages.data[userMessages.data.length - 1].messages[userMessages.data[userMessages.data.length - 1].messages.length - 1].content
+    // console.log(lastMessage.includes("removed"))
+
 
     const deleteChat = async () => {
         const lastMessageId = userMessages.data[userMessages.data.length - 1].messages[userMessages.data[userMessages.data.length - 1].messages.length - 1]._id
@@ -363,6 +366,8 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
 
 
     const userFriends = recepientDetails.type == "ChatGroup" && useUserFriends(user._id, recepientDetails?.groupId)
+    const groupMemberToggle = useGroupMemberToggle(user._id, recepientDetails?.groupId)
+
     const [addMemberState, setAddMemberState] = useState(false)
 
     return (
@@ -419,6 +424,8 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                         {friend.isGroupMember ? <span className="p-3 bg-card border border-accent">Member</span> :
                                             <Button onClick={() => {
                                                 groupMemberToggle.mutate({ userId: friend._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'add' })
+                                                socket.emit("toggleJoin", { userId: friend._id, groupId: recepientDetails.groupId, memberUsername: friend.username, adminUsername: user.username })
+
                                             }}>
                                                 Add
                                             </Button>}
