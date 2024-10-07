@@ -5,12 +5,14 @@ import { UserChatListService } from 'src/chatlist/chatlist.service';
 import { ChatGroup } from 'src/schema/cgroup';
 import { Types } from 'mongoose'
 import { MessageService } from 'src/message/message.service';
+import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 
 @Injectable()
 export class CGroupsService {
     constructor(
         @InjectModel(ChatGroup.name) private readonly chatGroupModel: Model<ChatGroup>,
         private readonly chatlistService: UserChatListService,
+        private readonly metricsAggregatorService: MetricsAggregatorService,
         private readonly messageService: MessageService,
     ) { }
 
@@ -127,8 +129,9 @@ export class CGroupsService {
         try {
             let group = await this.chatGroupModel.create({ admins: [_userId], user: _userId, ...groupDetails })
             let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: new Types.ObjectId(userId), recepient: group._id, content: "group created", messageType: "Info", isGroup: true })
-            console.log(message, 'message')
-            console.log(group, 'group')
+            // console.log(message, 'message')
+            // console.log(group, 'group')
+            await this.metricsAggregatorService.incrementCount(group._id, "members", "group")
 
             return group
         } catch (error) {

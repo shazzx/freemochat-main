@@ -62,7 +62,7 @@ console.log(softDelete)
     const _cursor = 
     (cursor && softDelete) ? { createdAt: { $lt: new Date(cursor), _id: {$gt: softDelete.lastDeletedId }} } 
     : 
-    cursor ?  {createdAt: { $lt: new Date(cursor)}} : softDelete.lastDeletedId ?  {_id: {$gt: softDelete.lastDeletedId}} : {};
+    cursor ?  {createdAt: { $lt: new Date(cursor)}} : softDelete ?  {_id: {$gt: softDelete.lastDeletedId}} : {};
 
       query = { ..._cursor, recepient: new Types.ObjectId(recepientId) }
       

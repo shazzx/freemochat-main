@@ -239,7 +239,7 @@ export function useMessages({recepientId, isChatGroup}: {recepientId: string, is
         initialPageParam: null,
         getNextPageParam: (lastPage) => lastPage.nextCursor,
         getPreviousPageParam: (firstpage) => {
-            return firstpage.nextCursor
+            return firstpage?.nextCursor
         },
 
     });

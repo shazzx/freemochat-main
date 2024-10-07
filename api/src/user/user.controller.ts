@@ -318,7 +318,7 @@ export class UserController {
             const authId = uuidv4()
 
             await this.cacheService.setForgetPassword(user._id, authId)
-            const link = `http://ec2-15-206-203-226.ap-south-1.compute.amazonaws.com:5173/reset-password/${authId}?username=${user.username}`
+            const link = `https://www.freedombook.com/reset-password/${authId}?username=${user.username}`
             const message = messageGenerator(user.firstname + " " + user.lastname, link, 'reset-password')
             await this.twilioService.sendSMS(user.phone, message)
 

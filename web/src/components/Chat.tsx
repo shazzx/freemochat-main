@@ -1,7 +1,7 @@
 import { ChevronLeft, Copy, Delete, DeleteIcon, EllipsisIcon, File, Image, Video } from "lucide-react"
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import EmojiPicker, { Categories } from "emoji-picker-react";
-import { MdCancel, MdDelete, MdSend } from "react-icons/md";
+import { MdCancel, MdClose, MdDelete, MdSend } from "react-icons/md";
 import { axiosClient } from "@/api/axiosClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
@@ -26,6 +26,7 @@ import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { format } from "date-fns";
 import { AlertDialogC } from "./AlertDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useUserFriends } from "@/hooks/User/useUser";
 
 function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
@@ -359,10 +360,76 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
 
+
+    const userFriends = recepientDetails.type == "ChatGroup" && useUserFriends(user._id, recepientDetails?.groupId)
+    const [addMemberState, setAddMemberState] = useState(false)
+
     return (
         <div className='flex flex-col min-w-[300px] h-full w-full' >
             {searchParams.get("model") == "settings" &&
                 <CreateChatGroup setModelTrigger={setChatGroupInfo} groupDetails={recepientDetails} editState={true} editGroup={editGroup} />
+            }
+
+            {addMemberState && 
+            
+            <div className="fixed inset-0 z-[100]  w-screen overflow-hidden h-screen flex items-center justify-center top-0 right-0">
+                <div className="absolute top-0 right-0 w-full h-full backdrop-blur-[1.5px]" onClick={() => {
+                    setAddMemberState(false)
+                }}>
+
+                </div>
+
+            <div className="z-10 max-w-[460px] w-full bg-background rounded-lg h-[90%]  border-2 border-accent overflow-auto">
+                <div className="flex justify-between w-full gap-2 p-2 ">
+                    <span className="text-lg font-semibold">Add Friends</span>
+                    <MdClose size={24} cursor="pointer" onClick={() => setAddMemberState(false)} />
+                </div>
+                {(userFriends?.data?.length == 0 || userFriends.data[0]?.friends?.length == 0) &&
+                    <div className="flex items-center flex-col">
+
+                        <svg width="340" height="240" viewBox="0 0 900 380" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="transparent" d="M0 0h900v600H0z" /><path fill-rule="evenodd" clip-rule="evenodd" d="M285.12 141.988c-37.13 0-67.505 30.348-67.505 67.446s30.375 67.446 67.505 67.446c7.448 0 13.549 6.095 13.549 13.537 0 7.442-6.101 13.537-13.549 13.537h-35.323c-18.113 0-32.935 14.81-32.935 32.907 0 18.098 14.822 32.907 32.935 32.907 15.666 0 28.484 12.807 28.484 28.459 0 28.557 23.386 51.922 51.967 51.922h305.063c37.13 0 67.505-30.348 67.505-67.446s-30.375-67.446-67.505-67.446h-6.53c-7.448 0-13.549-6.088-13.549-13.537 0-7.443 6.093-13.538 13.549-13.538h43.954c18.113 0 32.935-14.809 32.935-32.906 0-18.075-14.784-32.869-32.867-32.907h-35.368c-15.666 0-28.484-12.807-28.484-28.459 0-28.557-23.385-51.922-51.967-51.922H285.12z" fill="url(#a)" /><rect x="196.575" y="233.005" width="167.656" height="163.739" rx="33.551" fill="#666AF6" /><rect x="279.738" y="365.259" width="35.446" height="35.446" rx="11.743" transform="rotate(45 279.738 365.259)" fill="#666AF6" /><path fill-rule="evenodd" clip-rule="evenodd" d="M324.276 351.096v6.372c0 3.517-2.833 6.372-6.324 6.372h-75.881c-3.491 0-6.324-2.855-6.324-6.372v-6.474c0-19.282 21.867-31.81 44.265-31.81 22.397 0 44.264 12.534 44.264 31.81m-29.145-78.43c8.567 8.873 8.567 23.258 0 32.131-8.566 8.873-22.456 8.873-31.022 0-8.567-8.873-8.567-23.258 0-32.131 8.566-8.872 22.456-8.872 31.022 0z" fill="#fff" /><rect x="371.96" y="113.956" width="167.656" height="163.739" rx="33.551" fill="#666AF6" /><rect x="455.122" y="246.21" width="35.446" height="35.446" rx="11.743" transform="rotate(45 455.122 246.21)" fill="#666AF6" /><path fill-rule="evenodd" clip-rule="evenodd" d="M499.66 232.046v6.373c0 3.517-2.833 6.372-6.323 6.372h-75.882c-3.49 0-6.323-2.855-6.323-6.372v-6.475c0-19.282 21.866-31.809 44.264-31.809 22.398 0 44.264 12.534 44.264 31.809m-29.145-78.429c8.567 8.873 8.567 23.258 0 32.131-8.566 8.872-22.455 8.872-31.022 0-8.567-8.873-8.567-23.258 0-32.131 8.567-8.872 22.456-8.872 31.022 0z" fill="#fff" /><rect x="371.96" y="311.254" width="167.656" height="163.739" rx="33.551" fill="#666AF6" /><rect x="455.122" y="443.507" width="35.446" height="35.446" rx="11.743" transform="rotate(45 455.122 443.507)" fill="#666AF6" /><path fill-rule="evenodd" clip-rule="evenodd" d="M499.66 429.344v6.372c0 3.517-2.833 6.372-6.323 6.372h-75.882c-3.49 0-6.323-2.855-6.323-6.372v-6.474c0-19.282 21.866-31.81 44.264-31.81 22.398 0 44.264 12.534 44.264 31.81m-29.145-78.43c8.567 8.873 8.567 23.258 0 32.131-8.566 8.873-22.455 8.873-31.022 0s-8.567-23.258 0-32.131c8.567-8.872 22.456-8.872 31.022 0z" fill="#fff" /><rect x="547.344" y="193.398" width="167.656" height="163.739" rx="33.551" fill="#666AF6" /><rect x="630.506" y="325.653" width="35.446" height="35.446" rx="11.743" transform="rotate(45 630.506 325.653)" fill="#666AF6" /><path fill-rule="evenodd" clip-rule="evenodd" d="M675.045 311.489v6.372c0 3.517-2.833 6.372-6.324 6.372H592.84c-3.491 0-6.324-2.855-6.324-6.372v-6.474c0-19.282 21.867-31.81 44.264-31.81 22.398 0 44.265 12.534 44.265 31.81M645.9 232.958c8.567 8.872 8.567 23.258 0 32.13-8.567 8.873-22.456 8.873-31.023 0-8.566-8.872-8.566-23.258 0-32.13 8.567-8.873 22.456-8.873 31.023 0z" fill="#fff" /><path fill-rule="evenodd" clip-rule="evenodd" d="M255.594 168.461v-32.18c0-3.334 2.695-6.034 6.021-6.034h36.127c3.327 0 6.022 2.7 6.022 6.034v32.18a6.035 6.035 0 0 1-3.098 5.274l-18.064 10.055a6.003 6.003 0 0 1-5.849 0l-18.064-10.055a6.04 6.04 0 0 1-3.095-5.274z" fill="#E1E4E5" /><path d="M269.667 156.857h20.025m-20.025-9.381h20.025m-20.025 18.492h20.025" stroke="#fff" stroke-width="3.094" stroke-linecap="round" stroke-linejoin="round" /><circle cx="324.753" cy="431.824" r="5.922" transform="rotate(105 324.753 431.824)" fill="#E1E4E5" /><circle cx="331.27" cy="209.181" r="5.922" transform="rotate(105 331.27 209.181)" fill="#E1E4E5" /><circle cx="192.253" cy="221.128" r="5.922" transform="rotate(105 192.253 221.128)" fill="#E1E4E5" /><circle cx="571.29" cy="175.513" r="5.922" transform="rotate(105 571.29 175.513)" fill="#E1E4E5" /><circle cx="575.635" cy="393.812" r="5.922" transform="rotate(105 575.635 393.812)" fill="#E1E4E5" /><path fill-rule="evenodd" clip-rule="evenodd" d="M651.83 413.803h-2.897c-.701 0-1.265-.57-1.265-1.264v-2.897c0-.701.57-1.265 1.265-1.265h2.897c.694 0 1.264.57 1.264 1.265v2.897a1.262 1.262 0 0 1-1.264 1.264zm-10.044 0h-2.897a1.27 1.27 0 0 1-1.265-1.264v-2.897c0-.701.57-1.265 1.265-1.265h2.897c.694 0 1.264.57 1.264 1.265v2.897a1.27 1.27 0 0 1-1.264 1.264zm-10.051 0h-2.897a1.27 1.27 0 0 1-1.264-1.264v-2.897c0-.701.57-1.265 1.264-1.265h2.897c.695 0 1.265.57 1.265 1.265v2.897a1.262 1.262 0 0 1-1.265 1.264zm-10.044 0h-2.897a1.27 1.27 0 0 1-1.264-1.264v-2.897c0-.701.57-1.265 1.264-1.265h2.897c.701 0 1.271.57 1.271 1.265v2.897a1.279 1.279 0 0 1-1.271 1.264zm-10.044 0h-2.897a1.27 1.27 0 0 1-1.271-1.264v-2.897c0-.701.57-1.265 1.271-1.265h2.897c.694 0 1.264.57 1.264 1.265v2.897a1.27 1.27 0 0 1-1.264 1.264zm29.77-10.952h-2.896a1.27 1.27 0 0 1-1.265-1.265v-2.903c0-.694.57-1.264 1.265-1.264h2.896c.701 0 1.265.57 1.265 1.264v2.897a1.263 1.263 0 0 1-1.265 1.271zm-10.044 0h-2.897a1.27 1.27 0 0 1-1.264-1.265v-2.903c0-.694.57-1.264 1.264-1.264h2.897c.695 0 1.265.57 1.265 1.264v2.897a1.263 1.263 0 0 1-1.265 1.271zm-10.044 0h-2.897c-.7 0-1.27-.57-1.27-1.265v-2.903c0-.694.57-1.264 1.27-1.264h2.897c.694 0 1.264.57 1.264 1.264v2.897a1.27 1.27 0 0 1-1.264 1.271zm10.406 22.718h-2.897a1.27 1.27 0 0 1-1.264-1.265v-2.896c0-.701.57-1.265 1.264-1.265h2.897c.695 0 1.265.57 1.265 1.265v2.896a1.262 1.262 0 0 1-1.265 1.265zm-10.044 0h-2.897a1.27 1.27 0 0 1-1.264-1.265v-2.896c0-.701.57-1.265 1.264-1.265h2.897c.701 0 1.271.57 1.271 1.265v2.896a1.279 1.279 0 0 1-1.271 1.265z" fill="#E1E4E5" /><rect x="325.103" y="179.782" width="31.655" height="3.688" rx="1.844" transform="rotate(-45 325.103 179.782)" fill="#E1E4E5" /><rect x="337.239" y="179.869" width="11.754" height="3.688" rx="1.844" transform="rotate(-45 337.239 179.869)" fill="#E1E4E5" /><rect x="276.241" y="431.61" width="31.655" height="3.688" rx="1.844" transform="rotate(135 276.241 431.61)" fill="#E1E4E5" /><rect x="264.104" y="431.523" width="11.754" height="3.688" rx="1.844" transform="rotate(135 264.104 431.523)" fill="#E1E4E5" /><rect x="650.934
+" y="153.578" width="31.655" height="3.688" rx="1.844" transform="rotate(135 650.934 153.578)" fill="#E1E4E5" /><rect x="638.797" y="153.491" width="11.754" height="3.688" rx="1.844" transform="rotate(135 638.797 153.491)" fill="#E1E4E5" /><defs><linearGradient id="a" x1="471.688" y1="622.922" x2="465.697" y2="-193.306" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" /><stop offset="1" stop-color="#EEE" /></linearGradient></defs></svg>
+                        <span>No Friends</span>
+                    </div>
+
+                }
+
+                {!userFriends.isLoading && userFriends.data?.map((page, pageIndex) => {
+                    return page.friends.map((friend, userIndex) => {
+                        friend = friend.friend
+                        return (
+
+                            <div className='flex flex-col gap-1 w-full bg-card'>
+                                <div className='flex items-center p-2 gap-2 relative w-full '>
+                                    <div className='flex w-full gap-2'>
+                                        <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
+                                            <Avatar >
+                                                <AvatarImage src={friend?.images?.profile} alt="Avatar" />
+                                                <AvatarFallback className='text-2xl'>{friend?.firstname[0]?.toUpperCase() + friend?.lastname[0]?.toUpperCase()}</AvatarFallback>
+                                            </Avatar>
+                                        </div>
+                                        <div className="flex flex-col justify-center">
+                                            <div className=''>{friend?.firstname + " " + friend?.lastname}</div>
+                                            <div className='text-gray-400 text-sm'>@{friend?.username}</div>
+
+                                        </div>
+                                    </div>
+                                    <div>
+                                        {friend.isGroupMember ? <span className="p-3 bg-card border border-accent">Member</span> :
+                                            <Button onClick={() => {
+                                                groupMemberToggle.mutate({ userId: friend._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'add' })
+                                            }}>
+                                                Add
+                                            </Button>}
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })
+                })}
+            </div>
+            </div>
+
             }
 
             {/* initiated call */}
@@ -419,7 +486,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                             <path d="M24.64 3.43994L19 5.93994V2.93994C19 2.4095 18.7892 1.9008 18.4142 1.52572C18.0391 1.15066 17.5304 0.939941 17 0.939941H1.99997C1.46953 0.939941 0.960829 1.15066 0.585755 1.52572C0.210683 1.9008 -3.05176e-05 2.4095 -3.05176e-05 2.93994V16.9399C-3.05176e-05 17.4703 0.210683 17.9791 0.585755 18.3541C0.960829 18.7291 1.46953 18.9399 1.99997 18.9399H17C17.5304 18.9399 18.0391 18.7291 18.4142 18.3541C18.7892 17.9791 19 17.4703 19 16.9399V13.9399L24.64 16.4399C24.792 16.4985 24.9562 16.5193 25.118 16.4999C25.2798 16.4807 25.4346 16.4223 25.5686 16.3295C25.7026 16.2369 25.812 16.1129 25.8872 15.9683C25.9624 15.8237 26.0012 15.6629 26 15.4999V4.37994C26.0012 4.21696 25.9624 4.05616 25.8872 3.91156C25.812 3.76696 25.7026 3.64292 25.5686 3.55026C25.4346 3.45758 25.2798 3.3991 25.118 3.37986C24.9562 3.36064 24.792 3.38126 24.64 3.43994Z" fill="#433FFA" />
                         </svg>
                     </div>}
-                    <DropdownUser setAlertDialog={setAlertDialog} deleteChat={deleteChat} blockUser={blockUser} />
+                    <DropdownUser isGroup={recepientDetails.type == 'ChatGroup' ? true : false } setAddMemberState={setAddMemberState} setAlertDialog={setAlertDialog} deleteChat={deleteChat} blockUser={blockUser} />
                 </div>
             </div>
 
@@ -429,7 +496,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                     setOpenedDropDownMessageId(null)
                 }
             }} ref={chatContainerRef}>
-                {!userMessages.isLoading && userMessages.data[0].nextCursor !== null && <Button className="relative m-1 w-fit bg-card text-xs mx-auto" ref={ref} onClick={() => {
+                {!userMessages.isLoading && userMessages.data[0]?.nextCursor !== null && <Button className="relative m-1 w-fit bg-card text-xs mx-auto" ref={ref} onClick={() => {
                     userMessages.fetchPreviousPage()
                 }}>Load More</Button>}
                 {/* <div className="w-full text-center pb-4">

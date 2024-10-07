@@ -18,7 +18,7 @@ import { RiAdminLine, RiUserUnfollowLine } from "react-icons/ri"
 import { useNavigate } from "react-router-dom"
 
 
-const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, createGroup, editGroup, editState, groupDetails }) => {
+const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editState, groupDetails }) => {
 
     let [imageSrc, setImageSrc] = useState(null)
     let [coverImage, SetCoverImage] = useState(null)
@@ -84,7 +84,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, setCurrentTab, setModelTrigger, 
                     <div className="flex flex-col items-center justify-center relative">
                         {/* cover image */}
                         <div className='relative w-full max-h-72 roundd-md  overflow-hidden'>
-                        <MdClose className="sm:hidden float-end" size={24} cursor="pointer" onClick={() => {
+                        <MdClose className="absolute right-1 top-1" size={24} cursor="pointer" onClick={() => {
                         navigate('', {replace: true})
                     }} />
                             <div className="w-full">

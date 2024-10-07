@@ -10,11 +10,11 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MdDelete, MdReport, MdUpgrade } from "react-icons/md"
+import { MdDelete, MdGroup, MdReport, MdUpgrade } from "react-icons/md"
 import { FC } from "react"
 import { AlertDialogC } from "../AlertDialog"
 
-export const DropdownUser: FC<any> = ({ setAlertDialog, blockUser, setReportModelState, reportModelState }) => {
+export const DropdownUser: FC<any> = ({ setAlertDialog, blockUser, setReportModelState, reportModelState, setAddMemberState, isGroup }) => {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -36,7 +36,12 @@ export const DropdownUser: FC<any> = ({ setAlertDialog, blockUser, setReportMode
                         <MdReport className="mr-2 h-4 w-4" />
                         <span>Report</span>
                     </DropdownMenuItem> */}
-
+                    {isGroup &&
+                        <DropdownMenuItem className="cursor-pointer" onClick={() => {
+                            setAddMemberState(true)
+                        }}>
+                            <span className="flex"><MdGroup className="mr-2 h-4 w-4" /> Add Friends</span>
+                        </DropdownMenuItem>}
                     <DropdownMenuItem className="cursor-pointer" onClick={() => {
                         setAlertDialog(true)
                     }}>
