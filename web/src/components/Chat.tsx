@@ -29,6 +29,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useUserFriends } from "@/hooks/User/useUser";
 
 function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
+    console.log(recepientDetails)
     const [emojiPickerState, setEmojiPickerState] = useState(false)
     const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId)
     const group: any = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId) : {}
@@ -738,7 +739,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
             {recepientDetails?.type == "group" && groupData?.members?.includes(user?._id) && <Button type="button" onClick={leaveGroup}>Leave</Button>
 
             }
-            <div className="flex gap-2 items-center justify-center p-2 flex-1">
+{!recepientDetails?.removed &&  <div className="flex gap-2 items-center justify-center p-2 flex-1">
                 {!isRecording && <div className="flex  items-center justify-center border border-primary h-11 rounded-md p-2 w-full">
 
                     {
@@ -919,7 +920,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                         <MdSend size={24} className="text-foreground"></MdSend>
                     </Button>
                 }
-            </div>
+            </div>}
         </div >
     )
 }

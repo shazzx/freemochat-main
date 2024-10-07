@@ -60,6 +60,7 @@ export const useGroupMemberToggle = (_userId: string, groupId: string) => {
                     if (draft.pages[pageIndex].friends[userIndex].friend.isGroupMember) {
                         draft.pages[pageIndex].friends[userIndex].friend.isGroupMember = false 
                         toast.success('Member Removed')
+                        return
                     }
                     
                     if (draft.pages[pageIndex].friends[userIndex].friend.isGroupMember == false) {
@@ -81,7 +82,7 @@ export const useGroupMemberToggle = (_userId: string, groupId: string) => {
             // queryClient.setQueryData(['userFriends', _userId], context.previousUser)
         },
         onSettled: (e) => {
-            console.log(e)
+            console.log(e, 'member toggle response')
             // uncommeting this will refetch the comments again from the server to be in sync
             // queryClient.invalidateQueries({ queryKey: ["comments"] })
         }

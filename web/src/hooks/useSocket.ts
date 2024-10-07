@@ -129,6 +129,12 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
 
     });
 
+    socket.on('toggleJoin', (data)=> {
+      console.log(data)
+      queryClient.invalidateQueries({queryKey: ["chatlist"]})
+      queryClient.invalidateQueries({queryKey: ["messages", data.groupId]})
+    })
+
 
     socket.on("users", (users) => {
       console.log(users)

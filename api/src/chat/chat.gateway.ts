@@ -56,7 +56,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       let message = await this.messageService.createMessage({ type: payload.recepientDetails.type, sender: new Types.ObjectId(payload.senderDetails.targetId), recepient: new Types.ObjectId(payload.recepientDetails.targetId), content: payload.body, gateway: true, messageType: payload.messageType, })
-      const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body }, "Text")
+      const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body, messageId: message._id }, "Text")
 
       this.server.to(recepient?.socketId).emit('chat', { ...payload, _id: message._id });
       this.server.emit('chatlist', { users: chatlist })
@@ -82,7 +82,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const message = await this.messageService.createMessage({ type: payload.recepientDetails.type, sender: new Types.ObjectId(payload.senderDetails.targetId), recepient: new Types.ObjectId(payload.recepientDetails.targetId), content: payload.body, gateway: true, messageType: payload.messageType, })
-      const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body }, "Text")
+      const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body, messageId: message._id }, "Text")
 
       console.log('sending to : ', payload.recepientDetails.targetId)
       this.server.to(payload.recepientDetails.targetId).emit('groupchat', { ...payload, _id: message._id });
@@ -94,51 +94,44 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  leaveOrRemoveFromGroup(groupId: string){
+    this.server.to(groupId).emit('group-update', {groupId})
+  }
+
   async sendMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number, isUploaded: boolean } }) {
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(String(messageDetails.recepient)))
     this.server.to(recepient?.socketId).emit('chat', messageDetails);
   }
 
-  @SubscribeMessage("joingroup")
+  @SubscribeMessage("toggleJoin")
   async handleJoinGroup(client: Socket, payload: { userId: string, groupId: string }) {
-    // const group: any = await this.chatGroupService.joinChatGroup({ userId: payload.userId }, { groupId: payload.groupId })
-    // let recepientId = this.connectedUsers.get(client.handshake.auth.username)
-    // console.log(client.handshake.auth)
-
-    // console.log(group)
-    // client.join(group._id.toString())
-    // console.log(client.rooms)
-    // this.server.to(recepientId).emit("joingroup", 'joined')
-    // return group
+    const result = await this.memberService.toggleJoin(payload.userId, {groupId: payload.groupId, type: "chatgroup"}, )
+    console.log(result, 'togglejoin')
+    const user = await this.cacheService.getOnlineUser(payload.userId)
+    console.log(user, 'toggle joing member')
+    this.server.to(payload.groupId).emit("toggleJoin", {groupId: payload.groupId})
+    this.server.to(user?.socketId).emit("toggleJoin", {groupId: payload.groupId})
   }
 
   // @SubscribeMessage("leavegroup")
   // async handleLeaveGroup(client: Socket, payload: { userId: string, groupId: string }) {
-  //   const group: any = await this.chatGroupService.leaveChatGroup({ userId: payload.userId }, { groupId: payload.groupId })
-  //   client.leave(group._id.toString())
-  //   let recepientId = this.connectedUsers.get(client.handshake.auth.username)
-
-  //   console.log(client.rooms)
-  //   this.server.to(recepientId).emit("leavegroup", 'left')
-
-  //   return group
   // }
 
-  @SubscribeMessage("chatgroup")
-  handleGroupMessages(@MessageBody() payload: { userId: string, groupId: string, senderDetails: { userId: Types.ObjectId, username: string }, body: string, recepientDetails: { userId: Types.ObjectId, username: string, type: string, groupId: Types.ObjectId } }): { senderDetails: { userId: Types.ObjectId, username: string }, body: string, recepientDetails: { userId: Types.ObjectId, username: string, type: string, groupId: Types.ObjectId } } {
-    console.log(`Message received: ${payload.senderDetails.userId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.groupId + " - " + payload.recepientDetails.username + " - " + payload.body}`);
-    console.log(payload)
+  // @SubscribeMessage("chatgroup")
+  // handleGroupMessages(@MessageBody() payload: { userId: string, groupId: string, senderDetails: { userId: Types.ObjectId, username: string }, body: string, recepientDetails: { userId: Types.ObjectId, username: string, type: string, groupId: Types.ObjectId } }): { senderDetails: { userId: Types.ObjectId, username: string }, body: string, recepientDetails: { userId: Types.ObjectId, username: string, type: string, groupId: Types.ObjectId } } {
+  //   console.log(`Message received: ${payload.senderDetails.userId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.groupId + " - " + payload.recepientDetails.username + " - " + payload.body}`);
+  //   console.log(payload)
 
-    this.groups.set(payload.userId, payload.groupId)
-    let recepientId = this.connectedUsers.get(payload.recepientDetails.username)
-    console.log(recepientId)
+  //   this.groups.set(payload.userId, payload.groupId)
+  //   let recepientId = this.connectedUsers.get(payload.recepientDetails.username)
+  //   console.log(recepientId)
 
-    // this.messageService.createMessage({ type: payload.recepientDetails.type, sender: payload.senderDetails.userId, recepient: payload.recepientDetails.groupId, content: payload.body })
+  //   // this.messageService.createMessage({ type: payload.recepientDetails.type, sender: payload.senderDetails.userId, recepient: payload.recepientDetails.groupId, content: payload.body })
 
-    this.server.to(recepientId).emit('chat', payload); // broadbast a message to all clients
+  //   this.server.to(recepientId).emit('chat', payload); // broadbast a message to all clients
 
-    return payload
-  }
+  //   return payload
+  // }
 
   // calling logic
   @SubscribeMessage("initiate-call")
@@ -214,6 +207,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async uploadSuccess(data) {
     let user = JSON.parse(await this.cacheService.getOnlineUser(data?.target?.targetId))
+    console.log(user, 'online user')
     this.server.to(user?.socketId).emit('upload-status', data)
     console.log('listener called')
     // this.server.to(recepientId).emit('notification', event)

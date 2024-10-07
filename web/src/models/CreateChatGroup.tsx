@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useChatGroup, useGroupMemberToggle } from "@/hooks/Chat/main"
 import { useGroupMembers, useToggleAdmin } from "@/hooks/useGroup"
 import { useUserFriends } from "@/hooks/User/useUser"
+import { useSocket } from "@/hooks/useSocket"
 import { ChatGroupCreate } from "@/utils/schemas/auth"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
@@ -19,6 +20,8 @@ import { useNavigate } from "react-router-dom"
 
 
 const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editState, groupDetails }) => {
+    
+    const socket = useSocket()
 
     let [imageSrc, setImageSrc] = useState(null)
     let [coverImage, SetCoverImage] = useState(null)
@@ -316,13 +319,13 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md'>
-                                                        <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' >
-                                                            <RiUserUnfollowLine size={22} onClick={() => {
+                                                        <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' onClick={() => {
                                                                 groupMemberToggle.mutate({ userId: memberData.user._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'remove' })
+                                                                socket.emit("toggleJoin", {userId: memberData.user._id, groupId: chatGroup.data._id})
                                                                 console.log('user remove')
-
-                                                            }} />
-                                                            <span>Remove</span>
+                                                            }}  >
+                                                            <RiUserUnfollowLine size={22} />
+                                                            <span>Remove User</span>
                                                         </DropdownMenuItem>
                                                         {chatGroup?.data?.isSuperAdmin
                                                             &&
@@ -388,7 +391,10 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                             <div>
                                                 {friend.isGroupMember ? <span className="p-3 bg-card border border-accent">Member</span> :
                                                     <Button onClick={() => {
+                                                        
                                                         groupMemberToggle.mutate({ userId: friend._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'add' })
+                                                        socket.emit("toggleJoin", {userId: friend._id, groupId: chatGroup.data._id})
+                                                        console.log('adding')
                                                     }}>
                                                         Add
                                                     </Button>}

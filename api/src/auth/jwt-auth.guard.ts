@@ -52,7 +52,7 @@ export class JwtAuthGuard implements CanActivate {
                 }
             );
 
-            console.log(payload, 'payload auth guard')
+            // console.log(payload, 'payload auth guard')
             if(!payload){
                 return false
             }

@@ -17,9 +17,9 @@ export class CGroupsService {
     ) { }
 
     async getGroups(userId) {
-        console.log(userId)
+        // console.log(userId)
         let groups = await this.chatGroupModel.find({$or: [{ user: new Types.ObjectId(userId)}, {admins: new Types.ObjectId(userId) }]})
-        console.log('founded groups', groups)
+        // console.log('founded groups', groups)
         return groups
     }
 
@@ -117,7 +117,7 @@ export class CGroupsService {
         // },
         const isSuperAdmin = group[0].user.toString() === userId;
         const isAdmin = group[0].admins.some(adminId => adminId.toString() === userId);
-        console.log(group[0], isSuperAdmin, isAdmin)
+        // console.log(group[0], isSuperAdmin, isAdmin)
 
         let groupData = { ...group[0], isAdmin, isSuperAdmin }
         return groupData

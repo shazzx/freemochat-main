@@ -2,6 +2,7 @@ import { useAppSelector } from "@/app/hooks";
 import Chat from "@/components/Chat"
 import ChatSidebar from "@/components/ChatSidebar"
 import { useUserChatlist } from "@/hooks/Chat/main";
+import { useSocket } from "@/hooks/useSocket";
 import { format } from "date-fns";
 import { memo, useState } from "react"
 
@@ -9,14 +10,16 @@ function MessagesSection() {
     const [chatOpen, setChatOpen] = useState(false)
     const [recepientDetails, setRecepientDetails] = useState({ userId: "", username: "", type: "", fullname: "", name: "", chatIndex: -1 })
     const { user } = useAppSelector((data) => data.user)
+    const socket = useSocket()
     const { data, isLoading } = useUserChatlist()
     const isOnline = !isLoading && recepientDetails.chatIndex > -1 && data.users[recepientDetails.chatIndex]?.onlineStatus
+    console.log(data)
     // data && console.log(format(data?.users[0]?.createdAt, 'MMM d, yyy h:mm:ss a'))
 
     return (
         <div className="flex w-full bg-background-secondary">
             <div className="flex w-full">
-                <ChatSidebar setChatOpen={setChatOpen} chatOpen={chatOpen} setRecepientDetails={setRecepientDetails} chatList={!isLoading && data} />
+                <ChatSidebar socket={socket} setChatOpen={setChatOpen} chatOpen={chatOpen} setRecepientDetails={setRecepientDetails} chatList={!isLoading && data} />
                 {chatOpen && recepientDetails?.type !== "ChatGroup" &&
                     <Chat user={user} recepientDetails={recepientDetails} isOnline={isOnline} setChatOpen={setChatOpen} />
                 }

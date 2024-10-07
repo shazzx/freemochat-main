@@ -16,6 +16,9 @@ class LastMessage {
     @Prop({ type: Buffer, required: true })
     encryptedContent: Buffer;
 
+    @Prop({type: Types.ObjectId})
+    messageId: ObjectId
+
     @Prop({ type: Date, default: Date.now })
     createdAt: Date;
 }
@@ -45,8 +48,8 @@ export class ChatItem {
     @Prop({ type: Date, default: null })
     removedAt: Date
 
-    @Prop({ type: Date, default: null })
-    chatRemovedAt: Date
+    // @Prop({ type: Date, default: null })
+    // chatRemovedAt: Date
 
     @Prop({ type: LastMessage, required: true })
     lastMessage: LastMessage;

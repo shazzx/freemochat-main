@@ -15,11 +15,11 @@ export class MessageService {
   ) { }
 
   async createMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number, isUploaded: boolean }, gateway?: boolean, isGroup?: boolean, removeUser?: boolean, removeChat?: boolean }) {
+    const message = await this.messageModel.create(messageDetails)
     if (!messageDetails?.gateway) {
       console.log('gateway condition')
-      await this.chatlistService.createOrUpdateChatList(messageDetails.sender.toString(), messageDetails.recepient.toString(), messageDetails.type, { sender: messageDetails.sender, encryptedContent: messageDetails?.isGroup ? messageDetails.content : messageDetails.messageType }, messageDetails.messageType, messageDetails.removeUser, messageDetails.removeChat)
+      await this.chatlistService.createOrUpdateChatList(messageDetails.sender.toString(), messageDetails.recepient.toString(), messageDetails.type, { sender: messageDetails.sender, encryptedContent: messageDetails?.isGroup ? messageDetails.content : messageDetails.messageType, messageId: message._id }, messageDetails.messageType, messageDetails.removeUser, messageDetails.removeChat)
     }
-    const message = await this.messageModel.create(messageDetails)
     return message
   }
 
@@ -60,11 +60,13 @@ console.log(softDelete)
     }
     if (isChatGroup == 1) {
     const _cursor = 
-    (cursor && softDelete) ? { createdAt: { $lt: new Date(cursor), _id: {$gt: softDelete.lastDeletedId }} } 
+    (cursor && softDelete) ? { createdAt: { $lt: new Date(cursor)}, _id: {$gt: softDelete.lastDeletedId } } 
     : 
     cursor ?  {createdAt: { $lt: new Date(cursor)}} : softDelete ?  {_id: {$gt: softDelete.lastDeletedId}} : {};
 
       query = { ..._cursor, recepient: new Types.ObjectId(recepientId) }
+
+      console.log(query)
       
       messages = await this.messageModel.aggregate([
         { $match: { ...query}},

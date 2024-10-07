@@ -17,7 +17,7 @@ export class UserChatListService {
         userId: any,
         recepientId: any,
         type: string,
-        lastMessage: { sender: Types.ObjectId, encryptedContent: string },
+        lastMessage: { sender: Types.ObjectId, encryptedContent: string, messageId: Types.ObjectId },
         messageType: string,
         removeUser?: boolean,
         removeChat?: boolean,
@@ -42,6 +42,7 @@ export class UserChatListService {
                 { _id: userChat._id, 'type': type, 'recepient': recepientId },
                 {
                     $set: {
+                        removedAt: lastMessage.encryptedContent == 'added in group' ? null : removeUser ? Date.now() : null,
                         lastMessage,
                         messageType
                     },
@@ -71,7 +72,7 @@ export class UserChatListService {
                     $inc: { 'unreadCount': recepientId.toString() !== lastMessage.sender.toString() ? 1 : 0 },
                 }
             );
-        } else {
+        } else if(type !== "ChatGroup") {
             await this.userChatListModel.create({
                 user: recepientId,
                 type,
@@ -128,7 +129,7 @@ export class UserChatListService {
     }
 
 
-    async removeUser(userId, recepientId) {
+    async removeUser(userId: Types.ObjectId, recepientId: Types.ObjectId) {
         let removedUser = await this.userChatListModel.findOneAndUpdate(
             { user: userId, recepient: recepientId },
             { removedAt: Date.now() },
@@ -136,10 +137,6 @@ export class UserChatListService {
         );
         console.log(removedUser)
         return removedUser
-    }
-
-    async removeChatRecord(userId, recepientId) {
-
     }
 
     async getChatList(userId: string, recepient: string) {

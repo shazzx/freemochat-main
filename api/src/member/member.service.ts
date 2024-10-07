@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model, Types } from 'mongoose'
+import { ChatGateway } from 'src/chat/chat.gateway';
 import { UserChatListService } from 'src/chatlist/chatlist.service';
 import { MessageService } from 'src/message/message.service';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
@@ -15,7 +16,7 @@ export class MemberService {
         @InjectModel(Member.name) private readonly memberModel: Model<Member>,
         private readonly metricsAggregatorService: MetricsAggregatorService,
         private readonly messageService: MessageService,
-        // private readonly notificationService: NotificationService,
+        private readonly chatlistService: UserChatListService,
         @InjectModel(Group.name) private groupModel: Model<Group>,
         @InjectModel(ChatGroup.name) private chatGroupModel: Model<ChatGroup>,
         @InjectConnection() private connection: Connection
@@ -102,8 +103,8 @@ export class MemberService {
     async toggleJoin(_userId, groupDetails) {
         let userId = groupDetails?.userId || _userId 
 
-        console.log('yes yes', groupDetails)
-        console.log('joiner', userId, 'user', _userId)
+        // console.log('yes yes', groupDetails)
+        // console.log('joiner', userId, 'user', _userId)
 
         const filter = {
             member: new Types.ObjectId(userId),
@@ -113,12 +114,12 @@ export class MemberService {
         const member = await this.memberModel.findOne({member: filter.member})
 
         if(member && member.isAdmin == 1){
-            console.log('deleting')
+            // console.log('deleting')
             let _member = await this.chatGroupModel.updateOne(
                 { _id: filter.groupId },
                 { $pull: { admins: filter.member } },
             );
-            console.log(_member)
+            // console.log(_member)
         }
 
         const deleteResult = await this.memberModel.deleteOne(filter);
@@ -126,7 +127,7 @@ export class MemberService {
         if (deleteResult.deletedCount === 0) {
             await this.memberModel.create({...filter, type: groupDetails.type});
             if(groupDetails.type == 'chatgroup'){
-                let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.groupId, recepient: filter.member, content: "added in group", messageType: "Info", isGroup: true })
+                let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content: "added in group", messageType: "Info", isGroup: true })
             }
                 // await this.notificationService.createNotification(
             //     {
@@ -144,8 +145,8 @@ export class MemberService {
             return true;
         }
         if(groupDetails.type == 'chatgroup'){
-            let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.groupId, recepient: filter.member, content: "removed from group", messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
-            console.log(message)
+            let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content: "removed from group", messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
+            await this.chatlistService.removeUser(filter.member, filter.groupId)
         }
         await this.metricsAggregatorService.decrementCount(filter.groupId, "members", "group")
         return false;
@@ -155,8 +156,8 @@ export class MemberService {
         const adminId = new Types.ObjectId(_superAdminId)
         const userId = new Types.ObjectId(_userId)
         const groupId = new Types.ObjectId(_groupId)
-        console.log(_superAdminId, _userId, _groupId)
-        console.log(adminId, ":admin", userId, ": user", groupId, ": group")
+        // console.log(_superAdminId, _userId, _groupId)
+        // console.log(adminId, ":admin", userId, ": user", groupId, ": group")
         // const session = await this.connection.startSession();
         // session.startTransaction();
         try {
@@ -174,24 +175,24 @@ export class MemberService {
                     throw new ForbiddenException('Only the group creator can perform this action');
                 }
             }
-            console.log('isgroup')
+            // console.log('isgroup')
             // Toggle isAdmin in GroupMember
             const updatedMember = await this.memberModel.findOneAndUpdate(
                 { groupId, member: userId },
                 { $bit: { isAdmin: { xor: 1 } } },
                 { new: true }
             );
-            console.log(updatedMember)
+            // console.log(updatedMember)
 
             if (!updatedMember) {
                 throw new NotFoundException('Group member not found');
             }
 
-            console.log('iis updated member')
+            // console.log('iis updated member')
 
             // Update Group's admins array based on new isAdmin status
             if (updatedMember.isAdmin) {
-                console.log('is admin')
+                // console.log('is admin')
                 // Add to admins array if not already present
                 if (isChatGroup) {
                     await this.chatGroupModel.updateOne(
@@ -206,7 +207,7 @@ export class MemberService {
                 }
             } else {
                 // Remove from admins array
-                console.log('not admin')
+                // console.log('not admin')
                 if (isChatGroup) {
                     await this.chatGroupModel.updateOne(
                         { _id: groupId },
@@ -219,7 +220,7 @@ export class MemberService {
                     );
                 }
             }
-            console.log(updatedMember, 'done')
+            // console.log(updatedMember, 'done')
             return updatedMember;
         } catch (error) {
             // await session.abortTransaction();

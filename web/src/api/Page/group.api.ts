@@ -8,8 +8,8 @@ export const joinGroup = async (groupData: {groupDetails: {groupId: string, user
 
 
 export const toggleJoinGroup = async (groupData: {groupDetails: {groupId: string, userId?: string, type: string}}) => {
-    const { data } = await axiosClient.post("/members/join", groupData)
-    console.log(data)
+    // const { data } = await axiosClient.post("/members/join", groupData)
+    // console.log(data)
 }
 
 
