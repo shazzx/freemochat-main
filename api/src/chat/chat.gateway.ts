@@ -77,24 +77,29 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       let group = await this.chatGroupService.groupExist(payload.recepientDetails.targetId)
-      let isMember = await this.memberService.isMember(payload.senderDetails.targetId, payload.recepientDetails.targetId)
+      const members = await this.memberService.getGroupMemberIds(payload.recepientDetails.targetId)
 
-      console.log(isMember,'ismember')
+      // console.log(isMember,'ismember')
 
       if (!group) {
         throw new BadRequestException("Group has been deleted")
       }
 
-      if(!isMember){
+      const sender = String(payload.senderDetails.targetId)
+
+      if(!members.includes(sender)){
         throw new BadRequestException("You're no longer part of the group")
       }
 
       const message = await this.messageService.createMessage({ type: payload.recepientDetails.type, sender: new Types.ObjectId(payload.senderDetails.targetId), recepient: new Types.ObjectId(payload.recepientDetails.targetId), content: payload.body, gateway: true, messageType: payload.messageType, })
-      const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body, messageId: message._id }, "Text")
+      console.log(members, 'members')
+      members.forEach(async(memberId) => {
+        await this.chatlistService.createOrUpdateChatList(memberId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body, messageId: message._id }, "Text")
+      })
 
       console.log('sending to : ', payload.recepientDetails.targetId)
       this.server.to(payload.recepientDetails.targetId).emit('groupchat', { ...payload, _id: message._id });
-      this.server.emit('chatlist', { groups: chatlist })
+      this.server.emit('chatlist', {})
       return payload;
     } catch (error) {
       const user = await this.cacheService.getOnlineUser(payload.senderDetails.targetId)

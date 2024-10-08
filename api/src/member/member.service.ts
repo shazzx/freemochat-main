@@ -92,6 +92,18 @@ export class MemberService {
         return results
     }
 
+    async getGroupMemberIds(groupId){
+        const members = await this.memberModel.find({groupId: new Types.ObjectId(groupId)})
+        const group = await this.chatGroupModel.findById(groupId)
+        const _members = members.map((member)=> {
+            return member.member.toString()
+        })
+        const _admins = group.admins.map((admin) => {
+            return admin.toString()
+        })
+        return [..._members, ..._admins]
+    }
+
     async getGroupIds(userId) {
         let query = { member: new Types.ObjectId(userId), type: 'chatgroup' }
         const groups = await this.memberModel.find(query);
@@ -127,7 +139,7 @@ export class MemberService {
         if (deleteResult.deletedCount === 0) {
             await this.memberModel.create({ ...filter, type: groupDetails.type });
             if (groupDetails.type == 'chatgroup') {
-                let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content:  `@${adminUsername} added @${memberUsername}`, messageType: "Info", isGroup: true })
+                await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content:  `@${adminUsername} added @${memberUsername}`, messageType: "Info", isGroup: true })
             }
             // await this.notificationService.createNotification(
             //     {
@@ -145,7 +157,7 @@ export class MemberService {
             return true;
         }
         if (groupDetails.type == 'chatgroup') {
-            let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content: type == 'leave' ? `@${memberUsername} left` : `@${adminUsername} removed @${memberUsername}`, messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
+            await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content: type == 'leave' ? `@${memberUsername} left` : `@${adminUsername} removed @${memberUsername}`, messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
             await this.chatlistService.removeUser(filter.member, filter.groupId)
             await this.metricsAggregatorService.decrementCount(filter.groupId, "members", "group")
         }

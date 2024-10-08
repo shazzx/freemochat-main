@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, PopulateOptions } from 'mongoose';
 import { CacheService } from 'src/cache/cache.service';
+import { MemberService } from 'src/member/member.service';
 import { ChatItem, MessageType } from 'src/schema/chatlist.schema';
 import { MessageSoftDelete } from 'src/schema/chatsoftdelete';
 
@@ -10,7 +11,7 @@ export class UserChatListService {
     constructor(
         @InjectModel(ChatItem.name) private userChatListModel: Model<ChatItem>,
         @InjectModel(MessageSoftDelete.name) private messageSoftDelete: Model<MessageSoftDelete>,
-        private readonly cacheService: CacheService
+        private readonly cacheService: CacheService,
     ) { }
 
     async createOrUpdateChatList(
@@ -24,6 +25,39 @@ export class UserChatListService {
     ): Promise<any> {
         console.log(userId, recepientId, type, lastMessage, 'inside chatlist')
 
+        // if (type == 'ChatGroup') {
+        //     const userChat = await this.userChatListModel.findOne({
+        //         user: userId,
+        //         type: type,
+        //         recepient: recepientId,
+        //     });
+
+        //     if (userChat != null) {
+        //         await this.userChatListModel.updateOne(
+        //             { _id: userChat._id, 'type': type, 'recepient': recepientId },
+        //             {
+        //                 $set: {
+        //                     removedAt: lastMessage.encryptedContent == 'added in group' ? null : removeUser ? Date.now() : null,
+        //                     lastMessage,
+        //                     messageType
+        //                 },
+        //                 $inc: { 'unreadCount': userId.toString() !== lastMessage.sender.toString() ? 1 : 0 },
+        //             }
+        //         );
+        //     } else {
+        //         await this.userChatListModel.create({
+        //             user: userId,
+        //             type,
+        //             recepient: recepientId,
+        //             lastMessage: { ...lastMessage, createdAt: Date.now() },
+        //             removedAt: removeUser ? Date.now() : null,
+        //             chatRemovedAt: removeChat ? Date.now() : null,
+        //             unreadCount: userId.toString() !== lastMessage.sender.toString() ? 1 : 0
+        //         });
+        //     }
+
+
+        // }
 
         const userChat = await this.userChatListModel.findOne({
             user: userId,
@@ -72,7 +106,7 @@ export class UserChatListService {
                     $inc: { 'unreadCount': recepientId.toString() !== lastMessage.sender.toString() ? 1 : 0 },
                 }
             );
-        } else if(type !== "ChatGroup") {
+        } else if (type !== "ChatGroup") {
             await this.userChatListModel.create({
                 user: recepientId,
                 type,
