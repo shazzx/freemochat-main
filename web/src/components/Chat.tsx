@@ -27,6 +27,7 @@ import { format } from "date-fns";
 import { AlertDialogC } from "./AlertDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useUserFriends } from "@/hooks/User/useUser";
+import MessageActionsDropdown from "./MessageActionsDropDown";
 
 function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
     // console.log(recepientDetails)
@@ -470,7 +471,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                         </Avatar>
                             :
                             <Avatar className="h-10 w-10 flex items-center justify-center" onClick={() => {
-                                if(!recepientDetails?.removed){
+                                if (!recepientDetails?.removed) {
                                     navigate("?model=settings")
                                 }
                             }}>
@@ -518,26 +519,28 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                 {/* {console.log(userMessages?.data)} */}
                 {!userMessages.isLoading && userMessages.data?.map((page, pageIndex) => {
                     return page.messages.map((message, messageIndex) => {
+                        let isDeleted;
                         if (message?.deletedFor?.length > 0) {
-                            const isDeleted = message?.deletedFor?.filter((deleted) => {
+                            isDeleted = message?.deletedFor?.filter((deleted) => {
                                 if (deleted?.userId == user?._id) {
                                     return deleted
                                 }
                             })
-                            if (isDeleted?.[0]?.userId == user?._id) {
-                                return (
-                                    <div className="flex gap-2 justify-end" key={message?._id}>
 
-                                        <div className="relative max-w-80 w-fit">
+                            // if (isDeleted?.[0]?.userId == user?._id) {
+                            //     return (
+                            //         <div className="flex gap-2 justify-end" key={message?._id}>
 
-                                            <div className="relative border border-muted
-                                     text-sm bg-card p-1 text-foreground rounded-lg pr-3" onMouseEnter={() => setDropDownMessageId(message?._id)} onMouseLeave={() => setDropDownMessageId(null)}>
-                                                <p className="" >message deleted</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )
-                            }
+                            //             <div className="relative max-w-80 w-fit">
+
+                            //                 <div className="relative border border-muted
+                            //          text-sm bg-card p-1 text-foreground rounded-lg pr-3" onMouseEnter={() => setDropDownMessageId(message?._id)} onMouseLeave={() => setDropDownMessageId(null)}>
+                            //                     <p className="" >message deleted</p>
+                            //                 </div>
+                            //             </div>
+                            //         </div>
+                            //     )
+                            // }
                         }
 
                         if (message?.messageType == 'Info') {
@@ -555,11 +558,11 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                             )
                         }
                         return (
-                            (message?.sender == user._id || message?.sender?._id == user._id) ?
+                            ((message?.sender == user._id) || (message?.sender?._id == user._id)) ?
                                 <div className="flex gap-2 justify-end" key={message?._id}>
                                     {/* {userMessages.data.length - 1 == pageIndex && (pageIndex == 0 && messageIndex == 0) && <div ref={ref}></div>} */}
                                     <div className="relative max-w-80 w-fit">
-                                        <div className={`relative ${!message?.media ? selectedMessageId == message._id ? "bg-primary p-2 pr-3" : "p-2 pr-3 bg-primary" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
+                                        <div className={`flex items-center justify-center relative ${!message?.media ? selectedMessageId == message._id ? "bg-primary p-2 pr-3" : "p-2 pr-3 bg-primary" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
                                             onTouchStart={() => handleTouchStart(message._id)}
                                             onTouchEnd={handleTouchEnd}
                                             onMouseDown={() => handleTouchStart(message._id)}
@@ -625,7 +628,17 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                                     <video src={message.media.url} controls />
                                                 </div>
                                             }
-                                            <p className="" >{message?.content}</p>
+                                            {(isDeleted?.[0]?.userId == user._id) ?
+                                            <p className="">message deleted</p> 
+                                            :
+                                            <p className="cursor-pointer" onClick={() => {
+                                                setSelectedMessageId(message._id)
+                                            }}>{message?.content}</p>
+                                        }
+                                            {(message._id && (selectedMessageId == message._id)) && <MessageActionsDropdown onDelete={() => {
+                                                message?.deletedFor.push({ userId: user?._id })
+                                                deleteSelectedMessage()
+                                            }} setSelectedMessageId={setSelectedMessageId} />}
                                             {/* {
                                                 (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) &&
                                                 <div className="cursor-pointer absolute top-0 -right-2" onClick={() => {
@@ -635,15 +648,15 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                                 </div>
 
                                             } */}
-                                            {
-                                                 message?._id == selectedMessageId &&
+                                            {/* {
+                                                 (message?._id == selectedMessageId) &&
                                                 <div className="absolute top-10 right-0 z-20">
                                                     <Button className="bg-card border border-accent" onClick={() => {
                                                         message?.deletedFor.push({ userId: user?._id })
                                                         deleteSelectedMessage()
                                                     }}><MdDelete size={20} className="mr-2"/> Delete</Button>
                                                 </div>
-                                            } 
+                                            }  */}
                                         </div>
                                     </div>
                                     <div className='max-w-10 max-h-10 rounded-full overflow-hidden'>
@@ -669,8 +682,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                             </Avatar>
                                         </div>
                                         <div className="relative max-w-80 w-fit">
-                                            <div className="relative p-2 border border-muted text-sm text-foreground rounded-lg pl-3"
-
+                                            <div className={`flex items-center justify-center relative ${!message?.media ? selectedMessageId == message._id ? "bg-card p-2 pr-3" : "p-2 pr-3 bg-card" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
                                                 onMouseEnter={() => {
                                                     setDropDownMessageIndex(messageIndex)
                                                     setDropDownMessagePageIndex(pageIndex)
@@ -716,8 +728,18 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                                         <video src={message.media.url} controls />
                                                     </div>
                                                 }
-                                                <p className="" >{message?.content}</p>
-                                                {
+                                                {isDeleted?.[0]?.userId == user._id ?
+                                                    <p className="">message deleted</p>
+                                                    :
+                                                    <p className="cursor-pointer" onClick={() => {
+                                                        setSelectedMessageId(message._id)
+                                                    }}>{message?.content}</p>
+                                                }
+                                                {(selectedMessageId == message._id) && <MessageActionsDropdown onDelete={() => {
+                                                    message?.deletedFor.push({ userId: message?.sender?._id })
+                                                    deleteSelectedMessage()
+                                                }} setSelectedMessageId={setSelectedMessageId} />}
+                                                {/* {
                                                     (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) &&
                                                     <div className="cursor-pointer absolute top-0 -right-2" onClick={() => {
                                                         setOpenedDropDownMessageId(message?._id)
@@ -725,7 +747,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                                         <EllipsisIcon />
                                                     </div>
 
-                                                }
+                                                } */}
                                                 {/* {
                                                     dropDownMessagePageIndex == pageIndex && dropDownMessageIndex && message?._id && message?._id == openedDropDownMessageId &&
                                                     <div className="absolute top-10 right-0 z-20">
