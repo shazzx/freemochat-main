@@ -2,12 +2,12 @@ import { Button } from "@/components/ui/button"
 import { FC, useEffect, useRef, useState } from "react"
 import EmojiPicker from 'emoji-picker-react'
 import { Theme } from 'emoji-picker-react'
-import { MdCancel, MdRestaurant } from "react-icons/md"
+import { MdCancel } from "react-icons/md"
 import PostCarousel from "@/components/Carousel"
-import { Combobox } from "@/components/Comboxbox"
-import { ChevronLeft, Loader } from "lucide-react"
+import { Loader } from "lucide-react"
 import { toast } from "react-toastify"
 import { useNavigate } from "react-router-dom"
+import CustomComboBox from "@/components/ComboboxTwo"
 
 const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetails, updatePost }) => {
     const [selectedMedia, setSelectedMedia] = useState([])
@@ -43,7 +43,7 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
 
     const getSelected = (selectionState) => {
         setSelected(selectionState)
-        console.log(selectionState)
+        console.log(selectionState, 'selection state')
     }
     const navigate = useNavigate()
 
@@ -141,7 +141,7 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
                                 <div className="w-full flex justify-between p-2">
                                     <span className="text-base text-center p-2 px-6 bg-card rounded-md">Visibility</span>
                                     <div>
-                                        <Combobox getSelected={getSelected} />
+                                        <CustomComboBox getSelected={getSelected} />
                                     </div>
                                 </div>
                             </div>

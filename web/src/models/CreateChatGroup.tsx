@@ -35,12 +35,12 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
     });
     const navigate = useNavigate()
 
-    console.log(groupDetails)
+    // console.log(groupDetails)
     const groupName = useRef<HTMLInputElement>()
     const groupDescription = useRef<HTMLTextAreaElement>()
 
     const onSubmit = async (groupData) => {
-        console.log(editState, 'editstate')
+        // console.log(editState, 'editstate')
         if (editState) {
             editGroup({ groupData, imageUpload, coverImageUpload })
             return
@@ -51,7 +51,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
     const { user } = useAppSelector(state => state.user)
 
     const userFriends = useUserFriends(user._id, groupDetails?.groupId)
-    console.log(groupDetails)
+    // console.log(groupDetails)
 
     const [addMemberState, setAddMemberState] = useState(false)
     const { data, isLoading } = useGroupMembers(groupDetails?.groupId)
@@ -208,7 +208,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                     <div>
                         {editState &&
                             !chatGroup.isLoading && chatGroup?.data?.admins?.map((admin) => {
-                                console.log(admin._id, chatGroup.data.user)
+                                // console.log(admin._id, chatGroup.data.user)
                                 if (admin?._id == chatGroup.data.user) {
                                     return (
                                         <div className='flex flex-col gap-1 w-full bg-card' key={admin?._id}>
@@ -265,7 +265,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md' >
                                                     <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' onClick={() => {
-                                                        console.log('admin remove')
+                                                        // console.log('admin remove')
                                                         groupMemberToggle.mutate({ userId: admin._id, type: "chatgroup" })
 
                                                     }}>
@@ -293,7 +293,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                         {!isLoading && data.map((page, pageIndex) => {
                             return page.members.map((memberData, userIndex) => {
                                 if (memberData?.isAdmin) {
-                                    console.log('yes')
+                                    // console.log('yes')
                                     return null
                                 }
                                 return (
@@ -326,7 +326,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                                         <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' onClick={() => {
                                                             groupMemberToggle.mutate({ userId: memberData.user._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'remove' })
                                                             socket.emit("toggleJoin", { userId: memberData.user._id, groupId: chatGroup.data._id, memberUsername: memberData.user.username, adminUsername: user.username })
-                                                            console.log('user remove')
+                                                            // console.log('user remove')
                                                         }}  >
                                                             <RiUserUnfollowLine size={22} />
                                                             <span>Remove User</span>
@@ -409,7 +409,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
 
                                                         groupMemberToggle.mutate({ userId: friend._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'add' })
                                                         socket.emit("toggleJoin", { userId: friend._id, groupId: chatGroup.data._id, memberUsername: friend.username, adminUsername: user.username })
-                                                        console.log('adding')
+                                                        // console.log('adding')
                                                     }}>
                                                         Add
                                                     </Button>}

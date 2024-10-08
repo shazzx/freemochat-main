@@ -29,7 +29,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useUserFriends } from "@/hooks/User/useUser";
 
 function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
-    console.log(recepientDetails)
+    // console.log(recepientDetails)
     const [emojiPickerState, setEmojiPickerState] = useState(false)
     const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId)
     const group: any = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId) : {}
@@ -285,7 +285,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
     // chat method
     const deleteMessage = async (messageId) => {
         const { data } = await axiosClient.post("/messages/remove", { messageId })
-        console.log(data)
+        // console.log(data)
     }
     // const lastMessage = userMessages.data[userMessages.data.length - 1].messages[userMessages.data[userMessages.data.length - 1].messages.length - 1].content
     // console.log(lastMessage.includes("removed"))
@@ -515,7 +515,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
 
                 {/* user */}
 
-                {console.log(userMessages?.data)}
+                {/* {console.log(userMessages?.data)} */}
                 {!userMessages.isLoading && userMessages.data?.map((page, pageIndex) => {
                     return page.messages.map((message, messageIndex) => {
                         if (message?.deletedFor?.length > 0) {
@@ -635,7 +635,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                                 </div>
 
                                             } */}
-                                            {/* {
+                                            {
                                                  message?._id == selectedMessageId &&
                                                 <div className="absolute top-10 right-0 z-20">
                                                     <Button className="bg-card border border-accent" onClick={() => {
@@ -643,7 +643,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                                         deleteSelectedMessage()
                                                     }}><MdDelete size={20} className="mr-2"/> Delete</Button>
                                                 </div>
-                                            }  */}
+                                            } 
                                         </div>
                                     </div>
                                     <div className='max-w-10 max-h-10 rounded-full overflow-hidden'>
@@ -798,7 +798,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                 const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, messageType: "PDF", type: recepientDetails?.type, mediaDetails: { type: "pdf", } }
                                 formData.append("messageData", JSON.stringify(messageData))
                                 formData.append("file", file, 'pdf')
-                                console.log(messageData, recepientDetails)
+                                // console.log(messageData, recepientDetails)
 
                                 createMessage.mutate({ messageData: { ...messageData, media: { type: "pdf", url: URL.createObjectURL(file), isUploaded: false } }, formData })
                                 scrollToBottom()

@@ -35,12 +35,16 @@ export function Combobox({getSelected}) {
   const [value, setValue] = React.useState(frameworks[0].value)
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} >
       <PopoverTrigger defaultChecked={true} asChild>
         <Button
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          onClick={() => {
+    console.log(open, value)
+
+          }}
           className="w-[120px] bg-card text-foreground border border-accent justify-between"
         >
           {value
@@ -59,7 +63,7 @@ export function Combobox({getSelected}) {
                   value={framework.value}
                   onSelect={(currentValue) => {
                     setValue(currentValue)
-                    setOpen(false)
+                    // setOpen(false)
                     getSelected(currentValue)
                   }}
                 >

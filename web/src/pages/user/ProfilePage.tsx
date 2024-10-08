@@ -94,9 +94,9 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     }
 
     // post upload
-    const _createPost = async ({ content, selectedMedia, formData }) => {
+    const _createPost = async ({ content, selectedMedia, formData, visibility }) => {
         let data;
-        let postDetails = { content, media: data, type: "user", }
+        let postDetails = { content, media: data, type: "user", visibility}
         formData.append("postData", JSON.stringify(postDetails))
         createPost.mutate({ content, formData, selectedMedia, type: "user", target: user, isUploaded: false })
         setPostModal(false)

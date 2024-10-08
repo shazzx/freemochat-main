@@ -43,7 +43,14 @@ export class PostsService {
         let model = type + 's'
         const limit = 5
 
-        const visibility = self == 'true' ? {} : {}
+        // let visibility = self == 'true' ? {} : {}
+            let visibility = {
+                $or: [
+                    { visibility: 'public' },
+                    { $and: [{ visibility: 'private' }, { user: new Types.ObjectId(userId) }] }
+                ]
+            }
+        
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility } : {...visibility};
         let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type } : { ..._cursor, type }
         console.log(
@@ -503,7 +510,15 @@ export class PostsService {
     async feed(userId, cursor) {
         console.log(userId, cursor)
         const limit = 12
-        const query = cursor ? { createdAt: { $lt: new Date(cursor) }} : {};
+
+        let visibility = {
+            $or: [
+                { visibility: 'public' },
+                { $and: [{ visibility: 'private' }, { user: new Types.ObjectId(userId) }] }
+            ]
+        }
+
+        const query = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility} : {...visibility};
 
         const posts = await this.postModel.aggregate([
             { $match: query },

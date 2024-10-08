@@ -39,7 +39,7 @@ export const useGroupMemberToggle = (_userId: string, groupId: string) => {
             const previousGroup = queryClient.getQueryData([ 'chatgroup', groupId])
             queryClient.setQueryData([ 'chatgroup', groupId], (data: any) => {
                 const updatedUser = produce(data, (draft: any) => {
-                    // console.log(data)
+                    console.log(data.membersCount)
                     if (toggleState == 'add') {
                         draft.membersCount = draft.membersCount + 1
                     }
@@ -50,6 +50,21 @@ export const useGroupMemberToggle = (_userId: string, groupId: string) => {
                 })
                 return updatedUser
             });
+
+
+            await queryClient.cancelQueries({ queryKey: ['groupMembers', groupId] })
+            const previousMembers = queryClient.getQueryData(['groupMembers', groupId])
+            queryClient.setQueryData(['groupMembers', groupId], (data: any) => {
+                const updatedUser = produce(data, (draft: any) => {
+                    console.log(data.pages[pageIndex].members[userIndex], 'group Members')
+                    if(draft.pages[pageIndex].members[userIndex] && toggleState == 'remove'){
+                        draft.pages[pageIndex].members.splice(userIndex, 1)
+                        return draft
+                    }
+                })
+                return updatedUser
+            });
+
 
 
             await queryClient.cancelQueries({ queryKey: ['userFriends', _userId] })

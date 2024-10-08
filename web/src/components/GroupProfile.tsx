@@ -55,8 +55,8 @@ function GroupProfile() {
 
     const createPost = useCreatePost('groupPosts', data?._id)
 
-    const _createPost = async ({ content, selectedMedia, formData }) => {
-        let postDetails = { content, media: data, type: "group", targetId: data?._id }
+    const _createPost = async ({ content, selectedMedia, formData, visibility }) => {
+        let postDetails = { content, media: data, type: "group", targetId: data?._id, visibility }
         formData.append("postData", JSON.stringify(postDetails))
         let response = createPost.mutate({ content, formData, selectedMedia, type: "group", target: data })
         console.log(response, 'uploaded')
