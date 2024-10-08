@@ -19,7 +19,7 @@ import { RiAdminLine, RiUserUnfollowLine } from "react-icons/ri"
 import { useNavigate } from "react-router-dom"
 
 
-const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editState, groupDetails }) => {
+const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editState, groupDetails, setChatOpen }) => {
 
     const socket = useSocket()
 
@@ -58,7 +58,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
     const groupMemberToggle = useGroupMemberToggle(user._id, groupDetails?.groupId)
     const groupAdminToggle = useToggleAdmin()
     const chatGroup: any = editState ? useChatGroup(groupDetails?.groupId) : {}
-    
+
 
     return (
         <div className='absolute top-0 right-0 w-screen z-10 sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
@@ -199,8 +199,8 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                             }}>
 
                                 {!editState && <Button type="submit" >Create</Button>}
-                                {editState && chatGroup?.data?.user == user._id && 
-                                <Button type="submit" >Update</Button>}
+                                {editState && chatGroup?.data?.user == user._id &&
+                                    <Button type="submit" >Update</Button>}
                             </div>
                         </div>
 
@@ -358,7 +358,12 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                     }
                     {chatGroup?.data?.user !== user._id
                         &&
-                        <div>
+                        <div onClick={() => {
+                            socket.emit("toggleJoin", { userId: user._id, groupId: chatGroup.data._id, memberUsername: user.username, type: "leave" })
+                            setChatOpen(false)
+                            navigate('', { replace: true })
+
+                        }}>
                             <Button>Leave</Button>
                         </div>
                     }

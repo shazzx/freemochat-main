@@ -114,9 +114,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage("toggleJoin")
-  async handleJoinGroup(client: Socket, payload: { userId: string, groupId: string, memberUsername: string, adminUsername: string }) {
+  async handleJoinGroup(client: Socket, payload: { userId: string, groupId: string, memberUsername: string, adminUsername: string, type?: string }) {
+    console.log(payload)
+
+    if(payload?.type && payload?.type == 'leave'){
+      const result = await this.memberService.toggleJoin(payload.userId, {groupId: payload.groupId, type: "chatgroup"}, payload.memberUsername, payload.adminUsername, payload.type)
+      console.log(result, 'inside type')
+      return
+    }
+
     const result = await this.memberService.toggleJoin(payload.userId, {groupId: payload.groupId, type: "chatgroup"}, payload.memberUsername, payload.adminUsername)
-    console.log(result, 'togglejoin')
+    console.log(result, payload, 'togglejoin')
     const user = await this.cacheService.getOnlineUser(payload.userId)
     console.log(user, 'toggle joing member')
     this.server.to(payload.groupId).emit("toggleJoin", {groupId: payload.groupId})

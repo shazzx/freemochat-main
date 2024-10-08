@@ -100,7 +100,7 @@ export class MemberService {
         return [...groups.map((group) => group.groupId.toString()), ..._groups.map((group, i) => group._id.toString())]
     }
 
-    async toggleJoin(_userId, groupDetails, memberUsername?, adminUsername?) {
+    async toggleJoin(_userId, groupDetails, memberUsername?, adminUsername?, type?) {
         let userId = groupDetails?.userId || _userId
 
         // console.log('yes yes', groupDetails)
@@ -127,7 +127,7 @@ export class MemberService {
         if (deleteResult.deletedCount === 0) {
             await this.memberModel.create({ ...filter, type: groupDetails.type });
             if (groupDetails.type == 'chatgroup') {
-                let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content: `@${adminUsername} added @${memberUsername}`, messageType: "Info", isGroup: true })
+                let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content:  `@${adminUsername} added @${memberUsername}`, messageType: "Info", isGroup: true })
             }
             // await this.notificationService.createNotification(
             //     {
@@ -145,10 +145,14 @@ export class MemberService {
             return true;
         }
         if (groupDetails.type == 'chatgroup') {
-            let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content: `@${adminUsername} removed @${memberUsername}`, messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
+            let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content: type == 'leave' ? `@${memberUsername} left` : `@${adminUsername} removed @${memberUsername}`, messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
             await this.chatlistService.removeUser(filter.member, filter.groupId)
+            await this.metricsAggregatorService.decrementCount(filter.groupId, "members", "group")
         }
-        await this.metricsAggregatorService.decrementCount(filter.groupId, "members", "group")
+        
+        if(!type){
+            await this.metricsAggregatorService.decrementCount(filter.groupId, "members", "group")
+        }
         return false;
     }
 

@@ -17,7 +17,7 @@ export class MessageService {
   async createMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number, isUploaded: boolean }, gateway?: boolean, isGroup?: boolean, removeUser?: boolean, removeChat?: boolean }) {
     const message = await this.messageModel.create(messageDetails)
     if (!messageDetails?.gateway) {
-      console.log('gateway condition')
+      // console.log('gateway condition')
       await this.chatlistService.createOrUpdateChatList(messageDetails.sender.toString(), messageDetails.recepient.toString(), messageDetails.type, { sender: messageDetails.sender, encryptedContent: messageDetails?.isGroup ? messageDetails.content : messageDetails.messageType, messageId: message._id }, messageDetails.messageType, messageDetails.removeUser, messageDetails.removeChat)
     }
     return message
@@ -25,10 +25,10 @@ export class MessageService {
 
 
   async updateMessage(messageId: string, messageDetails: { type?: string, content?: string, messageType?: string, media?: { url: string, type?: string, duration?: number, isUploaded: boolean } }) {
-    console.log(messageDetails, messageId)
+    // console.log(messageDetails, messageId)
     // let updatedUser = this.userModel.findByIdAndUpdate(userId, { $set: { ...updatedDetails } }, { returnOriginal: false })
 
-    console.log(await this.messageModel.findById(messageId))
+    // console.log(await this.messageModel.findById(messageId))
     const message = await this.messageModel.findByIdAndUpdate(messageId, { $set: { media: messageDetails.media } }, { new: true })
     return message
   }
@@ -42,13 +42,13 @@ export class MessageService {
     }
 
     const softDelete = await this.messageSoftDelete.findOne({user: new Types.ObjectId(userId), recepient: new Types.ObjectId(recepientId)})
-console.log(softDelete)
+// console.log(softDelete)
     const _cursor = cursor && softDelete ? { createdAt: { $lt: new Date(cursor) }, _id: {$gt: softDelete.lastDeletedId} } : cursor ? {createdAt: { $lt: new Date(cursor)}} : softDelete ? {_id: {$gt: softDelete.lastDeletedId}} : {}
     
     // let query = { ..._cursor, $or: [{ sender: userId, recepient: recepientId }, { sender: recepientId, recepient: userId }] }
     let query;
     let messages;
-    console.log(cursor)
+    // console.log(cursor)
     if (isChatGroup == 0) {
       query = { ..._cursor, $or: [{ sender: new Types.ObjectId(userId), recepient: new Types.ObjectId(recepientId) }, { sender: new Types.ObjectId(recepientId), recepient: new Types.ObjectId(userId) }] }
       messages = await this.messageModel.aggregate([
@@ -66,7 +66,7 @@ console.log(softDelete)
 
       query = { ..._cursor, recepient: new Types.ObjectId(recepientId) }
 
-      console.log(query)
+      // console.log(query)
       
       messages = await this.messageModel.aggregate([
         { $match: { ...query}},
@@ -146,7 +146,7 @@ console.log(softDelete)
     const hasNextPage = messages.length > limit;
     const _messages = hasNextPage ? messages.slice(0, -1).reverse() : messages.reverse();
     const nextCursor = hasNextPage ? _messages[0].createdAt.toISOString() : null;
-    console.log(_messages[0])
+    // console.log(_messages[0])
 
     const results = { messages: _messages, nextCursor };
     return results
