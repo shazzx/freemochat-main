@@ -72,7 +72,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
     });
 
     socket.on('groupchat', (message) => {
-// console.log(message, 'groupmessage')
+console.log(message, 'groupmessage')
       if(message?.success == false){
         toast.error(message?.message)
       }
@@ -105,6 +105,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
           draft.pages.forEach((page, _pageIndex) => {
             page.messages.forEach((message, _messageIndex) => {
               if (message._id == newMessage._id) {
+                console.log('yes exists')
                 pageIndex = _pageIndex
                 messageIndex = _messageIndex
               }

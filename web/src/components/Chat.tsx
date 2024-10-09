@@ -470,7 +470,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                             <AvatarFallback>{recepientDetails?.firstname[0]?.toUpperCase()}</AvatarFallback>
                         </Avatar>
                             :
-                            <Avatar className="h-10 w-10 flex items-center justify-center" onClick={() => {
+                            <Avatar className="cursor-pointer h-10 w-10 flex items-center justify-center" onClick={() => {
                                 if (!recepientDetails?.removed) {
                                     navigate("?model=settings")
                                 }
@@ -519,6 +519,9 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                 {/* {console.log(userMessages?.data)} */}
                 {!userMessages.isLoading && userMessages.data?.map((page, pageIndex) => {
                     return page.messages.map((message, messageIndex) => {
+                        if(!message?._id){
+                            queryClient.invalidateQueries({queryKey: ['messages', recepientDetails.groupId]})
+                        }
                         let isDeleted;
                         if (message?.deletedFor?.length > 0) {
                             isDeleted = message?.deletedFor?.filter((deleted) => {
@@ -557,6 +560,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                 </div>
                             )
                         }
+
                         return (
                             ((message?.sender == user._id) || (message?.sender?._id == user._id)) ?
                                 <div className="flex gap-2 justify-end" key={message?._id}>
@@ -632,6 +636,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                             <p className="">message deleted</p> 
                                             :
                                             <p className="cursor-pointer" onClick={() => {
+                                                console.log(message)
                                                 setSelectedMessageId(message._id)
                                             }}>{message?.content}</p>
                                         }

@@ -11,8 +11,9 @@ import { ChatGroupCreate } from "@/utils/schemas/auth"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Label } from "@radix-ui/react-dropdown-menu"
+import { QueryClient } from "@tanstack/react-query"
 import { Camera, ChevronLeft, EllipsisVertical } from "lucide-react"
-import { FC, useRef, useState } from "react"
+import { FC, memo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { MdClose } from "react-icons/md"
 import { RiAdminLine, RiUserUnfollowLine } from "react-icons/ri"
@@ -22,6 +23,7 @@ import { useNavigate } from "react-router-dom"
 const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editState, groupDetails, setChatOpen }) => {
 
     const socket = useSocket()
+    const queryClient = new QueryClient()
 
     let [imageSrc, setImageSrc] = useState(null)
     let [coverImage, SetCoverImage] = useState(null)
@@ -360,9 +362,9 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                         &&
                         <div onClick={() => {
                             socket.emit("toggleJoin", { userId: user._id, groupId: chatGroup.data._id, memberUsername: user.username, type: "leave" })
+                                
                             setChatOpen(false)
                             navigate('', { replace: true })
-
                         }}>
                             <Button>Leave</Button>
                         </div>
@@ -387,7 +389,6 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                             return page.friends.map((friend, userIndex) => {
                                 friend = friend.friend
                                 return (
-
                                     <div className='flex flex-col gap-1 w-full bg-card'>
                                         <div className='flex items-center p-2 gap-2 relative w-full '>
                                             <div className='flex w-full gap-2'>
@@ -428,4 +429,4 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
     )
 }
 
-export default CreateChatGroup
+export default memo(CreateChatGroup)
