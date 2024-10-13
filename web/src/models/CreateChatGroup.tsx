@@ -22,7 +22,8 @@ import { useNavigate } from "react-router-dom"
 
 const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editState, groupDetails, setChatOpen }) => {
 
-    const socket = useSocket()
+    const {socket} = useAppSelector(state => state.socket)
+
     const queryClient = new QueryClient()
 
     let [imageSrc, setImageSrc] = useState(null)

@@ -6,7 +6,7 @@ function BottomNav() {
     const [active, setActive] = useState(location.pathname)
 
     useEffect(() => {
-        console.log(location.pathname)
+        // console.log(location.pathname)
         if(location.pathname == '/'){
             setActive('/')
         }

@@ -1,12 +1,13 @@
 import { acceptCall, endCall, incomingCall, startCall } from "@/app/features/user/callSlice";
 import { setNewNotification } from "@/app/features/user/notificationSlice";
 import { setOffline, setOnline } from "@/app/features/user/onlineSlice";
+import { setSocket } from "@/app/features/user/socketSlice";
 import { useAppSelector } from "@/app/hooks";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { socketConnect } from "@/websocket/socket.io";
 import { useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
@@ -19,9 +20,9 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
 
   useEffect(() => {
     const socket = socketRef.current;
-    
-    socket.on('chat', (message) => {
+    dispatch(setSocket(socket))
 
+    socket.on('chat', (message) => {
       if(message?.success == false){
         toast.error(message?.message)
       }
@@ -130,10 +131,10 @@ console.log(message, 'groupmessage')
 
     });
 
-    socket.on("group-error", (data) => {
-      console.log(data)
-      toast.error(data.message)
-    })
+    // socket.on("group-error", (data) => {
+    //   console.log(data)
+    //   toast.error(data.message)
+    // })
 
     socket.on('toggleJoin', (data)=> {
       console.log(data)
@@ -141,14 +142,13 @@ console.log(message, 'groupmessage')
       queryClient.invalidateQueries({queryKey: ["messages", data.groupId]})
     })
 
+    // socket.on("users", (users) => {
+    //   console.log(users)
+    // })
 
-    socket.on("users", (users) => {
-      console.log(users)
-    })
-
-    socket.on("getOnlineFriends", (onlineFriends) => {
-      console.log(onlineFriends)
-    })
+    // socket.on("getOnlineFriends", (onlineFriends) => {
+    //   console.log(onlineFriends)
+    // })
 
     socket.on("upload-status", (data) => {
       console.log(data, 'upload status')
@@ -200,7 +200,6 @@ console.log(message, 'groupmessage')
       queryClient.invalidateQueries({ queryKey: ['chatlist'] })
     })
 
-
     socket.on("friendStatus", (data) => {
       if (data?.isOnline && data?.friendId) {
         dispatch(setOnline(data.friendId))
@@ -215,14 +214,10 @@ console.log(message, 'groupmessage')
       queryClient.invalidateQueries({ queryKey: ['metrics'] })
       // dispatch(setNewNotification())
     })
-
-
     socket.on("request", (data) => {
       queryClient.invalidateQueries({ queryKey: ['metrics'] })
       queryClient.invalidateQueries({ queryKey: ['userRequests', user._id] })
     })
-
-
     socket.on("initiate-call", (data) => {
       console.log(data)
       if (data.type == 'VIDEO') {
@@ -246,13 +241,10 @@ console.log(message, 'groupmessage')
         ))
       }
     })
-
-
     socket.on("call-decline", (data) => {
       console.log("decline")
       dispatch(endCall())
     })
-
     socket.on("call-accept", (data) => {
       console.log(data)
       if (data?.type == "AUDIO") {
@@ -269,8 +261,6 @@ console.log(message, 'groupmessage')
         ))
       }
     })
-
-
     socket.on("disconnect", () => {
       console.log("Socket disconnected");
     });
@@ -278,17 +268,24 @@ console.log(message, 'groupmessage')
     return () => {
       socket.off("connect");
       socket.off("disconnect");
+      // socket.off("group-error");
       // socket.off("chat");
-      socket.off("chatlist");
+      // socket.off("group-chat");
+      // socket.off("toggleJoin");
       socket.off("upload-status");
-      socket.off("friendOnlineStatusChange");
+      // socket.off("chatlist");
       socket.off("friendStatus");
-      socket.off("users");
-      socket.off("getOnlineFriends");
       socket.off("notification");
-      socket.off('newMessage');
+      socket.off("request");
+      // socket.off("initiate-call");
+      // socket.off("call-decline");
+      // socket.off("call-accept");
+      // socket.off("friendOnlineStatusChange");
+      // socket.off("users");
+      // socket.off("getOnlineFriends");
+      // socket.off('newMessage');
     };
-  }, [queryClient]);
+  }, []);
 
-  return socketRef.current;
+  return useMemo(() => socketRef.current , []);
 }

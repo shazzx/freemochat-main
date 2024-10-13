@@ -14,7 +14,7 @@ export class SearchController {
     async search(@Query(new ZodValidationPipe(Search)) searchDTO: SearchDTO, @Req() req: Request, @Res() response: Response) {
         let { type, query } = searchDTO
         const { sub } = req.user
-        
+        console.log(type, query, 'search request')        
         const results = await this.searchService.search({ type, query }, sub)
         response.json(results)
     }

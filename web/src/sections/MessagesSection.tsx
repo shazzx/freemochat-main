@@ -13,7 +13,7 @@ function MessagesSection() {
     const socket = useSocket()
     const { data, isLoading } = useUserChatlist()
     const isOnline = !isLoading && recepientDetails.chatIndex > -1 && data.users[recepientDetails.chatIndex]?.onlineStatus
-    console.log(data)
+    // console.log(data)
     // data && console.log(format(data?.users[0]?.createdAt, 'MMM d, yyy h:mm:ss a'))
 
     return (

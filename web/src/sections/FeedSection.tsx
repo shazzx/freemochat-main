@@ -21,7 +21,7 @@ function FeedSection() {
     const { user } = useAppSelector((data) => data.user)
     const { inView, ref } = useInView()
     const { data, isLoading, fetchNextPage } = useFeed()
-    console.log(data)
+    // console.log(data)
 
     // useEffect(() => {
 
@@ -58,7 +58,7 @@ function FeedSection() {
     useEffect(() => {
         window.addEventListener("resize", () => {
             setWidth(window.innerWidth)
-            console.log(window.innerWidth)
+            // console.log(window.innerWidth)
         })
     }, [])
 

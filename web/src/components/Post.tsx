@@ -105,7 +105,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     useEffect(() => {
         window.addEventListener("resize", () => {
             setWidth(window.innerWidth)
-            console.log(window.innerWidth)
+            // console.log(window.innerWidth)
         })
     }, [])
 
@@ -118,12 +118,12 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         }
 
         if (inView && fetchNextPage) {
-            console.log('fetching')
+            // console.log('fetching')
             fetchNextPage()
         }
         // if (inView) {
         if (inView && postData?.promotion?.length > 0 && postData?.promotion[0]?.active == 1) {
-            console.log("promoted post view")
+            // console.log("promoted post view")
             // dispatch(insertViewedPost(postData._id))
             // viewPost()
         }
@@ -161,7 +161,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
     useEffect(() => {
         if (isOpen && videoRef.current?.pause && postData._id == id && click == 'comment') {
-            console.log('yes')
+            // console.log('yes')
             videoRef.current.play()
         }
 

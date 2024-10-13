@@ -60,7 +60,7 @@ function LikeButton({ postData, mutate, pageIndex, postIndex }) {
   })
 
   useEffect(() => {
-    console.log(showReactions)
+    // console.log(showReactions)
   }, [showReactions])
 
 
@@ -101,7 +101,7 @@ function LikeButton({ postData, mutate, pageIndex, postIndex }) {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showReactions])
-  console.log(postData)
+  // console.log(postData)
 
   return (
 
