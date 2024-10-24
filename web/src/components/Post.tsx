@@ -85,14 +85,14 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
     }
 
-    const _updatePost = async ({ content, selectedMedia, formData, media, setModelTrigger }) => {
+    const _updatePost = async ({ visibility, content, selectedMedia, formData, media, setModelTrigger }) => {
         let _media = media.filter((media) => {
             if (!media?.file) {
                 return media
             }
         })
 
-        let postDetails = { content, media: _media, type, postId: postData._id }
+        let postDetails = { visibility, content, media: _media, type, postId: postData._id }
         formData.append("postData", JSON.stringify(postDetails))
         updatePost.mutate({ content, formData, selectedMedia, pageIndex, postIndex, postId: postData?._id, media })
         setModelTrigger(false)
@@ -286,7 +286,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                         {postData?.type !== 'user' ?
                                             <Avatar>
                                                 <AvatarImage src={_profile} alt="Avatar" />
-                                                <AvatarFallback>{(postData?.target?.name ? (postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase(): "D")}</AvatarFallback>
+                                                <AvatarFallback>{(postData?.target?.name ? (postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
                                             </Avatar>
                                             :
                                             <>
@@ -311,12 +311,12 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                             <div className='flex flex-col gap-1'>
                                 {postData.type == 'group' ?
                                     <h3 className='text-card-foreground flex gap-2 text-sm'>
-                                                <Link to={postData?.user?.username && `${domain}/user/${postData?.user?.username}`}>
-                                                    {postData?.user?.firstname + " " + postData?.user?.lastname}
-                                                </Link>
-                                                <Link to={navigation && `${domain}/${postData?.type}/${navigation}`}>
-                                                    ({postData?.target?.name || "Deleted"})
-                                                </Link>
+                                        <Link to={postData?.user?.username && `${domain}/user/${postData?.user?.username}`}>
+                                            {postData?.user?.firstname + " " + postData?.user?.lastname}
+                                        </Link>
+                                        <Link to={navigation && `${domain}/${postData?.type}/${navigation}`}>
+                                            ({postData?.target?.name || "Deleted"})
+                                        </Link>
                                     </h3>
                                     :
                                     navigation ?

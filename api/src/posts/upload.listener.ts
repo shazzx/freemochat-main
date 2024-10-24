@@ -92,6 +92,7 @@ export class UploadListener {
                 await this.postsService.updatePost(postId, postDetails);
                 await this.chatGateway.uploadSuccess({
                     isSuccess: true, target: {
+                        isUpdate: true,
                         targetId,
                         type,
                         invalidate: "posts"

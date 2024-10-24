@@ -294,11 +294,10 @@ export const useUpdatePost = (key, id: string) => {
       toast.error("something went wrong")
       queryClient.setQueryData([key, id], context.previousPosts)
     },
-    onSettled: (e) => {
-      console.log(e)
-      // uncommeting this will refetch the user posts again from the server to be in sync
-      // queryClient.invalidateQueries({ queryKey: [key, id] })
-      toast.success("Post updated")
+    onSettled: (data) => {
+      if (data.isUploaded == null) {
+        toast.success("Post updated")
+      }
     }
   })
 
@@ -484,7 +483,7 @@ export const useLikePageFeedPost = () => {
     },
 
 
-    onMutate: async ({ postId, postIndex, pageIndex, reaction}) => {
+    onMutate: async ({ postId, postIndex, pageIndex, reaction }) => {
       await queryClient.cancelQueries({ queryKey: ['pageFeed'] })
       const previousComments = queryClient.getQueryData(['pageFeed'])
 
@@ -495,7 +494,7 @@ export const useLikePageFeedPost = () => {
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
-            draft.pages[pageIndex].posts[postIndex] = {...draft.pages[pageIndex].posts[postIndex], reaction: null}
+            draft.pages[pageIndex].posts[postIndex] = { ...draft.pages[pageIndex].posts[postIndex], reaction: null }
 
             return draft
           }
@@ -503,7 +502,7 @@ export const useLikePageFeedPost = () => {
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
-            draft.pages[pageIndex].posts[postIndex] = {...draft.pages[pageIndex].posts[postIndex], reaction}
+            draft.pages[pageIndex].posts[postIndex] = { ...draft.pages[pageIndex].posts[postIndex], reaction }
 
 
             return draft
@@ -542,7 +541,7 @@ export const useLikePageFeedPost = () => {
 export const useLikeSinglePost = (postId: string) => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (postDetails: { postId: string, authorId: string, type?: string, targetId?: string , reaction: string}) => {
+    mutationFn: (postDetails: { postId: string, authorId: string, type?: string, targetId?: string, reaction: string }) => {
       return likePost({ postId: postDetails.postId, authorId: postDetails.authorId, type: postDetails?.type, targetId: postDetails?.targetId, reaction: postDetails?.reaction })
     },
 
@@ -555,14 +554,14 @@ export const useLikeSinglePost = (postId: string) => {
           if (draft[0] && draft[0]._id == postId && draft[0].isLikedByUser) {
             draft[0].isLikedByUser = false
             draft[0].likesCount = draft[0].likesCount - 1
-            draft[0] = {...draft[0], reaction: null}
+            draft[0] = { ...draft[0], reaction: null }
             return draft
           }
 
           if (draft[0] && draft[0]._id == postId && !draft[0].isLikedByUser) {
             draft[0].isLikedByUser = true
             draft[0].likesCount = draft[0].likesCount + 1
-            draft[0] = {...draft[0], reaction}
+            draft[0] = { ...draft[0], reaction }
             return draft
           }
 
@@ -689,14 +688,14 @@ export const useLikeSearchFeedPost = () => {
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
-            draft.pages[pageIndex].posts[postIndex] = {...draft.pages[pageIndex].posts[postIndex], reaction: null}
+            draft.pages[pageIndex].posts[postIndex] = { ...draft.pages[pageIndex].posts[postIndex], reaction: null }
 
             return draft
           }
 
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
-            draft.pages[pageIndex].posts[postIndex] = {...draft.pages[pageIndex].posts[postIndex], reaction}
+            draft.pages[pageIndex].posts[postIndex] = { ...draft.pages[pageIndex].posts[postIndex], reaction }
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
 
             return draft
@@ -859,7 +858,7 @@ export const useLikeGroupFeedPost = () => {
     },
 
 
-    onMutate: async ({ postId, postIndex, pageIndex, reaction}) => {
+    onMutate: async ({ postId, postIndex, pageIndex, reaction }) => {
       await queryClient.cancelQueries({ queryKey: ['groupFeed'] })
       const previousComments = queryClient.getQueryData(['groupFeed'])
 
@@ -875,7 +874,7 @@ export const useLikeGroupFeedPost = () => {
 
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
-            draft.pages[pageIndex].posts[postIndex] = {...draft.pages[pageIndex].posts[postIndex], reaction}
+            draft.pages[pageIndex].posts[postIndex] = { ...draft.pages[pageIndex].posts[postIndex], reaction }
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
 
             return draft
@@ -974,7 +973,7 @@ export const useLikeSearchPost = (query: string) => {
     },
 
 
-    onMutate: async ({ postId, postIndex, pageIndex, reaction}) => {
+    onMutate: async ({ postId, postIndex, pageIndex, reaction }) => {
       console.log(postId, postIndex, pageIndex, reaction, 'uselikesearch')
       await queryClient.cancelQueries({ queryKey: ["search", query] })
       const previousComments = queryClient.getQueryData(["search", query])
@@ -985,7 +984,7 @@ export const useLikeSearchPost = (query: string) => {
 
           if (draft.data.posts[postIndex] && draft.data.posts[postIndex]._id == postId && draft.data.posts[postIndex].isLikedByUser) {
             draft.data.posts[postIndex].isLikedByUser = false
-            draft.data.posts[postIndex] = {...draft.data.posts[postIndex], reaction: null}
+            draft.data.posts[postIndex] = { ...draft.data.posts[postIndex], reaction: null }
             draft.data.posts[postIndex].likesCount = draft.data.posts[postIndex].likesCount - 1
 
             return draft
@@ -993,7 +992,7 @@ export const useLikeSearchPost = (query: string) => {
 
           if (draft.data.posts[postIndex] && draft.data.posts[postIndex]._id == postId && !draft.data.posts[postIndex].isLikedByUser) {
             draft.data.posts[postIndex].isLikedByUser = true
-            draft.data.posts[postIndex] = {...draft.data.posts[postIndex], reaction}
+            draft.data.posts[postIndex] = { ...draft.data.posts[postIndex], reaction }
             draft.data.posts[postIndex].likesCount = draft.data.posts[postIndex].likesCount + 1
 
             return draft
@@ -1094,7 +1093,7 @@ export const useLikePost = (type: string, targetId: string) => {
     },
 
 
-    onMutate: async ({ postId, postIndex, pageIndex, reaction}) => {
+    onMutate: async ({ postId, postIndex, pageIndex, reaction }) => {
       await queryClient.cancelQueries({ queryKey: [type, targetId] })
       const previousComments = queryClient.getQueryData([type, targetId])
 
@@ -1105,14 +1104,14 @@ export const useLikePost = (type: string, targetId: string) => {
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
-            draft.pages[pageIndex].posts[postIndex] = {...draft.pages[pageIndex].posts[postIndex], reaction: null}
+            draft.pages[pageIndex].posts[postIndex] = { ...draft.pages[pageIndex].posts[postIndex], reaction: null }
 
             return draft
           }
 
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
-            draft.pages[pageIndex].posts[postIndex] = {...draft.pages[pageIndex].posts[postIndex], reaction}
+            draft.pages[pageIndex].posts[postIndex] = { ...draft.pages[pageIndex].posts[postIndex], reaction }
 
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
 
@@ -1429,12 +1428,12 @@ export const useLikeFeedPost = () => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, authorId: string, type?: string, targetId: string, reaction?:string }) => {
+    mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, authorId: string, type?: string, targetId: string, reaction?: string }) => {
       return likePost({ postId: postDetails.postId, authorId: postDetails.authorId, type: postDetails?.type, targetId: postDetails.targetId, reaction: postDetails?.reaction })
     },
 
 
-    onMutate: async ({ postId, postIndex, pageIndex, reaction}) => {
+    onMutate: async ({ postId, postIndex, pageIndex, reaction }) => {
       await queryClient.cancelQueries({ queryKey: ['feed'] })
       const previousComments = queryClient.getQueryData(['feed'])
 
@@ -1445,13 +1444,13 @@ export const useLikeFeedPost = () => {
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
-            draft.pages[pageIndex].posts[postIndex] = {...draft.pages[pageIndex].posts[postIndex], reaction: null}
+            draft.pages[pageIndex].posts[postIndex] = { ...draft.pages[pageIndex].posts[postIndex], reaction: null }
             return draft
           }
 
           if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
             draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
-            draft.pages[pageIndex].posts[postIndex] = {...draft.pages[pageIndex].posts[postIndex], reaction}
+            draft.pages[pageIndex].posts[postIndex] = { ...draft.pages[pageIndex].posts[postIndex], reaction }
             draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
 
             return draft

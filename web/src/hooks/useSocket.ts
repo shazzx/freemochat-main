@@ -23,7 +23,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
     dispatch(setSocket(socket))
 
     socket.on('chat', (message) => {
-      if(message?.success == false){
+      if (message?.success == false) {
         toast.error(message?.message)
       }
 
@@ -73,8 +73,8 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
     });
 
     socket.on('groupchat', (message) => {
-console.log(message, 'groupmessage')
-      if(message?.success == false){
+      console.log(message, 'groupmessage')
+      if (message?.success == false) {
         toast.error(message?.message)
       }
 
@@ -88,7 +88,7 @@ console.log(message, 'groupmessage')
         type: message?.type
       }
       // console.log(newMessage)
-      if(newMessage.sender.username == user.username){
+      if (newMessage.sender.username == user.username) {
         return
       }
       queryClient.invalidateQueries({ queryKey: ['chatlist'] })
@@ -136,10 +136,10 @@ console.log(message, 'groupmessage')
     //   toast.error(data.message)
     // })
 
-    socket.on('toggleJoin', (data)=> {
+    socket.on('toggleJoin', (data) => {
       console.log(data)
-      queryClient.invalidateQueries({queryKey: ["chatlist"]})
-      queryClient.invalidateQueries({queryKey: ["messages", data.groupId]})
+      queryClient.invalidateQueries({ queryKey: ["chatlist"] })
+      queryClient.invalidateQueries({ queryKey: ["messages", data.groupId] })
     })
 
     // socket.on("users", (users) => {
@@ -161,8 +161,10 @@ console.log(message, 'groupmessage')
       if (data.target?.invalidate == "posts") {
         const { targetId } = data?.target
         if (data.isSuccess) {
-          toast.success("Post created")
+          toast.success(data?.target?.isUpdate ? "Post Updated" : "Post created")
         }
+
+
 
         queryClient.invalidateQueries({ queryKey: [data.target.type + "Posts", targetId] })
         queryClient.invalidateQueries({ queryKey: [data.target.type + "Media", targetId] })
@@ -287,5 +289,5 @@ console.log(message, 'groupmessage')
     };
   }, []);
 
-  return useMemo(() => socketRef.current , []);
+  return useMemo(() => socketRef.current, []);
 }
