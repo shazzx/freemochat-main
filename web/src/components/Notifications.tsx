@@ -89,7 +89,7 @@ export function Notifications({ setNotificationsState }) {
                 <CardContent className="grid gap-4 p-1 ">
                     <div>
                         {notifications && notifications.length == 0 &&
-                        <div className="text-center">No Notifications</div>
+                            <div className="text-center">No Notifications</div>
                         }
                         {notifications && notifications?.map((notification, index) => {
                             if (notification?.value) {

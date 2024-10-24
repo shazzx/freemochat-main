@@ -65,7 +65,7 @@ export class AuthService {
             // })
             const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP)
             console.log(message)
-            await this.twilioService.sendSMS(user.phone, message)
+            // await this.twilioService.sendSMS(user.phone, message)
             await this.userService.updateUser(user._id, { tempSecret: tempSecret })
             throw new HttpException({ message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: { username, auth_id: tempSecret }, verification }, HttpStatus.BAD_REQUEST)
         }
@@ -80,9 +80,9 @@ export class AuthService {
         // })
         const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP)
         console.log(message)
-        await this.twilioService.sendSMS(user.phone, message)
+        // await this.twilioService.sendSMS(user.phone, message)
 
-        console.log( phoneOTP)
+        console.log(phoneOTP)
 
         throw new HttpException({ message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: { username, auth_id: user.tempSecret }, verification }, HttpStatus.BAD_REQUEST)
 

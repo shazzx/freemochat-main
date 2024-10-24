@@ -9,12 +9,12 @@ import { RiUserUnfollowLine } from 'react-icons/ri'
 import { useInView } from 'react-intersection-observer'
 import { Link } from 'react-router-dom'
 
-function Followers({isSelf, userFollowers, followUserToggle, media, recepientId, setMediaModelDetails, setMediaOpenDetails, setMediaOpenModel }) {
-    const {ref, inView} = useInView()
+function Followers({ isSelf, userFollowers, followUserToggle, media, recepientId, setMediaModelDetails, setMediaOpenDetails, setMediaOpenModel }) {
+    const { ref, inView } = useInView()
 
     useEffect(() => {
         userFollowers.fetchNextPage()
-    },[inView])
+    }, [inView])
     console.log(userFollowers)
 
     return (
@@ -23,25 +23,25 @@ function Followers({isSelf, userFollowers, followUserToggle, media, recepientId,
                 {userFollowers.isSuccess && userFollowers.data.map((page, pageIndex) => {
                     return page.followers.map((follower, followerIndex) => {
                         follower = follower.follower
-                    if(pageIndex == userFollowers.length && followerIndex == userFollowers[pageIndex].friends.length - 3){
-                        return (
-                            <div className='flex flex-col gap-1 w-full bg-card' key={follower._id} ref={ref}>
-                                <div className='flex items-center p-2 gap-2 relative w-full '>
-                                    <Link to={domain + "/user/" + follower?.username} className='cursor-pointer flex w-full gap-2'>
-                                        
-                                        <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
-                                            <Avatar >
-                                                <AvatarImage src={follower?.profile} alt="Avatar" />
-                                                <AvatarFallback className='text-2xl'>{follower?.firstname[0]?.toUpperCase() + follower?.lastname[0]?.toUpperCase()}</AvatarFallback>
-                                            </Avatar>
-                                        </div>
-                                        <div className="flex flex-col justify-center">
-                                            <div className=''>{follower?.firstname + " " + follower?.lastname}</div>
-                                            <div className='text-gray-400 text-sm'>@{follower?.username}</div>
+                        if (pageIndex == userFollowers.length && followerIndex == userFollowers[pageIndex].friends.length - 3) {
+                            return (
+                                <div className='flex flex-col gap-1 w-full bg-card' key={follower._id} ref={ref}>
+                                    <div className='flex items-center p-2 gap-2 relative w-full '>
+                                        <Link to={domain + "/user/" + follower?.username} className='cursor-pointer flex w-full gap-2'>
 
-                                        </div>
-                                    </Link>
-{/* {isSelf &&                                    <DropdownMenu>
+                                            <div className='w-16 h-16  rounded-lg flex items-center justify-center  border-primary border-2 overflow-hidden'>
+                                                <Avatar >
+                                                    <AvatarImage src={follower?.profile} alt="Avatar" />
+                                                    <AvatarFallback className='text-2xl'>{follower?.firstname[0]?.toUpperCase() + follower?.lastname[0]?.toUpperCase()}</AvatarFallback>
+                                                </Avatar>
+                                            </div>
+                                            <div className="flex flex-col justify-center">
+                                                <div className=''>{follower?.firstname + " " + follower?.lastname}</div>
+                                                <div className='text-gray-400 text-sm'>@{follower?.username}</div>
+
+                                            </div>
+                                        </Link>
+                                        {/* {isSelf &&                                    <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" className="h-8 w-8 bg-card p-2 rounded-md">
                                                 <span className="sr-only">Open menu</span>
@@ -58,10 +58,10 @@ function Followers({isSelf, userFollowers, followUserToggle, media, recepientId,
 
                                     </DropdownMenu>
                                 } */}
+                                    </div>
                                 </div>
-                            </div>
-                        )
-                    }
+                            )
+                        }
 
                         return (
                             <div className='flex flex-col gap-1 w-full bg-card'>

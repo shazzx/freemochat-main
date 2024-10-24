@@ -29,7 +29,7 @@ export class MessageController {
     @UploadedFile(FileValidatorPipe) file: Express.Multer.File) {
     let { type, content, sender, recepient, mediaDetails, messageType, localUrl } = createMessageDTO
 
-    console.log(mediaDetails)
+    console.log(mediaDetails, 'controller media details')
 
     const fileType = getFileType(file.mimetype)
     const filename = uuidv4()

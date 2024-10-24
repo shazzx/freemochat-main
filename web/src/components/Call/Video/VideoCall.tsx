@@ -101,7 +101,7 @@ const VideoCall = ({ channel, _callDetails, cancelCall }) => {
                     <button className="rounded-full p-[14px] bg-red-500 hover:bg-red-400 active:bg-red-600"
                         onClick={() => {
                             setActiveConnection(false)
-                            socket.emit("call-end", {userDetails: user, recepientDetails: targetDetails})
+                            socket.emit("call-end", { userDetails: user, recepientDetails: targetDetails })
                             cancelCall("VIDEO")
                         }}>
                         <MdPhone size={32} color="white" />

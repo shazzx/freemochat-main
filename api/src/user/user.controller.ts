@@ -318,9 +318,9 @@ export class UserController {
             const authId = uuidv4()
 
             await this.cacheService.setForgetPassword(user._id, authId)
-            const link = `https://www.freedombook.com/reset-password/${authId}?username=${user.username}`
+            const link = `https://www.freedombook.co/reset-password/${authId}?username=${user.username}`
             const message = messageGenerator(user.firstname + " " + user.lastname, link, 'reset-password')
-            await this.twilioService.sendSMS(user.phone, message)
+            // await this.twilioService.sendSMS(user.phone, message)
 
             return res.json({ success: true, message: "otp has been sent to your phone" })
 
