@@ -1,5 +1,25 @@
 export enum Address {
-    INVALID = "Invalid Address"    
+    INVALID = "Invalid Address"
+}
+
+export enum GENERAL {
+    COUNT = "count",
+    REQUEST = "request",
+    FOLLOWERS = "followers",
+    FRIENDS = "friends",
+}
+
+export enum MODELS {
+    MEMBERS = "members",
+    USERS = "users",
+    FOLLOWERS = "followers",
+    COUNTERS = "counters",
+    FRIEND_REQUESTS = "friendrequests"
+}
+
+export enum Error {
+    WRONG_USERNAME_OR_PASSWORD = "provide correct username or password",
+    REMOVE_FRIENDS = "error while removing friends"
 }
 
 export enum AddressTypes {

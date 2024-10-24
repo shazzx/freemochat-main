@@ -9,6 +9,9 @@ import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggrega
 import { CryptoService } from 'src/crypto/crypto.service';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { AccountManagementService } from 'src/account-management/account-management.service';
+import { CreateUser } from 'src/utils/interfaces';
+import { Error, GENERAL, MODELS } from 'src/utils/enums/global.c';
+import { USER } from 'src/utils/enums/user.c';
 
 @Injectable()
 export class UserService {
@@ -19,24 +22,24 @@ export class UserService {
         @InjectModel(Friend.name) private readonly friendModel: Model<Friend>,
         @InjectModel(Follower.name) private readonly followerModel: Model<Follower>,
         private readonly metricsAggregatorService: MetricsAggregatorService,
-        // private readonly accountManagementService: AccountManagementService,
         private readonly notificationGateway: ChatGateway,
         private readonly cryptoService: CryptoService
     ) {
 
     }
 
-    async createUser(user: { firstname: string, lastname: string, username: string, email?: string, password: string, confirmPassword: string, address: { country?: string, city?: string, area?: string, }, phone: string, tempSecret: string }): Promise<any> {
+    async createUser(user: CreateUser): Promise<any> {
         const { firstname, lastname, username, password, confirmPassword, address, phone, tempSecret } = user
 
         if (password !== confirmPassword) {
-            throw new BadRequestException("provide correct username or password")
+            throw new BadRequestException(Error.WRONG_USERNAME_OR_PASSWORD)
         }
 
         let hashedPassword = await this.cryptoService.hash(password, 16)
 
         const _user = await this.userModel.create({ firstname, lastname, username, password: hashedPassword, phone, address, tempSecret })
-        await this.metricsAggregatorService.incrementCount(null, "count", "users")
+
+        await this.metricsAggregatorService.incrementCount(null, GENERAL.COUNT, USER.USERS)
 
         return _user
     }
@@ -46,9 +49,7 @@ export class UserService {
     }
 
     async getFriends(cursor, userId, groupId) {
-        console.log(groupId, ' group id')
-        console.log(userId, 'friends')
-        const limit = 5
+        const limit = 12
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
         let query = { ..._cursor, user: new Types.ObjectId(userId) }
 
@@ -59,7 +60,7 @@ export class UserService {
 
             {
                 $lookup: {
-                    from: 'members',
+                    from: MODELS.MEMBERS,
                     let: { friendId: '$friend', groupId: new Types.ObjectId(groupId) },
                     pipeline: [
                         {
@@ -78,7 +79,7 @@ export class UserService {
             },
             {
                 $lookup: {
-                    from: 'users',
+                    from: MODELS.USERS,
                     localField: "friend",
                     foreignField: "_id",
                     as: "friend"
@@ -108,18 +109,14 @@ export class UserService {
         const nextCursor = hasNextPage ? _friends[_friends.length - 1].createdAt.toISOString() : null;
 
         const results = { friends: _friends, nextCursor };
-        // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
-
         return results
     }
 
 
     async getFriendRequests(cursor, userId) {
-        console.log(userId, 'friendrequests')
-        const limit = 5
+        const limit = 12
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
         let query = { ..._cursor, reciever: new Types.ObjectId(userId) }
-        console.log(await this.friendModel.find())
 
         const friendRequests = await this.friendRequestModel.aggregate([
             { $match: query },
@@ -127,7 +124,7 @@ export class UserService {
             { $limit: limit + 1 },
             {
                 $lookup: {
-                    from: 'users',
+                    from: MODELS.USERS,
                     localField: "sender",
                     foreignField: "_id",
                     as: "sender"
@@ -146,16 +143,12 @@ export class UserService {
                 },
             },
         ]);
-        console.log(friendRequests)
-
-
 
         const hasNextPage = friendRequests.length > limit;
         const _friendRequests = hasNextPage ? friendRequests.slice(0, -1) : friendRequests;
         const nextCursor = hasNextPage ? _friendRequests[_friendRequests.length - 1].createdAt.toISOString() : null;
 
         const results = { friendRequests: _friendRequests, nextCursor };
-        // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
 
         return results
     }
@@ -166,16 +159,14 @@ export class UserService {
             reciever: new Types.ObjectId(recepientId)
         }
 
-        // await this.friendRequestModel.deleteMany();
-
         const deleteResult = await this.friendRequestModel.deleteOne(filter);
         if (deleteResult.deletedCount === 0) {
             const request = await this.friendRequestModel.create(filter);
-            this.metricsAggregatorService.incrementCount(filter.reciever, "request", "user")
+            this.metricsAggregatorService.incrementCount(filter.reciever, GENERAL.REQUEST, USER.USER)
             await this.notificationGateway.handleRequest({ user: filter.reciever });
             return true;
         }
-        this.metricsAggregatorService.decrementCount(filter.reciever, "request", "user")
+        this.metricsAggregatorService.decrementCount(filter.reciever, GENERAL.REQUEST, USER.USER)
         await this.notificationGateway.handleRequest({ user: filter.reciever });
 
         return false;
@@ -186,32 +177,22 @@ export class UserService {
         const filter = {
             follower: new Types.ObjectId(userId),
             targetId: new Types.ObjectId(recepientId),
-            type: "user"
+            type: USER.USER
         };
 
         const deleteResult = await this.followerModel.deleteOne(filter);
 
         if (deleteResult.deletedCount === 0) {
             await this.followerModel.create(filter);
-            await this.metricsAggregatorService.incrementCount(filter.targetId, "user", "followers")
+            await this.metricsAggregatorService.incrementCount(filter.targetId, USER.USER, GENERAL.FOLLOWERS)
 
-            // await this.notificationService.createNotification(
-            //     {
-            //         from: new Types.ObjectId(userId),
-            //         user: new Types.ObjectId(recepientId),
-            //         targetId: new Types.ObjectId(recepientId),
-            //         type: "user",
-            //         value: "has followed you"
-            //     }
-            // )
             return true;
         }
-        await this.metricsAggregatorService.decrementCount(filter.targetId, "user", "followers")
+        await this.metricsAggregatorService.decrementCount(filter.targetId, USER.USER, GENERAL.FOLLOWERS)
         return false;
     }
 
     async acceptFriendRequest(userId: string, recepientId: string) {
-        console.log(recepientId, userId)
         const filter = [{
             sender: new Types.ObjectId(userId),
             reciever: new Types.ObjectId(recepientId),
@@ -221,29 +202,21 @@ export class UserService {
         }]
 
         const deleteResult = await this.friendRequestModel.deleteOne({ $or: filter });
-        console.log(deleteResult)
+
         if (deleteResult.deletedCount === 0) {
             throw new BadRequestException()
         }
 
-        this.metricsAggregatorService.decrementCount(filter[0].sender, "request", "user")
+        this.metricsAggregatorService.decrementCount(filter[0].sender, GENERAL.REQUEST, USER.USER)
         await this.notificationGateway.handleRequest({ user: filter[0].sender });
 
         let friends = await this.friendModel.insertMany([
             { user: new Types.ObjectId(userId), friend: new Types.ObjectId(recepientId) },
             { user: new Types.ObjectId(recepientId), friend: new Types.ObjectId(userId) }
         ])
-        // await this.notificationService.createNotification(
-        //     {
-        //         from: new Types.ObjectId(userId),
-        //         user: new Types.ObjectId(recepientId),
-        //         targetId: new Types.ObjectId(recepientId),
-        //         type: "user",
-        //         value: "accepted your friend request"
-        //     }
-        // )
-        await this.metricsAggregatorService.incrementCount(filter[0].sender, "user", "friends")
-        await this.metricsAggregatorService.incrementCount(filter[0].reciever, "user", "friends")
+
+        await this.metricsAggregatorService.incrementCount(filter[0].sender, USER.USER, GENERAL.FRIENDS)
+        await this.metricsAggregatorService.incrementCount(filter[0].reciever, USER.USER, GENERAL.FRIENDS)
 
         return friends
     }
@@ -266,11 +239,11 @@ export class UserService {
 
         console.log(deleteResult)
         if (deleteResult.deletedCount !== 2) {
-            throw new BadRequestException("error while removing friends")
+            throw new BadRequestException(Error.REMOVE_FRIENDS)
         }
 
-        await this.metricsAggregatorService.decrementCount(filter.user, "user", "friends")
-        await this.metricsAggregatorService.decrementCount(filter.friend, "user", "friends")
+        await this.metricsAggregatorService.decrementCount(filter.user, USER.USER, GENERAL.FRIENDS)
+        await this.metricsAggregatorService.decrementCount(filter.friend, USER.USER, GENERAL.FRIENDS)
 
         return true
     }
@@ -296,20 +269,13 @@ export class UserService {
 
     async userExists(userId) {
         let user = await this.userModel.findById(userId)
-        if(user){
+        if (user) {
             return true
         }
         return false
     }
 
     async getUser(username: string, populate?: string, userId?: string) {
-        console.log(username)
-
-        // let accountStatus = await this.accountManagementService.getAccountStatus(userId)
-
-        // if(accountStatus.isSuspended){
-        //     return null
-        // }
 
         if (populate) {
             let user = await this.userModel.find({ username, isActive: true }).populate(populate)
@@ -342,7 +308,7 @@ export class UserService {
             },
             {
                 $lookup: {
-                    from: "followers",
+                    from: MODELS.FOLLOWERS,
                     let: { userId: '$_id' },
                     pipeline: [
                         {
@@ -361,36 +327,9 @@ export class UserService {
                 }
             },
 
-            // {
-
-            //     $lookup: {
-            //         from: 'friendrequests',
-            //         let: { userId: '$_id', areFriends: '$areFriends' },
-            //         pipeline: [
-            //             {
-            //                 $match: {
-            //                     $expr: {
-            //                         $and: [
-            //                             { $eq: ["$$areFriends", false] },
-            //                             {
-            //                                 $or: [
-            //                                     { $and: [{ $eq: ["$reciever", '$$userId'] }, [{ $eq: ["$sender", new Types.ObjectId(userId)] }]] },
-            //                                     { $and: [{ $eq: ["$sender", '$$userId'] }, [{ $eq: ["$reciever", new Types.ObjectId(userId)] }]] },
-            //                                 ],
-            //                             }
-            //                         ]
-
-            //                     }
-            //                 },
-            //             },
-            //         ],
-            //         as: 'friendRequest',
-            //     },
-            // },
-
             {
                 $lookup: {
-                    from: 'counters',
+                    from: MODELS.COUNTERS,
                     let: { userId: '$_id' },
                     pipeline: [
                         {
@@ -428,7 +367,7 @@ export class UserService {
             },
             {
                 $lookup: {
-                    from: 'friendrequests',
+                    from: MODELS.FRIEND_REQUESTS,
                     let: { userId: '$_id', areFriends: '$areFriends' },
                     pipeline: [
                         {
@@ -466,7 +405,6 @@ export class UserService {
                     lastname: 1,
                     followersCount: { $ifNull: ['$followersCount.count', 0] },
                     friendsCount: { $ifNull: ['$friendsCount.count', 0] },
-                    // email: 1,
                     bio: 1,
                     address: 1,
                     phone: 1,
@@ -478,17 +416,6 @@ export class UserService {
                             then: null,
                             else: {
                                 $cond: {
-                                    // if: { $gt: [{ $size: "$friendRequest" }, 0] },
-                                    // then: {
-                                    //     exists: true,
-                                    //     isRecievedByUser: { $eq: [{ $arrayElemAt: ["$friendRequest.sender", 0] }, "$_id"] },
-                                    //     isSentByUser: { $eq: [{ $arrayElemAt: ["$friendRequest.reciever", 0] }, "$_id"] },
-                                    // },
-                                    // else: {
-                                    //     exists: false,
-                                    //     isSentByUser: false,
-                                    //     isRecievedByUser: false,
-                                    // }
                                     if: { $gt: [{ $size: "$friendRequest" }, 0] },
                                     then: {
                                         exists: true,
@@ -517,7 +444,7 @@ export class UserService {
 
     async deleteUser(userId: string) {
         let deletedUser = await this.userModel.findByIdAndDelete(userId)
-        await this.metricsAggregatorService.decrementCount(null, "count", "users")
+        await this.metricsAggregatorService.decrementCount(null, GENERAL.COUNT, USER.USERS)
         return deletedUser
     }
 
