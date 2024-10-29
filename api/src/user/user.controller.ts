@@ -525,15 +525,13 @@ export class UserController {
         const payload = await this.authService.login(user)
         console.log('payload ', payload)
 
-        response.cookie("refreshToken", payload.refresh_token, {
-            httpOnly: true,
+        response.cookie("accessToken", payload.access_token, {
             sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000
+            maxAge: 5 * 60 * 1000
         }).json({
             access_token: payload.access_token
         })
     }
-
 
     @Post('logout')
     async logoutUser(
@@ -548,15 +546,16 @@ export class UserController {
     async refreshToken(
         @Req() req: Request,
         @Res() res: Response) {
-        const refreshToken = req.cookies.refreshToken
+        const accessToken = req.cookies.accessToken
+        console.log(accessToken)
 
-        if (!refreshToken) {
-            throw new BadRequestException("something went wrong")
-        }
+        // if (!refreshToken) {
+        //     throw new BadRequestException("something went wrong")
+        // }
 
-        console.log(refreshToken, 'refresh')
-        const accessToken = await this.authService.refreshToken(refreshToken)
-        res.json({ accessToken })
+        // console.log(refreshToken, 'refresh')
+        // const accessToken = await this.authService.refreshToken(refreshToken)
+        // res.json({ accessToken })
     }
 
     @Get("")

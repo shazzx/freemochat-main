@@ -82,7 +82,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     const deletePost = async () => {
         removePost.mutate({ postId: postData?._id, postIndex, pageIndex, media: postData?.media, })
         toast.success("Post deleted")
-
     }
 
     const _updatePost = async ({ visibility, content, selectedMedia, formData, media, setModelTrigger }) => {

@@ -11,6 +11,7 @@ import { OtpService } from 'src/otp/otp.service';
 import { TwilioService } from 'src/twilio/twilio.service';
 import { compare } from 'bcrypt';
 import { messageGenerator } from 'src/utils/messageGenerator';
+import { CacheService } from 'src/cache/cache.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
         private jwtService: JwtService,
         private otpService: OtpService,
         private readonly twilioService: TwilioService,
+        private readonly redisService: CacheService,
         @InjectModel(OTP.name) private readonly otpModel: Model<OTP>
     ) { }
 
@@ -90,17 +92,26 @@ export class AuthService {
 
     async login(user: any) {
         const payload = { username: user.username, sub: user._id }
+        const refresh_token = this.jwtService.sign(payload, { secret: jwtConstants.secret, expiresIn: '4m' })
+        await this.redisService.setUserRefreshToken(user._id, refresh_token)
         return {
             user,
-            access_token: this.jwtService.sign(payload),
-            refresh_token: this.jwtService.sign(payload)
+            access_token: this.jwtService.sign(payload, { secret: jwtConstants.secret, expiresIn: '1m' }),
         }
     }
 
     async refreshToken(token) {
         try {
-            const payload = await this.jwtService.verifyAsync(token, { secret: jwtConstants.secret })
-            const access_token = this.jwtService.sign({ username: payload.username, sub: payload.sub }, { secret: jwtConstants.secret, expiresIn: '1h' })
+            const payload = await this.jwtService.decode(token)
+
+            const refresh_token = await this.redisService.getUserRefreshToken(payload.sub)
+
+            console.log(refresh_token, 'refresh token from redis')
+
+            const { username, sub } = this.jwtService.verify(refresh_token, { secret: jwtConstants.secret })
+
+            const access_token = this.jwtService.sign({ username, sub }, { secret: jwtConstants.secret, expiresIn: '1m' })
+            console.log('new access token')
             return access_token
         } catch (error) {
             console.log(error)

@@ -257,7 +257,7 @@ const MainHome = ({ children }: any) => {
           {/* <h1 className="sm:hidden text-2xl font-bold "><img className="h-12" src={profile} alt="" /></h1> */}
 
           <div className="flex w-full items-center gap-3 md:gap-32 justify-between">
-            {searchParams.get('search') !=='active' &&
+            {searchParams.get('search') !== 'active' &&
               <div className="block">
                 <Link to="/">
                   {/* logo */}
@@ -287,7 +287,7 @@ const MainHome = ({ children }: any) => {
                         }
                       }}
                       onKeyDown={async (e) => {
-                        if(e.key == 'Enter'){
+                        if (e.key == 'Enter') {
                           setSearchSuggestions([])
                           setSearchSuggestionsState(false)
                         }
@@ -340,7 +340,7 @@ const MainHome = ({ children }: any) => {
                         }
                       }}
                       onKeyDown={async (e) => {
-                        if(e.key == 'Enter'){
+                        if (e.key == 'Enter') {
                           setSearchSuggestions([])
                           setSearchSuggestionsState(false)
                         }
@@ -349,7 +349,7 @@ const MainHome = ({ children }: any) => {
                       placeholder="Search..."
                       className="max-w-2xl appearance-none bg-background pl-8 shadow-none"
                     />
-                    {searchQuery.length > 0 &&  searchSuggestions.length > 0 && searchSuggestionsState &&
+                    {searchQuery.length > 0 && searchSuggestions.length > 0 && searchSuggestionsState &&
                       <div className="absolute top-10 z-50 bg-card max-w-2xl w-full flex flex-col">
                         {searchSuggestions.map((suggestion) => {
                           return (
@@ -376,7 +376,7 @@ const MainHome = ({ children }: any) => {
               &&
               <MdSearch className="sm:hidden" size="24px" cursor="pointer" onClick={() => {
                 setSearchState(true)
-                navigate('?search=active', {replace: true})
+                navigate('?search=active', { replace: true })
               }} />
             }
             <div className="relative" onClick={async () => {
@@ -426,9 +426,9 @@ const MainHome = ({ children }: any) => {
                   }
                 }}>Logout</DropdownMenuItem>
                 <DropdownMenuItem>
-            <ModeToggle />
+                  <ModeToggle />
                 </DropdownMenuItem>
-                
+
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

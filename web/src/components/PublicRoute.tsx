@@ -3,7 +3,7 @@ import { logout, setAccessToken } from '@/app/features/user/authSlice'
 import { setVerificationStatus } from '@/app/features/user/verificationStatusSlice'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import React, { useEffect, useState } from 'react'
-import {  Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 
 function PublicRoute() {
@@ -30,9 +30,9 @@ function PublicRoute() {
                     })
                     dispatch(setVerificationStatus({ isPhoneVerified, success: true }))
                 }
-                const { data } = await axiosClient.post("user/refresh-token")
-                dispatch(setAccessToken(data?.accessToken))
-                console.log(data, 'accessToken')
+                // const { data } = await axiosClient.post("user/refresh-token")
+                // dispatch(setAccessToken(data?.accessToken))
+                // console.log(data, 'accessToken')
 
                 let response = await axiosClient.get("user")
                 if (response.status == 200) {
@@ -43,11 +43,10 @@ function PublicRoute() {
                     dispatch(logout())
                 }
 
-
             } catch (error) {
                 setIsFetched(true)
                 console.log(error.response.data)
-                
+
 
                 if (error.response.data.message.startsWith('already verified')) {
                     toast.error(error.response.data.message)
@@ -55,7 +54,7 @@ function PublicRoute() {
                     navigate('/login')
                     return
                 }
-                
+
                 // if(!location.pathname.startsWith("/auth") && !error.response.data.message.startsWith('Your Account')){
                 //     toast.error(error.response.data.message)
                 //     dispatch(setVerificationStatus({isPhoneVerified: false, isEmailVerified: false, success: false}))

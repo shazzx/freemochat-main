@@ -2,6 +2,7 @@ import { axiosClient } from '@/api/axiosClient'
 import { logout, setAccessToken } from '@/app/features/user/authSlice'
 import { setUser } from '@/app/features/user/userSlice'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
+import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -20,9 +21,6 @@ function ProtectedRoute() {
         const getUser = async () => {
             console.log('callme')
             try {
-                const { data } = await axiosClient.post("/user/refresh-token")
-                dispatch(setAccessToken(data?.accessToken))
-
                 let response = await axiosClient.get("user")
                 if (response.status == 200) {
                     // setTimeout(() => {
