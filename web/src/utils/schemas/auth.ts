@@ -42,7 +42,7 @@ export const PageCreateSchema = yup.object().shape({
       return true;
     })
     .required('Handle is required'),
-    bio: yup
+  bio: yup
     .string()
     .max(120, 'Bio must not exceed 120 characters'),
   about: yup
@@ -62,13 +62,13 @@ export const UserSchema = yup.object().shape({
     .min(3, 'Name must be at least 3 characters')
     .max(36, 'Name must not exceed 50 characters'),
   username: yup.string()
-    .min(6, 'Handle must be at least 6 characters')
-    .max(30, 'Handle must not exceed 30 characters')
+    .min(6, 'Username must be at least 6 characters')
+    .max(30, 'Username must not exceed 30 characters')
     .matches(/^[a-z0-9_]+$/, 'Handle must contain only lowercase letters, numbers, and underscores')
     .test('unique-handle', 'This handle is already taken', async (value) => {
       if (value && value.length >= 6) {
         try {
-          const response = await axiosClient.post(`user/username-exists`, {username: value});
+          const response = await axiosClient.post(`user/username-exists`, { username: value });
           console.log(response.data)
           return response.data.success;
         } catch (error) {
@@ -79,29 +79,29 @@ export const UserSchema = yup.object().shape({
       return false;
     })
     .required('username is required'),
-    // .matches(/^[a-z0-9_]+$/, 'Handle must contain only lowercase letters, numbers, and underscores')
-    // .test('unique-handle', 'This handle is already taken', async (value) => {
-    //   if (value && value.length >= 6) {
-    //     try {
-    //       const response = await axiosClient.get(`page/handleExists?handle=${value}`);
-    //       console.log(response.data)
-    //       return response.data;
-    //     } catch (error) {
-    //       console.error('Error checking handle availability:', error);
-    //       return true; // Assume available in case of error
-    //     }
-    //   }
-    //   return true;
-    // })
-    // .required('Handle is required'),
+  // .matches(/^[a-z0-9_]+$/, 'Handle must contain only lowercase letters, numbers, and underscores')
+  // .test('unique-handle', 'This handle is already taken', async (value) => {
+  //   if (value && value.length >= 6) {
+  //     try {
+  //       const response = await axiosClient.get(`page/handleExists?handle=${value}`);
+  //       console.log(response.data)
+  //       return response.data;
+  //     } catch (error) {
+  //       console.error('Error checking handle availability:', error);
+  //       return true; // Assume available in case of error
+  //     }
+  //   }
+  //   return true;
+  // })
+  // .required('Handle is required'),
   // email: yup
-    // .string().email()
-    // .required('emai is required'),
+  // .string().email()
+  // .required('emai is required'),
   // phone: yup.number().required('phone no is required'),
   // address: yup.object({
-    // country: yup.string().required("country is required"),
-    // city: yup.string().required('city is required'),
-    // area: yup.string().required('area is required')
+  // country: yup.string().required("country is required"),
+  // city: yup.string().required('city is required'),
+  // area: yup.string().required('area is required')
   // }),
   bio: yup.string().max(160, "bio should not exceed 160 characters"),
   // password: yup.string().min(8, "password atleast be 8 characters long"),
@@ -175,7 +175,7 @@ export const GroupCreateSchema = yup.object().shape({
       return true;
     })
     .required('Handle is required'),
-    bio: yup
+  bio: yup
     .string()
     .max(300, 'Bio must not exceed 120 characters'),
   description: yup

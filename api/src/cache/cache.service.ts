@@ -16,8 +16,8 @@ export class CacheService {
   }
   async setUserRefreshToken(userId: string, token: string): Promise<boolean> {
     try {
-      // 5 minutes expiration
-    await this.redis.set(`refresh-token:${userId}`, token, 'EX', 600); 
+      // 20 minutes expiration
+    await this.redis.set(`refresh-token:${userId}`, token, 'EX', 2400); 
     return true
     } catch (error) {
       console.log(error)
