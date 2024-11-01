@@ -66,6 +66,15 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
             // console.log(window.innerWidth)
         })
     }, [])
+
+    useEffect(() => {
+        const getOnlineStatus = async () => {
+            const { data } = await axiosClient.post("user/onlineStatus", { userId: recepientDetails.userId })
+            console.log(data)
+        }
+
+        getOnlineStatus()
+    }, [])
     // const [isOnline, setIsOnline] = useState(null)
 
     // const online = useAppSelector((state) => state.online)
@@ -519,8 +528,8 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                 {/* {console.log(userMessages?.data)} */}
                 {!userMessages.isLoading && userMessages.data?.map((page, pageIndex) => {
                     return page.messages.map((message, messageIndex) => {
-                        if(!message?._id){
-                            queryClient.invalidateQueries({queryKey: ['messages', recepientDetails.groupId]})
+                        if (!message?._id) {
+                            queryClient.invalidateQueries({ queryKey: ['messages', recepientDetails.groupId] })
                         }
                         let isDeleted;
                         if (message?.deletedFor?.length > 0) {
@@ -633,13 +642,13 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                                 </div>
                                             }
                                             {(isDeleted?.[0]?.userId == user._id) ?
-                                            <p className="">message deleted</p> 
-                                            :
-                                            <p className="cursor-pointer" onClick={() => {
-                                                console.log(message)
-                                                setSelectedMessageId(message._id)
-                                            }}>{message?.content}</p>
-                                        }
+                                                <p className="">message deleted</p>
+                                                :
+                                                <p className="cursor-pointer" onClick={() => {
+                                                    console.log(message)
+                                                    setSelectedMessageId(message._id)
+                                                }}>{message?.content}</p>
+                                            }
                                             {(message._id && (selectedMessageId == message._id)) && <MessageActionsDropdown onDelete={() => {
                                                 message?.deletedFor.push({ userId: user?._id })
                                                 deleteSelectedMessage()

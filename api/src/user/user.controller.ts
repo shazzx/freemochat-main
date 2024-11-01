@@ -611,6 +611,20 @@ export class UserController {
         response.json(await this.userService.rejectFriendRequest(sub, recepientId))
     }
 
+
+    @Post("onlineStatus")
+    async onlineStatus(
+        @Req() req: Request,
+        @Res() response: Response) {
+        const userId = req.body.userId
+        console.log(userId, req.body)
+        let online = await this.cacheService.getOnlineUser(userId)
+        let offline = await this.cacheService.getOfflineUser(userId)
+        console.log(online, 'online')
+        console.log(offline, 'offline')
+        response.json(online || offline)
+    }
+
     @Post("follow")
     async toggleFollow(
         @Body(new ZodValidationPipe(FriendGeneral)) friendGeneralDTO: FriendGeneralDTO,

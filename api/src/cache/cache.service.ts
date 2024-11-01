@@ -98,14 +98,18 @@ export class CacheService {
   async setUserOffline(userId: string): Promise<void> {
     try {
     await this.redis.hdel('online_users', userId);
+    await this.redis.hset('offline_users', userId, JSON.stringify({lastSeenAt: Date.now(), userId}));
     } catch (error) {
       console.log(error)      
     }
+  }
 
-    // const friendKeys = await this.redis.keys("user:*:online_friends")
-    // for(const key of friendKeys){
-    //   await this.redis.srem(key, userId)
-    // }
+  async getOfflineUser(userId: string) {
+    try {
+    return await this.redis.hget('offline_users', userId);
+    } catch (error) {
+      console.log(error)      
+    }
   }
 
   async isUserOnline(userId: string): Promise<number> {
