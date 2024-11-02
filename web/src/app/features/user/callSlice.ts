@@ -32,13 +32,17 @@ const callSlice = createSlice({
 
         // recep
         incomingCall(state, action) {
+            if (action.payload?.stateChange) {
+                state.recepientState = CallStates.RINGING
+                return
+            }
             state.onCall = true
             state.type = action.payload.type
             state.recepientState = CallStates.CALLING
             state.callDetails = action.payload.callDetails
         },
 
-        
+
         acceptCall(state, action) {
             state.callDetails = action.payload.callDetails
             state.callerState = CallStates.ACCEPTED
@@ -47,12 +51,12 @@ const callSlice = createSlice({
 
         // both
         endCall(state) {
-            state.onCall= false
-            state.targetDetails= null
-            state.callerState= null
-            state.recepientState= null
-            state.callDetails= null
-            state.type= null
+            state.onCall = false
+            state.targetDetails = null
+            state.callerState = null
+            state.recepientState = null
+            state.callDetails = null
+            state.type = null
         },
     }
 })

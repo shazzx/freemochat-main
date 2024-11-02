@@ -69,7 +69,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
 
     useEffect(() => {
         const getOnlineStatus = async () => {
-            const { data } = await axiosClient.post("user/onlineStatus", { userId: recepientDetails.userId })
+            const { data } = await axiosClient.get("user/onlineStatus", { params: { userId: recepientDetails.userId } })
             console.log(data)
         }
 

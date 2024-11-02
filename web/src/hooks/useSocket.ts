@@ -243,6 +243,14 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
         ))
       }
     })
+    socket.on("call-ringing", (data) => {
+      console.log(data, 'call-ringing')
+      dispatch(incomingCall(
+        {
+          stateChange: true,
+        }
+      ))
+    })
     socket.on("call-decline", (data) => {
       console.log("decline")
       dispatch(endCall())

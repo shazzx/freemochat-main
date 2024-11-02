@@ -612,12 +612,14 @@ export class UserController {
     }
 
 
-    @Post("onlineStatus")
+    @Get("onlineStatus")
     async onlineStatus(
+        @Query() query: { userId: string },
         @Req() req: Request,
         @Res() response: Response) {
-        const userId = req.body.userId
-        console.log(userId, req.body)
+        const userId = query.userId
+        console.log(query)
+        console.log(userId)
         let online = await this.cacheService.getOnlineUser(userId)
         let offline = await this.cacheService.getOfflineUser(userId)
         console.log(online, 'online')

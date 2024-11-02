@@ -87,13 +87,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const sender = String(payload.senderDetails.targetId)
 
-      if(!members.includes(sender)){
+      if (!members.includes(sender)) {
         throw new BadRequestException("You're no longer part of the group")
       }
 
       const message = await this.messageService.createMessage({ type: payload.recepientDetails.type, sender: new Types.ObjectId(payload.senderDetails.targetId), recepient: new Types.ObjectId(payload.recepientDetails.targetId), content: payload.body, gateway: true, messageType: payload.messageType, })
       console.log(members, 'members')
-      members.forEach(async(memberId) => {
+      members.forEach(async (memberId) => {
         await this.chatlistService.createOrUpdateChatList(memberId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body, messageId: message._id }, "Text")
       })
 
@@ -104,13 +104,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (error) {
       const user = await this.cacheService.getOnlineUser(payload.senderDetails.targetId)
       console.log(user)
-      this.server.to(user?.socketId).emit("group-error", {message: "You are no longer part of the group"})
+      this.server.to(user?.socketId).emit("group-error", { message: "You are no longer part of the group" })
       this.logger.error(error)
     }
   }
 
-  leaveOrRemoveFromGroup(groupId: string){
-    this.server.to(groupId).emit('group-update', {groupId})
+  leaveOrRemoveFromGroup(groupId: string) {
+    this.server.to(groupId).emit('group-update', { groupId })
   }
 
   async sendMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number, isUploaded: boolean } }) {
@@ -122,18 +122,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleJoinGroup(client: Socket, payload: { userId: string, groupId: string, memberUsername: string, adminUsername: string, type?: string }) {
     console.log(payload)
 
-    if(payload?.type && payload?.type == 'leave'){
-      const result = await this.memberService.toggleJoin(payload.userId, {groupId: payload.groupId, type: "chatgroup"}, payload.memberUsername, payload.adminUsername, payload.type)
+    if (payload?.type && payload?.type == 'leave') {
+      const result = await this.memberService.toggleJoin(payload.userId, { groupId: payload.groupId, type: "chatgroup" }, payload.memberUsername, payload.adminUsername, payload.type)
       console.log(result, 'inside type')
       return
     }
 
-    const result = await this.memberService.toggleJoin(payload.userId, {groupId: payload.groupId, type: "chatgroup"}, payload.memberUsername, payload.adminUsername)
+    const result = await this.memberService.toggleJoin(payload.userId, { groupId: payload.groupId, type: "chatgroup" }, payload.memberUsername, payload.adminUsername)
     console.log(result, payload, 'togglejoin')
     const user = await this.cacheService.getOnlineUser(payload.userId)
     console.log(user, 'toggle joing member')
-    this.server.to(payload.groupId).emit("toggleJoin", {groupId: payload.groupId})
-    this.server.to(user?.socketId).emit("toggleJoin", {groupId: payload.groupId})
+    this.server.to(payload.groupId).emit("toggleJoin", { groupId: payload.groupId })
+    this.server.to(user?.socketId).emit("toggleJoin", { groupId: payload.groupId })
   }
 
   // @SubscribeMessage("leavegroup")
@@ -165,8 +165,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     console.log(payload)
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
-    let user = await this.userService.getRawUser(payload.userDetails.userId)
+    let user = JSON.parse(await this.cacheService.getOnlineUser(payload.userDetails.userId))
+    // let user = await this.userService.getRawUser(payload.userDetails.userId)
     let _recepient = await this.userService.getRawUser(payload.recepientDetails.userId)
+    let socketStatus = this.server.sockets.sockets.has(recepient?.socketId)
+    console.log(socketStatus, recepient, "socket status and recepient")
+    if (recepient?.socketId && socketStatus) {
+      this.server.to(user.socketId).emit("call-ringing", { callState: "ringing" })
+    }
     this.server.to(recepient?.socketId).emit("initiate-call", { userDetails: payload?.userDetails, recepientDetails: { ..._recepient, userId: _recepient._id }, type: payload?.type })
   }
 
