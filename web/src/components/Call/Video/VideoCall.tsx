@@ -150,6 +150,9 @@ const VideoCall = ({ channel, _callDetails, cancelCall }) => {
                             <span className='text-lg'>{callDetails?.userDetails?.fullname || targetDetails?.fullname}</span>
                             <span>@{callDetails?.userDetails?.username || targetDetails?.username}</span>
                         </div>
+                        <div >
+                            <span>{recepientState || "Calling"}...</span>
+                        </div>
                     </div>
                 }
             </div>
