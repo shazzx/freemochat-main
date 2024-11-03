@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useSocket } from '@/hooks/useSocket'
 import { MdPhone } from 'react-icons/md'
-import { useAppDispatch } from '@/app/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { endCall } from '@/app/features/user/callSlice'
 
 function AudioCallCaller({ recepientDetails, setAudioCallCaller }) {
@@ -27,6 +27,8 @@ function AudioCallCaller({ recepientDetails, setAudioCallCaller }) {
         dispatch(endCall())
     }
 
+    const { recepientState } = useAppSelector((state) => state.call)
+
     return (
         <div className='fixed inset-0 z-50  w-screen overflow-hidden h-screen flex items-center justify-center'>
             <div className='absolute backdrop-blur-[1.5px] w-screen h-screen' onClick={() => {
@@ -48,7 +50,7 @@ function AudioCallCaller({ recepientDetails, setAudioCallCaller }) {
                     </div>
                 </div>
                 <div >
-                    <span>Calling...</span>
+                    <span>{recepientState || "Calling"}...</span>
                 </div>
                 <div className="flex gap-12 absolute bottom-32">
                     <Button type="button" className="rounded-full p-5 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={() => {

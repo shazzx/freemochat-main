@@ -36,16 +36,10 @@ export class NotificationService {
     return notification
   }
 
-  /**
-   * Validates an Expo push token
-   */
   public isExpoPushToken(token: string): boolean {
     return Expo.isExpoPushToken(token);
   }
 
-  /**
-   * Sends push notifications to multiple recipients
-   */
   public async sendNotifications(messages: ExpoPushMessage[]): Promise<ExpoPushTicket[]> {
     const chunks = this.expo.chunkPushNotifications(messages);
     const tickets: ExpoPushTicket[] = [];
@@ -68,9 +62,6 @@ export class NotificationService {
     }
   }
 
-  /**
-   * Sends a push notification to a single recipient
-   */
   public async sendNotification(
     token: string,
     title: string,

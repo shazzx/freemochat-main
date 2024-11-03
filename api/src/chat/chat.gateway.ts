@@ -10,16 +10,12 @@ import { BadRequestException, forwardRef, Inject, Logger } from '@nestjs/common'
 import { Server, Socket } from 'socket.io';
 import { MessageService } from 'src/message/message.service';
 import { UserChatListService } from 'src/chatlist/chatlist.service';
-import { MessageType } from 'src/schema/chatlist.schema';
 import { Types } from 'mongoose';
 import { UserService } from 'src/user/user.service';
 import { CGroupsService } from 'src/cgroups/cgroups.service';
-import { randomUUID } from 'crypto';
 import { CacheService } from 'src/cache/cache.service';
 import { FriendService } from 'src/friend/friend.service';
 import { MemberService } from 'src/member/member.service';
-
-let connectedUsers = new Map()
 
 @WebSocketGateway({ cors: { origin: '*' }, path: "/api/socket" },)
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -58,6 +54,34 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       let message = await this.messageService.createMessage({ type: payload.recepientDetails.type, sender: new Types.ObjectId(payload.senderDetails.targetId), recepient: new Types.ObjectId(payload.recepientDetails.targetId), content: payload.body, gateway: true, messageType: payload.messageType, })
       const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body, messageId: message._id }, "Text")
 
+      const userPushToken = await this.cacheService.getUserPushToken(payload.recepientDetails.targetId)
+      console.log(userPushToken, 'userpushtoken', payload.recepientDetails.targetId)
+
+      const pushMessage = {
+        // to: 'ExponentPushToken[g3lNZoCh-cv0PbpHf-bgNt]',
+        to: userPushToken,
+        sound: 'default',
+        title: payload.recepientDetails.username,
+        body: message.content,
+        data: { someData: 'goes here' },
+      };
+
+      if (!recepient && userPushToken) {
+        console.log('socket id does not exists in redis db')
+        await this.sendPushNotification(pushMessage)
+        this.server.emit('chatlist', { users: chatlist })
+        return
+      }
+
+      console.log('socket id exists in redis db')
+
+      if (!this.server.sockets.sockets.has(recepient?.socketId) && userPushToken) {
+        console.log('socket id does not exists in server connection')
+        await this.sendPushNotification(pushMessage)
+        this.server.emit('chatlist', { users: chatlist })
+        return
+      }
+      
       this.server.to(recepient?.socketId).emit('chat', { ...payload, _id: message._id });
       this.server.emit('chatlist', { users: chatlist })
       return payload;
@@ -65,6 +89,24 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.error(error)
     }
   }
+
+  async sendPushNotification(message) {
+    console.log('sending push notification')
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Accept-encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    }).then((data) => {
+      console.log('push notification sent')
+    }).catch((error) => {
+      console.log("something went wrong ", error, error.message)
+    })
+  }
+
 
 
   @SubscribeMessage('groupchat')

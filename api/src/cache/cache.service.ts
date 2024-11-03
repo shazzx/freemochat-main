@@ -14,6 +14,7 @@ export class CacheService {
   async set(key: string, value: any, expireIn: number) {
     await this.redis.set(key, value);
   }
+
   async setUserRefreshToken(userId: string, token: string): Promise<boolean> {
     try {
       // 20 minutes expiration
@@ -25,6 +26,24 @@ export class CacheService {
     }
   }
 
+  async setUserPushToken(userId: string, token: string): Promise<boolean> {
+    try {
+    await this.redis.set(`push-tokens:${userId}`, token); 
+    return true
+    } catch (error) {
+      console.log(error)
+      return false
+    }
+  }
+
+  async getUserPushToken(userId: string): Promise<string | boolean> {
+    try {
+    return await this.redis.get(`push-tokens:${userId}`); 
+    } catch (error) {
+      console.log(error)
+      return false
+    }
+  }
 
   async getUserRefreshToken(userId: string): Promise<string> {
     try {
@@ -124,21 +143,6 @@ export class CacheService {
     }
     return await this.redis.hmget("online_users", ...friends)
   }
-
-  // async addOnlineFriend(userId: string, friendId: string): Promise<void>{
-  //   await this.redis.sadd(`user:${userId}:online_friends`, friendId)
-  // }
-
-
-  // async removeOnlineFriend(userId: string, friendId: string): Promise<void>{
-  //   await this.redis.srem(`user:${userId}:online_friends`, friendId)
-  // }
-
-  // async getOnlineFriends(userId: string): Promise<string[]> {
-  //   return await this.redis.smembers(`user:${userId}:online_friends`);
-  // }
-
-
 
   async getOnlineUser(userId: any): Promise<any> {
     return await this.redis.hget("online_users", userId);

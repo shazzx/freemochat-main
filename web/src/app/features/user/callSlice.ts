@@ -31,11 +31,12 @@ const callSlice = createSlice({
 
 
         // recep
+
+        callRinging(state) {
+            state.recepientState = CallStates.RINGING
+        },
+
         incomingCall(state, action) {
-            if (action.payload?.stateChange) {
-                state.recepientState = CallStates.RINGING
-                return
-            }
             state.onCall = true
             state.type = action.payload.type
             state.recepientState = CallStates.CALLING
@@ -61,5 +62,5 @@ const callSlice = createSlice({
     }
 })
 
-export const { startCall, incomingCall, acceptCall, endCall } = callSlice.actions
+export const { startCall, incomingCall, callRinging, acceptCall, endCall } = callSlice.actions
 export default callSlice.reducer

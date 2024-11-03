@@ -19,10 +19,10 @@ import { compare } from 'bcrypt';
 import { CryptoService } from 'src/crypto/crypto.service';
 import { CacheService } from 'src/cache/cache.service';
 import { messageGenerator } from 'src/utils/messageGenerator';
+import Expo from 'expo-server-sdk';
 
 @Controller('user')
 export class UserController {
-
     constructor(
         private authService: AuthService,
         private userService: UserService,
@@ -85,7 +85,6 @@ export class UserController {
         //     access_token: payload.access_token, user
         // })
     }
-
 
     @Public()
     @Post('verify-otp')
@@ -622,9 +621,38 @@ export class UserController {
         console.log(userId)
         let online = await this.cacheService.getOnlineUser(userId)
         let offline = await this.cacheService.getOfflineUser(userId)
+        // if (online) {
+        // console.log('yes socket id found', online)
+        // if (this.server.sockets.sockets.has(online?.socketId)) {
+        // console.log('no user is not onlien')
+        // response.json(online)
+        // return
+        // }
+        // await this.cacheService.setUserOffline(userId)
+        // }
+
         console.log(online, 'online')
         console.log(offline, 'offline')
         response.json(online || offline)
+    }
+
+
+
+    @Post("pushToken")
+    async userPushToken(
+        @Body() body: { pushToken: string },
+        @Req() req: Request,
+        @Res() response: Response) {
+        const pushToken = body.pushToken
+        const isValidExpoPushToken = Expo.isExpoPushToken(pushToken)
+
+        console.log(pushToken, isValidExpoPushToken, 'isvalid push token')
+        if (isValidExpoPushToken) {
+            this.cacheService.setUserPushToken(req.user.sub, pushToken)
+            return response.json({ success: true, message: 'User push token stored successfully' })
+        }
+
+        throw new BadRequestException()
     }
 
     @Post("follow")
