@@ -127,22 +127,20 @@ export class UserChatListService {
 
 
     async updateMessageDeliverability(
-        userId: any,
-        recepientId: any,
-        type: string,
+        recepientId: string,
+        senderId: string,
         messageId: Types.ObjectId
     ): Promise<any> {
-        console.log(userId, recepientId, type, messageId, 'inside message deliverability')
-
-        // await this.userChatListModel.updateOne(
-        //     { _id: userChat._id, 'type': type, 'recepient': recepientId },
-        //     {
-        //         $set: {
-        //             lastm
-        //         },
-        //         $inc: { 'unreadCount': userId.toString() !== lastMessage.sender.toString() ? 1 : 0 },
-        //     }
-        // );
+        const updated = await this.userChatListModel.updateOne(
+            { recepient: recepientId, user: senderId },
+            {
+                $set: {
+                    lastSeenMessageId: messageId
+                },
+            }
+        );
+        console.log(updated)
+        return true
     }
 
     // async removeChat(userId: string, recepientId: string) {

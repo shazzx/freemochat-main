@@ -77,6 +77,7 @@ function ChatSidebar({ socket, setChatOpen, setRecepientDetails, chatList, chatO
         };
     }, [chatOptions])
     // console.log(userFriends)
+    console.log(chatList)
 
     return (
         <div className={`min-w-[260px] sm:max-w-[460px] w-full flex h-full ${chatOpen && "hidden lg:flex"}`}>
@@ -99,14 +100,15 @@ function ChatSidebar({ socket, setChatOpen, setRecepientDetails, chatList, chatO
                 {/* <TabsTrigger value="groups" className="data-[state=active]:bg-background-secondary data-[state=active]text-foreground">Groups</TabsTrigger> */}
                 {/* </TabsList> */}
                 {/* <TabsContent value="general" className="h-full"> */}
+
                 <Card x-chunk="dashboard-01-chunk-5" className="w-full bg-background-secondary h-full border-none ">
                     <CardContent className="flex flex-col gap-2 p-0">
                         {chatList?.users?.length > 0 ? chatList?.users?.map((chat, i) => (
                             <div className="flex gap-4 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={() => {
                                 if (chat.type == "Page") {
-                                    setRecepientDetails({ userId: chat?.recepient?._id, username: chat?.recepient.handle, images: { profile: chat?.recepient?.profile, cover: chat?.recepient?.cover }, name: chat?.recepient?.name, type: "Page", chatIndex: i })
+                                    setRecepientDetails({ lastSeenMessageId: chat.lastSeenMessageId, chatlistId: chat._id, userId: chat?.recepient?._id, username: chat?.recepient.handle, images: { profile: chat?.recepient?.profile, cover: chat?.recepient?.cover }, name: chat?.recepient?.name, type: "Page", chatIndex: i })
                                 } else {
-                                    setRecepientDetails({ userId: chat?.recepient?._id, username: chat?.recepient.username || chat?.recepient.handle, profile: chat?.recepient?.profile, fullname: (chat?.recepient?.firstname + " " + chat?.recepient.lastname) || chat?.recepient?.name, firstname: chat?.recepient?.firstname || chat?.recepient?.name, lastname: chat?.recepient.lastname, type: "User", chatIndex: i })
+                                    setRecepientDetails({ lastSeenMessageId: chat.lastSeenMessageId, chatlistId: chat._id, userId: chat?.recepient?._id, username: chat?.recepient.username || chat?.recepient.handle, profile: chat?.recepient?.profile, fullname: (chat?.recepient?.firstname + " " + chat?.recepient.lastname) || chat?.recepient?.name, firstname: chat?.recepient?.firstname || chat?.recepient?.name, lastname: chat?.recepient.lastname, type: "User", chatIndex: i })
                                 }
                                 setChatOpen(true)
 
@@ -249,7 +251,7 @@ function ChatSidebar({ socket, setChatOpen, setRecepientDetails, chatList, chatO
                 } */}
 
             </div>
-        </div>
+        </div >
     )
 }
 

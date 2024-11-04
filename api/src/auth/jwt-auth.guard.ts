@@ -41,9 +41,7 @@ export class JwtAuthGuard implements CanActivate {
         const request = context.switchToHttp().getRequest();
         const response: Response = context.switchToHttp().getResponse();
         const token = this.extractTokenFromHeader(request);
-        console.log(token, 'this is the token from request')
         if (!token) {
-            console.log('not token')
             throw new UnauthorizedException();
         }
         try {
@@ -73,7 +71,6 @@ export class JwtAuthGuard implements CanActivate {
             // }
 
             let accountStatus = await this.accountManagementService.getAccountStatus(payload.sub)
-            console.log(accountStatus)
 
             if (accountStatus?.isSuspended) {
                 throw new UnauthorizedException("Your account is suspended please contact customer support")
@@ -86,19 +83,15 @@ export class JwtAuthGuard implements CanActivate {
             request['user'] = payload;
 
         } catch (err) {
-            console.log(err)
             if (err instanceof TokenExpiredError) {
                 console.log('yes token expired error')
                 const _token = await this.jwtService.decode(token)
-                console.log(_token)
                 const refreshToken = await this.cacheService.getUserRefreshToken(_token.sub)
-                console.log(refreshToken, 'this is the user refresh token')
                 if (!refreshToken) {
                     throw new UnauthorizedException(err.message);
                 }
 
                 const refreshToken_payload = await this.jwtService.verify(refreshToken)
-                console.log(refreshToken_payload, 'refresh token payload but access token expired')
 
                 request['user'] = refreshToken_payload
 

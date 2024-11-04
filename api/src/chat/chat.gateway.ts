@@ -91,27 +91,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
 
-  // @SubscribeMessage('message-deliverability')
-  // async handleMessageDeliverability(@MessageBody() payload: { senderDetails: { targetId: Types.ObjectId, username: string }, messageId: Types.ObjectId, recepientDetails: { username: string, type: string, targetId: string } }) {
+  @SubscribeMessage('message-deliverability')
+  async handleMessageDeliverability(@MessageBody() payload: { senderId: string, recepientId: string, messageId: string, }) {
 
-  //   let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.targetId))
-  //   console.log(recepient, recepient)
+    let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientId))
 
-  //   try {
-  //     let user = await this.userService.userExists(payload.recepientDetails.targetId)
+    try {
+      console.log(payload, 'message deliverability payload')
+      const chatlist = await this.chatlistService.updateMessageDeliverability(payload.recepientId, payload.senderId, new Types.ObjectId(payload.messageId))
 
-  //     const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body, messageId: message._id }, "Text")
-
-  //     const userPushToken = await this.cacheService.getUserPushToken(payload.recepientDetails.targetId)
-  //     console.log(userPushToken, 'userpushtoken', payload.recepientDetails.targetId)
-
-  //     // this.server.to(recepient?.socketId).emit('chat', { ...payload, _id: message._id });
-  //     this.server.emit('chatlist', { users: chatlist })
-  //     return payload;
-  //   } catch (error) {
-  //     this.logger.error(error)
-  //   }
-  // }
+      this.server.to(recepient?.socketId).emit('message-deliverability', { lastSeenMessageId: payload.messageId });
+      this.server.emit('chatlist', { users: chatlist })
+      return payload;
+    } catch (error) {
+      this.logger.error(error)
+    }
+  }
 
   async sendPushNotification(message) {
     console.log('sending push notification')

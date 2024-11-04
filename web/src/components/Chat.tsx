@@ -60,21 +60,49 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
     const emojiPickerRef = useRef(null)
     const queryClient = useQueryClient()
     const [width, setWidth] = useState(window.innerWidth)
+
     useEffect(() => {
         window.addEventListener("resize", () => {
             setWidth(window.innerWidth)
-            // console.log(window.innerWidth)
         })
     }, [])
+
+    console.log(recepientDetails.lastSeenMessageId, 'lastseenmessage')
 
     useEffect(() => {
         const getOnlineStatus = async () => {
             const { data } = await axiosClient.get("user/onlineStatus", { params: { userId: recepientDetails.userId } })
-            console.log(data)
         }
+
+        const findLastMessageByUserId = () => {
+            for (let i = userMessages.data.length - 1; i >= 0; i--) {
+                const page = userMessages.data[i]
+                const messages = page.messages
+
+                const lastMessage = messages.reverse().find((message) => {
+                    return message.sender == messagesDetails.recepientId
+                })
+
+                if (lastMessage) {
+                    console.log(lastMessage, 'lastmessage found')
+                    if (recepientDetails.chatlistId && lastMessage._id) {
+                        console.log(recepientDetails.chatlistId, lastMessage._id)
+                        socket.emit("message-deliverability", { senderId: messagesDetails.recepientId, recepientId: user._id, messageId: lastMessage._id })
+                    }
+                    return lastMessage
+                }
+                console.log(lastMessage, 'lastmessage not found')
+
+            }
+            return null
+        }
+
+        findLastMessageByUserId()
 
         getOnlineStatus()
     }, [])
+
+
     // const [isOnline, setIsOnline] = useState(null)
 
     // const online = useAppSelector((state) => state.online)
@@ -573,6 +601,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                         return (
                             ((message?.sender == user._id) || (message?.sender?._id == user._id)) ?
                                 <div className="flex gap-2 justify-end" key={message?._id}>
+
                                     {/* {userMessages.data.length - 1 == pageIndex && (pageIndex == 0 && messageIndex == 0) && <div ref={ref}></div>} */}
                                     <div className="relative max-w-80 w-fit">
                                         <div className={`flex items-center justify-center relative ${!message?.media ? selectedMessageId == message._id ? "bg-primary p-2 pr-3" : "p-2 pr-3 bg-primary" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
@@ -648,6 +677,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                                     console.log(message)
                                                     setSelectedMessageId(message._id)
                                                 }}>{message?.content}</p>
+
                                             }
                                             {(message._id && (selectedMessageId == message._id)) && <MessageActionsDropdown onDelete={() => {
                                                 message?.deletedFor.push({ userId: user?._id })
@@ -672,6 +702,22 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                                 </div>
                                             }  */}
                                         </div>
+                                        {recepientDetails.lastSeenMessageId == message._id &&
+                                            <div className='absolute -bottom-2 -right-4 max-w-10 max-h-10 bg-accent rounded-full overflow-hidden'>
+                                                <Avatar className="h-4 w-4 flex items-center justify-center">
+                                                    <AvatarImage src={message?.sender?.profile || recepientDetails?.profile} alt="Avatar" />
+                                                    <AvatarFallback>
+                                                        {message?.sender?.firstname ? message?.sender?.firstname[0]?.toUpperCase()
+                                                            ||
+                                                            (recepientDetails?.firstname && recepientDetails?.firstname[0]?.toUpperCase())
+                                                            :
+                                                            (recepientDetails?.firstname && recepientDetails?.firstname[0]?.toUpperCase())
+
+                                                        }</AvatarFallback>
+                                                </Avatar>
+                                            </div>
+                                        }
+
                                     </div>
                                     <div className='max-w-10 max-h-10 rounded-full overflow-hidden'>
 
