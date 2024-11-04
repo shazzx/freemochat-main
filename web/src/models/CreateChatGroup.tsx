@@ -328,7 +328,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                                     <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md'>
                                                         <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' onClick={() => {
                                                             groupMemberToggle.mutate({ userId: memberData.user._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'remove' })
-                                                            socket.emit("toggleJoin", { userId: memberData.user._id, groupId: chatGroup.data._id, memberUsername: memberData.user.username, adminUsername: user.username })
+                                                            // socket.emit("toggleJoin", { userId: memberData.user._id, groupId: chatGroup.data._id, memberUsername: memberData.user.username, adminUsername: user.username })
                                                             // console.log('user remove')
                                                         }}  >
                                                             <RiUserUnfollowLine size={22} />
@@ -362,7 +362,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                     {chatGroup?.data?.user !== user._id
                         &&
                         <div onClick={() => {
-                            socket.emit("toggleJoin", { userId: user._id, groupId: chatGroup.data._id, memberUsername: user.username, type: "leave" })
+                            // socket.emit("toggleJoin", { userId: user._id, groupId: chatGroup.data._id, memberUsername: user.username, type: "leave" })
                                 
                             setChatOpen(false)
                             navigate('', { replace: true })
@@ -410,7 +410,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                                     <Button onClick={() => {
 
                                                         groupMemberToggle.mutate({ userId: friend._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'add' })
-                                                        socket.emit("toggleJoin", { userId: friend._id, groupId: chatGroup.data._id, memberUsername: friend.username, adminUsername: user.username })
+                                                        // socket.emit("toggleJoin", { userId: friend._id, groupId: chatGroup.data._id, memberUsername: friend.username, adminUsername: user.username })
                                                         // console.log('adding')
                                                     }}>
                                                         Add

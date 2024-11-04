@@ -202,13 +202,23 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
       queryClient.invalidateQueries({ queryKey: ['chatlist'] })
     })
 
+    // socket.on("friendStatus", (data) => {
+    //   if (data?.isOnline && data?.friendId) {
+    //     dispatch(setOnline(data.friendId))
+    //     queryClient.invalidateQueries({ queryKey: ['chatlist'] })
+    //   } else {
+    //     dispatch(setOffline(data.friendId))
+    //     queryClient.invalidateQueries({ queryKey: ['chatlist'] })
+    //   }
+    // })
+
+
     socket.on("friendStatus", (data) => {
+      console.log(data, 'friendstatus')
       if (data?.isOnline && data?.friendId) {
-        dispatch(setOnline(data.friendId))
-        queryClient.invalidateQueries({ queryKey: ['chatlist'] })
+        queryClient.invalidateQueries({ queryKey: ['onlineStatus', data.friendId] })
       } else {
-        dispatch(setOffline(data.friendId))
-        queryClient.invalidateQueries({ queryKey: ['chatlist'] })
+        queryClient.invalidateQueries({ queryKey: ['onlineStatus', data.friendId] })
       }
     })
 
