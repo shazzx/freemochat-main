@@ -11,6 +11,12 @@ export const fetchUser = async (username) => {
     }
 }
 
+
+export const fetchUserOnlineStatus = async (userId: string) => {
+    const { data } = await axiosClient.get("/user/onlineStatus", { params: { userId } })
+    return JSON.parse(data)
+}
+
 export const fetchUserStories = async () => {
     const { data } = await axiosClient.get("stories")
     return data

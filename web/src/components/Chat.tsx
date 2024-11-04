@@ -26,7 +26,7 @@ import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { format } from "date-fns";
 import { AlertDialogC } from "./AlertDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useUserFriends } from "@/hooks/User/useUser";
+import { useOnlineStatus, useUserFriends } from "@/hooks/User/useUser";
 import MessageActionsDropdown from "./MessageActionsDropDown";
 
 function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
@@ -69,10 +69,9 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
 
     console.log(recepientDetails.lastSeenMessageId, 'lastseenmessage')
 
+    const userOnlineStatus = useOnlineStatus(recepientDetails?.userId)
+
     useEffect(() => {
-        const getOnlineStatus = async () => {
-            const { data } = await axiosClient.get("user/onlineStatus", { params: { userId: recepientDetails.userId } })
-        }
 
         const findLastMessageByUserId = () => {
             for (let i = userMessages.data.length - 1; i >= 0; i--) {
@@ -98,8 +97,6 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
         }
 
         findLastMessageByUserId()
-
-        getOnlineStatus()
     }, [])
 
 
@@ -519,7 +516,12 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                     </div>
                     <div className='flex flex-col gap-0'>
                         <h3 className='text-card-foreground text-sm'>{recepientDetails?.type == "User" ? recepientDetails?.fullname : recepientDetails?.name}</h3>
-                        <span className='text-muted-foreground text-xs'>{recepientDetails?.type == "ChatGroup" ? group?.data?.membersCount > 0 ? "members " + group?.data?.membersCount : "no members" : isOnline ? "online" : "offline"}</span>
+                        <span className='text-muted-foreground text-xs'>
+                            {userOnlineStatus.isLoading && "loading..."}
+                            {
+                                (!userOnlineStatus.isLoading && !userOnlineStatus.data?.lastSeenAt) ? userOnlineStatus.data?.socketId ? "online" : "offline" : userOnlineStatus.data?.lastSeenAt && "last seen at " + format(userOnlineStatus.data?.lastSeenAt, 'h:mm a')
+                            }
+                        </span>
                     </div>
                 </div>
                 <div className="flex items-center justify-center gap-4 sm:mr-4">

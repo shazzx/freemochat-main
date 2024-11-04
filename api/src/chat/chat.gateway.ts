@@ -232,6 +232,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(socketStatus, recepient, "socket status and recepient")
     if (recepient?.socketId && socketStatus) {
       this.server.to(user.socketId).emit("call-ringing", { callState: "ringing" })
+    } else {
+
+      const userPushToken = await this.cacheService.getUserPushToken(_recepient?._id.toString())
+      console.log(userPushToken, 'userpushtoken', payload.recepientDetails.targetId)
+
+      const pushMessage = {
+        to: userPushToken,
+        sound: 'default',
+        title: _recepient.firstname + " " + _recepient.lastname + " is Calling You",
+        body: "Open app to become online",
+      };
+
+      if (!recepient && userPushToken) {
+        console.log('socket id does not exists in redis db')
+        await this.sendPushNotification(pushMessage)
+        return
+      }
+
+      if (!this.server.sockets.sockets.has(recepient?.socketId) && userPushToken) {
+        console.log('socket id does not exists in server connection')
+        await this.sendPushNotification(pushMessage)
+        return
+      }
+
     }
     this.server.to(recepient?.socketId).emit("initiate-call", { userDetails: payload?.userDetails, recepientDetails: { ..._recepient, userId: _recepient._id }, type: payload?.type })
   }
