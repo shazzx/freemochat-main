@@ -1,7 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, ObjectId, Types } from 'mongoose';
-import { User } from './user';
-import { ChatGroup } from './cgroup';
+import { ObjectId, Types } from 'mongoose';
 
 export enum MessageType {
     User = 'User',
@@ -16,7 +14,7 @@ class LastMessage {
     @Prop({ type: Buffer, required: true })
     encryptedContent: Buffer;
 
-    @Prop({type: Types.ObjectId})
+    @Prop({ type: Types.ObjectId })
     messageId: ObjectId
 
     @Prop({ type: Date, default: Date.now })
@@ -48,31 +46,25 @@ export class ChatItem {
     @Prop({ type: Date, default: null })
     removedAt: Date
 
-    // @Prop({ type: Date, default: null })
-    // chatRemovedAt: Date
-
     @Prop({ type: LastMessage, required: true })
     lastMessage: LastMessage;
 
-    @Prop({ type: Number, default: 0 })
-    unreadCount: number;
+    @Prop({ type: Types.ObjectId })
+    lastSentMessageId: ObjectId
+
+    @Prop({ type: Types.ObjectId })
+    lastDeliveredMessageId: ObjectId
+
+    @Prop({ type: Types.ObjectId })
+    lastSeenMessageId: ObjectId
 
     @Prop({ type: Date, default: Date.now() })
     createdAt: Date;
 
+    @Prop({ type: Number, default: 0 })
+    unreadCount: number;
 }
-
-
-// export class UserChatList extends Document {
-//     @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
-//     user: User | Types.ObjectId;
-
-//     @Prop({ type: [ChatItem], default: [] })
-//     chats: ChatItem[];
-// }
-
 
 export const ChatItemSchema = SchemaFactory.createForClass(ChatItem);
 
-// Create a compound index for efficient sorting and querying
 ChatItemSchema.index({ 'lastMessage.createdAt': -1 });

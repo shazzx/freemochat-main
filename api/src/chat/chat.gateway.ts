@@ -81,7 +81,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.server.emit('chatlist', { users: chatlist })
         return
       }
-      
+
       this.server.to(recepient?.socketId).emit('chat', { ...payload, _id: message._id });
       this.server.emit('chatlist', { users: chatlist })
       return payload;
@@ -89,6 +89,29 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.error(error)
     }
   }
+
+
+  // @SubscribeMessage('message-deliverability')
+  // async handleMessageDeliverability(@MessageBody() payload: { senderDetails: { targetId: Types.ObjectId, username: string }, messageId: Types.ObjectId, recepientDetails: { username: string, type: string, targetId: string } }) {
+
+  //   let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.targetId))
+  //   console.log(recepient, recepient)
+
+  //   try {
+  //     let user = await this.userService.userExists(payload.recepientDetails.targetId)
+
+  //     const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body, messageId: message._id }, "Text")
+
+  //     const userPushToken = await this.cacheService.getUserPushToken(payload.recepientDetails.targetId)
+  //     console.log(userPushToken, 'userpushtoken', payload.recepientDetails.targetId)
+
+  //     // this.server.to(recepient?.socketId).emit('chat', { ...payload, _id: message._id });
+  //     this.server.emit('chatlist', { users: chatlist })
+  //     return payload;
+  //   } catch (error) {
+  //     this.logger.error(error)
+  //   }
+  // }
 
   async sendPushNotification(message) {
     console.log('sending push notification')
