@@ -68,7 +68,7 @@ export class UserController {
             // })
 
             const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP, 'register')
-            // await this.twilioService.sendSMS(phone, message)
+            await this.twilioService.sendSMS(phone, message)
             res.json({ success: true, tempSecret, username: user.username, message: "account created successfully", verification: "pending" })
 
         } catch (error) {
@@ -319,7 +319,7 @@ export class UserController {
             await this.cacheService.setForgetPassword(user._id, authId)
             const link = `https://www.freedombook.co/reset-password/${authId}?username=${user.username}`
             const message = messageGenerator(user.firstname + " " + user.lastname, link, 'reset-password')
-            // await this.twilioService.sendSMS(user.phone, message)
+            await this.twilioService.sendSMS(user.phone, message)
 
             return res.json({ success: true, message: "otp has been sent to your phone" })
 

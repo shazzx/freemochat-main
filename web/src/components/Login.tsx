@@ -137,21 +137,16 @@ export function LoginForm() {
             </Card>
             <div className="flex flex-col gap-2 items-center justify-center">
                 <div className="flex flex-wrap max-w-72 items-center justify-center gap-2">
-                    <span className="text-xs cursor-pointer">
-                        Privacy Policy
-                    </span>
-                    <span className="text-xs cursor-pointer">
-                        Terms of Service
-                    </span>
-                    <span className="text-xs cursor-pointer">
-                        Cookie Policy
-                    </span>
-                    <span className="text-xs cursor-pointer">
-                        Help/FAQ
-                    </span>
-                    <span className="text-xs cursor-pointer">
-                        Contact Us
-                    </span>
+                    <Link to={'/privacy-policy'}>
+                        <span className="text-xs cursor-pointer">
+                            Privacy Policy
+                        </span>
+                    </Link>
+                    <Link to={'/terms-and-conditions'}>
+                        <span className="text-xs cursor-pointer">
+                            Terms and Conditions
+                        </span>
+                    </Link>
                 </div>
                 <div>
                     <span className="text-xs cursor-pointer">

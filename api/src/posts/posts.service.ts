@@ -44,14 +44,14 @@ export class PostsService {
         const limit = 5
 
         // let visibility = self == 'true' ? {} : {}
-            let visibility = {
-                $or: [
-                    { visibility: 'public' },
-                    { $and: [{ visibility: 'private' }, { user: new Types.ObjectId(userId) }] }
-                ]
-            }
-        
-        const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility } : {...visibility};
+        let visibility = {
+            $or: [
+                { visibility: 'public' },
+                { $and: [{ visibility: 'private' }, { user: new Types.ObjectId(userId) }] }
+            ]
+        }
+
+        const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility } : { ...visibility };
         let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type } : { ..._cursor, type }
         console.log(
             "userId: ", userId,
@@ -59,7 +59,7 @@ export class PostsService {
             "targetId: ", targetId,
             "query: ", query,
             "type: ", type)
-            console.log('is self', self, visibility)
+        console.log('is self', self, visibility)
         const posts = await this.postModel.aggregate([
             { $match: query },
             { $sort: { createdAt: -1 } },
@@ -518,7 +518,7 @@ export class PostsService {
             ]
         }
 
-        const query = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility} : {...visibility};
+        const query = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility } : { ...visibility };
 
         const posts = await this.postModel.aggregate([
             { $match: query },
@@ -1811,8 +1811,10 @@ export class PostsService {
             'Sad': '😢',
         }
 
+        let reactionFilter;
+
         if (type == 'post' && reaction) {
-            filter = { ...filter, reaction }
+            reactionFilter = { ...filter, reaction }
         }
 
         console.log(_targetId)
@@ -1823,7 +1825,44 @@ export class PostsService {
         }
 
         const deleteResult = await this.likeModel.deleteOne(filter);
-        console.log(targetType, 'target type')
+
+        let reactionDeleteResult;
+        if (reactionFilter) {
+            reactionDeleteResult = await this.likeModel.deleteOne(reactionFilter)
+        }
+
+        if (reactionDeleteResult && reactionDeleteResult.deletedCount === 0) {
+            await this.likeModel.create(filter);
+            if (userId != authorId) {
+                await this.notificationService.createNotification(
+                    {
+                        from: new Types.ObjectId(userId),
+                        user: new Types.ObjectId(authorId),
+                        targetId: new Types.ObjectId(targetId),
+                        type,
+                        targetType,
+                        value: type == "post" ? reaction ? `has reacted on your post (${reactions[reaction] || reaction})` : "liked your post" : type == "comment" ? "liked your commnet" : "liked your reply"
+                    }
+                )
+            }
+
+            await this.metricsAggregatorService.incrementCount(filter.targetId, type, "likes")
+
+            if (targetType == 'user' || targetType == "page") {
+                console.log(filter)
+                let updatedInteraction = await this.followerModel.updateOne({ follower: interactionFilter.userId, targetId: interactionFilter.targetId },
+                    { $inc: { interactionScore: 1 } }
+                )
+                console.log(updatedInteraction)
+            }
+            if (targetType == 'group') {
+                let updatedInteraction = await this.memberModel.updateOne({ member: interactionFilter.userId, groupId: interactionFilter.targetId },
+                    { $inc: { interactionScore: 1 } }
+                )
+                console.log(updatedInteraction)
+            }
+            return true;
+        }
 
         if (deleteResult.deletedCount === 0) {
             await this.likeModel.create(filter);

@@ -20,6 +20,8 @@ import ManagePages from "./sections/ManagePages";
 import SearchSection from "./sections/SearchSection";
 import YourAccount from "./components/YourAccount";
 import ForgetPassword from "./components/ForgetPassword";
+import TermsAndConditions from "./pages/user/TermsAndConditions";
+import PrivacyPolicy from "./pages/user/PrivacyPolicy";
 
 export const router = createBrowserRouter([
     {
@@ -28,28 +30,28 @@ export const router = createBrowserRouter([
         children: [
             {
                 path: "/",
-                element: <MainHome children={<FeedSection/>} />,
+                element: <MainHome children={<FeedSection />} />,
                 index: true
             },
             {
                 path: "/login",
-                element: <LoginForm/>,
+                element: <LoginForm />,
             },
             {
                 path: "/messages",
-                element: <MainHome children={<MessagesSection/>} />,
+                element: <MainHome children={<MessagesSection />} />,
             },
             {
                 path: "/pages",
-                element: <MainHome children={<PagesSection/>} />,
+                element: <MainHome children={<PagesSection />} />,
             },
             {
                 path: "/groups",
-                element: <MainHome children={<Groups/>} />,
+                element: <MainHome children={<Groups />} />,
             },
             {
                 path: "/bookmarked",
-                element: <MainHome children={<Bookmarked/>} />,
+                element: <MainHome children={<Bookmarked />} />,
             },
             // {
             //     path: "/campaigns",
@@ -88,15 +90,15 @@ export const router = createBrowserRouter([
                 path: "/search",
                 element: <MainHome children={<SearchSection />} />,
             },
-        ] 
+        ]
     },
     {
-                path: "/",
+        path: "/",
         element: <PublicRoute />,
         children: [
             {
                 path: "/login",
-                element: <LoginForm/>,
+                element: <LoginForm />,
                 index: true
             },
             {
@@ -105,15 +107,23 @@ export const router = createBrowserRouter([
             },
             {
                 path: "/signup",
-                element: <Signup/>,
+                element: <Signup />,
             },
             {
                 path: "/forget-password",
-                element: <YourAccount/>,
+                element: <YourAccount />,
             },
             {
                 path: "/reset-password/:auth",
-                element: <ForgetPassword/>,
+                element: <ForgetPassword />,
+            },
+            {
+                path: "/privacy-policy",
+                element: <PrivacyPolicy />,
+            },
+            {
+                path: "/terms-and-conditions",
+                element: <TermsAndConditions />,
             },
         ],
 
