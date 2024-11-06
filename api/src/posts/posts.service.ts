@@ -1817,8 +1817,6 @@ export class PostsService {
             reactionFilter = { ...filter, reaction }
         }
 
-        console.log(_targetId)
-
         const interactionFilter = {
             userId: new Types.ObjectId(userId),
             targetId: new Types.ObjectId(_targetId),
@@ -1831,7 +1829,10 @@ export class PostsService {
             reactionDeleteResult = await this.likeModel.deleteOne(reactionFilter)
         }
 
-        if (reactionDeleteResult && reactionDeleteResult.deletedCount === 0) {
+        console.log(reactionFilter)
+
+        if (reactionDeleteResult && reactionDeleteResult.deletedCount === 0 && deleteResult.deletedCount === 0) {
+            console.log('inside reaction create filter')
             await this.likeModel.create(filter);
             if (userId != authorId) {
                 await this.notificationService.createNotification(
@@ -1864,7 +1865,9 @@ export class PostsService {
             return true;
         }
 
-        if (deleteResult.deletedCount === 0) {
+        if (deleteResult.deletedCount === 0 && reactionDeleteResult.deletedCount === 0) {
+            console.log('inside normal create query filter')
+
             await this.likeModel.create(filter);
             if (userId != authorId) {
                 await this.notificationService.createNotification(
