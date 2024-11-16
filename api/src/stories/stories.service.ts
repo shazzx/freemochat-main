@@ -22,8 +22,7 @@ export class StoriesService {
 
     async getStories(userId: string, username: string) {
         const friendIds = await this.friendService.getFriends(userId, true)
-        console.log(friendIds)
-        console.log(await this.storyModel.find())
+        console.log(friendIds, 'user friends stories')
         const stories = await this.storyModel.aggregate([
             {
                 $match: {
@@ -64,13 +63,27 @@ export class StoriesService {
     }
 
     async viewStory(storyId, userId) {
+        const story = await this.storyModel.findById(storyId)
+
+        if (story.user == userId) {
+            return null
+        }
+
+        const alreadyViewed = await this.viewedStoriesModel.findOne({ storyId: new Types.ObjectId(storyId), userId: new Types.ObjectId(userId) })
+
+        if (alreadyViewed) {
+            console.log('story already viewed')
+            return null
+        }
+
         const storyViewed = await this.viewedStoriesModel.create({ storyId: new Types.ObjectId(storyId), userId: new Types.ObjectId(userId) })
-        console.log(storyViewed)
         return storyViewed
     }
 
     async getStoryViewes(storyId) {
+        console.log(storyId, 'viewed stories storyid')
         const storyViews = await this.viewedStoriesModel.find({ storyId }).populate('userId')
+        console.log('viewed stories list', storyViews)
         return storyViews
     }
 

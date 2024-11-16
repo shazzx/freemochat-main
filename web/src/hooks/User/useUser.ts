@@ -1,4 +1,4 @@
-import { acceptFriendRequest, defaultMetric, fetchUser, fetchUserMetrics, fetchUserOnlineStatus, fetchUserStories, followUserToggle, rejectFriendRequest, removeFriend, removeStory, sendFriendRequest, uploadStory, userFollowers, userFriendRequests, userFriends } from "@/api/User/users.api"
+import { acceptFriendRequest, defaultMetric, fetchUser, fetchUserMetrics, fetchUserOnlineStatus, fetchUserStories, fetchUserStoryViews, followUserToggle, rejectFriendRequest, removeFriend, removeStory, sendFriendRequest, uploadStory, userFollowers, userFriendRequests, userFriends } from "@/api/User/users.api"
 import { useAppSelector } from "@/app/hooks"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { produce } from "immer"
@@ -43,8 +43,27 @@ export const useUserStories = (userId: string) => {
 }
 
 
+export const useUserStoryViews = (userId: string, storyId) => {
+    const { data, isLoading, isError, isFetched, isSuccess } = useQuery({
+        queryKey: ['storyViews', userId],
+        queryFn: () => {
+            return fetchUserStoryViews(storyId)
+        },
+
+    })
+
+    return {
+        data,
+        isLoading,
+        isError,
+        isFetched,
+        isSuccess,
+    }
+}
+
+
 export const useUserMetrics = () => {
-    
+
     const { data, isLoading, isError, isFetched, isSuccess } = useQuery({
         queryKey: ['metrics'],
         queryFn: () => {
@@ -398,7 +417,7 @@ export const useAcceptFriendRequest = () => {
                             isRecievedByUser: false,
                             isSentByUser: false,
                         }
-                            draft.friendsCount = draft.friendsCount + 1
+                        draft.friendsCount = draft.friendsCount + 1
                     }
                     return draft
 
@@ -420,17 +439,17 @@ export const useAcceptFriendRequest = () => {
                         })
 
                     )))
-                    return draft 
+                    return draft
                 });
             })
             return { previousRequests, previousUser };
         },
 
-        onError: (err, {username}, context,) => {
+        onError: (err, { username }, context,) => {
             console.log(err)
             toast.error("something went wrong")
             queryClient.setQueryData(['userRequests', user._id], context?.previousRequests)
-            queryClient.setQueryData(['user',username], context?.previousUser)
+            queryClient.setQueryData(['user', username], context?.previousUser)
         },
         onSettled: (data, err) => {
             console.log(data)

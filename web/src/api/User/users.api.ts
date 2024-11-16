@@ -23,6 +23,12 @@ export const fetchUserStories = async () => {
 }
 
 
+export const fetchUserStoryViews = async (storyId: string) => {
+    const { data } = await axiosClient.get("stories/views", { params: { storyId } })
+    return data
+}
+
+
 export const uploadStory = async (formData: FormData) => {
     const { data } = await axiosClient.post("/stories/create", formData, { headers: { "Content-Type": 'multipart/form-data' } })
     return data

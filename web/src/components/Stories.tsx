@@ -8,6 +8,8 @@ import { EllipsisVertical } from "lucide-react"
 import { CiSquareRemove } from "react-icons/ci"
 import { useRemoveStory, useUploadStory, useUserStories } from "@/hooks/User/useUser"
 import { MdClose } from "react-icons/md"
+import { FaEye } from "react-icons/fa"
+import { useUserStoryViews } from '../hooks/User/useUser';
 
 function Stories() {
     let [storyUrl, setStoryUrl] = useState(undefined)
@@ -60,11 +62,16 @@ function Stories() {
                 let updatedStories = [...data]
                 updatedStories.splice(storiesIndex, 1)
                 setStories([data[storiesIndex], ...updatedStories])
+            } else {
+                setStories(data)
             }
         }
 
         getStories()
     }, [data])
+    console.log(data)
+
+    const [currentStoryId, setCurrentStoryId] = useState(null)
 
     let [openStory, setOpenStory] = useState(false)
     useEffect(() => {
@@ -72,6 +79,8 @@ function Stories() {
             storyTimeRef.current = setInterval(() => {
                 if (openedStoryIndex == stories.length - 1 && storyViewIndex == stories[openedStoryIndex].stories.length - 1) {
                     console.log('right equal')
+                    const storyDetails = { storyId: stories[openedStoryIndex].stories[storyViewIndex]._id }
+                    axiosClient.post("stories/view", storyDetails)
                     setOpenedStoryIndex(0)
                     setStoryViewIndex(0)
                     setStoryViewModelState(false)
@@ -81,12 +90,21 @@ function Stories() {
 
                 if (openedStoryIndex < stories.length - 1 && storyViewIndex == stories[openedStoryIndex].stories.length - 1) {
                     setOpenedStoryIndex(openedStoryIndex + 1)
+                    const storyDetails = { storyId: stories[openedStoryIndex].stories[storyViewIndex]._id }
+                    setCurrentStoryId(storyDetails.storyId)
+                    console.log(storyDetails)
+                    axiosClient.post("stories/view", storyDetails)
                     setStoryViewIndex(0)
                 }
                 console.log(openedStoryIndex)
 
                 if (storyViewIndex < stories[openedStoryIndex].stories.length - 1) {
                     console.log(storyViewIndex)
+                    const storyDetails = { storyId: stories[openedStoryIndex].stories[storyViewIndex]._id }
+                    setCurrentStoryId(storyDetails.storyId)
+
+                    console.log(storyDetails)
+                    axiosClient.post("stories/view", storyDetails)
                     setStoryViewIndex(storyViewIndex + 1)
                 }
 
@@ -108,6 +126,21 @@ function Stories() {
         setLoad(false)
     }, [data, isLoading, isSuccess])
 
+
+    useEffect(() => {
+        console.log(currentStoryId)
+        if (stories && openedStoryIndex && storyViewIndex) {
+            setCurrentStoryId(stories[openedStoryIndex]?.stories[storyViewIndex]?._id)
+            console.log(stories[openedStoryIndex]?.stories[storyViewIndex]?._id, 'current story id')
+        }
+
+    }, [stories, openedStoryIndex, storyViewIndex])
+
+
+
+    const storyViews = currentStoryId && useUserStoryViews(user?._id, currentStoryId && currentStoryId)
+    console.log(storyViews, 'story views')
+
     return (
         <div className='flex gap-3  overflow-hidden  overflow-x-auto z-50'>
             {stories && openStory && openedStoryIndex >= 0 && storyViewIndex >= 0 && stories?.length > 0 &&
@@ -121,13 +154,13 @@ function Stories() {
                     // setOpenStory(false)
                     clearInterval(storyTimeRef.current)
                 }}>
-                        <MdClose className="absolute top-2 right-2 size-6 cursor-pointer" onClick={() => {
-                            setOpenedStoryIndex(0)
-                            setStoryViewIndex(0)
-                            setStoryViewModelState(false)
-                            clearInterval(storyTimeRef.current)
-                            setOpenStory(false)
-                        }} />
+                    <MdClose className="absolute top-2 right-2 size-6 cursor-pointer" onClick={() => {
+                        setOpenedStoryIndex(0)
+                        setStoryViewIndex(0)
+                        setStoryViewModelState(false)
+                        clearInterval(storyTimeRef.current)
+                        setOpenStory(false)
+                    }} />
 
 
                     <div onClick={() => {
@@ -161,31 +194,31 @@ function Stories() {
                                     </span>
                                 </div>
                                 {(stories[openedStoryIndex].user?.username == user.username) &&
-                                < DropdownMenu >
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="h-10 w-8 text-white  p-2 rounded-md">
-                                        <EllipsisVertical className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md'>
-                                    <DropdownMenuItem className=' cursor-pointer hover:bg-accent flex gap-2 p-2 items-center justify-center z-20' onClick={async () => {
-                                        // axiosClient.post("/stories/delete", { storyId: stories[openedStoryIndex]?.stories[storyViewIndex]?._id, url: stories[openedStoryIndex]?.stories[storyViewIndex]?._id })
-                                        let storyId = stories[openedStoryIndex]?.stories[storyViewIndex]?._id
-                                        // let _stories = [...stories]
-                                        removeStory.mutate({ storyId, openedStoryIndex, storyViewIndex, url: stories[openedStoryIndex]?.stories[storyViewIndex]?._id })
-                                        // _stories[openedStoryIndex].stories.splice(storyViewIndex, 1)
-                                        // setStories(_stories)
-                                        // setLoad(true)
-                                        setOpenedStoryIndex(0)
-                                        setStoryViewIndex(0)
-                                        setStoryViewModelState(false)
-                                        setOpenStory(false)
-                                        pauseStory()
-                                    }}><CiSquareRemove size={22} /> <span>Remove</span></DropdownMenuItem>
+                                    < DropdownMenu >
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" className="h-10 w-8 text-white  p-2 rounded-md">
+                                                <EllipsisVertical className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md'>
+                                            <DropdownMenuItem className=' cursor-pointer hover:bg-accent flex gap-2 p-2 items-center justify-center z-20' onClick={async () => {
+                                                // axiosClient.post("/stories/delete", { storyId: stories[openedStoryIndex]?.stories[storyViewIndex]?._id, url: stories[openedStoryIndex]?.stories[storyViewIndex]?._id })
+                                                let storyId = stories[openedStoryIndex]?.stories[storyViewIndex]?._id
+                                                // let _stories = [...stories]
+                                                removeStory.mutate({ storyId, openedStoryIndex, storyViewIndex, url: stories[openedStoryIndex]?.stories[storyViewIndex]?._id })
+                                                // _stories[openedStoryIndex].stories.splice(storyViewIndex, 1)
+                                                // setStories(_stories)
+                                                // setLoad(true)
+                                                setOpenedStoryIndex(0)
+                                                setStoryViewIndex(0)
+                                                setStoryViewModelState(false)
+                                                setOpenStory(false)
+                                                pauseStory()
+                                            }}><CiSquareRemove size={22} /> <span>Remove</span></DropdownMenuItem>
 
-                                </DropdownMenuContent>
+                                        </DropdownMenuContent>
 
-                            </DropdownMenu>
+                                    </DropdownMenu>
                                 }
 
                             </div>
@@ -199,6 +232,13 @@ function Stories() {
                                 src={stories[openedStoryIndex]?.stories[storyViewIndex]?.url} alt="" onClick={() => {
                                 }} />
                         </div>
+                        <div className="absolute flex gap-2 items-center justify-center flex-col bottom-2 left-2">
+                            <FaEye />
+                            <span>
+                                {0} Views
+                            </span>
+                        </div>
+
                     </div>
 
                     <div onClick={() => {
