@@ -2,13 +2,22 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { FriendService } from 'src/friend/friend.service';
+import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
+import { Counter } from 'src/schema/Counter';
 import { Story } from 'src/schema/story';
+import { ViewedStories } from 'src/schema/viewedStories';
 import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class StoriesService {
 
-    constructor(@InjectModel(Story.name) private readonly storyModel: Model<Story>, private readonly userService: UserService, private readonly friendService: FriendService) { }
+    constructor(
+        @InjectModel(Story.name) private readonly storyModel: Model<Story>,
+        @InjectModel(ViewedStories.name) private readonly viewedStoriesModel: Model<ViewedStories>,
+        private readonly userService: UserService,
+        private readonly metricsAggregatorService: MetricsAggregatorService,
+        private readonly friendService: FriendService
+    ) { }
 
 
     async getStories(userId: string, username: string) {
@@ -54,6 +63,17 @@ export class StoriesService {
         return stories
     }
 
+    async viewStory(storyId, userId) {
+        const storyViewed = await this.viewedStoriesModel.create({ storyId: new Types.ObjectId(storyId), userId: new Types.ObjectId(userId) })
+        console.log(storyViewed)
+        return storyViewed
+    }
+
+    async getStoryViewes(storyId) {
+        const storyViews = await this.viewedStoriesModel.find({ storyId }).populate('userId')
+        return storyViews
+    }
+
     async createStory(userId, storyDetails) {
         const story = await this.storyModel.create({ url: storyDetails.url, user: new Types.ObjectId(userId) })
         return story
@@ -76,7 +96,7 @@ export class StoriesService {
 
 
     async deleteStory(storyId: string, userId) {
-        const deletedStory =  await this.storyModel.findOneAndDelete({_id: new Types.ObjectId(storyId), user: new Types.ObjectId(userId)})
+        const deletedStory = await this.storyModel.findOneAndDelete({ _id: new Types.ObjectId(storyId), user: new Types.ObjectId(userId) })
 
         if (!deletedStory) {
             throw new BadRequestException('Story not found or you do not have permission to delete it.');

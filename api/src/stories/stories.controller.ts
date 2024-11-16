@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Res, UseInterceptors, Body, Req, UploadedFile, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Get, Post, Res, UseInterceptors, Body, Req, UploadedFile, BadRequestException, InternalServerErrorException, Query } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { Request, Response } from 'express';
 import { UploadService } from 'src/upload/upload.service';
@@ -10,7 +10,10 @@ import { DeleteStory, DeleteStoryDTO } from 'src/schema/validation/stories';
 
 @Controller('stories')
 export class StoriesController {
-    constructor(private storiesService: StoriesService, private uploadService: UploadService) { }
+    constructor(
+        private storiesService: StoriesService,
+        private uploadService: UploadService,
+    ) { }
 
     @Get()
     async getStories(@Req() req, @Res() res: Response) {
@@ -30,6 +33,20 @@ export class StoriesController {
         res.json(await this.storiesService.createStory(sub, { url }))
     }
 
+    @Post("view")
+    async viewStory(@Req() req: Request, @Res() res: Response) {
+        const { sub } = req.user as { sub: string, username: string }
+        const { storyId } = req.body
+        res.json(this.storiesService.viewStory(storyId, sub))
+    }
+
+
+    @Get("views")
+    async getViews(@Req() req: Request, @Res() res: Response, @Query() query) {
+        const { storyId } = query
+        res.json(this.storiesService.getStoryViewes(storyId))
+    }
+
     // @Post("update")
     // async updateStory(@Body(new ZodValidationPipe(UpdateStory)) updateStoryDTO: UpdateStoryDTO, @Req() req) {
     //     const { userDetails, storyDetails } = req.body
@@ -38,16 +55,16 @@ export class StoriesController {
 
     @Post("delete")
     async deleteStory(@Body(new ZodValidationPipe(DeleteStory)) deleteStoryDTO: DeleteStoryDTO, @Req() req: Request, @Res() res: Response) {
-        const {sub} = req.user as {sub: string}
+        const { sub } = req.user as { sub: string }
         const { storyId, url } = deleteStoryDTO
-        const deleted =  await this.storiesService.deleteStory(storyId, sub)
+        const deleted = await this.storiesService.deleteStory(storyId, sub)
 
-        if(deleted){
-        let imageUrlSplit = url.split("/")
-        let filename = imageUrlSplit[imageUrlSplit.length - 1]
-        await this.uploadService.deleteFromS3(filename)
-        res.json(deleted)
-        return 
+        if (deleted) {
+            let imageUrlSplit = url.split("/")
+            let filename = imageUrlSplit[imageUrlSplit.length - 1]
+            await this.uploadService.deleteFromS3(filename)
+            res.json(deleted)
+            return
         }
 
         throw new BadRequestException("something went wrong")

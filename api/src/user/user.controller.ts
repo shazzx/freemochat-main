@@ -537,7 +537,7 @@ export class UserController {
     async logoutUser(
         @Req() req: Request,
         @Res({ passthrough: true }) response: Response) {
-        response.clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict', })
+        response.clearCookie('accessToken', { sameSite: 'strict', })
         response.json({ success: true })
     }
 

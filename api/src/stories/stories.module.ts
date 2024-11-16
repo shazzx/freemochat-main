@@ -7,9 +7,12 @@ import { Story, StorySchema } from 'src/schema/story';
 import { JwtModule } from '@nestjs/jwt';
 import { FriendModule } from 'src/friend/friend.module';
 import { UploadModule } from 'src/upload/upload.module';
+import { ViewedStories, ViewedStoriesSchema } from 'src/schema/viewedStories';
+import counterSchema, { Counter } from 'src/schema/Counter';
+import { MetricsAggregatorModule } from 'src/metrics-aggregator/metrics-aggregator.module';
 
 @Module({
-  imports: [FriendModule, forwardRef(() => UploadModule), UserModule, JwtModule, MongooseModule.forFeature([{ name: Story.name, schema: StorySchema }])],
+  imports: [FriendModule, forwardRef(() => UploadModule), MetricsAggregatorModule, UserModule, JwtModule, MongooseModule.forFeature([{ name: Story.name, schema: StorySchema }, { name: ViewedStories.name, schema: ViewedStoriesSchema }])],
   providers: [StoriesService],
   controllers: [StoriesController]
 })
