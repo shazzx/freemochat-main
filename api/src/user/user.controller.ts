@@ -68,7 +68,8 @@ export class UserController {
             // })
 
             const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP, 'register')
-            await this.twilioService.sendSMS(phone, message)
+            console.log(message)
+            // await this.twilioService.sendSMS(phone, message)
             res.json({ success: true, tempSecret, username: user.username, message: "account created successfully", verification: "pending" })
 
         } catch (error) {
