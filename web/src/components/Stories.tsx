@@ -72,8 +72,6 @@ function Stories() {
     }, [data])
     console.log(data)
 
-    const [currentStoryId, setCurrentStoryId] = useState(null)
-
     let [openStory, setOpenStory] = useState(false)
     useEffect(() => {
         if (stories && stories.length > 0 && openedStoryIndex >= 0 && storyViewIndex >= 0 && !isPaused) {
@@ -92,19 +90,13 @@ function Stories() {
                 if (openedStoryIndex < stories.length - 1 && storyViewIndex == stories[openedStoryIndex].stories.length - 1) {
                     setOpenedStoryIndex(openedStoryIndex + 1)
                     const storyDetails = { storyId: stories[openedStoryIndex].stories[storyViewIndex]._id }
-                    setCurrentStoryId(storyDetails.storyId)
-                    console.log(storyDetails)
                     axiosClient.post("stories/view", storyDetails)
                     setStoryViewIndex(0)
                 }
-                console.log(openedStoryIndex)
 
                 if (storyViewIndex < stories[openedStoryIndex].stories.length - 1) {
                     console.log(storyViewIndex)
                     const storyDetails = { storyId: stories[openedStoryIndex].stories[storyViewIndex]._id }
-                    setCurrentStoryId(storyDetails.storyId)
-
-                    console.log(storyDetails)
                     axiosClient.post("stories/view", storyDetails)
                     setStoryViewIndex(storyViewIndex + 1)
                 }
@@ -128,19 +120,14 @@ function Stories() {
     }, [data, isLoading, isSuccess])
 
 
-    useEffect(() => {
-        console.log(currentStoryId)
-        if (stories && openedStoryIndex && storyViewIndex) {
-            setCurrentStoryId(stories[openedStoryIndex]?.stories[storyViewIndex]?._id)
-            console.log(stories[openedStoryIndex]?.stories[storyViewIndex]?._id, 'current story id')
-        }
+    // useEffect(() => {
+    //     console.log(currentStoryId)
+    //     if (stories && openedStoryIndex && storyViewIndex) {
+    //         setCurrentStoryId(stories[openedStoryIndex]?.stories[storyViewIndex]?._id)
+    //         console.log(stories[openedStoryIndex]?.stories[storyViewIndex]?._id, 'current story id')
+    //     }
 
-    }, [stories, openedStoryIndex, storyViewIndex])
-
-
-
-    const storyViews = currentStoryId && useUserStoryViews(user?._id, currentStoryId && currentStoryId)
-    console.log(storyViews, 'story views')
+    // }, [stories, openedStoryIndex, storyViewIndex])
 
     return (
         <div className='flex gap-3  overflow-hidden  overflow-x-auto z-50'>

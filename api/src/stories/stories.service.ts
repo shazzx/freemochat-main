@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, Types, ObjectId } from 'mongoose';
 import { FriendService } from 'src/friend/friend.service';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 import { Counter } from 'src/schema/Counter';
@@ -82,7 +82,7 @@ export class StoriesService {
 
     async getStoryViewes(storyId) {
         console.log(storyId, 'viewed stories storyid')
-        const storyViews = await this.viewedStoriesModel.find({ storyId }).populate('userId')
+        const storyViews = await this.viewedStoriesModel.find({ storyId: new Types.ObjectId(storyId) }).populate('userId')
         console.log('viewed stories list', storyViews)
         return storyViews
     }

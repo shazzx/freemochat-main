@@ -44,7 +44,7 @@ export class StoriesController {
     @Get("views")
     async getViews(@Req() req: Request, @Res() res: Response, @Query() query) {
         const { storyId } = query
-        res.json(this.storiesService.getStoryViewes(storyId))
+        res.json(await this.storiesService.getStoryViewes(storyId))
     }
 
     // @Post("update")
