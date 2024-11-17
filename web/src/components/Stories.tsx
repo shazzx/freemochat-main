@@ -10,6 +10,7 @@ import { useRemoveStory, useUploadStory, useUserStories } from "@/hooks/User/use
 import { MdClose } from "react-icons/md"
 import { FaEye } from "react-icons/fa"
 import { useUserStoryViews } from '../hooks/User/useUser';
+import Story from "./Story"
 
 function Stories() {
     let [storyUrl, setStoryUrl] = useState(undefined)
@@ -174,7 +175,7 @@ function Stories() {
                         }
                     }}>
                     </div>
-                    <div className="relative h-screen z-50">
+                    {/* <div className="relative h-screen z-50">
                         <div className="absolute w-full items-center p-2 flex gap-2">
                             <div className='w-14 h-14 bg-accent flex items-center justify-center rounded-full overflow-hidden border-2 border-primary-active'>
                                 <Avatar className="flex">
@@ -239,7 +240,20 @@ function Stories() {
                             </span>
                         </div>
 
-                    </div>
+                    </div> */}
+                    <Story
+                        openedStoryIndex={openedStoryIndex}
+                        setOpenedStoryIndex={setOpenedStoryIndex}
+                        pauseStory={pauseStory}
+                        removeStory={removeStory}
+                        setOpenStory={setOpenStory}
+                        setStoryViewIndex={setStoryViewIndex}
+                        setStoryViewModelState={setStoryViewModelState}
+                        startStory={startStory}
+                        stories={stories}
+                        storyViewIndex={storyViewIndex}
+                        user={user}
+                    />
 
                     <div onClick={() => {
                         if (openedStoryIndex == stories.length - 1 && storyViewIndex == stories[openedStoryIndex].stories.length - 1) {
