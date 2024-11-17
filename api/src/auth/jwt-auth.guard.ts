@@ -100,7 +100,7 @@ export class JwtAuthGuard implements CanActivate {
 
                 response.cookie("accessToken", access_token, {
                     sameSite: 'strict',
-                    maxAge: 5 * 60 * 1000
+                    maxAge: 7 * 60 * 60 * 1000
                 })
                 return true
             }

@@ -527,7 +527,7 @@ export class UserController {
 
         response.cookie("accessToken", payload.access_token, {
             sameSite: 'strict',
-            maxAge: 5 * 60 * 1000
+            maxAge: 7 * 60 * 60 * 1000
         }).json({
             access_token: payload.access_token
         })

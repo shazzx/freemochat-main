@@ -110,7 +110,7 @@ export class AuthService {
 
             const { username, sub } = this.jwtService.verify(refresh_token, { secret: jwtConstants.secret })
 
-            const access_token = this.jwtService.sign({ username, sub }, { secret: jwtConstants.secret, expiresIn: '1m' })
+            const access_token = this.jwtService.sign({ username, sub }, { secret: jwtConstants.secret, expiresIn: '100h' })
             console.log('new access token')
             return access_token
         } catch (error) {

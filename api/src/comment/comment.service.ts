@@ -78,8 +78,34 @@ export class CommentService {
                 },
             },
             {
+                $lookup: {
+                    from: 'counters',
+                    let: { commentId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$commentId'] },
+                                        { $eq: ['$name', 'comment'] },
+                                        { $eq: ['$type', 'replies'] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'counters'
+                }
+            },
+            {
                 $addFields: {
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
+                    repliesCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'replies'] } } }, 0] },
+                            { count: 0 }
+                        ]
+                    },
                 },
             },
             {
@@ -88,6 +114,7 @@ export class CommentService {
                     content: 1,
                     post: 1,
                     user: 1,
+                    repliesCount: { $ifNull: ['$repliesCount.count', 0] },
                     audio: 1,
                     likesCount: 1,
                     isLikedByUser: 1,
@@ -95,6 +122,8 @@ export class CommentService {
                 },
             },
         ]).sort({ createdAt: -1 });
+
+        console.log('getting comments')
 
         const hasNextPage = comments.length > limit;
         const _comments = hasNextPage ? comments.slice(0, -1) : comments;
@@ -167,6 +196,7 @@ export class CommentService {
                     as: 'userLike',
                 },
             },
+
             {
                 $addFields: {
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
@@ -223,7 +253,7 @@ export class CommentService {
     }
 
     async updateComment(commentDetails, commentId: string, userId: string) {
-        const comment = await this.commentModel.findOneAndUpdate({_id: new Types.ObjectId(commentId), user: new Types.ObjectId(userId)}, { content: commentDetails.content })
+        const comment = await this.commentModel.findOneAndUpdate({ _id: new Types.ObjectId(commentId), user: new Types.ObjectId(userId) }, { content: commentDetails.content })
 
         if (!comment) {
             throw new BadRequestException('Comment not found or you do not have permission to update it.');
@@ -271,12 +301,13 @@ export class CommentService {
                 type: 'reply',
                 parentId: new Types.ObjectId(commentId)
             })
+        await this.metricsAggregatorService.incrementCount(new Types.ObjectId(commentId), "comment", "replies")
         return reply
     }
 
 
     async updateReply(replyDetails, replyId: string, userId: string) {
-        const reply = await this.commentModel.findOneAndUpdate({_id: new Types.ObjectId(replyId), user: new Types.ObjectId(userId)}, { content: replyDetails.content })
+        const reply = await this.commentModel.findOneAndUpdate({ _id: new Types.ObjectId(replyId), user: new Types.ObjectId(userId) }, { content: replyDetails.content })
 
         if (!reply) {
             throw new BadRequestException('reply not found or you do not have permission to update it.');

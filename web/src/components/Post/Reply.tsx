@@ -52,9 +52,9 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                                     const replyData = { userId: userId, commentId: reply.parentId, replyId: reply?._id, pageIndex, replyIndex }
                                     mutate(replyData)
                                 }}>Like {reply?.likedBy?.length}</span>
-                                <span className='cursor-pointer' onClick={() => {
+                                {/* <span className='cursor-pointer' onClick={() => {
                                     reply({ ...reply, replyIndex })
-                                }}>Reply</span>
+                                }}>Reply</span> */}
 
                             </div>
                         </div>
@@ -98,9 +98,9 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                                     const replyData = { userId: userId, commentId: reply.parentId, replyId: reply?._id, pageIndex, replyIndex }
                                     mutate(replyData)
                                 }}>Like {reply?.likedBy?.length}</span>
-                                <span className='cursor-pointer' onClick={() => {
+                                {/* <span className='cursor-pointer' onClick={() => {
                                     reply({ ...reply, replyIndex })
-                                }}>Reply</span>
+                                }}>Reply</span> */}
 
                             </div>
                         </div>

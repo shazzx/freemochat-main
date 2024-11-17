@@ -18,6 +18,7 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
     //     console.log('fetching')
     //     fetchNextPage()
     // }
+    console.log(comment)
     return (
         <div>
             {
@@ -64,7 +65,8 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                                 }}>Like {comment?.likedBy?.length}</span>
                                 <span className='cursor-pointer' onClick={() => {
                                     reply({ ...comment, commentIndex })
-                                }}>Reply</span>
+                                }}>{comment?.repliesCount > 0 ? "Replies " + comment.repliesCount : 'Reply'}</span>
+
 
                             </div>
                         </div>
@@ -110,7 +112,8 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                                 }}>Like {comment?.likedBy?.length}</span>
                                 <span className='cursor-pointer' onClick={() => {
                                     reply({ ...comment, commentIndex })
-                                }}>Reply</span>
+                                }}>{comment?.repliesCount > 0 ? "Replies " + comment.repliesCount : 'Reply'}</span>
+
 
                             </div>
                         </div>
