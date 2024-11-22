@@ -257,7 +257,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
     }
-    this.server.to(recepient?.socketId).emit("initiate-call", { userDetails: payload?.userDetails, recepientDetails: { ..._recepient, userId: _recepient._id }, type: payload?.type })
+
+    console.log('ismobile', payload)
+    this.server.to(recepient?.socketId).emit("initiate-call", { userDetails: payload?.userDetails, recepientDetails: { ..._recepient, userId: _recepient._id }, type: payload?.type, isMobile: payload?.isMobile ?? false })
   }
 
   @SubscribeMessage("call-decline")
@@ -267,7 +269,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       throw new BadRequestException('recepient id required')
     }
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
-
     console.log(payload, 'declined')
 
     this.server.to(recepient?.socketId).emit("call-decline", { status: "DECLINED", payload })
@@ -284,8 +285,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const uuid = '3u293urasdjkof'
 
 
-    this.server.to(user?.socketId).emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.recepientDetails })
-    this.server.to(recepient?.socketId).emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.userDetails })
+    this.server.to(user?.socketId).emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.recepientDetails, isMobile: payload?.isMobile ?? false })
+    this.server.to(recepient?.socketId).emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.userDetails, isMobile: payload?.isMobile ?? false })
   }
 
   @SubscribeMessage("call-end")

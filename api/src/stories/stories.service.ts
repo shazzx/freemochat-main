@@ -65,19 +65,31 @@ export class StoriesService {
     async viewStory(storyId, userId) {
         const story = await this.storyModel.findById(storyId)
 
+        console.log(story, storyId, 'first')
         if (story.user == userId) {
             return null
         }
 
         const alreadyViewed = await this.viewedStoriesModel.findOne({ storyId: new Types.ObjectId(storyId), userId: new Types.ObjectId(userId) })
 
+        console.log(alreadyViewed, storyId, userId)
+
         if (alreadyViewed) {
             console.log('story already viewed')
             return null
         }
 
-        const storyViewed = await this.viewedStoriesModel.create({ storyId: new Types.ObjectId(storyId), userId: new Types.ObjectId(userId) })
-        return storyViewed
+        try {
+            const storyViewed = await this.viewedStoriesModel.create({ storyId: new Types.ObjectId(storyId), userId: new Types.ObjectId(userId) })
+            return storyViewed
+
+        } catch (error) {
+            if (error.name == "MongoServerError" && error.code == 11000) {
+                return null
+            }
+
+            throw new BadRequestException()
+        }
     }
 
     async getStoryViewes(storyId) {
