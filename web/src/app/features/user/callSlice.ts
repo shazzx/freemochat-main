@@ -8,6 +8,7 @@ const initialState = {
     recepientState: null,
     callDetails: null,
     type: null,
+    isMobile: false,
     // caller: null,
     // recepient: null,
 }
@@ -41,6 +42,7 @@ const callSlice = createSlice({
             state.type = action.payload.type
             state.recepientState = CallStates.CALLING
             state.callDetails = action.payload.callDetails
+            state.isMobile = action.payload?.isMobile ?? false
         },
 
 
@@ -48,6 +50,9 @@ const callSlice = createSlice({
             state.callDetails = action.payload.callDetails
             state.callerState = CallStates.ACCEPTED
             state.recepientState = CallStates.ACCEPTED
+            if (!state.isMobile) {
+                state.isMobile = action.payload?.isMobile ?? false
+            }
         },
 
         // both

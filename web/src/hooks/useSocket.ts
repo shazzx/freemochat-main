@@ -239,6 +239,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
             type: CallTypes.VIDEO,
             recepientState: CallStates.CALLING,
             callDetails: data,
+            isMobile: data.isMobile
           }
         ))
       }
@@ -273,6 +274,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
         dispatch(acceptCall(
           {
             callDetails: data,
+            isMobile: data?.isMobile
           }
         ))
       }

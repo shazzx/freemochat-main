@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { isMobile } from "react-device-detect";
 
 import {
     LocalUser,
@@ -21,7 +20,7 @@ import { join } from "path";
 
 
 const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
-    const { callDetails, callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
+    const { callDetails, callerState, onCall, recepientState, isMobile, targetDetails, type } = useAppSelector((state) => state.call)
     const { user } = useAppSelector((state) => state.user)
 
     console.log(callDetails)
@@ -101,7 +100,8 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
                 username: user.username,
                 fullname: user.firstname + " " + user?.lastname,
                 profile: user?.profile
-            }
+            },
+            isMobile
         })
     }
     console.log(callDetails?.recepientDetails.username, user.username)
@@ -124,7 +124,7 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
                         }}>
                         <MdPhone size={32} color="white" />
                     </button>
-                    
+
                     {/* 
                     <button className="rounded-full p-[14px] bg-red-500" onClick={() => setMic(a => !a)}>
                         <Mic color="white" size={32} />

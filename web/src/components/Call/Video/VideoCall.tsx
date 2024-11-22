@@ -21,12 +21,10 @@ import { join } from "path";
 import { endCall } from "@/app/features/user/callSlice";
 
 
-const VideoCall = ({ channel, _callDetails, cancelCall }) => {
+const VideoCall = ({cancelCall }) => {
     const { callDetails, callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
     const { user } = useAppSelector((state) => state.user)
 
-    console.log(callDetails)
-    console.log(_callDetails)
     const socket = useSocket()
 
     useEffect(() => {
