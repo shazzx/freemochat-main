@@ -1865,7 +1865,7 @@ export class PostsService {
             return true;
         }
 
-        if (deleteResult.deletedCount === 0 && reactionDeleteResult.deletedCount === 0) {
+        if (deleteResult.deletedCount === 0 && reactionDeleteResult && reactionDeleteResult.deletedCount === 0) {
             console.log('inside normal create query filter')
 
             await this.likeModel.create(filter);

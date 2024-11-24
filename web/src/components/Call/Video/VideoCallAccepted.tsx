@@ -17,6 +17,7 @@ import { useAppSelector } from "@/app/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Button } from "@/components/ui/button";
 import { join } from "path";
+import CallSecondsCounter from "../CallSecondsCounter";
 
 
 const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
@@ -146,6 +147,9 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
                     remoteUsers.map((user) => {
                         return (
                             <div key={user.uid} className={isMobile ? "remote-video-container-mobile" : "remote-video-container"}>
+                                <div className="absolute top-3 right-3 p-2 rounded-sm">
+                                    <CallSecondsCounter isCallActive={true} key={callDetails.userId} />
+                                </div>
                                 <RemoteUser allowFullScreen={true} playVideo={true} user={user} />
                             </div>
                         )
