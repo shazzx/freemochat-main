@@ -704,7 +704,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                                 </div>
                                             }  */}
                                         </div>
-                                        {recepientDetails.lastSeenMessageId == message._id &&
+                                        {recepientDetails?.lastSeenMessageId !== undefined && recepientDetails.lastSeenMessageId == message._id &&
                                             <div className='absolute -bottom-2 -right-4 max-w-10 max-h-10 bg-accent rounded-full overflow-hidden'>
                                                 <Avatar className="h-4 w-4 flex items-center justify-center">
                                                     <AvatarImage src={message?.sender?.profile || recepientDetails?.profile} alt="Avatar" />

@@ -57,7 +57,7 @@ export class UserController {
             const phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
             // const emailOTP = await this.otpService.generateOtp(user._id, 'email')
 
-            console.log('phoneOTP: ', phoneOTP, "tempSecret: ", tempSecret, "phone secret: ")
+            // console.log('phoneOTP: ', phoneOTP, "tempSecret: ", tempSecret, "phone secret: ")
 
             // await this.twilioService.sendEmail({
             //     to: email,
