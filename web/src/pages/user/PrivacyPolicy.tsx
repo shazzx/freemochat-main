@@ -7,7 +7,7 @@ const PrivacyPolicy = () => {
             <Card>
                 <CardContent className="p-6">
                     <h1 className="text-3xl font-bold mb-8">Privacy Policy for Freedombook</h1>
-                    <p className="text-sm text-gray-500 mb-6">Last Updated: November 5, 2024</p>
+                    <p className="text-sm text-gray-500 mb-6">Last Updated: November 25, 2024</p>
 
                     <div className="space-y-6">
                         <section>
@@ -47,6 +47,12 @@ const PrivacyPolicy = () => {
                                 <li>Comply with legal obligations</li>
                             </ul>
                         </section>
+
+                        <section>
+                            <h2 className="text-2xl font-semibold mb-4">Contact Us</h2>
+                            <p className="mb-4">freedombook99@gmail.com</p>
+                        </section>
+
 
                         {/* Add remaining sections similarly */}
                     </div>

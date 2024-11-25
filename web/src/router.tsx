@@ -118,11 +118,11 @@ export const router = createBrowserRouter([
                 element: <ForgetPassword />,
             },
             {
-                path: "/privacy-policy",
+                path: "/privacy",
                 element: <PrivacyPolicy />,
             },
             {
-                path: "/terms-and-conditions",
+                path: "/terms",
                 element: <TermsAndConditions />,
             },
         ],

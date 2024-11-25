@@ -137,12 +137,12 @@ export function LoginForm() {
             </Card>
             <div className="flex flex-col gap-2 items-center justify-center">
                 <div className="flex flex-wrap max-w-72 items-center justify-center gap-2">
-                    <Link to={'/privacy-policy'}>
+                    <Link to={'/privacy'}>
                         <span className="text-xs cursor-pointer">
                             Privacy Policy
                         </span>
                     </Link>
-                    <Link to={'/terms-and-conditions'}>
+                    <Link to={'/terms'}>
                         <span className="text-xs cursor-pointer">
                             Terms and Conditions
                         </span>
