@@ -138,7 +138,7 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
 
 
       await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS, postId] })
-      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS, postId ])
+      const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS, postId])
 
       queryClient.setQueryData([CommentKeys.COMMENTS, postId], (pages: any) => {
         const firstPage = pages.pages[0]
@@ -342,13 +342,14 @@ export const useReplyOnComment = () => {
       return { previousReplies }
     },
 
-    onError: (err, {commentId}, context) => {
+    onError: (err, { commentId }, context) => {
       console.log(err)
       toast.error("something went wrong")
       queryClient.setQueryData([CommentKeys.REPLIES, commentId], context.previousReplies)
     },
-    onSettled: (data, reply, { commentId }) => {
+    onSettled: (data, reply, { commentId, postId }) => {
       queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
+      queryClient.invalidateQueries({ queryKey: [CommentKeys.COMMENTS, postId] })
     }
   })
 
@@ -386,12 +387,12 @@ export const useUpdateReply = () => {
       return { previousReplies }
     },
 
-    onError: (err, {commentId}, context) => {
+    onError: (err, { commentId }, context) => {
       console.log(err)
       toast.error("something went wrong")
       queryClient.setQueryData([CommentKeys.REPLIES, commentId], context.previousReplies)
     },
-    onSettled: (data, err, {commentId}) => {
+    onSettled: (data, err, { commentId }) => {
       queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
     }
   })
@@ -405,11 +406,11 @@ export const useUpdateReply = () => {
 }
 
 
-export const useDeleteReply = (commentId) => {
+export const useDeleteReply = (commentId, postId) => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate } = useMutation({
     mutationFn: (replyDetails: { replyId: string, audio: { src: string, duration: string }, pageIndex: number, replyIndex: number }) => {
-      return deleteReply({ replyId: replyDetails.replyId, audio: replyDetails?.audio ?? null })
+      return deleteReply({ replyId: replyDetails.replyId, commentId, audio: replyDetails?.audio ?? null })
     },
     onMutate: async ({ replyId, pageIndex, replyIndex }) => {
       await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
@@ -437,6 +438,7 @@ export const useDeleteReply = (commentId) => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
+      queryClient.invalidateQueries({ queryKey: [CommentKeys.COMMENTS, postId] })
     }
   })
 

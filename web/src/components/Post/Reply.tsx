@@ -12,7 +12,7 @@ import { useAppSelector } from '@/app/hooks'
 const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, setEditCommentModelState, editCommentModelState, setCommentDetails }) => {
     const { mutate } = useLikeReply(reply?.parentId)
     const {user} = useAppSelector((state) => state.user)
-    const deleteReply = useDeleteReply(reply?.parentId)
+    const deleteReply = useDeleteReply(reply?.parentId, postId)
     return (
         <div>
             {

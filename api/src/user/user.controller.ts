@@ -69,7 +69,7 @@ export class UserController {
 
             const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP, 'register')
             console.log(message)
-            // await this.twilioService.sendSMS(phone, message)
+            await this.twilioService.sendSMS(phone, message)
             res.json({ success: true, tempSecret, username: user.username, message: "account created successfully", verification: "pending" })
 
         } catch (error) {
@@ -312,7 +312,7 @@ export class UserController {
             const user = await this.userService.findUser(username)
 
             if (!user) {
-                throw new BadRequestException()
+                throw new BadRequestException("User account deos not exist with this username")
             }
 
             const authId = uuidv4()

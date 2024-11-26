@@ -329,6 +329,8 @@ export class CommentService {
             await this.uploadService.deleteFromS3(replyDetails.audio.src)
         }
 
+        await this.metricsAggregatorService.decrementCount(new Types.ObjectId(replyDetails.commentId), "comment", "replies")
+
         return deletedReply
 
     }

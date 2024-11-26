@@ -32,6 +32,7 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
     const { data, isSuccess, isLoading, fetchNextPage } = useComments(postId)
     const mutation = useCreateComment(params)
     const replyMutation = useReplyOnComment()
+    const stopRecordingRef = useRef(null)
 
     const replies = useReplies(replyId)
 
@@ -116,11 +117,14 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
                 dispatch(setClose())
                 setModelTrigger(false)
+                if (isRecording) {
+                    stopRecordingRef.current?.clearRecording()
+                }
                 if (location.pathname == '/') {
                     navigate("/", { replace: true })
                     return
                 }
-                if(location.pathname.startsWith('/search')){
+                if (location.pathname.startsWith('/search')) {
                     searchParams.delete("model", "post")
                     return
                 }
@@ -170,7 +174,11 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
                 <div className='relative bg-card w-full flex p-2'>
                     <ChevronLeft size={24} z={12} className='z-20' cursor="pointer" onClick={() => {
                         setModelTrigger(false)
+                        if (isRecording) {
+                            stopRecordingRef.current?.clearRecording()
+                        }
                         if (location.pathname == '/') {
+
                             navigate("/", { replace: true })
                             return
                         }
@@ -261,7 +269,7 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
                                         <path d="M17.9998 12.8337V11.667" stroke-width="1.5" stroke-linecap="round" />
                                     </svg> */}
                                 </div>}
-                                <AudioRecorder setIsRecordingMain={setIsRecording} onRecordingComplete={(audioBlob, uploadState, recordingTime) => {
+                                <AudioRecorder stopRecordingRef={stopRecordingRef} setIsRecordingMain={setIsRecording} onRecordingComplete={(audioBlob, uploadState, recordingTime) => {
                                     console.log(audioBlob, uploadState, 'audiorecorder')
                                     if (uploadState && replyState) {
                                         const url = URL.createObjectURL(audioBlob)
@@ -299,7 +307,7 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
                                 <path d="M17.9998 12.8337V11.667" stroke-width="1.5" stroke-linecap="round" />
                             </svg> */}
                         </div>}
-                        <AudioRecorder setIsRecordingMain={setIsRecording} onRecordingComplete={(audioBlob, uploadState, recordingTime) => {
+                        <AudioRecorder stopRecordingRef={stopRecordingRef} setIsRecordingMain={setIsRecording} onRecordingComplete={(audioBlob, uploadState, recordingTime) => {
                             if (!replyState) {
 
                                 console.log(audioBlob, uploadState, recordingTime, 'on recording complete')

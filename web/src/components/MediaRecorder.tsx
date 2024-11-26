@@ -1,13 +1,9 @@
-import { v4 as uuidv4 } from 'uuid';
 import React, { useRef, useState } from 'react';
-import { axiosClient } from '@/api/axiosClient';
-import VoiceMessagePlayer from './AudioPlayer';
-import { MdRecordVoiceOver } from 'react-icons/md';
-import { Mic, Mic2 } from 'lucide-react';
+import { Mic } from 'lucide-react';
 import { useAppSelector } from '@/app/hooks';
 import { toast } from 'react-toastify';
 
-const AudioRecorder = ({ onRecordingComplete, setIsRecordingMain }) => {
+const AudioRecorder = ({ stopRecordingRef, onRecordingComplete, setIsRecordingMain }) => {
     const [recordedUrl, setRecordedUrl] = useState('');
     const [recordedAudio, setRecordedAudio] = useState(undefined);
     const { user } = useAppSelector((data) => data.user)
@@ -19,6 +15,19 @@ const AudioRecorder = ({ onRecordingComplete, setIsRecordingMain }) => {
     const recordingTime = useRef(0)
     const [_recordingTime, setRecordingTime] = useState(0)
     const uploadState = useRef(false)
+
+    const clearRecording = () => {
+        uploadState.current = false
+        recordingTime.current = 0;
+        setRecordingTime(0)
+        stopRecording()
+    }
+
+
+    React.useImperativeHandle(stopRecordingRef, () => ({
+        clearRecording
+    }));
+
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia(
@@ -49,7 +58,7 @@ const AudioRecorder = ({ onRecordingComplete, setIsRecordingMain }) => {
                 recordingTime.current = recordingTime.current + 1
                 setRecordingTime((prev) => prev + 1)
 
-                if(recordingTime.current >= 30){
+                if (recordingTime.current >= 30) {
                     uploadState.current = false
                     recordingTime.current = 0;
                     setRecordingTime(0)
