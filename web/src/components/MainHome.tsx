@@ -42,6 +42,7 @@ import { toast } from "react-toastify"
 import VideoCallAccepted from "./Call/Video/VideoCallAccepted"
 import { useUserMetrics } from "@/hooks/User/useUser"
 import BottomNav from "./BottomNav"
+import NetworkStatusNotifier from "./NetworkStatusNotifier"
 
 const MainHome = ({ children }: any) => {
   useSocket()
@@ -105,7 +106,6 @@ const MainHome = ({ children }: any) => {
 
   // },[viewedPosts])
   return (
-
     <div className="relative h-screen w-full flex flex-col overflow-hidden">
       {/* incoming call */}
       {onCall && type == "Audio" && recepientState == "CALLING" && callDetails?.userDetails &&
@@ -129,6 +129,8 @@ const MainHome = ({ children }: any) => {
       {/* {onCall && (recepientState == "ACCEPTED" || (callerState == "ACCEPTED" || callerState == "CALLING")) && callDetails?.type == "VIDEO" && callDetails?.channel &&
         <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} />
       } */}
+
+      <NetworkStatusNotifier />
 
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-2 lg:h-[60px] lg:px-6">

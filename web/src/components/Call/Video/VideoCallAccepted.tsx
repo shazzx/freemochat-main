@@ -147,7 +147,7 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
                     remoteUsers.map((user) => {
                         return (
                             <div key={user.uid} className={isMobile ? "remote-video-container-mobile" : "remote-video-container"}>
-                                <div className="absolute top-3 right-3 p-2 rounded-sm">
+                                <div className="absolute top-3 right-3 p-2 rounded-sm z-50">
                                     <CallSecondsCounter isCallActive={true} key={callDetails.userId} />
                                 </div>
                                 <RemoteUser allowFullScreen={true} playVideo={true} user={user} />

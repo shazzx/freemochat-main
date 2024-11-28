@@ -117,15 +117,24 @@ function ChatSidebar({ socket, setChatOpen, setRecepientDetails, chatList, chatO
                                     <AvatarImage src={chat?.recepient?.profile} alt="Avatar" />
                                     <AvatarFallback>{chat?.recepient?.firstname && chat?.recepient?.firstname[0]?.toUpperCase() + chat?.recepient?.lastname && chat?.recepient?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                 </Avatar>
-                                <div className="flex flex-col gap-2 justify-center">
+                                <div className="relative flex flex-col gap-2 justify-center">
                                     <p className="text-sm font-medium leading-none">
                                         {chat?.type == "Page" ? chat?.recepient?.name : chat?.recepient?.firstname + " " + chat?.recepient?.lastname}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
                                         {chat?.lastMessage?.encryptedContent}
                                     </p>
+
                                 </div>
-                                <div className="ml-auto text-xs">{format(chat?.updatedAt ?? Date.now(), 'MMM d, yyy h:mm a')}</div>
+                                <div className="ml-auto flex flex-col">
+                                    <span className="text-xs">{format(chat?.updatedAt ?? Date.now(), 'MMM d, yyy h:mm a')}</span>
+                                    {
+                                        chat?.unreadCount > 0 &&
+                                        <span className="ml-auto text-xs bg-red-500 rounded-full text-center w-6 mt-4 ">
+                                            {chat?.unreadCount}
+                                        </span>
+                                    }
+                                </div>
                             </div>
                         ))
                             :

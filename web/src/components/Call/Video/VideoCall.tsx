@@ -21,7 +21,7 @@ import { join } from "path";
 import { endCall } from "@/app/features/user/callSlice";
 
 
-const VideoCall = ({cancelCall }) => {
+const VideoCall = ({ cancelCall }) => {
     const { callDetails, callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
     const { user } = useAppSelector((state) => state.user)
 

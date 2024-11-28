@@ -9,7 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
 import { useEffect, useMemo, useRef } from "react";
 import { useDispatch } from "react-redux";
-import { toast } from "react-toastify";
+import { toast, useToast } from "react-toastify";
 
 export const useSocket = (recepient?: string, _isOnline?: Function) => {
   const queryClient = useQueryClient();
@@ -26,6 +26,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
       if (message?.success == false) {
         toast.error(message?.message)
       }
+      toast.info(message.body)
 
       console.log(message, 'new message')
       let newMessage = {
@@ -255,7 +256,6 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
       }
     })
     socket.on("call-ringing", (data) => {
-      console.log(data, 'call-ringing')
       dispatch(callRinging())
     })
     socket.on("call-decline", (data) => {

@@ -3,8 +3,7 @@ import Chat from "@/components/Chat"
 import ChatSidebar from "@/components/ChatSidebar"
 import { useUserChatlist } from "@/hooks/Chat/main";
 import { useSocket } from "@/hooks/useSocket";
-import { format } from "date-fns";
-import { memo, useState } from "react"
+import { memo, useEffect, useRef, useState } from "react"
 
 function MessagesSection() {
     const [chatOpen, setChatOpen] = useState(false)
@@ -13,15 +12,23 @@ function MessagesSection() {
     const socket = useSocket()
     const { data, isLoading } = useUserChatlist()
     const isOnline = !isLoading && recepientDetails.chatIndex > -1 && data.users[recepientDetails.chatIndex]?.onlineStatus
-    // console.log(data)
-    // data && console.log(format(data?.users[0]?.createdAt, 'MMM d, yyy h:mm:ss a'))
+    const [isRecording, setIsRecording] = useState(false)
+    const stopRecordingRef = useRef(null)
+
+    useEffect(() => {
+        setIsRecording(false)
+        stopRecordingRef.current?.clearRecording()
+        return () => {
+            stopRecordingRef.current?.clearRecording()
+        }
+    }, [recepientDetails])
 
     return (
         <div className="flex w-full bg-background-secondary">
             <div className="flex w-full">
                 <ChatSidebar socket={socket} setChatOpen={setChatOpen} chatOpen={chatOpen} setRecepientDetails={setRecepientDetails} chatList={!isLoading && data} />
                 {chatOpen && recepientDetails?.type !== "ChatGroup" &&
-                    <Chat user={user} recepientDetails={recepientDetails} isOnline={isOnline} setChatOpen={setChatOpen} />
+                    <Chat user={user} stopRecordingRef={stopRecordingRef} isRecording={isRecording} setIsRecording={setIsRecording} recepientDetails={recepientDetails} isOnline={isOnline} setChatOpen={setChatOpen} />
                 }
                 {chatOpen && recepientDetails?.type == "ChatGroup" && recepientDetails?.name?.length > 4 &&
                     <Chat user={user} recepientDetails={recepientDetails} setChatOpen={setChatOpen} />

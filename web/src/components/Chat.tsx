@@ -1,16 +1,14 @@
-import { ChevronLeft, Copy, Delete, DeleteIcon, EllipsisIcon, File, Image, Video } from "lucide-react"
+import { ChevronLeft, File, Image, Video } from "lucide-react"
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import EmojiPicker, { Categories } from "emoji-picker-react";
-import { MdCancel, MdClose, MdDelete, MdSend } from "react-icons/md";
+import { MdCancel, MdClose, MdSend } from "react-icons/md";
 import { axiosClient } from "@/api/axiosClient";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Button } from "./ui/button";
-import VideoCallRecepient from "./Call/Video/VideoCallRecepient";
-import VideoCallCaller from "./Call/Video/VideoCallCaller";
 import AudioCallCaller from "./Call/Audio/AudioCallCaller";
 import { DropdownUser } from "./Dropdowns/DropdownUser";
-import { useChatGroup, useCreateMessage, useGroupMemberToggle, useMessages, useUpdateChatGroup, useUserChatlist } from "@/hooks/Chat/main";
+import { useChatGroup, useCreateMessage, useGroupMemberToggle, useMessages, useUpdateChatGroup } from "@/hooks/Chat/main";
 import { useInView } from "react-intersection-observer";
 import AudioRecorder from "./MediaRecorder";
 import AudioPlayer from "@/AudioPlayer";
@@ -29,8 +27,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useOnlineStatus, useUserFriends } from "@/hooks/User/useUser";
 import MessageActionsDropdown from "./MessageActionsDropDown";
 
-function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
-    // console.log(recepientDetails)
+function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecording, setIsRecording }: any) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
     const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId)
     const group: any = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId) : {}
@@ -38,17 +35,11 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
     const [inputValue, setInputValue] = useState("");
     const [groupData, setGroupData] = useState(null)
     const chatContainerRef = useRef(null)
-    const [isRecording, setIsRecording] = useState(false)
-
-    const [videoCallState, setVideoCallState] = useState("NEUTRAL")
-    const [videoCallCallerState, setVideoCallCallerState] = useState(false)
+    // const [isRecording, setIsRecording] = useState(false)
 
     const { ref, inView } = useInView()
 
-    const [audioCallState, setAudioCallState] = useState("NEUTRAL")
     const [audioCallCallerState, setAudioCallCallerState] = useState(false)
-    const [callDetails, setCallDetails] = useState(null)
-    // const [callAccept, setCallAccept] = useState()
     const [openedDropDownMessageId, setOpenedDropDownMessageId] = useState(null)
     const [dropDownMessageId, setDropDownMessageId] = useState(null)
     const [dropDownMessageIndex, setDropDownMessageIndex] = useState(null)
@@ -225,9 +216,10 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
     }, [userMessages.data])
 
 
+
     const [selectedMessageId, setSelectedMessageId] = useState(null);
     const longPressTimer = useRef(null);
-    const longPressDuration = 500; // milliseconds
+    const longPressDuration = 500;
 
     const handleTouchStart = useCallback((id) => {
         longPressTimer.current = setTimeout(() => {
@@ -255,7 +247,6 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
         }
 
         queryClient.invalidateQueries({ queryKey: ['chatlist'] })
-        // console.log(e)
 
         if (e?.type !== "click" && e?.key !== "Enter") {
             return
@@ -882,7 +873,6 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                 const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, messageType: "PDF", type: recepientDetails?.type, mediaDetails: { type: "pdf", } }
                                 formData.append("messageData", JSON.stringify(messageData))
                                 formData.append("file", file, 'pdf')
-                                // console.log(messageData, recepientDetails)
 
                                 createMessage.mutate({ messageData: { ...messageData, media: { type: "pdf", url: URL.createObjectURL(file), isUploaded: false } }, formData })
                                 scrollToBottom()
@@ -918,8 +908,6 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                 const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, messageType: "Video", type: recepientDetails?.type, mediaDetails: { type: "video", } }
                                 formData.append("messageData", JSON.stringify(messageData))
                                 formData.append("file", file, 'video')
-                                // console.log(messageData, recepientDetails)
-
 
                                 createMessage.mutate({ messageData: { ...messageData, media: { type: "video", url: URL.createObjectURL(file), isUploaded: false } }, formData })
                                 scrollToBottom()
@@ -980,8 +968,6 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                                         if (emoji == "12rwtfadfasdf") {
                                             _emoji = '🪽'
                                         }
-                                        // console.log(selection)
-
 
                                         if (selection == 0 && inputValue.length == 0) {
                                             setInputValue(_emoji)
@@ -1003,8 +989,8 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                             }
                         </div>
                     </div>}
-                    <AudioRecorder setIsRecordingMain={setIsRecording} onRecordingComplete={async (audioBlob, uploadState, recordingTime) => {
-                        // console.log(audioBlob, uploadState, recordingTime)
+
+                    <AudioRecorder  path="messages" stopRecordingRef={stopRecordingRef} setIsRecordingMain={setIsRecording} onRecordingComplete={async (audioBlob, uploadState, recordingTime) => {
                         if (uploadState) {
                             const formData = new FormData()
                             const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, type: recepientDetails?.type, messageType: "Voice", mediaDetails: { type: "audio", duration: recordingTime } }
@@ -1014,6 +1000,7 @@ function Chat({ user, recepientDetails, setChatOpen, isOnline }: any) {
                         }
 
                     }} />
+
                     {!isRecording &&
                         <Button className="m-0 bg-transparent  py-5 px-2 border-[2px] border-primary" onClick={handleSendMessage} >
                             <MdSend size={24} className="text-foreground"></MdSend>

@@ -1,10 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Mic } from 'lucide-react';
 import { useAppSelector } from '@/app/hooks';
 import { toast } from 'react-toastify';
 
 const AudioRecorder = ({ stopRecordingRef, onRecordingComplete, setIsRecordingMain }) => {
-    const [recordedUrl, setRecordedUrl] = useState('');
     const [recordedAudio, setRecordedAudio] = useState(undefined);
     const { user } = useAppSelector((data) => data.user)
     const mediaStream = useRef(null);
@@ -17,16 +16,25 @@ const AudioRecorder = ({ stopRecordingRef, onRecordingComplete, setIsRecordingMa
     const uploadState = useRef(false)
 
     const clearRecording = () => {
+        console.log('recording cleared ref func')
         uploadState.current = false
         recordingTime.current = 0;
         setRecordingTime(0)
         stopRecording()
+        clearInterval(timer.current)
     }
 
 
     React.useImperativeHandle(stopRecordingRef, () => ({
         clearRecording
     }));
+
+    useEffect(() => {
+
+        return () => {
+            clearRecording()
+        }
+    }, [])
 
     const startRecording = async () => {
         try {
@@ -58,7 +66,8 @@ const AudioRecorder = ({ stopRecordingRef, onRecordingComplete, setIsRecordingMa
                 recordingTime.current = recordingTime.current + 1
                 setRecordingTime((prev) => prev + 1)
 
-                if (recordingTime.current >= 30) {
+                console.log('stop recording')
+                if (recordingTime.current >= 5) {
                     uploadState.current = false
                     recordingTime.current = 0;
                     setRecordingTime(0)
@@ -70,6 +79,7 @@ const AudioRecorder = ({ stopRecordingRef, onRecordingComplete, setIsRecordingMa
             console.error('Error accessing microphone:', error);
         }
     };
+
     const stopRecording = async () => {
         if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
             mediaRecorder.current.stop();

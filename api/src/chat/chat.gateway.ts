@@ -226,7 +226,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(payload)
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
     let user = JSON.parse(await this.cacheService.getOnlineUser(payload.userDetails.userId))
-    // let user = await this.userService.getRawUser(payload.userDetails.userId)
     let _recepient = await this.userService.getRawUser(payload.recepientDetails.userId)
     let socketStatus = this.server.sockets.sockets.has(recepient?.socketId)
     console.log(socketStatus, recepient, "socket status and recepient")
