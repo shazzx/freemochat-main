@@ -43,6 +43,7 @@ import VideoCallAccepted from "./Call/Video/VideoCallAccepted"
 import { useUserMetrics } from "@/hooks/User/useUser"
 import BottomNav from "./BottomNav"
 import NetworkStatusNotifier from "./NetworkStatusNotifier"
+import { useRTCClient } from "agora-rtc-react"
 
 const MainHome = ({ children }: any) => {
   useSocket()
@@ -67,28 +68,20 @@ const MainHome = ({ children }: any) => {
   const [searchSuggestionsState, setSearchSuggestionsState] = useState(false)
   const searchRef = useRef<HTMLInputElement>()
 
+
   let cancelCall = async (type) => {
     try {
       if (type == "AUDIO") {
-        console.log('audio call end')
-
-        // setAudioCallCallerState(false)
-        // setAudioCallState("NEUTRAL")
         const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaStream.getTracks().forEach(track => track.stop())
       } else {
-        console.log('video call end')
-        // setVideoCallCallerState(false)
-        // setVideoCallState("NEUTRAL")
-        // const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        // mediaStream.getTracks().forEach(track => track.stop())
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        mediaStream.getTracks().forEach(track => track.stop())
       }
       dispatch(endCall())
-      // setCallDetails(null)
     } catch (error) {
       console.log(error)
       dispatch(endCall())
-      // location.reload()
     }
   }
   // const {viewedPosts} = useAppSelector((state) => state.viewedPosts)

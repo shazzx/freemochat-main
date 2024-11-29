@@ -9,9 +9,10 @@ import { ChatItem, ChatItemSchema } from 'src/schema/chatlist.schema';
 import { CacheModule } from 'src/cache/cache.module';
 import { MessageSoftDelete, MessageSoftDeleteSchema } from 'src/schema/chatsoftdelete';
 import { MemberModule } from 'src/member/member.module';
+import { MetricsAggregatorModule } from 'src/metrics-aggregator/metrics-aggregator.module';
 
 @Module({
-  imports: [JwtModule, CacheModule, AuthModule, MongooseModule.forFeature([{ name: ChatItem.name, schema: ChatItemSchema }, { name: MessageSoftDelete.name, schema: MessageSoftDeleteSchema }])],
+  imports: [JwtModule, CacheModule, AuthModule, MetricsAggregatorModule, MongooseModule.forFeature([{ name: ChatItem.name, schema: ChatItemSchema }, { name: MessageSoftDelete.name, schema: MessageSoftDeleteSchema }])],
   exports: [UserChatListService],
   providers: [UserChatListService],
   controllers: [ChatlistController],

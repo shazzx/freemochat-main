@@ -105,6 +105,7 @@ function ChatSidebar({ socket, setChatOpen, setRecepientDetails, chatList, chatO
                     <CardContent className="flex flex-col gap-2 p-0">
                         {chatList?.users?.length > 0 ? chatList?.users?.map((chat, i) => (
                             <div className="flex gap-4 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={() => {
+                                chat.unreadCount = 0
                                 if (chat.type == "Page") {
                                     setRecepientDetails({ lastSeenMessageId: chat.lastSeenMessageId, chatlistId: chat._id, userId: chat?.recepient?._id, username: chat?.recepient.handle, images: { profile: chat?.recepient?.profile, cover: chat?.recepient?.cover }, name: chat?.recepient?.name, type: "Page", chatIndex: i })
                                 } else {
@@ -121,7 +122,7 @@ function ChatSidebar({ socket, setChatOpen, setRecepientDetails, chatList, chatO
                                     <p className="text-sm font-medium leading-none">
                                         {chat?.type == "Page" ? chat?.recepient?.name : chat?.recepient?.firstname + " " + chat?.recepient?.lastname}
                                     </p>
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-sm text-muted-foreground break-words max-w-[240px]">
                                         {chat?.lastMessage?.encryptedContent}
                                     </p>
 

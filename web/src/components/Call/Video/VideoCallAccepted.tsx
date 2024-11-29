@@ -9,6 +9,7 @@ import {
     usePublish,
     useRemoteAudioTracks,
     useRemoteUsers,
+    useRTCClient,
 } from "agora-rtc-react";
 import { useSocket } from "@/hooks/useSocket";
 import { Mic } from "lucide-react";
@@ -36,6 +37,19 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
     })
 
     const appId = 'f41145d4d6fa4a3caab3104ac89622ec'
+
+
+    const remoteUsers = useRemoteUsers();
+
+    // useEffect(() => {
+    //     if (remoteUsers.length == 0) {
+    //         cancelCall()
+    //     }
+    //     return () => {
+    //         console.log('ending calll there here')
+    //         // cancelCall("VIDEO")
+    //     };
+    // }, [remoteUsers])
 
     // set the connection state
     const [activeConnection, setActiveConnection] = useState(true);
@@ -65,7 +79,6 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
     usePublish([localMicrophoneTrack, localCameraTrack]);
 
     //remote users
-    const remoteUsers = useRemoteUsers();
     const { audioTracks } = useRemoteAudioTracks(remoteUsers);
     // play the remote user audio tracks
     audioTracks.forEach((track) => track.play());

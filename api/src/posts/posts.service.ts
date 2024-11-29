@@ -1829,11 +1829,11 @@ export class PostsService {
             reactionDeleteResult = await this.likeModel.deleteOne(reactionFilter)
         }
 
-        console.log(reactionFilter)
+        console.log("reactionDeleteResult :", reactionDeleteResult, "deleteResult :", deleteResult)
 
         if (reactionDeleteResult && reactionDeleteResult.deletedCount === 0 && deleteResult.deletedCount === 0) {
             console.log('inside reaction create filter')
-            await this.likeModel.create(filter);
+            await this.likeModel.create(reactionFilter);
             if (userId != authorId) {
                 await this.notificationService.createNotification(
                     {
@@ -1865,7 +1865,7 @@ export class PostsService {
             return true;
         }
 
-        if (deleteResult.deletedCount === 0 && reactionDeleteResult && reactionDeleteResult.deletedCount === 0) {
+        if ((deleteResult.deletedCount === 0 && !reactionDeleteResult) || (deleteResult.deletedCount === 0 && reactionDeleteResult.deletedCount === 1)) {
             console.log('inside normal create query filter')
 
             await this.likeModel.create(filter);
@@ -1915,8 +1915,9 @@ export class PostsService {
             console.log(updatedInteraction)
         }
 
+        console.log('ending function')
         await this.metricsAggregatorService.decrementCount(filter.targetId, type, "likes")
-        return false; // Indicates the item is now unliked
+        return false;
     }
 
     async getBookmarkedPosts(username) {

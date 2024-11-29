@@ -72,7 +72,10 @@ const VideoCall = ({ cancelCall }) => {
     const dispatch = useAppDispatch()
 
     useEffect(() => {
-        console.log(localMicrophoneTrack, localCameraTrack)
+        return () => {
+            // cancelCall("VIDEO")
+            // dispatch(endCall())
+        }
     }, [localMicrophoneTrack, localCameraTrack])
     const callDecline = () => {
         socket.emit('call-decline', { recepientDetails: callDetails.userDetails })

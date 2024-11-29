@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, PopulateOptions } from 'mongoose';
 import { CacheService } from 'src/cache/cache.service';
 import { MemberService } from 'src/member/member.service';
+import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 import { ChatItem, MessageType } from 'src/schema/chatlist.schema';
 import { MessageSoftDelete } from 'src/schema/chatsoftdelete';
 
@@ -11,8 +12,18 @@ export class UserChatListService {
     constructor(
         @InjectModel(ChatItem.name) private userChatListModel: Model<ChatItem>,
         @InjectModel(MessageSoftDelete.name) private messageSoftDelete: Model<MessageSoftDelete>,
+        private readonly metricsAggregatorService: MetricsAggregatorService,
         private readonly cacheService: CacheService,
     ) { }
+
+    async messagesSeen(chatlistId) {
+        await this.userChatListModel.updateOne(
+            { _id: chatlistId },
+            {
+                unreadCount: 0
+            }
+        );
+    }
 
     async createOrUpdateChatList(
         userId: any,
@@ -121,6 +132,7 @@ export class UserChatListService {
             refPath: "type"
         } as PopulateOptions).sort({ updatedAt: -1 })
 
+        // this.metricsAggregatorService.incrementCount()
 
         return chatListUser
     }

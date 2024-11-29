@@ -260,6 +260,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
     })
     socket.on("call-decline", (data) => {
       console.log("decline")
+      toast.info("Call declined")
       dispatch(endCall())
     })
     socket.on("call-accept", (data) => {
