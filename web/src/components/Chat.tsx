@@ -65,24 +65,28 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
     useEffect(() => {
 
         const findLastMessageByUserId = () => {
-            for (let i = userMessages.data.length - 1; i >= 0; i--) {
-                const page = userMessages.data[i]
-                const messages = page.messages
+            try {
+                for (let i = userMessages.data.length - 1; i >= 0; i--) {
+                    const page = userMessages?.data[i]
+                    const messages = page.messages
 
-                const lastMessage = messages.reverse().find((message) => {
-                    return message.sender == messagesDetails.recepientId
-                })
+                    const lastMessage = messages?.reverse()?.find((message) => {
+                        return message.sender == messagesDetails.recepientId
+                    })
 
-                if (lastMessage) {
-                    console.log(lastMessage, 'lastmessage found')
-                    if (recepientDetails.chatlistId && lastMessage._id) {
-                        console.log(recepientDetails.chatlistId, lastMessage._id)
-                        socket.emit("message-deliverability", { senderId: messagesDetails.recepientId, recepientId: user._id, messageId: lastMessage._id })
+                    if (lastMessage) {
+                        console.log(lastMessage, 'lastmessage found')
+                        if (recepientDetails.chatlistId && lastMessage._id) {
+                            console.log(recepientDetails.chatlistId, lastMessage._id)
+                            socket.emit("message-deliverability", { senderId: messagesDetails.recepientId, recepientId: user._id, messageId: lastMessage._id })
+                        }
+                        return lastMessage
                     }
-                    return lastMessage
-                }
-                console.log(lastMessage, 'lastmessage not found')
+                    console.log(lastMessage, 'lastmessage not found')
 
+                }
+            } catch (error) {
+                return error
             }
             return null
         }
@@ -990,7 +994,7 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
                         </div>
                     </div>}
 
-                    <AudioRecorder  path="messages" stopRecordingRef={stopRecordingRef} setIsRecordingMain={setIsRecording} onRecordingComplete={async (audioBlob, uploadState, recordingTime) => {
+                    <AudioRecorder path="messages" stopRecordingRef={stopRecordingRef} setIsRecordingMain={setIsRecording} onRecordingComplete={async (audioBlob, uploadState, recordingTime) => {
                         if (uploadState) {
                             const formData = new FormData()
                             const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, type: recepientDetails?.type, messageType: "Voice", mediaDetails: { type: "audio", duration: recordingTime } }

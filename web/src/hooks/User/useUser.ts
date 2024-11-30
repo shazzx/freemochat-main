@@ -84,8 +84,8 @@ export const useUserMetrics = () => {
 export const useUserDefaultMetric = () => {
     const queryClient = useQueryClient()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-        mutationFn: (name: string) => {
-            return defaultMetric(name)
+        mutationFn: (name: string, targetId?: string) => {
+            return defaultMetric(name, targetId)
         },
 
 
@@ -172,7 +172,6 @@ export const useOnlineStatus = (userId: string) => {
         },
 
     })
-    console.log(data)
 
     return {
         data,

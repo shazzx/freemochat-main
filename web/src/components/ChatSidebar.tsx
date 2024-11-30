@@ -16,7 +16,7 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs"
 import { useChatGroups, useCreateChatGroup } from "@/hooks/Chat/main"
-import { useUserFriends } from "@/hooks/User/useUser"
+import { useUserDefaultMetric, useUserFriends } from "@/hooks/User/useUser"
 import CreateChatGroup from "@/models/CreateChatGroup"
 import NewChat from "@/models/NewChat"
 import React, { useEffect, useRef, useState } from "react"
@@ -26,6 +26,8 @@ import { useSocket } from "@/hooks/useSocket"
 import { useAppSelector } from "@/app/hooks"
 import { format } from "date-fns"
 import { useNavigate, useSearchParams } from "react-router-dom"
+import { QueryClient, useQueryClient } from "@tanstack/react-query"
+import { produce } from "immer"
 
 
 function ChatSidebar({ socket, setChatOpen, setRecepientDetails, chatList, chatOpen }) {
@@ -79,6 +81,9 @@ function ChatSidebar({ socket, setChatOpen, setRecepientDetails, chatList, chatO
     // console.log(userFriends)
     console.log(chatList)
 
+    const queryClient = useQueryClient()
+    const defaultMetric = useUserDefaultMetric()
+
     return (
         <div className={`min-w-[260px] sm:max-w-[460px] w-full flex h-full ${chatOpen && "hidden lg:flex"}`}>
             {searchParams.get("model") == "newgroup" &&
@@ -104,8 +109,22 @@ function ChatSidebar({ socket, setChatOpen, setRecepientDetails, chatList, chatO
                 <Card x-chunk="dashboard-01-chunk-5" className="w-full bg-background-secondary h-full border-none ">
                     <CardContent className="flex flex-col gap-2 p-0">
                         {chatList?.users?.length > 0 ? chatList?.users?.map((chat, i) => (
-                            <div className="flex gap-4 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={() => {
-                                chat.unreadCount = 0
+                            <div className="flex gap-4 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={async () => {
+                                const response = await axiosClient.post("chatlist/messagesSeen", { chatlistId: chat._id, recepientId: chat.recepient._id })
+                                defaultMetric.mutate('unreadChatlist')
+                                await queryClient.cancelQueries({ queryKey: ['chatlist'] })
+                                queryClient.invalidateQueries({ queryKey: ['metrics'] })
+                                queryClient.setQueryData(['chatlist'], (chatlists: any) => {
+                                    const updatedUser = produce(chatlists, (draft: any) => {
+                                        if (draft?.users) {
+                                            draft.users[i].unreadCount = 0
+                                            return draft
+                                        }
+                                    })
+                                    return updatedUser
+                                });
+
+
                                 if (chat.type == "Page") {
                                     setRecepientDetails({ lastSeenMessageId: chat.lastSeenMessageId, chatlistId: chat._id, userId: chat?.recepient?._id, username: chat?.recepient.handle, images: { profile: chat?.recepient?.profile, cover: chat?.recepient?.cover }, name: chat?.recepient?.name, type: "Page", chatIndex: i })
                                 } else {

@@ -26,7 +26,8 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
       if (message?.success == false) {
         toast.error(message?.message)
       }
-      toast.info(message.body)
+
+
 
       console.log(message, 'new message')
       let newMessage = {
@@ -70,6 +71,8 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
         })
         return updatedMessages
       });
+
+      queryClient.invalidateQueries({ queryKey: ['metrics'] })
 
     });
 
@@ -227,6 +230,12 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
       queryClient.invalidateQueries({ queryKey: ['metrics'] })
       // dispatch(setNewNotification())
     })
+
+
+    socket.on("unreadChatlist", (data) => {
+      queryClient.invalidateQueries({ queryKey: ['metrics'] })
+    })
+
     socket.on("request", (data) => {
       queryClient.invalidateQueries({ queryKey: ['metrics'] })
       queryClient.invalidateQueries({ queryKey: ['userRequests', user._id] })

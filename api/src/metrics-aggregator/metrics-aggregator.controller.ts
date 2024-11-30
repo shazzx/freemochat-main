@@ -11,16 +11,15 @@ export class MetricsAggregatorController {
   // @Public()
   @Get("user/metrics")
   async getAll(@Req() req: Request, @Res() res: Response) {
-    const {sub} = req.user as {sub: string}
+    const { sub } = req.user as { sub: string }
     res.json(await this.metricsAggregatorService.userMetrics(sub))
   }
 
   @Post("user/metrics/default")
   async default(@Req() req: Request, @Res() res: Response) {
-    const {sub} = req.user as {sub: string}
-    const {name} = req.body
-    console.log(name)
-    res.json(await this.metricsAggregatorService.defaultCount(sub, name, 'user'))
+    const { sub } = req.user as { sub: string }
+    const { name, targetId } = req.body
+    res.json(await this.metricsAggregatorService.defaultCount(targetId || sub, name, 'user'))
   }
 
   // @Public()

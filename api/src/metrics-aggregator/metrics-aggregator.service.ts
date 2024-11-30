@@ -23,7 +23,8 @@ export class MetricsAggregatorService {
     async userMetrics(targetId: string) {
         let notification = await this.counterModel.findOne({ targetId: new Types.ObjectId(targetId), name: "notification", type: "user" })
         let requests = await this.counterModel.findOne({ targetId: new Types.ObjectId(targetId), name: "request", type: "user" })
-        return { notification, requests }
+        let unreadChatlists = await this.counterModel.findOne({ targetId: new Types.ObjectId(targetId), name: "unreadChatlist", type: "user" })
+        return { notification, requests, unreadChatlists }
     }
 
 
