@@ -40,7 +40,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleMessage(@MessageBody() payload: { senderDetails: { targetId: Types.ObjectId, username: string }, body: string, messageType: string, recepientDetails: { username: string, type: string, targetId: string } }) {
 
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.targetId))
-    console.log(recepient, recepient)
+    let _user = JSON.parse(await this.cacheService.getOnlineUser(payload.senderDetails.targetId))
+    console.log(recepient, _user, 'this is user and rec')
 
     this.logger.log(`Message received: ${payload.senderDetails.targetId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.targetId + " - " + payload.recepientDetails.username + " - " + payload.body}`);
 
@@ -70,6 +71,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log('socket id does not exists in redis db')
         await this.sendPushNotification(pushMessage)
         this.server.emit('chatlist', { users: chatlist })
+        this.server.to(_user?.socketId).emit('chat', { ...payload, _id: message._id });
+
         return
       }
 
@@ -79,11 +82,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log('socket id does not exists in server connection')
         await this.sendPushNotification(pushMessage)
         this.server.emit('chatlist', { users: chatlist })
+        this.server.to(_user?.socketId).emit('chat', { ...payload, _id: message._id });
         return
       }
 
       this.server.to(recepient?.socketId).emit('chat', { ...payload, _id: message._id });
-      this.server.emit('chatlist', { users: chatlist })
+      this.server.to(_user?.socketId).emit('chat', { ...payload, _id: message._id });
+      this.server.to(_user?.socketId).emit('chatlist', { users: chatlist })
       return payload;
     } catch (error) {
       this.logger.error(error)
@@ -223,12 +228,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (payload.recepientDetails && !payload.recepientDetails.userId) {
       throw new BadRequestException('recepient id required')
     }
-    console.log(payload)
+
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
     let user = JSON.parse(await this.cacheService.getOnlineUser(payload.userDetails.userId))
     let _recepient = await this.userService.getRawUser(payload.recepientDetails.userId)
     let socketStatus = this.server.sockets.sockets.has(recepient?.socketId)
+
     console.log(socketStatus, recepient, "socket status and recepient")
+
+    let message = await this.messageService.createMessage({ type: 'User', sender: new Types.ObjectId(payload.userDetails.userId), recepient: new Types.ObjectId(payload.recepientDetails.userId), content: payload?.type, gateway: true, messageType: 'Info', })
+    const chatlist = await this.chatlistService.createOrUpdateChatList(payload.userDetails.userId, payload.recepientDetails.userId, 'User', { sender: payload.senderDetails.userId, encryptedContent: "Video Call", messageId: message._id }, "Text")
+
     if (recepient?.socketId && socketStatus) {
       this.server.to(user.socketId).emit("call-ringing", { callState: "ringing" })
     } else {
@@ -254,10 +264,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         await this.sendPushNotification(pushMessage)
         return
       }
-
     }
 
-    console.log('ismobile', payload)
     this.server.to(recepient?.socketId).emit("initiate-call", { userDetails: payload?.userDetails, recepientDetails: { ..._recepient, userId: _recepient._id }, type: payload?.type, isMobile: payload?.isMobile ?? false })
   }
 

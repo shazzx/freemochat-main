@@ -26,6 +26,7 @@ import { AlertDialogC } from "./AlertDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useOnlineStatus, useUserFriends } from "@/hooks/User/useUser";
 import MessageActionsDropdown from "./MessageActionsDropDown";
+import { v4 as uuidv4 } from 'uuid';
 
 function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecording, setIsRecording }: any) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
@@ -237,10 +238,13 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
         }
     }, []);
 
-    const deleteSelectedMessage = () => {
+    const deleteSelectedMessage = (invalidate) => {
         if (selectedMessageId !== null) {
             deleteMessage(selectedMessageId)
             setSelectedMessageId(null);
+            if(invalidate){
+                queryClient.invalidateQueries({ queryKey: ['messages', recepientDetails.userId] })
+            }
         }
     };
 
@@ -255,7 +259,9 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
         if (e?.type !== "click" && e?.key !== "Enter") {
             return
         }
-        const messageData = { recepeint: recepientDetails.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, type: recepientDetails?.type, messageType: "Text" }
+
+        const uuid = uuidv4()
+        const messageData = { recepeint: recepientDetails.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, type: recepientDetails?.type, messageType: "Text", deletedFor: [], uuid }
 
         queryClient.setQueryData(["messages", recepientDetails.type == 'ChatGroup' ? recepientDetails.groupId : recepientDetails.userId], (pages: any) => {
             const updatedMessages = produce(pages, (draft: any) => {
@@ -275,12 +281,14 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
             return updatedMessages
         });
 
-        if (recepientDetails.type == "ChatGroup") {
-            socket.emit("groupchat", { senderDetails: { targetId: user?._id, username: user?.username, firstname: user.firstname, profile: user?.profile, lastname: user.lastname }, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, targetId: messageData.recepeint } });
-            setInputValue("");
-            return
-        }
-        socket.emit("chat", { senderDetails: { targetId: user?._id, username: user?.username }, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, groupName: recepientDetails.name, targetId: messageData.recepeint } });
+        // if (recepientDetails.type == "ChatGroup") {
+        //     socket.emit("groupchat", { senderDetails: { targetId: user?._id, username: user?.username, firstname: user.firstname, profile: user?.profile, lastname: user.lastname }, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, targetId: messageData.recepeint } });
+        //     setInputValue("");
+        //     return
+        // }
+
+
+        socket.emit("chat", { senderDetails: { targetId: user?._id, username: user?.username }, uuid, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, groupName: recepientDetails.name, targetId: messageData.recepeint } });
         setInputValue("");
     };
 
@@ -588,7 +596,7 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
                                         <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p>
                                         <div className="relative border border-muted
                                  text-sm bg-card p-1 text-foreground rounded-lg pr-3">
-                                            <p className="p-1 px-2 text-center" >{message?.content}</p>
+                                            <p className="p-1 px-2 text-center" >{message?.content + " Call"}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -677,8 +685,12 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
 
                                             }
                                             {(message._id && (selectedMessageId == message._id)) && <MessageActionsDropdown onDelete={() => {
-                                                message?.deletedFor.push({ userId: user?._id })
-                                                deleteSelectedMessage()
+                                                try {
+                                                    message?.deletedFor?.push({ userId: user?._id })
+                                                    deleteSelectedMessage(false)
+                                                } catch (error) {
+                                                    deleteSelectedMessage(true)
+                                                }
                                             }} setSelectedMessageId={setSelectedMessageId} />}
                                             {/* {
                                                 (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) &&

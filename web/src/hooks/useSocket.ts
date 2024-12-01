@@ -28,16 +28,52 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
       }
 
 
-
-      console.log(message, 'new message')
+      console.log(message, 'new message why')
       let newMessage = {
+        uuid: message?.uuid,
         _id: message?._id,
-        recepient: message?.recepientDetails?.userId,
-        sender: message?.senderDetails?.userId,
+        recepient: message?.recepientDetails?.targetId,
+        sender: message?.senderDetails?.targetId,
         content: message?.body,
         media: message?.media,
         type: message?.type
       }
+
+      if (message?.senderDetails?.targetId == user._id) {
+        console.log('yes own')
+        queryClient.setQueryData(["messages", recepient], (pages: any) => {
+          const updatedMessages = produce(pages, (draft: any) => {
+            if (!draft) {
+              return null
+            }
+
+            let pageIndex = -1
+            let messageIndex = -1
+
+            draft.pages.forEach((page, _pageIndex) => {
+              page.messages.forEach((message, _messageIndex) => {
+                if (message.uuid == newMessage.uuid) {
+                  draft.pages[_pageIndex].messages[_messageIndex]._id = newMessage._id
+                  pageIndex = _pageIndex
+                  messageIndex = _messageIndex
+                }
+              })
+            })
+
+            if (pageIndex > -1 && messageIndex > -1) {
+              return draft
+            }
+
+            console.log(pages)
+            throw new Error()
+          })
+          return updatedMessages
+        });
+
+        return
+      }
+
+
       queryClient.setQueryData(["messages", recepient], (pages: any) => {
         const updatedMessages = produce(pages, (draft: any) => {
           if (!draft) {
