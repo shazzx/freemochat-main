@@ -24,11 +24,11 @@ import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { format } from "date-fns";
 import { AlertDialogC } from "./AlertDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useOnlineStatus, useUserFriends } from "@/hooks/User/useUser";
+import { useOnlineStatus, useUserDefaultMetric, useUserFriends } from "@/hooks/User/useUser";
 import MessageActionsDropdown from "./MessageActionsDropDown";
 import { v4 as uuidv4 } from 'uuid';
 
-function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecording, setIsRecording }: any) {
+function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecording, chatlistDetails, setIsRecording }: any) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
     const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId)
     const group: any = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId) : {}
@@ -62,38 +62,6 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
     console.log(recepientDetails.lastSeenMessageId, 'lastseenmessage')
 
     const userOnlineStatus = useOnlineStatus(recepientDetails?.userId)
-
-    useEffect(() => {
-
-        const findLastMessageByUserId = () => {
-            try {
-                for (let i = userMessages.data.length - 1; i >= 0; i--) {
-                    const page = userMessages?.data[i]
-                    const messages = page.messages
-
-                    const lastMessage = messages?.reverse()?.find((message) => {
-                        return message.sender == messagesDetails.recepientId
-                    })
-
-                    if (lastMessage) {
-                        console.log(lastMessage, 'lastmessage found')
-                        if (recepientDetails.chatlistId && lastMessage._id) {
-                            console.log(recepientDetails.chatlistId, lastMessage._id)
-                            socket.emit("message-deliverability", { senderId: messagesDetails.recepientId, recepientId: user._id, messageId: lastMessage._id })
-                        }
-                        return lastMessage
-                    }
-                    console.log(lastMessage, 'lastmessage not found')
-
-                }
-            } catch (error) {
-                return error
-            }
-            return null
-        }
-
-        findLastMessageByUserId()
-    }, [])
 
 
     // const [isOnline, setIsOnline] = useState(null)
@@ -148,8 +116,64 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
     const messagesDetails = recepientDetails?.groupId ? { recepientId: recepientDetails?.groupId, isChatGroup: 1 } : { recepientId: recepientDetails?.userId, isChatGroup: 0 }
     const createMessage = useCreateMessage(recepientDetails?.userId || recepientDetails?.groupId)
     const userMessages = useMessages(messagesDetails)
+    const defaultMetric = useUserDefaultMetric()
+
+    useEffect(() => {
+
+        const findLastMessageByUserId = () => {
+            try {
+                for (let i = userMessages.data.length - 1; i >= 0; i--) {
+                    const page = userMessages?.data[i]
+                    const messages = page.messages
+
+                    const lastMessage = messages?.reverse()?.find((message) => {
+                        return message.sender == messagesDetails.recepientId
+                    })
+
+                    if (lastMessage) {
+                        console.log(lastMessage, 'lastmessage found')
+                        if (recepientDetails.chatlistId && lastMessage._id) {
+                            console.log(recepientDetails.chatlistId, lastMessage._id)
+                            socket.emit("message-deliverability", { senderId: messagesDetails.recepientId, recepientId: user._id, messageId: lastMessage._id })
+                        }
+                        return lastMessage
+                    }
+                    console.log(lastMessage, 'lastmessage not found')
+
+                }
+
+            } catch (error) {
+                return error
+            }
+            return null
+        }
+
+        const unreadChat = async () => {
+            const response = await axiosClient.post("chatlist/messagesSeen", { chatlistId: chatlistDetails.chatId, recepientId: chatlistDetails.recepientId })
+            console.log({ chatlistId: chatlistDetails.chatId, recepientId: chatlistDetails.recepientId }, 'seen')
+            defaultMetric.mutate('unreadChatlist')
+            queryClient.invalidateQueries({ queryKey: ['metrics'] })
+            queryClient.setQueryData(['chatlist'], (chatlists: any) => {
+                const updatedUser = produce(chatlists, (draft: any) => {
+                    if (draft?.users && chatlistDetails?.chatIndex > -1) {
+                        draft.users[chatlistDetails.chatIndex].unreadCount = 0
+                        return draft
+                    }
+                })
+                return updatedUser
+            });
 
 
+        }
+        console.log("yesyesyseyyseysyfysdfasdfasdfjasdfaskjdf;laajfaskdjf;j;")
+        unreadChat()
+        findLastMessageByUserId()
+
+        return () => {
+            unreadChat()
+            findLastMessageByUserId()
+        }
+    }, [userMessages.data])
 
     const joinGroup = async () => {
         socket.emit("joingroup", { userId: user?._id, groupId: recepientDetails?.groupId })
@@ -242,7 +266,7 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
         if (selectedMessageId !== null) {
             deleteMessage(selectedMessageId)
             setSelectedMessageId(null);
-            if(invalidate){
+            if (invalidate) {
                 queryClient.invalidateQueries({ queryKey: ['messages', recepientDetails.userId] })
             }
         }

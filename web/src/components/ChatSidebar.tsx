@@ -30,7 +30,7 @@ import { QueryClient, useQueryClient } from "@tanstack/react-query"
 import { produce } from "immer"
 
 
-function ChatSidebar({ socket, setChatOpen, setRecepientDetails, chatList, chatOpen }) {
+function ChatSidebar({ socket, setChatOpen, setChatlistDetails, setRecepientDetails, chatList, chatOpen }) {
     const { data } = useChatGroups()
     const { user } = useAppSelector(state => state.user)
     const userFriends = useUserFriends(user._id)
@@ -110,6 +110,7 @@ function ChatSidebar({ socket, setChatOpen, setRecepientDetails, chatList, chatO
                     <CardContent className="flex flex-col gap-2 p-0">
                         {chatList?.users?.length > 0 ? chatList?.users?.map((chat, i) => (
                             <div className="flex gap-4 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={async () => {
+                                setChatlistDetails({ chatId: chat._id, recepientId: chat.recepient._id, chatIndex: i })
                                 const response = await axiosClient.post("chatlist/messagesSeen", { chatlistId: chat._id, recepientId: chat.recepient._id })
                                 defaultMetric.mutate('unreadChatlist')
                                 await queryClient.cancelQueries({ queryKey: ['chatlist'] })

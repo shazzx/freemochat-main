@@ -39,7 +39,11 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
         type: message?.type
       }
 
+      queryClient.invalidateQueries({ queryKey: ['chatlist'] })
+
+
       if (message?.senderDetails?.targetId == user._id) {
+
         console.log('yes own')
         queryClient.setQueryData(["messages", recepient], (pages: any) => {
           const updatedMessages = produce(pages, (draft: any) => {
@@ -69,6 +73,7 @@ export const useSocket = (recepient?: string, _isOnline?: Function) => {
           })
           return updatedMessages
         });
+        queryClient.invalidateQueries({ queryKey: ['metrics'] })
 
         return
       }

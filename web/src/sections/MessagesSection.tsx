@@ -8,6 +8,7 @@ import { memo, useEffect, useRef, useState } from "react"
 function MessagesSection() {
     const [chatOpen, setChatOpen] = useState(false)
     const [recepientDetails, setRecepientDetails] = useState({ userId: "", username: "", type: "", fullname: "", name: "", chatIndex: -1 })
+    const [chatlistDetails, setChatlistDetails] = useState({ chatId: "", recepientId: "", chatIndex: -1 })
     const { user } = useAppSelector((data) => data.user)
     const socket = useSocket()
     const { data, isLoading } = useUserChatlist()
@@ -26,9 +27,9 @@ function MessagesSection() {
     return (
         <div className="flex w-full bg-background-secondary">
             <div className="flex w-full">
-                <ChatSidebar socket={socket} setChatOpen={setChatOpen} chatOpen={chatOpen} setRecepientDetails={setRecepientDetails} chatList={!isLoading && data} />
+                <ChatSidebar socket={socket} setChatOpen={setChatOpen} chatOpen={chatOpen} setChatlistDetails={setChatlistDetails} setRecepientDetails={setRecepientDetails} chatList={!isLoading && data} />
                 {chatOpen && recepientDetails?.type !== "ChatGroup" &&
-                    <Chat user={user} stopRecordingRef={stopRecordingRef} isRecording={isRecording} setIsRecording={setIsRecording} recepientDetails={recepientDetails} isOnline={isOnline} setChatOpen={setChatOpen} />
+                    <Chat user={user} stopRecordingRef={stopRecordingRef} isRecording={isRecording} chatlistDetails={chatlistDetails} setIsRecording={setIsRecording} recepientDetails={recepientDetails} isOnline={isOnline} setChatOpen={setChatOpen} />
                 }
                 {chatOpen && recepientDetails?.type == "ChatGroup" && recepientDetails?.name?.length > 4 &&
                     <Chat user={user} recepientDetails={recepientDetails} setChatOpen={setChatOpen} />
