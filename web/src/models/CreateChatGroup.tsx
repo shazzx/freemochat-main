@@ -6,7 +6,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { useChatGroup, useGroupMemberToggle } from "@/hooks/Chat/main"
 import { useGroupMembers, useToggleAdmin } from "@/hooks/useGroup"
 import { useUserFriends } from "@/hooks/User/useUser"
-import { useSocket } from "@/hooks/useSocket"
 import { ChatGroupCreate } from "@/utils/schemas/auth"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
@@ -21,9 +20,6 @@ import { useNavigate } from "react-router-dom"
 
 
 const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editState, groupDetails, setChatOpen }) => {
-
-    const {socket} = useAppSelector(state => state.socket)
-
     const queryClient = new QueryClient()
 
     let [imageSrc, setImageSrc] = useState(null)

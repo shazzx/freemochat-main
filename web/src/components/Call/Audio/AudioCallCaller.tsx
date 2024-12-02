@@ -1,13 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { useSocket } from '@/hooks/useSocket'
 import { MdPhone } from 'react-icons/md'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { endCall } from '@/app/features/user/callSlice'
 
 function AudioCallCaller({ recepientDetails, setAudioCallCaller }) {
-    const socket = useSocket()
+  const { socket } = useAppSelector((state) => state.socket)
     const dispatch = useAppDispatch()
 
     useEffect(() => {

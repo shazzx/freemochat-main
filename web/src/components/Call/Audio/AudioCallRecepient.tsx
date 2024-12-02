@@ -2,12 +2,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { Button } from '@/components/ui/button'
-import { useSocket } from '@/hooks/useSocket'
 import { MdPhone } from 'react-icons/md'
 import { endCall } from '@/app/features/user/callSlice'
 
 function AudioCallRecepient({ recepientDetails }) {
-    const socket = useSocket()
+    const { socket } = useAppSelector((state) => state.socket)
     const dispatch = useAppDispatch()
 
     useEffect(() => {
@@ -28,12 +27,14 @@ function AudioCallRecepient({ recepientDetails }) {
     }
 
     const callAccept = () => {
-        socket.emit('call-accept', { type: "AUDIO", recepientDetails, userDetails: {
-            userId: user._id,
-            username: user.username,
-            fullname: user.firstname + " " + user?.lastname,
-            profile: user?.profile
-        }})
+        socket.emit('call-accept', {
+            type: "AUDIO", recepientDetails, userDetails: {
+                userId: user._id,
+                username: user.username,
+                fullname: user.firstname + " " + user?.lastname,
+                profile: user?.profile
+            }
+        })
     }
 
     return (

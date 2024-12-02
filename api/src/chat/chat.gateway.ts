@@ -16,6 +16,7 @@ import { CGroupsService } from 'src/cgroups/cgroups.service';
 import { CacheService } from 'src/cache/cache.service';
 import { FriendService } from 'src/friend/friend.service';
 import { MemberService } from 'src/member/member.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @WebSocketGateway({ cors: { origin: '*' }, path: "/api/socket" },)
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -42,6 +43,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.targetId))
     let _user = JSON.parse(await this.cacheService.getOnlineUser(payload.senderDetails.targetId))
     console.log(recepient, _user, 'this is user and rec')
+    
 
     this.logger.log(`Message received: ${payload.senderDetails.targetId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.targetId + " - " + payload.recepientDetails.username + " - " + payload.body}`);
 
@@ -234,10 +236,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let _recepient = await this.userService.getRawUser(payload.recepientDetails.userId)
     let socketStatus = this.server.sockets.sockets.has(recepient?.socketId)
 
-    console.log(socketStatus, recepient, "socket status and recepient")
+    // console.log(socketStatus, recepient, "socket status and recepient")
 
     let message = await this.messageService.createMessage({ type: 'User', sender: new Types.ObjectId(payload.userDetails.userId), recepient: new Types.ObjectId(payload.recepientDetails.userId), content: payload?.type, gateway: true, messageType: 'Info', })
-    const chatlist = await this.chatlistService.createOrUpdateChatList(payload.userDetails.userId, payload.recepientDetails.userId, 'User', { sender: payload.senderDetails.userId, encryptedContent: "Video Call", messageId: message._id }, "Text")
+    // const chatlist = await this.chatlistService.createOrUpdateChatList(payload.userDetails.userId, payload.recepientDetails.userId, 'User', { sender: payload.senderDetails.userId, encryptedContent: "Video Call", messageId: message._id }, "Text")
 
     if (recepient?.socketId && socketStatus) {
       this.server.to(user.socketId).emit("call-ringing", { callState: "ringing" })
@@ -271,12 +273,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage("call-decline")
   async handleCallDecline(@MessageBody() payload) {
-    console.log(payload, 'decline payload')
     if (payload.recepientDetails && !payload.recepientDetails.userId) {
       throw new BadRequestException('recepient id required')
     }
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
-    console.log(payload, 'declined')
 
     this.server.to(recepient?.socketId).emit("call-decline", { status: "DECLINED", payload })
   }
@@ -288,9 +288,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.userId))
     let user = JSON.parse(await this.cacheService.getOnlineUser(payload.userDetails.userId))
-    console.log(user, 'accepted')
-    const uuid = '3u293urasdjkof'
-
+    const uuid = uuidv4()
 
     this.server.to(user?.socketId).emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.recepientDetails, isMobile: payload?.isMobile ?? false })
     this.server.to(recepient?.socketId).emit("call-accept", { status: "ACCEPTED", type: payload.type, channel: uuid, recepientDetails: payload.userDetails, isMobile: payload?.isMobile ?? false })
@@ -298,17 +296,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage("call-end")
   async cancelCall(@MessageBody() payload) {
-    console.log(payload, 'call end payload')
     if (!payload?.recepientDetails && !payload.recepientDetails.userId) {
       throw new BadRequestException('recepient id required')
     }
 
-    console.log(payload, 'call end payload')
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload?.recepientDetails?.userId))
     let user = JSON.parse(await this.cacheService.getOnlineUser(payload?.userDetails?.userId))
-
-    console.log(user, 'user')
-    console.log(recepient, 'recepient')
 
     this.server.to(user?.socketId).emit("call-end", { status: "END", })
     this.server.to(recepient?.socketId).emit("call-end", { status: "END", })

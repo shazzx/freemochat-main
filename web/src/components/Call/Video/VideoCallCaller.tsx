@@ -1,10 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import  { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { useSocket } from '@/hooks/useSocket'
+import { useAppSelector } from '@/app/hooks'
 
 function VideoCallCaller({ recepientDetails, setVideoCallCallerState }) {
-    const socket = useSocket()
+    const { socket } = useAppSelector((state) => state.socket)
 
     useEffect(() => {
 

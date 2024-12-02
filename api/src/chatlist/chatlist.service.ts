@@ -129,6 +129,7 @@ export class UserChatListService {
                 unreadCount: recepientId.toString() !== lastMessage.sender.toString() ? 1 : 0
             });
         }
+
         const chatListUser = await this.userChatListModel.find({ user: userId }).populate({
             path: "recepient",
             refPath: "type"
@@ -136,6 +137,7 @@ export class UserChatListService {
 
         const recepient = await this.userChatListModel.findOne({ user: recepientId, recepient: userId })
 
+        console.log('recepient idididi', recepientId)
 
         if (recepient.unreadCount == 1) {
             await this.metricsAggregatorService.incrementCount(new Types.ObjectId(recepientId), 'unreadChatlist', 'user')

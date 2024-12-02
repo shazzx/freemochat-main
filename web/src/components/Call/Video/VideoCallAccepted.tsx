@@ -11,8 +11,6 @@ import {
     useRemoteUsers,
     useRTCClient,
 } from "agora-rtc-react";
-import { useSocket } from "@/hooks/useSocket";
-import { Mic } from "lucide-react";
 import { MdPhone } from "react-icons/md";
 import { useAppSelector } from "@/app/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
@@ -24,9 +22,7 @@ import CallSecondsCounter from "../CallSecondsCounter";
 const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
     const { callDetails, callerState, onCall, recepientState, isMobile, targetDetails, type } = useAppSelector((state) => state.call)
     const { user } = useAppSelector((state) => state.user)
-
-    console.log(callDetails)
-    const socket = useSocket()
+    const { socket } = useAppSelector((state) => state.socket)
 
     useEffect(() => {
         socket.on("call-end", (data) => {

@@ -22,7 +22,6 @@ import NewChat from "@/models/NewChat"
 import React, { useEffect, useRef, useState } from "react"
 import { MdCancel, MdGroups, MdMessage } from "react-icons/md"
 import { BiSolidMessageSquareAdd } from "react-icons/bi";
-import { useSocket } from "@/hooks/useSocket"
 import { useAppSelector } from "@/app/hooks"
 import { format } from "date-fns"
 import { useNavigate, useSearchParams } from "react-router-dom"
@@ -41,7 +40,6 @@ function ChatSidebar({ socket, setChatOpen, setChatlistDetails, setRecepientDeta
     const [newChatModelState, setNewChatModelState] = useState(false)
     const [currentTab, setCurrentTab] = useState("general")
     const newChatRef = useRef(null)
-    // const socket = useSocket(user._id)
     const { mutate } = useCreateChatGroup()
 
     const createGroup = async (groupDetails, imageUpload, coverImageUpload) => {
@@ -148,7 +146,7 @@ function ChatSidebar({ socket, setChatOpen, setChatlistDetails, setRecepientDeta
 
                                 </div>
                                 <div className="ml-auto flex flex-col">
-                                    <span className="text-xs">{format(chat?.updatedAt ?? Date.now(), 'MMM d, yyy h:mm a')}</span>
+                                    <span className="text-xs">{format(chat.updatedAt, 'MMM d, yyy h:mm a')}</span>
                                     {
                                         chat?.unreadCount > 0 &&
                                         <span className="ml-auto text-xs bg-red-500 rounded-full text-center w-6 mt-4 ">

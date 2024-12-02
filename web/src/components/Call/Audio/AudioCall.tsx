@@ -13,14 +13,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Mic } from "lucide-react";
 import { MdPhone } from "react-icons/md";
 import CallSecondsCounter from "../CallSecondsCounter";
-import { useSocket } from "@/hooks/useSocket";
 import { useAppSelector } from "@/app/hooks";
 import { toast } from "react-toastify";
 
 const AudioCall = ({ channel, callDetails, cancelCall }) => {
   const recepient = callDetails.recepientDetails
   const appId = 'f41145d4d6fa4a3caab3104ac89622ec'
-  const socket = useSocket()
+  const { socket } = useAppSelector((state) => state.socket)
   const { user } = useAppSelector((state) => state.user)
 
 

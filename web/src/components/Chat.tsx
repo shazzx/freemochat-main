@@ -15,7 +15,6 @@ import AudioPlayer from "@/AudioPlayer";
 import { FaFilePdf } from 'react-icons/fa'
 import { useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
-import { useSocket } from "@/hooks/useSocket";
 import CreateChatGroup from "@/models/CreateChatGroup";
 import { toast } from "react-toastify";
 import { handleFile } from "@/lib/formatCheck";
@@ -28,9 +27,8 @@ import { useOnlineStatus, useUserDefaultMetric, useUserFriends } from "@/hooks/U
 import MessageActionsDropdown from "./MessageActionsDropDown";
 import { v4 as uuidv4 } from 'uuid';
 
-function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecording, chatlistDetails, setIsRecording }: any) {
+function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, isRecording, chatlistDetails, setIsRecording }: any) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
-    const socket = useSocket(recepientDetails?.userId || recepientDetails?.groupId)
     const group: any = recepientDetails?.groupId ? useChatGroup(recepientDetails?.groupId) : {}
     const [chatGroupInfo, setChatGroupInfo] = useState(false)
     const [inputValue, setInputValue] = useState("");
@@ -58,8 +56,6 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
             setWidth(window.innerWidth)
         })
     }, [])
-
-    console.log(recepientDetails.lastSeenMessageId, 'lastseenmessage')
 
     const userOnlineStatus = useOnlineStatus(recepientDetails?.userId)
 
@@ -118,61 +114,58 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
     const userMessages = useMessages(messagesDetails)
     const defaultMetric = useUserDefaultMetric()
 
+
+    const findLastMessageByUserId = () => {
+        try {
+            for (let i = userMessages.data.length - 1; i >= 0; i--) {
+                const page = userMessages?.data[i]
+                const messages = page.messages
+
+                const _messages = { ...messages }
+
+                const lastMessage = _messages?.reverse()?.find((message) => {
+                    return message.sender == messagesDetails.recepientId
+                })
+
+                if (lastMessage) {
+                    console.log(lastMessage, 'lastmessage found')
+                    if (recepientDetails.chatlistId && lastMessage._id) {
+                        console.log(recepientDetails.chatlistId, lastMessage._id)
+                        socket.emit("message-deliverability", { senderId: messagesDetails.recepientId, recepientId: user._id, messageId: lastMessage._id })
+                    }
+                    return lastMessage
+                }
+                console.log(lastMessage, 'lastmessage not found')
+
+            }
+
+        } catch (error) {
+            return error
+        }
+        return null
+    }
+
+    const unreadChat = async () => {
+        const response = await axiosClient.post("chatlist/messagesSeen", { chatlistId: chatlistDetails.chatId, recepientId: chatlistDetails.recepientId })
+        defaultMetric.mutate('unreadChatlist')
+        queryClient.invalidateQueries({ queryKey: ['metrics'] })
+        queryClient.invalidateQueries({ queryKey: ['chatlist'] })
+        queryClient.setQueryData(['chatlist'], (chatlists: any) => {
+            const updatedUser = produce(chatlists, (draft: any) => {
+                if (draft?.users && chatlistDetails?.chatIndex > -1) {
+                    draft.users[chatlistDetails.chatIndex].unreadCount = 0
+                    return draft
+                }
+            })
+            return updatedUser
+        });
+    }
+
     useEffect(() => {
 
-        const findLastMessageByUserId = () => {
-            try {
-                for (let i = userMessages.data.length - 1; i >= 0; i--) {
-                    const page = userMessages?.data[i]
-                    const messages = page.messages
-
-                    const lastMessage = messages?.reverse()?.find((message) => {
-                        return message.sender == messagesDetails.recepientId
-                    })
-
-                    if (lastMessage) {
-                        console.log(lastMessage, 'lastmessage found')
-                        if (recepientDetails.chatlistId && lastMessage._id) {
-                            console.log(recepientDetails.chatlistId, lastMessage._id)
-                            socket.emit("message-deliverability", { senderId: messagesDetails.recepientId, recepientId: user._id, messageId: lastMessage._id })
-                        }
-                        return lastMessage
-                    }
-                    console.log(lastMessage, 'lastmessage not found')
-
-                }
-
-            } catch (error) {
-                return error
-            }
-            return null
-        }
-
-        const unreadChat = async () => {
-            const response = await axiosClient.post("chatlist/messagesSeen", { chatlistId: chatlistDetails.chatId, recepientId: chatlistDetails.recepientId })
-            console.log({ chatlistId: chatlistDetails.chatId, recepientId: chatlistDetails.recepientId }, 'seen')
-            defaultMetric.mutate('unreadChatlist')
-            queryClient.invalidateQueries({ queryKey: ['metrics'] })
-            queryClient.setQueryData(['chatlist'], (chatlists: any) => {
-                const updatedUser = produce(chatlists, (draft: any) => {
-                    if (draft?.users && chatlistDetails?.chatIndex > -1) {
-                        draft.users[chatlistDetails.chatIndex].unreadCount = 0
-                        return draft
-                    }
-                })
-                return updatedUser
-            });
-
-
-        }
-        console.log("yesyesyseyyseysyfysdfasdfasdfjasdfaskjdf;laajfaskdjf;j;")
         unreadChat()
-        findLastMessageByUserId()
+        // findLastMessageByUserId()
 
-        return () => {
-            unreadChat()
-            findLastMessageByUserId()
-        }
     }, [userMessages.data])
 
     const joinGroup = async () => {
@@ -1051,4 +1044,4 @@ function Chat({ user, recepientDetails, setChatOpen, stopRecordingRef, isRecordi
     )
 }
 
-export default memo(Chat)
+export default Chat

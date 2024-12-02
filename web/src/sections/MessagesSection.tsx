@@ -2,15 +2,14 @@ import { useAppSelector } from "@/app/hooks";
 import Chat from "@/components/Chat"
 import ChatSidebar from "@/components/ChatSidebar"
 import { useUserChatlist } from "@/hooks/Chat/main";
-import { useSocket } from "@/hooks/useSocket";
-import { memo, useEffect, useRef, useState } from "react"
+import {  useEffect, useRef, useState } from "react"
 
 function MessagesSection() {
     const [chatOpen, setChatOpen] = useState(false)
     const [recepientDetails, setRecepientDetails] = useState({ userId: "", username: "", type: "", fullname: "", name: "", chatIndex: -1 })
     const [chatlistDetails, setChatlistDetails] = useState({ chatId: "", recepientId: "", chatIndex: -1 })
     const { user } = useAppSelector((data) => data.user)
-    const socket = useSocket()
+    const { socket } = useAppSelector((state) => state.socket)
     const { data, isLoading } = useUserChatlist()
     const isOnline = !isLoading && recepientDetails.chatIndex > -1 && data.users[recepientDetails.chatIndex]?.onlineStatus
     const [isRecording, setIsRecording] = useState(false)
@@ -29,7 +28,7 @@ function MessagesSection() {
             <div className="flex w-full">
                 <ChatSidebar socket={socket} setChatOpen={setChatOpen} chatOpen={chatOpen} setChatlistDetails={setChatlistDetails} setRecepientDetails={setRecepientDetails} chatList={!isLoading && data} />
                 {chatOpen && recepientDetails?.type !== "ChatGroup" &&
-                    <Chat user={user} stopRecordingRef={stopRecordingRef} isRecording={isRecording} chatlistDetails={chatlistDetails} setIsRecording={setIsRecording} recepientDetails={recepientDetails} isOnline={isOnline} setChatOpen={setChatOpen} />
+                    <Chat user={user} socket={socket} stopRecordingRef={stopRecordingRef} isRecording={isRecording} chatlistDetails={chatlistDetails} setIsRecording={setIsRecording} recepientDetails={recepientDetails} isOnline={isOnline} setChatOpen={setChatOpen} />
                 }
                 {chatOpen && recepientDetails?.type == "ChatGroup" && recepientDetails?.name?.length > 4 &&
                     <Chat user={user} recepientDetails={recepientDetails} setChatOpen={setChatOpen} />
@@ -49,4 +48,4 @@ function MessagesSection() {
     )
 }
 
-export default memo(MessagesSection)
+export default MessagesSection

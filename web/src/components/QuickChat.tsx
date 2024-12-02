@@ -11,7 +11,6 @@ import { EllipsisIcon } from 'lucide-react';
 import { axiosClient } from '@/api/axiosClient';
 import { useQueryClient } from '@tanstack/react-query';
 import { produce } from 'immer';
-import { useSocket } from '@/hooks/useSocket';
 import { MdClose, MdSend } from 'react-icons/md';
 
 function QuickChat({ target, setOpenQuickChat }: any) {
@@ -19,8 +18,7 @@ function QuickChat({ target, setOpenQuickChat }: any) {
     const [messages, setMessages] = useState([])
     const [inputValue, setInputValue] = useState("")
     const recepientDetails = target?.type == "User" ? { targetId: target?.data?._id, username: target?.data?.username, type: "User" } : { targetId: target?.data?._id, username: target?.data?.handle, type: "Page" }
-    const socket = useSocket(recepientDetails?.targetId)
-    console.log(recepientDetails)
+    const { socket } = useAppSelector((state) => state.socket)
     const chatContainerRef = useRef(null)
     const queryClient = useQueryClient()
     const [dropDownMessageIndex, setDropDownMessageIndex] = useState(null)
@@ -35,7 +33,7 @@ function QuickChat({ target, setOpenQuickChat }: any) {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
     }
 
-    const userMessages = useMessages({recepientId: target?.data?._id, isChatGroup: 0})
+    const userMessages = useMessages({ recepientId: target?.data?._id, isChatGroup: 0 })
     console.log(userMessages)
 
     const deleteMessage = async (messageId) => {
@@ -98,13 +96,13 @@ function QuickChat({ target, setOpenQuickChat }: any) {
                         }
                     </div>
                     <div className='flex flex-col gap-0'>
-                        <h3 className='text-card-foreground text-sm'>{target?.type == "User" ? target?.data?.firstname + " " + target?.data?.lastname  : target?.data?.name}</h3>
+                        <h3 className='text-card-foreground text-sm'>{target?.type == "User" ? target?.data?.firstname + " " + target?.data?.lastname : target?.data?.name}</h3>
                         <span className='text-muted-foreground text-xs'>@{target?.type == "User" ? target?.data?.username : target?.data?.handle}</span>
                     </div>
                 </div>
-            <MdClose size={24} cursor="pointer" onClick={() => {
-                setOpenQuickChat(false)
-            }} />
+                <MdClose size={24} cursor="pointer" onClick={() => {
+                    setOpenQuickChat(false)
+                }} />
 
             </div>
             <div className="h-full p-4 flex flex-col gap-4  overflow-y-scroll" onClick={() => {
@@ -201,12 +199,12 @@ function QuickChat({ target, setOpenQuickChat }: any) {
                                             }
                                             <p>{message?.content}</p>
                                             {/* { */}
-                                                {/* // (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) && */}
-                                                {/* // <div className="cursor-pointer absolute top-0 -right-2" onClick={() => { */}
-                                                {/* //     setOpenedDropDownMessageId(message?._id) */}
-                                                {/* // }}> */}
-                                                    {/* // <EllipsisIcon /> */}
-                                                {/* // </div> */}
+                                            {/* // (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) && */}
+                                            {/* // <div className="cursor-pointer absolute top-0 -right-2" onClick={() => { */}
+                                            {/* //     setOpenedDropDownMessageId(message?._id) */}
+                                            {/* // }}> */}
+                                            {/* // <EllipsisIcon /> */}
+                                            {/* // </div> */}
 
                                             {/* // } */}
                                             {/* {
@@ -416,8 +414,8 @@ function QuickChat({ target, setOpenQuickChat }: any) {
                     </div>
                 </div>
                 <Button className="m-0 bg-transparent  py-5 px-2 border-[2px] border-primary" onClick={handleSendMessage} >
-                        <MdSend size={24} className="text-foreground"></MdSend>
-                    </Button>
+                    <MdSend size={24} className="text-foreground"></MdSend>
+                </Button>
             </div>
         </div>
     )
