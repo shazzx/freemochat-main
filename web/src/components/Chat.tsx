@@ -121,11 +121,13 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                 const page = userMessages?.data[i]
                 const messages = page.messages
 
-                const _messages = { ...messages }
+                const _messages = [...messages]
 
                 const lastMessage = _messages?.reverse()?.find((message) => {
                     return message.sender == messagesDetails.recepientId
                 })
+
+                console.log(lastMessage, 'this is lastmessage')
 
                 if (lastMessage) {
                     console.log(lastMessage, 'lastmessage found')
@@ -140,6 +142,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
             }
 
         } catch (error) {
+            console.log(error, 'this is error')
             return error
         }
         return null
@@ -164,7 +167,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
     useEffect(() => {
 
         unreadChat()
-        // findLastMessageByUserId()
+        findLastMessageByUserId()
 
     }, [userMessages.data])
 
@@ -255,7 +258,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
         }
     }, []);
 
-    const deleteSelectedMessage = (invalidate) => {
+    const deleteSelectedMessage = (invalidate?) => {
         if (selectedMessageId !== null) {
             deleteMessage(selectedMessageId)
             setSelectedMessageId(null);
@@ -1027,7 +1030,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                         </div>
                     </div>}
 
-                    <AudioRecorder path="messages" stopRecordingRef={stopRecordingRef} setIsRecordingMain={setIsRecording} onRecordingComplete={async (audioBlob, uploadState, recordingTime) => {
+                    <AudioRecorder stopRecordingRef={stopRecordingRef} setIsRecordingMain={setIsRecording} onRecordingComplete={async (audioBlob, uploadState, recordingTime) => {
                         if (uploadState) {
                             const formData = new FormData()
                             const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, type: recepientDetails?.type, messageType: "Voice", mediaDetails: { type: "audio", duration: recordingTime } }

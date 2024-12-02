@@ -8,6 +8,7 @@ import { FaEye } from 'react-icons/fa'
 import { axiosClient } from '@/api/axiosClient'
 import { Link } from 'react-router-dom'
 import { domain } from '@/config/domain'
+import { MdCancel } from 'react-icons/md'
 
 function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStoryIndex, setStoryViewIndex, setStoryViewModelState, setOpenStory, pauseStory, startStory, removeStory }) {
     const [storyViewsData, setStoryViewsData] = useState(null)
@@ -92,42 +93,49 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
 
             {storyViewersState &&
                 <div className='absolute z-[100] bottom-0 w-full h-[50%] bg-background rounded-sm'>
-                    {storyViewsData?.length > 0 && storyViewsData.map(({ userId }) => {
-                        // userId == user object
-                        const user = userId
-                        return (
-                            <Link to={`${domain}/user/${user.username}`} className="items-center p-2 flex gap-2 bg-accent rounded-md cursor-pointer m-2" >
-                                <div className='w-14 h-14 bg-accent flex items-center justify-center rounded-full overflow-hidden border-2 border-primary-active'>
-                                    <Avatar className="flex">
-                                        <AvatarImage src={user?.profile} alt="Avatar" />
-                                        <AvatarFallback>{user?.firstname[0]?.toUpperCase() + user?.lastname[0]?.toUpperCase()}</AvatarFallback>
-                                    </Avatar>
+                    <MdCancel size={21} onClick={() => setStoryViewersState(false)} className='cursor-pointer ml-auto m-2' />
+                    {storyViewsData?.length > 0 ?
+                        storyViewsData.map(({ userId }) => {
+                            // userId == user object
+                            const user = userId
+                            return (
+                                <Link to={`${domain}/user/${user.username}`} className="items-center p-2 flex gap-2 bg-accent rounded-md cursor-pointer m-2" >
+                                    <div className='w-14 h-14 bg-accent flex items-center justify-center rounded-full overflow-hidden border-2 border-primary-active'>
+                                        <Avatar className="flex">
+                                            <AvatarImage src={user?.profile} alt="Avatar" />
+                                            <AvatarFallback>{user?.firstname[0]?.toUpperCase() + user?.lastname[0]?.toUpperCase()}</AvatarFallback>
+                                        </Avatar>
 
-                                </div>
-
-                                <div className="flex flex-1 justify-between">
-                                    <div className="flex flex-col">
-                                        <div className="text-md text-white">
-                                            {user?.firstname + " " + user?.lastname}
-                                        </div>
-                                        <span className="text-sm text-gray-300">
-                                            @{user?.username}
-                                        </span>
                                     </div>
-                                </div>
-                            </Link>
-                        )
-                    })}
+
+                                    <div className="flex flex-1 justify-between">
+                                        <div className="flex flex-col">
+                                            <div className="text-md text-white">
+                                                {user?.firstname + " " + user?.lastname}
+                                            </div>
+                                            <span className="text-sm text-gray-300">
+                                                @{user?.username}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </Link>
+                            )
+                        })
+                        :
+                        <div className='text-center p-2 w-full'>No Views</div>
+                    }
                 </div>
             }
-            <div className="absolute flex gap-2 items-center justify-center flex-col bottom-2 left-2 cursor-pointer" onClick={() => {
-                setStoryViewersState(true)
-            }}>
-                <FaEye />
-                <span>
-                    {storyViewsData ? storyViewsData?.length > 0 ? storyViewsData.length == 1 ? storyViewsData.length + " View" : storyViewsData.length + " Views" : 0 : 0}
-                </span>
-            </div>
+            {stories[openedStoryIndex]?.user?.username == user.username &&
+                <div className="absolute flex gap-2 items-center justify-center flex-col bottom-2 left-2 cursor-pointer" onClick={() => {
+                    setStoryViewersState(true)
+                }}>
+                    <FaEye />
+                    <span>
+                        {storyViewsData ? storyViewsData?.length > 0 ? storyViewsData.length == 1 ? storyViewsData.length + " View" : storyViewsData.length + " Views" : 0 : 0}
+                    </span>
+                </div>
+            }
 
         </div>
     )

@@ -73,14 +73,14 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                     </div> :
                     <div className="flex gap-2 select-none" key={comment._id} ref={ref}>
 
-                        <Link to={`${domain}/user/${comment.user.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
+                        <Link to={`${domain}/user/${comment?.user?.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
                                 <AvatarImage src={comment?.user?.profile} alt="Avatar" />
                                 <AvatarFallback>{comment?.user?.firstname && comment?.user?.firstname[0]?.toUpperCase()}</AvatarFallback>
                             </Avatar>
                         </Link>
                         <div className='flex flex-col '>
-                            <Link to={`${domain}/user/${comment.user.username}`} className='flex px-2 gap-4 text-xs'>
+                            <Link to={`${domain}/user/${comment?.user?.username}`} className='flex px-2 gap-4 text-xs'>
                                 <span className="font-medium">{comment?.user?.firstname} {comment?.user?.lastname}</span>
                             </Link>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-accent bg-card dark:bg-transparent text-sm rounded-lg ">

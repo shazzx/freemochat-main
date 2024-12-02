@@ -80,7 +80,7 @@ export const useCreatePage = () => {
     onError: (err: any, data, context) => {
       const { response } = err
       if (!response) {
-        queryClient.invalidateQueries({ queryKey: [PageKeys.PAGE] })
+        queryClient.invalidateQueries({ queryKey: [PageKeys.PAGES] })
         toast.error(err.message)
         return
       }
@@ -88,11 +88,11 @@ export const useCreatePage = () => {
       console.log(err)
       
       toast.error(message)
-      queryClient.invalidateQueries({ queryKey: [PageKeys.PAGE] })
+      queryClient.invalidateQueries({ queryKey: [PageKeys.PAGES] })
     },
 
     onSettled: (data) => {
-      queryClient.invalidateQueries({ queryKey: [PageKeys.PAGE] })
+      queryClient.invalidateQueries({ queryKey: [PageKeys.PAGES] })
 
       // queryClient.setQueryData([PageKeys.PAGES], (pages: any) => {
       //   const updatedPages = produce(pages, (draft: any) => {
