@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { Button } from '@/components/ui/button'
 import { MdPhone } from 'react-icons/md'
 import { endCall } from '@/app/features/user/callSlice'
+import { toast } from 'react-toastify'
 
 function AudioCallRecepient({ recepientDetails }) {
     const { socket } = useAppSelector((state) => state.socket)
@@ -11,6 +12,7 @@ function AudioCallRecepient({ recepientDetails }) {
 
     useEffect(() => {
         socket.on("call-decline", (data) => {
+            toast.info("Call declined")
             dispatch(endCall())
         })
 

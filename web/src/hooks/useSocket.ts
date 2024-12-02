@@ -5,7 +5,7 @@ import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { socketConnect } from "@/websocket/socket.io";
 import { useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
-import { useEffect} from "react";
+import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
@@ -35,12 +35,19 @@ export const useSocket = () => {
 
       queryClient.invalidateQueries({ queryKey: ['chatlist'] })
 
+      if (message?.media?.type == 'audio') {
+        queryClient.invalidateQueries({ queryKey: ["messages", message?.sender] })
+      }
+
 
       if (message?.senderDetails?.targetId == user._id) {
+        console.log(newMessage, 'self')
 
-        queryClient.setQueryData(["messages", message?.senderDetails?.targetId], (pages: any) => {
+        queryClient.setQueryData(["messages", (message?.recepientDetails?.targetId || message?.sender)], (pages: any) => {
           const updatedMessages = produce(pages, (draft: any) => {
+
             if (!draft) {
+              console.log('no doesnot exist' , message?.senderDetails?.targetId , message?.sender)
               return null
             }
 
@@ -57,6 +64,8 @@ export const useSocket = () => {
               })
             })
 
+            console.log('yes exist')
+
             if (pageIndex > -1 && messageIndex > -1) {
               return draft
             }
@@ -70,10 +79,10 @@ export const useSocket = () => {
 
         return
       }
+      console.log(message)
+      // console.log('this is recepient', message?.recepientDetails?.targetId)
 
-      console.log('this is recepient', message?.recepientDetails?.targetId)
-
-      queryClient.setQueryData(["messages", message?.senderDetails?.targetId], (pages: any) => {
+      queryClient.setQueryData(["messages", (message?.senderDetails?.targetId || message?.sender)], (pages: any) => {
         const updatedMessages = produce(pages, (draft: any) => {
           console.log(pages)
           if (!draft) {
@@ -222,7 +231,7 @@ export const useSocket = () => {
 
       if (data.isSuccess && data.target.type == "messages") {
         const { targetId } = data.target
-        console.log('messages cond')
+        console.log('messages cond', targetId)
         queryClient.invalidateQueries({ queryKey: ['messages', targetId] })
         return
       }
@@ -305,11 +314,11 @@ export const useSocket = () => {
     socket.on("call-ringing", (data) => {
       dispatch(callRinging())
     })
-    socket.on("call-decline", (data) => {
-      console.log("decline")
-      toast.info("Call declined")
-      dispatch(endCall())
-    })
+    // socket.on("call-decline", (data) => {
+    //   console.log("decline")
+    //   toast.info("Call declined")
+    //   dispatch(endCall())
+    // })
     socket.on("call-accept", (data) => {
       console.log(data)
       if (data?.type == "AUDIO") {
@@ -331,6 +340,12 @@ export const useSocket = () => {
       console.log("Socket disconnected");
     });
 
+    socket.on("call-log", ({ message }) => {
+      console.log(message, 'call log')
+      queryClient.invalidateQueries({ queryKey: ["messages", message.sender] })
+
+    })
+
     console.log('rerender socket')
 
 
@@ -349,7 +364,8 @@ export const useSocket = () => {
       socket.off("request");
       socket.off("initiate-call");
       socket.off("call-ringing");
-      socket.off("call-decline");
+      socket.off("call-log");
+      // socket.off("call-decline");
       socket.off("call-accept");
       // socket.off("friendOnlineStatusChange");
       // socket.off("users");

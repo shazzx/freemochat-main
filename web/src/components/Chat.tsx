@@ -146,7 +146,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
     }
 
     const unreadChat = async () => {
-        const response = await axiosClient.post("chatlist/messagesSeen", { chatlistId: chatlistDetails.chatId, recepientId: chatlistDetails.recepientId })
+        const response = await axiosClient.post("chatlist/messagesSeen", { chatlistId: chatlistDetails.chatId, userId: user._id })
         defaultMetric.mutate('unreadChatlist')
         queryClient.invalidateQueries({ queryKey: ['metrics'] })
         queryClient.invalidateQueries({ queryKey: ['chatlist'] })
@@ -321,6 +321,8 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                 callerState: CallStates.CALLING,
             }
         ))
+        queryClient.invalidateQueries({ queryKey: ["messages", recepientDetails.userId] })
+
         socket.emit("initiate-call", { type: 'AUDIO', userDetails: { userId: user?._id, username: user?.username, fullname: user?.firstname + " " + user?.lastname, profile: user?.profile }, recepientDetails })
     }, [])
 
@@ -334,6 +336,8 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                 targetDetails: recepientDetails,
             }
         ))
+        queryClient.invalidateQueries({ queryKey: ["messages", recepientDetails.userId] })
+
         socket.emit("initiate-call", { type: 'VIDEO', userDetails: { userId: user?._id, username: user?.username, fullname: user?.firstname + " " + user?.lastname, profile: user?.profile }, recepientDetails })
     }, [])
 

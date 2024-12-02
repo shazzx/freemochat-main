@@ -43,7 +43,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.targetId))
     let _user = JSON.parse(await this.cacheService.getOnlineUser(payload.senderDetails.targetId))
     console.log(recepient, _user, 'this is user and rec')
-    
+
 
     this.logger.log(`Message received: ${payload.senderDetails.targetId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.targetId + " - " + payload.recepientDetails.username + " - " + payload.body}`);
 
@@ -243,6 +243,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (recepient?.socketId && socketStatus) {
       this.server.to(user.socketId).emit("call-ringing", { callState: "ringing" })
+      this.server.to(recepient.socketId).emit('call-log', { message });
+      this.server.to(user.socketId).emit('call-log', { message });
+
     } else {
 
       const userPushToken = await this.cacheService.getUserPushToken(_recepient?._id.toString())

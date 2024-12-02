@@ -71,12 +71,14 @@ const MainHome = ({ children }: any) => {
 
   let cancelCall = async (type) => {
     try {
-      if (type == "AUDIO") {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaStream.getTracks().forEach(track => track.stop())
-      } else {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        mediaStream.getTracks().forEach(track => track.stop())
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+          .then(stream => {
+            stream.getTracks().forEach(track => track.stop());
+          })
+          .catch(error => {
+            console.error('Error stopping media tracks:', error);
+          });
       }
       dispatch(endCall())
     } catch (error) {
@@ -84,6 +86,9 @@ const MainHome = ({ children }: any) => {
       dispatch(endCall())
     }
   }
+
+
+
   // const {viewedPosts} = useAppSelector((state) => state.viewedPosts)
 
   // useEffect(() => {
@@ -483,7 +488,7 @@ const MainHome = ({ children }: any) => {
                     <path d="M31.417 14.2804C31.4317 14.6944 31.7792 15.018 32.1932 15.0033C32.6071 14.9885 32.9308 14.641 32.916 14.227L31.417 14.2804ZM25.3803 7.92039V8.67039C25.3887 8.67039 25.397 8.67025 25.4054 8.66998L25.3803 7.92039ZM15.2027 7.92039L15.1776 8.66998C15.186 8.67025 15.1943 8.67039 15.2027 8.67039V7.92039ZM7.66698 14.227C7.65224 14.641 7.97586 14.9885 8.38981 15.0033C8.80377 15.018 9.15129 14.6944 9.16603 14.2804L7.66698 14.227ZM32.9165 14.2537C32.9165 13.8395 32.5807 13.5037 32.1665 13.5037C31.7523 13.5037 31.4165 13.8395 31.4165 14.2537H32.9165ZM32.1665 23.7537L32.916 23.7804C32.9163 23.7715 32.9165 23.7626 32.9165 23.7537L32.1665 23.7537ZM25.3803 30.0871L25.4054 29.3375C25.397 29.3372 25.3887 29.3371 25.3803 29.3371L25.3803 30.0871ZM15.2027 30.0871V29.3371C15.1943 29.3371 15.186 29.3372 15.1776 29.3375L15.2027 30.0871ZM8.4165 23.7537H7.6665C7.6665 23.7626 7.66666 23.7715 7.66698 23.7804L8.4165 23.7537ZM9.1665 14.2537C9.1665 13.8395 8.83072 13.5037 8.4165 13.5037C8.00229 13.5037 7.6665 13.8395 7.6665 14.2537H9.1665ZM32.5448 14.9013C32.9025 14.6924 33.023 14.2331 32.8141 13.8754C32.6052 13.5178 32.1459 13.3972 31.7882 13.6061L32.5448 14.9013ZM23.8318 19.1225L23.4535 18.4748L23.4473 18.4786L23.8318 19.1225ZM16.7512 19.1225L17.1357 18.4785L17.1295 18.4749L16.7512 19.1225ZM8.7948 13.6061C8.43714 13.3972 7.97783 13.5178 7.7689 13.8754C7.55997 14.2331 7.68054 14.6924 8.0382 14.9013L8.7948 13.6061ZM32.916 14.227C32.7724 10.1927 29.39 7.03596 25.3553 7.17081L25.4054 8.66998C28.6134 8.56275 31.3028 11.0727 31.417 14.2804L32.916 14.227ZM25.3803 7.17039H15.2027V8.67039H25.3803V7.17039ZM15.2277 7.17081C11.193 7.03596 7.81064 10.1927 7.66698 14.227L9.16603 14.2804C9.28025 11.0727 11.9696 8.56275 15.1776 8.66998L15.2277 7.17081ZM31.4165 14.2537V23.7537H32.9165V14.2537H31.4165ZM31.417 23.727C31.3028 26.9348 28.6134 29.4447 25.4054 29.3375L25.3553 30.8366C29.39 30.9715 32.7724 27.8148 32.916 23.7804L31.417 23.727ZM25.3803 29.3371H15.2027V30.8371H25.3803V29.3371ZM15.1776 29.3375C11.9696 29.4447 9.28025 26.9348 9.16603 23.727L7.66698 23.7804C7.81064 27.8148 11.193 30.9715 15.2277 30.8366L15.1776 29.3375ZM9.1665 23.7537V14.2537H7.6665V23.7537H9.1665ZM31.7882 13.6061L23.4535 18.4749L24.2101 19.7701L32.5448 14.9013L31.7882 13.6061ZM23.4473 18.4786C21.5036 19.6394 19.0795 19.6394 17.1357 18.4786L16.3666 19.7664C18.7841 21.2101 21.7989 21.2101 24.2164 19.7664L23.4473 18.4786ZM17.1295 18.4749L8.7948 13.6061L8.0382 14.9013L16.3729 19.7701L17.1295 18.4749Z" />
                   </svg>
                   Messages
-                  {metrics?.data?.unreadChatlists?.count && metrics?.data?.unreadChatlists?.count > 0 && <Badge className="ml-auto flex h-6 w-6 shrink-0 bg-red-500 dark:bg-backgruond items-center justify-center rounded-full">
+                  { metrics?.data?.unreadChatlists?.count > 0 && <Badge className="ml-auto flex h-6 w-6 shrink-0 bg-red-500 dark:bg-backgruond items-center justify-center rounded-full">
                     {metrics?.data?.unreadChatlists?.count}
                   </Badge>}
                 </Link>

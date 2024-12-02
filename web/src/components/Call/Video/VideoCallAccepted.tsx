@@ -91,7 +91,10 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
                 profile: user?.profile
             }
         })
-        // dispatch(endCall())
+        localCameraTrack.stop()
+        localCameraTrack.close()
+        localMicrophoneTrack.close()
+        localMicrophoneTrack.stop()
     }
     console.log(callDetails)
 
@@ -99,8 +102,16 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
         socket.on("call-end", (data) => {
             console.log('call end', data)
             setActiveConnection(false)
+            localCameraTrack.stop()
+            localCameraTrack.close()
+            localMicrophoneTrack.close()
+            localMicrophoneTrack.stop()
             cancelCall("VIDEO")
         })
+
+        return () => {
+            socket.off("call-end")
+        }
     })
 
     const callAccept = () => {
@@ -130,6 +141,10 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
                                     profile: user?.profile
                                 }
                             })
+                            localCameraTrack.stop()
+                            localCameraTrack.close()
+                            localMicrophoneTrack.close()
+                            localMicrophoneTrack.stop()
                             cancelCall("VIDEO")
                         }}>
                         <MdPhone size={32} color="white" />

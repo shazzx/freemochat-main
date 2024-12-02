@@ -199,10 +199,10 @@ export class UploadListener {
             let messageUpdate = await this.messageService.updateMessage(messageId, { media: {...messageDetails.media, url: file[0].url, type: file[0].fileType, isUploaded: true } })
             console.log(messageUpdate)
             await this.chatGateway.sendMessage({...messageDetails, media: {...messageDetails.media, url: file[0].url, isUploaded: true }})
-            console.log('success')
+            console.log('success', messageDetails)
             await this.chatGateway.uploadSuccess({
                 isSuccess: true, target: {
-                    targetId: messageDetails.recepient,
+                    targetId: messageDetails.sender,
                     type: "messages",
                     invalidate: "messages",
                     messageId

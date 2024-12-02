@@ -8,12 +8,10 @@ function Agora({ channel, callDetails, cancelCall, Call }: any) {
     const agoraClient = useRTCClient(AgoraRTC.createClient({ codec: "vp8", mode: "rtc" }));
     console.log(channel, " : channel", callDetails, " : call details")
 
-
     useEffect(() => {
       agoraClient.on('user-left', (state) => {
         console.log('Connection state user left:', state);
         toast.info("User disconnected might be network issue")
-        cancelCall("VIDEO")
       });
 
       agoraClient.on('user-joined', (state) => {
@@ -21,8 +19,7 @@ function Agora({ channel, callDetails, cancelCall, Call }: any) {
       });
 
       return () => {
-        console.log('ending calll there here')
-        // cancelCall("VIDEO")
+        agoraClient.unpublish()
       };
     }, [])
 

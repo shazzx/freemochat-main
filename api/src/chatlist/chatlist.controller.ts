@@ -14,8 +14,8 @@ export class ChatlistController {
 
     @Post("messagesSeen")
     async chatListMessagesSeen(@Req() req: Request, @Res() response: Response) {
-        const { chatlistId, recepientId } = req.body
-        response.json(await this.chatlistService.messagesSeen(chatlistId, recepientId))
+        const { chatlistId, userId } = req.body
+        response.json(await this.chatlistService.messagesSeen(chatlistId, userId))
     }
 
     @Post("remove")

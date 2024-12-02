@@ -1,51 +1,54 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
-import  { useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { useAppSelector } from '@/app/hooks'
+// import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
+// import  { useEffect } from 'react'
+// import { Button } from '@/components/ui/button'
+// import { useAppSelector } from '@/app/hooks'
+// import { toast } from 'react-toastify'
 
-function VideoCallCaller({ recepientDetails, setVideoCallCallerState }) {
-    const { socket } = useAppSelector((state) => state.socket)
+// function VideoCallCaller({ recepientDetails, setVideoCallCallerState }) {
+//     const { socket } = useAppSelector((state) => state.socket)
 
-    useEffect(() => {
+//     useEffect(() => {
 
-        socket.on("call-decline", (data) => {
-            setVideoCallCallerState(false)
-        })
+//         socket.on("call-decline", (data) => {
+//             toast.info("Call declined caller")
 
-        return () => {
-            socket.off("call-decline");
-        }
-    }, [])
+//             setVideoCallCallerState(false)
+//         })
+
+//         return () => {
+//             socket.off("call-decline");
+//         }
+//     }, [])
 
     
-const cancelCall = () => {
-    socket.emit('call-cancel', {recepientDetails})
-    setVideoCallCallerState(false)
-}
-    return (
-        <div className='fixed inset-0 z-50  w-screen overflow-hidden h-screen flex items-center justify-center'>
-            <div className='w-full z-10 h-full py-40 flex flex-col items-center rounded-md gap-12 bg-card overflow-hidden'>
-                <div className='flex flex-col gap-2 items-center justify-center'>
-                    <div className='w-28 h-28 rounded-full flex items-center justify-center bg-accent overflow-hidden'>
-                        <Avatar className="flex items-center justify-center">
-                            <AvatarImage src={recepientDetails?.images?.profile} alt="Avatar" />
-                            <AvatarFallback className='text-4xl'>{recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                    </div>
-                    <div className='flex flex-col  items-center justify-center'>
-                        <span className='text-lg'>{recepientDetails?.firstname?.toUpperCase() + " " + recepientDetails?.lastname?.toUpperCase()}</span>
-                        <span>@{recepientDetails?.username}</span>
-                    </div>
-                </div>
-                <div >
-                    <span>Calling...</span>
-                </div>
-                <div className='flex gap-2'>
-                    <Button onClick={cancelCall} className='bg-destructive hover:bg-red-800 cursor-pointer'>Cancel</Button>
-                </div>
-            </div>
-        </div>
-    )
-}
+// const cancelCall = () => {
+//     socket.emit('call-cancel', {recepientDetails})
+//     setVideoCallCallerState(false)
+// }
+//     return (
+//         <div className='fixed inset-0 z-50  w-screen overflow-hidden h-screen flex items-center justify-center'>
+//             <div className='w-full z-10 h-full py-40 flex flex-col items-center rounded-md gap-12 bg-card overflow-hidden'>
+//                 <div className='flex flex-col gap-2 items-center justify-center'>
+//                     <div className='w-28 h-28 rounded-full flex items-center justify-center bg-accent overflow-hidden'>
+//                         <Avatar className="flex items-center justify-center">
+//                             <AvatarImage src={recepientDetails?.images?.profile} alt="Avatar" />
+//                             <AvatarFallback className='text-4xl'>{recepientDetails?.firstname[0]?.toUpperCase() + recepientDetails?.lastname[0]?.toUpperCase()}</AvatarFallback>
+//                         </Avatar>
+//                     </div>
+//                     <div className='flex flex-col  items-center justify-center'>
+//                         <span className='text-lg'>{recepientDetails?.firstname?.toUpperCase() + " " + recepientDetails?.lastname?.toUpperCase()}</span>
+//                         <span>@{recepientDetails?.username}</span>
+//                     </div>
+//                 </div>
+//                 <div >
+//                     <span>Calling...</span>
+//                 </div>
+//                 <div className='flex gap-2'>
+//                     <Button onClick={cancelCall} className='bg-destructive hover:bg-red-800 cursor-pointer'>Cancel</Button>
+//                 </div>
+//             </div>
+//         </div>
+//     )
+// }
 
-export default VideoCallCaller
+// export default VideoCallCaller

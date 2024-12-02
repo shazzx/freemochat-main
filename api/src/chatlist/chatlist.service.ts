@@ -16,14 +16,22 @@ export class UserChatListService {
         private readonly cacheService: CacheService,
     ) { }
 
-    async messagesSeen(chatlistId, recepientId) {
+    async messagesSeen(chatlistId, userId) {
+
+        const chatlist = await this.userChatListModel.findById(chatlistId)
+
+        if (chatlist.unreadCount == 0) {
+            return
+        }
+
         await this.userChatListModel.updateOne(
             { _id: chatlistId },
             {
                 unreadCount: 0
             }
         );
-        await this.metricsAggregatorService.decrementCount(new Types.ObjectId(recepientId), 'unreadChatlist', 'user')
+        console.log('decrementing', userId)
+        await this.metricsAggregatorService.decrementCount(new Types.ObjectId(userId), 'unreadChatlist', 'user')
         return true
     }
 
@@ -137,7 +145,7 @@ export class UserChatListService {
 
         const recepient = await this.userChatListModel.findOne({ user: recepientId, recepient: userId })
 
-        console.log('recepient idididi', recepientId)
+        console.log('recepient idididi', recepientId,)
 
         if (recepient.unreadCount == 1) {
             await this.metricsAggregatorService.incrementCount(new Types.ObjectId(recepientId), 'unreadChatlist', 'user')

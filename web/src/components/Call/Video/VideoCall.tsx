@@ -15,26 +15,17 @@ import { MdPhone } from "react-icons/md";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Button } from "@/components/ui/button";
-import { join } from "path";
 import { endCall } from "@/app/features/user/callSlice";
+import { toast } from "react-toastify";
 
 
 const VideoCall = ({ cancelCall }) => {
-    const { callDetails, callerState, onCall, recepientState, targetDetails, type } = useAppSelector((state) => state.call)
+    const { callDetails, recepientState, targetDetails } = useAppSelector((state) => state.call)
     const { user } = useAppSelector((state) => state.user)
     const { socket } = useAppSelector((state) => state.socket)
 
-    useEffect(() => {
-        socket.on("call-end", (data) => {
-            console.log('call end', data)
-            setActiveConnection(false)
-            cancelCall("VIDEO")
-        })
-    })
 
     const appId = 'f41145d4d6fa4a3caab3104ac89622ec'
-
-    // set the connection state
     const [activeConnection, setActiveConnection] = useState(true);
 
     // track the mic/video state - Turn on Mic and Camera On
@@ -44,11 +35,6 @@ const VideoCall = ({ cancelCall }) => {
     // get local video and mic tracks
     const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
     const { localCameraTrack } = useLocalCameraTrack(cameraOn);
-
-    const muteAudio = async () => {
-        // Update UI to show muted state
-    };
-    console.log(callDetails)
 
     useJoin(
         {
@@ -61,24 +47,30 @@ const VideoCall = ({ cancelCall }) => {
 
     usePublish([localMicrophoneTrack, localCameraTrack]);
 
-    //remote users
     const remoteUsers = useRemoteUsers();
     const { audioTracks } = useRemoteAudioTracks(remoteUsers);
-    // play the remote user audio tracks
+
     audioTracks.forEach((track) => track.play());
     const dispatch = useAppDispatch()
 
+
     useEffect(() => {
+        socket.on("call-end", () => {
+            console.log('yes call ended')
+            toast.info("Call declined")
+            localMicrophoneTrack?.close()
+            localCameraTrack?.close()
+            cancelCall()
+        })
+
         return () => {
-            // cancelCall("VIDEO")
-            // dispatch(endCall())
+            socket.off("call-end")
         }
-    }, [localMicrophoneTrack, localCameraTrack])
+    })
+
     const callDecline = () => {
         socket.emit('call-decline', { recepientDetails: callDetails.userDetails })
         cancelCall()
-        dispatch(endCall())
-        // dispatch(endCall())
     }
 
     const callAccept = () => {
@@ -100,7 +92,7 @@ const VideoCall = ({ cancelCall }) => {
                         onClick={() => {
                             setActiveConnection(false)
                             socket.emit("call-end", { userDetails: user, recepientDetails: targetDetails })
-                            cancelCall("VIDEO")
+                            cancelCall()
                         }}>
                         <MdPhone size={32} color="white" />
                     </button>

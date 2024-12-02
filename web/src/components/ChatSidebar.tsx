@@ -109,7 +109,7 @@ function ChatSidebar({ socket, setChatOpen, setChatlistDetails, setRecepientDeta
                         {chatList?.users?.length > 0 ? chatList?.users?.map((chat, i) => (
                             <div className="flex gap-4 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={async () => {
                                 setChatlistDetails({ chatId: chat._id, recepientId: chat.recepient._id, chatIndex: i })
-                                const response = await axiosClient.post("chatlist/messagesSeen", { chatlistId: chat._id, recepientId: chat.recepient._id })
+                                const response = await axiosClient.post("chatlist/messagesSeen", { chatlistId: chat._id, userId: user._id })
                                 defaultMetric.mutate('unreadChatlist')
                                 await queryClient.cancelQueries({ queryKey: ['chatlist'] })
                                 queryClient.invalidateQueries({ queryKey: ['metrics'] })

@@ -33,12 +33,14 @@ export class MetricsAggregatorService {
     }
 
     async defaultCount(targetId: string, name: string, type: string) {
+        if (name == 'unreadChatlist') {
+            return false
+        }
         let counter = await this.counterModel.updateOne(
             { targetId: new Types.ObjectId(targetId), name, type },
             { targetId, name, type, count: 0 },
             { upsert: true }
         )
-        console.log(targetId, name, type, "default")
         return counter
     }
 

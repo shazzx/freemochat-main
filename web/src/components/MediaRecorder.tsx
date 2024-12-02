@@ -67,7 +67,7 @@ const AudioRecorder = ({ stopRecordingRef, onRecordingComplete, setIsRecordingMa
                 setRecordingTime((prev) => prev + 1)
 
                 console.log('stop recording')
-                if (recordingTime.current >= 5) {
+                if (recordingTime.current >= 30) {
                     uploadState.current = false
                     recordingTime.current = 0;
                     setRecordingTime(0)
