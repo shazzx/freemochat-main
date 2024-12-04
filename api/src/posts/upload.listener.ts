@@ -203,6 +203,7 @@ export class UploadListener {
             await this.chatGateway.uploadSuccess({
                 isSuccess: true, target: {
                     targetId: messageDetails.sender,
+                    recepient: messageDetails.recepient,
                     type: "messages",
                     invalidate: "messages",
                     messageId

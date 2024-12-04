@@ -47,7 +47,7 @@ export const useSocket = () => {
           const updatedMessages = produce(pages, (draft: any) => {
 
             if (!draft) {
-              console.log('no doesnot exist' , message?.senderDetails?.targetId , message?.sender)
+              console.log('no doesnot exist', message?.senderDetails?.targetId, message?.sender)
               return null
             }
 
@@ -230,9 +230,7 @@ export const useSocket = () => {
 
 
       if (data.isSuccess && data.target.type == "messages") {
-        const { targetId } = data.target
-        console.log('messages cond', targetId)
-        queryClient.invalidateQueries({ queryKey: ['messages', targetId] })
+        queryClient.invalidateQueries({ queryKey: ['messages', data.target.recepient] })
         return
       }
 

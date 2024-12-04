@@ -7,9 +7,11 @@ import { CGroupsModule } from "src/cgroups/cgroups.module";
 import { CacheModule } from "src/cache/cache.module";
 import { FriendModule } from "src/friend/friend.module";
 import { MemberModule } from "src/member/member.module";
+import { MongooseModule } from "@nestjs/mongoose";
+import { Notification, notificationSchema } from "src/schema/Notification";
 
 @Module({
-  imports: [forwardRef(() => UserModule), MessageModule, MemberModule, CacheModule, FriendModule, ChatlistModule, CGroupsModule],
+  imports: [forwardRef(() => UserModule), MessageModule, MemberModule, CacheModule, FriendModule, ChatlistModule, CGroupsModule, MongooseModule.forFeature([{name: Notification.name, schema: notificationSchema}])],
   providers: [ChatGateway],
   exports: [ChatGateway],
 })

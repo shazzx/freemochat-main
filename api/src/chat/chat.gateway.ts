@@ -10,13 +10,16 @@ import { BadRequestException, forwardRef, Inject, Logger } from '@nestjs/common'
 import { Server, Socket } from 'socket.io';
 import { MessageService } from 'src/message/message.service';
 import { UserChatListService } from 'src/chatlist/chatlist.service';
-import { Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { UserService } from 'src/user/user.service';
 import { CGroupsService } from 'src/cgroups/cgroups.service';
 import { CacheService } from 'src/cache/cache.service';
 import { FriendService } from 'src/friend/friend.service';
 import { MemberService } from 'src/member/member.service';
 import { v4 as uuidv4 } from 'uuid';
+import { NotificationService } from 'src/notification/notification.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Notification } from 'src/schema/Notification';
 
 @WebSocketGateway({ cors: { origin: '*' }, path: "/api/socket" },)
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -28,7 +31,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly chatGroupService: CGroupsService,
     private readonly cacheService: CacheService,
     private readonly friendService: FriendService,
-    private readonly memberService: MemberService
+    private readonly memberService: MemberService,
+    @InjectModel(Notification.name) private notificationModel: Model<Notification>,
   ) { }
   @WebSocketServer()
   server: Server;
@@ -313,6 +317,24 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleNotifications(event) {
     let user = JSON.parse(await this.cacheService.getOnlineUser(event.user))
     this.server.to(user?.socketId).emit('notification', event)
+  }
+
+
+  async sendNotification({ user, reciever }) {
+    let recepient = JSON.parse(await this.cacheService.getOnlineUser(reciever))
+    const notification = await this.notificationModel.create(
+      {
+        from: reciever,
+        user: reciever,
+        targetId: user,
+        targetType: "user",
+        type: "request",
+        value: "has accepted your request"
+      }
+    )
+
+    console.log(notification)
+    this.server.to(recepient?.socketId).emit('notification', {acceptedBy: user})
   }
 
 

@@ -53,12 +53,12 @@ function AudioCallRecepient({ recepientDetails }) {
                         </Avatar>
                     </div>
                     <div className='flex flex-col  items-center justify-center'>
-                        <span className='text-lg'>{recepientDetails?.fullname}</span>
-                        <span>@{recepientDetails?.username}</span>
+                        <span className='text-lg text-white'>{recepientDetails?.fullname}</span>
+                        <span className='text-white'>@{recepientDetails?.username}</span>
                     </div>
                 </div>
                 <div >
-                    <span>Calling...</span>
+                    <span className='text-white'>Calling...</span>
                 </div>
                 <div className="flex gap-12 absolute bottom-32">
                     <Button type="button" className="rounded-full p-4 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={callDecline}>

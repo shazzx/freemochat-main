@@ -209,6 +209,10 @@ export class UserService {
 
         this.metricsAggregatorService.decrementCount(filter[0].sender, GENERAL.REQUEST, USER.USER)
         await this.notificationGateway.handleRequest({ user: filter[0].sender });
+        this.metricsAggregatorService.incrementCount(filter[0].reciever, "notification", "user")
+
+        await this.notificationGateway.sendNotification({ user: filter[0].sender, reciever: filter[0].reciever });
+
 
         let friends = await this.friendModel.insertMany([
             { user: new Types.ObjectId(userId), friend: new Types.ObjectId(recepientId) },

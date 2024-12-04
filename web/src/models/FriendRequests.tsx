@@ -37,12 +37,12 @@ function FriendRequests({ setFriendRequestState }) {
                                             <div className='w-14 h-14 flex flex-col items-center justify-center rounded-lg border-primary border-2 bg-card overflow-hidden'>
                                                 <Avatar>
                                                     <AvatarImage src={request?.profile} alt="Avatar" />
-                                                    <AvatarFallback className='text-xl'>{request?.firstname[0]?.toUpperCase() + request?.lastname[0]?.toUpperCase()}</AvatarFallback>
+                                                    <AvatarFallback className='text-xl text-foreground'>{request?.firstname[0]?.toUpperCase() + request?.lastname[0]?.toUpperCase()}</AvatarFallback>
                                                 </Avatar>
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-lg leading-tight">{request?.firstname + " " + request?.lastname}</span>
-                                                <span className="text-md">@{request?.username}</span>
+                                                <span className="text-lg leading-tight text-foreground">{request?.firstname + " " + request?.lastname}</span>
+                                                <span className="text-md text-foreground" >@{request?.username}</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-center">

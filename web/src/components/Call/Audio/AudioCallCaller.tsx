@@ -46,12 +46,12 @@ function AudioCallCaller({ recepientDetails, setAudioCallCaller }) {
                         </Avatar>
                     </div>
                     <div className='flex flex-col  items-center justify-center'>
-                        <span className='text-lg'>{recepientDetails?.firstname?.toUpperCase() + " " + recepientDetails?.lastname?.toUpperCase()}</span>
-                        <span>@{recepientDetails?.username}</span>
+                        <span className='text-lg text-white'>{recepientDetails?.firstname?.toUpperCase() + " " + recepientDetails?.lastname?.toUpperCase()}</span>
+                        <span className='text-white'>@{recepientDetails?.username}</span>
                     </div>
                 </div>
                 <div >
-                    <span>{recepientState || "Calling"}...</span>
+                    <span className='text-white'>{recepientState || "Calling"}...</span>
                 </div>
                 <div className="flex gap-12 absolute bottom-32">
                     <Button type="button" className="rounded-full p-5 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={() => {

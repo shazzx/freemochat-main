@@ -92,8 +92,8 @@ const AudioCall = ({ channel, callDetails, cancelCall }) => {
                 </Avatar>
               </div>
               <div className='flex flex-col  items-center justify-center'>
-                <span className='text-lg'>{recepient?.fullname}</span>
-                <span>@{recepient?.username}</span>
+                <span className='text-lg text-white'>{recepient?.fullname}</span>
+                <span className="text-white">@{recepient?.username}</span>
               </div>
             </div>
             <div >

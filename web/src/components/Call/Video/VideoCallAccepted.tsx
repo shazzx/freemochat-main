@@ -190,8 +190,8 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
                             </Avatar>
                         </div>
                         <div className='flex flex-col  items-center justify-center'>
-                            <span className='text-lg'>{callDetails?.recepientDetails?.fullname || targetDetails?.fullname}</span>
-                            <span>@{callDetails?.recepientDetails?.username || targetDetails?.username}</span>
+                            <span className='text-lg text-white'>{callDetails?.recepientDetails?.fullname || targetDetails?.fullname}</span>
+                            <span className="text-white">@{callDetails?.recepientDetails?.username || targetDetails?.username}</span>
                         </div>
                     </div>
                 }

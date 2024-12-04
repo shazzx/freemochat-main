@@ -632,7 +632,10 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                 <div className="flex gap-2 justify-end" key={message?._id}>
 
                                     {/* {userMessages.data.length - 1 == pageIndex && (pageIndex == 0 && messageIndex == 0) && <div ref={ref}></div>} */}
+
                                     <div className="relative max-w-80 w-fit">
+                                        <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p>
+
                                         <div className={`flex items-center justify-center relative ${!message?.media ? selectedMessageId == message._id ? "bg-primary p-2 pr-3" : "p-2 pr-3 bg-primary" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
                                             onTouchStart={() => handleTouchStart(message._id)}
                                             onTouchEnd={handleTouchEnd}
@@ -702,6 +705,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                             {(isDeleted?.[0]?.userId == user._id) ?
                                                 <p className="">message deleted</p>
                                                 :
+
                                                 <p className="cursor-pointer" onClick={() => {
                                                     console.log(message)
                                                     setSelectedMessageId(message._id)
@@ -759,8 +763,10 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                 :
 
                                 <div className="flex" key={message?._id}>
+
                                     {/* {userMessages.data.length - 1 == pageIndex && userMessages.data[userMessages.data.length - 1].messages.length - 1 == messageIndex && <div ref={ref}></div>} */}
                                     <div className="flex gap-2">
+
                                         <div className='max-w-10 max-h-10 bg-accent rounded-full overflow-hidden'>
                                             <Avatar className="h-9 w-9 flex items-center justify-center">
                                                 <AvatarImage src={message?.sender?.profile || recepientDetails?.profile} alt="Avatar" />
@@ -775,6 +781,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                             </Avatar>
                                         </div>
                                         <div className="relative max-w-80 w-fit">
+                                            <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p>
                                             <div className={`flex items-center justify-center relative ${!message?.media ? selectedMessageId == message._id ? "bg-card p-2 pr-3" : "p-2 pr-3 bg-card" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
                                                 onMouseEnter={() => {
                                                     setDropDownMessageIndex(messageIndex)
@@ -824,7 +831,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                 {isDeleted?.[0]?.userId == user._id ?
                                                     <p className="">message deleted</p>
                                                     :
-                                                    <p className="cursor-pointer" onClick={() => {
+                                                    <p className="cursor-pointer text-foreground" onClick={() => {
                                                         setSelectedMessageId(message._id)
                                                     }}>{message?.content}</p>
                                                 }

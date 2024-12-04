@@ -319,7 +319,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                     </h3>
                                     :
                                     navigation ?
-                                        <Link to={` ${domain}/${postData?.type}/${navigation}`}>
+                                        <Link to={`${domain}/${postData?.type}/${navigation}`}>
 
                                             <h3 className='text-card-foreground flex gap-2 text-sm'>{(postData?.target?.firstname ? (postData?.target?.firstname + " " + postData?.target?.lastname) : postData?.target?.name)}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
                                         </Link>

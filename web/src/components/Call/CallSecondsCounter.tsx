@@ -28,7 +28,7 @@ const CallSecondsCounter = ({ isCallActive }) => {
   };
 
   return (
-    <div className="calling-counter">
+    <div className="calling-counter text-white">
       {isCallActive ? `${formatTime(seconds)}` : 'Call not active'}
     </div>
   );

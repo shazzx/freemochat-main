@@ -316,6 +316,11 @@ function Stories() {
                             </label>
 
                         }
+                        <label htmlFor="image" className="cursor-pointer">
+                            <div className='w-5 h-5 z-10 bottom-7 right-0 bg-primary text-primary-foreground  shadow-md rounded-full text-base font-medium flex items-center justify-center absolute '>
+                                +
+                            </div>
+                        </label >
                         {
                             (isLoading || load) &&
                             <svg className="text-gray-700 animate-spin" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"

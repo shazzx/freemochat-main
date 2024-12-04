@@ -137,11 +137,11 @@ const VideoCall = ({ cancelCall }) => {
                             </Avatar>
                         </div>
                         <div className='flex flex-col  items-center justify-center'>
-                            <span className='text-lg'>{callDetails?.userDetails?.fullname || targetDetails?.fullname}</span>
-                            <span>@{callDetails?.userDetails?.username || targetDetails?.username}</span>
+                            <span className='text-lg text-white'>{callDetails?.userDetails?.fullname || targetDetails?.fullname}</span>
+                            <span className="text-white">@{callDetails?.userDetails?.username || targetDetails?.username}</span>
                         </div>
                         <div >
-                            <span>{recepientState || "Calling"}...</span>
+                            <span className="text-white">{recepientState || "Calling"}...</span>
                         </div>
                     </div>
                 }

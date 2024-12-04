@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { ObjectId, Types } from 'mongoose'
 
-@Schema({ timestamps: true, expires: '10m' })
+@Schema({ timestamps: true })
 export class Story {
     @Prop()
     url: String;
@@ -9,7 +9,11 @@ export class Story {
     @Prop({ type: Types.ObjectId, ref: "User" })
     user: ObjectId;
 
-    @Prop({ default: Date.now(), expires: '24h' })
+    @Prop({ 
+        type: Date, 
+        default: () => Date(), 
+        expires: '24h' })
+
     createdAt: Date
 }
 

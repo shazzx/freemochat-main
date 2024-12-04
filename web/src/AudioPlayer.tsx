@@ -61,11 +61,11 @@ const AudioPlayer = ({ src, duration }) => {
     <div className="flex flex-col items-center justify-center gap-1 bg-card p-2 rounded-md w-fit">
       <div className='flex gap-2'>
         <audio ref={audioRef} src={src} />
-        <button className='rounded-full p-1 border border-foreground flex items-center justify-center' onClick={togglePlayPause}>
+        <button className='rounded-full p-1 border border-foreground flex items-center justify-center text-foreground' onClick={togglePlayPause}>
           {isPlaying ? <CiPause1 size={22} /> : <CiPlay1 size={22} />}
         </button>
         <div className='flex items-center justify-center gap-1 '>
-          <span className='text-xs'>
+          <span className='text-xs text-foreground'>
             {formatTime(currentTime)}
           </span>
           <div>
@@ -81,7 +81,7 @@ const AudioPlayer = ({ src, duration }) => {
           </div>
 
 
-          <span className='text-xs'>
+          <span className='text-xs text-foreground'>
             {formatTime(duration)}
           </span>
           <div className='flex justify-between w-full'>
