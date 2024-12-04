@@ -163,7 +163,7 @@ function SearchSection() {
 
                                         {users.length > 0 && < div className='w-full text-center rounded-md' onClick={() => _setType("users")}>
 
-                                            <Button className='bg-card px-4'>
+                                            <Button className='bg-card px-4 text-foreground'>
                                                 Show more
                                             </Button>
                                         </div>}

@@ -20,7 +20,7 @@ import { toast } from "react-toastify";
 import { handleFile } from "@/lib/formatCheck";
 import { startCall } from "@/app/features/user/callSlice";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { AlertDialogC } from "./AlertDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useOnlineStatus, useUserDefaultMetric, useUserFriends } from "@/hooks/User/useUser";
@@ -634,7 +634,9 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                     {/* {userMessages.data.length - 1 == pageIndex && (pageIndex == 0 && messageIndex == 0) && <div ref={ref}></div>} */}
 
                                     <div className="relative max-w-80 w-fit">
-                                        <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p>
+                                        {/* <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p> */}
+                                        <p className="py-1 text-xs" >{formatDistanceToNow(message?.createdAt ?? Date.now(), { addSuffix: true })}</p>
+
 
                                         <div className={`flex items-center justify-center relative ${!message?.media ? selectedMessageId == message._id ? "bg-primary p-2 pr-3" : "p-2 pr-3 bg-primary" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
                                             onTouchStart={() => handleTouchStart(message._id)}
@@ -781,7 +783,9 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                             </Avatar>
                                         </div>
                                         <div className="relative max-w-80 w-fit">
-                                            <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p>
+                                            <p className="py-1 text-xs" >{formatDistanceToNow(message?.createdAt ?? Date.now(), { addSuffix: true })}</p>
+
+                                            {/* <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p> */}
                                             <div className={`flex items-center justify-center relative ${!message?.media ? selectedMessageId == message._id ? "bg-card p-2 pr-3" : "p-2 pr-3 bg-card" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
                                                 onMouseEnter={() => {
                                                     setDropDownMessageIndex(messageIndex)

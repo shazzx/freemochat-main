@@ -9,6 +9,7 @@ import { axiosClient } from '@/api/axiosClient'
 import { Link } from 'react-router-dom'
 import { domain } from '@/config/domain'
 import { MdCancel } from 'react-icons/md'
+import { format, formatDistance, formatDistanceToNow, subHours } from 'date-fns'
 
 function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStoryIndex, setStoryViewIndex, setStoryViewModelState, setOpenStory, pauseStory, startStory, removeStory }) {
     const [storyViewsData, setStoryViewsData] = useState(null)
@@ -33,7 +34,7 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
 
     return (
         <div className="relative h-screen z-50">
-            <div className="absolute w-full items-center p-2 flex gap-2">
+            <div className="absolute w-full items-center p-2 flex  gap-2">
                 <div className='w-14 h-14 bg-accent flex items-center justify-center rounded-full overflow-hidden border-2 border-primary-active'>
                     <Avatar className="flex">
                         <AvatarImage src={stories[openedStoryIndex].user?.profile} alt="Avatar" />
@@ -50,6 +51,8 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
                         <span className="text-sm text-gray-300">
                             @{stories[openedStoryIndex].user?.username}
                         </span>
+
+                        <p className="py-1 text-xs text-white" >{formatDistanceToNow(stories[openedStoryIndex]?.stories[storyViewIndex]?.createdAt, { addSuffix: true })}</p>
                     </div>
                     {(stories[openedStoryIndex].user?.username == user.username) &&
                         < DropdownMenu >

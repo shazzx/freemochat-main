@@ -70,7 +70,6 @@ function Stories() {
 
         getStories()
     }, [data])
-    console.log(data)
 
     let [openStory, setOpenStory] = useState(false)
     useEffect(() => {
@@ -102,8 +101,8 @@ function Stories() {
                 }
 
             }, 3000)
-            return () => clearInterval(storyTimeRef.current)
         }
+        return () => clearInterval(storyTimeRef.current)
     }, [openStory, storyViewIndex, openedStoryIndex, isPaused])
 
 
