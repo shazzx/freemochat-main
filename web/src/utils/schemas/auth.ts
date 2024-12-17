@@ -13,7 +13,7 @@ export const SignupUserSchema = z.object({
 
 
 export const LoginUserSchema = z.object({
-  username: z.string().or(z.string().email()),
+  username: z.string(),
   password: z.string()
 })
 
@@ -118,9 +118,19 @@ export const SignupSchema = yup.object().shape({
     .string()
     .min(3, 'Name must be at least 2 characters')
     .max(24, 'Name must not exceed 24 characters'),
-  username: yup.string()
-    .min(6, 'Handle must be at least 6 characters')
-    .max(30, 'Handle must not exceed 30 characters')
+  username: yup.string().min(3, 'Username must be at least 3 characters long')
+    .max(20, 'Username cannot exceed 20 characters')
+    .matches(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores')
+    .test('no-email', 'Username cannot be in an email format', (value) => {
+      if (!value) return true; // Handle empty values
+
+      // Prevent '@' symbol
+      if (value.includes('@')) return false;
+
+      // Prevent email-like patterns
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return !emailPattern.test(value);
+    })
     // .matches(/^[a-z0-9_]+$/, 'Handle must contain only lowercase letters, numbers, and underscores')
     // .test('unique-handle', 'This handle is already taken', async (value) => {
     //   if (value && value.length >= 6) {
@@ -135,7 +145,7 @@ export const SignupSchema = yup.object().shape({
     //   }
     //   return true;
     // })
-    .required('Handle is required'),
+    .required('username is required'),
   // email: yup
   //   .string().email()
   //   .required('emai is required'),

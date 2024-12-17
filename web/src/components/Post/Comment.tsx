@@ -73,7 +73,7 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                     </div> :
                     <div className="flex gap-2 select-none" key={comment._id} ref={ref}>
 
-                        <Link to={`${domain}/user/${comment?.user?.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
+                        <Link to={`${domain}/user/${comment?.user?.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-card dark:bg-accent  w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
                                 <AvatarImage src={comment?.user?.profile} alt="Avatar" />
                                 <AvatarFallback>{comment?.user?.firstname && comment?.user?.firstname[0]?.toUpperCase()}</AvatarFallback>

@@ -12,11 +12,12 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { updateUser } from '@/app/features/user/userSlice'
+import { MdClose } from 'react-icons/md'
 function ChangeCountryModel({ setModelTrigger }) {
 
     const { user } = useAppSelector((state) => state.user)
-console.log(user.address)
-    const [country, setCountry] = useState({name: user.address.country})
+    console.log(user.address)
+    const [country, setCountry] = useState({ name: user.address.country })
     const [cities, setCities] = useState(null)
     const [countries, setCountries] = useState(null)
     const [city, setCity] = useState(user.address.city)
@@ -72,8 +73,8 @@ console.log(user.address)
 
 
     const otpResend = async (type: string) => {
-        
-        if (!country || !city ) {
+
+        if (!country || !city) {
             toast.info("please select country and city")
             return
         }
@@ -84,7 +85,7 @@ console.log(user.address)
             return
         }
 
-        
+
 
         let phone = validatePhone(`${_phone}`, country["iso3"])
 
@@ -156,17 +157,17 @@ console.log(user.address)
 
 
     const changeCountry = async () => {
-        if(country.name == user.address.country){
+        if (country.name == user.address.country) {
             mutation.mutate({
-                 updatedData: {
-                     address: {
+                updatedData: {
+                    address: {
                         country: country.name,
                         city,
                         area: areaRef.current.value
                     }
                 }
             })
-            return 
+            return
         }
         let phone = validatePhone(`${_phone}`, country["iso3"])
 
@@ -190,8 +191,11 @@ console.log(user.address)
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
                 setModelTrigger(false)
             }}></div>
-            <Card className='z-10 p-6 border border-accent'>
-                <form action="" onSubmit={(e) => {
+            <Card className='z-10 p-2 border border-accent'>
+                <MdClose cursor="pointer" size={18} className='ml-auto' onClick={() => {
+                    setModelTrigger(false)
+                }} />
+                <form action="" className='p-4' onSubmit={(e) => {
                     e.preventDefault()
                     let valid = validatePhone(_phone, country['iso3'])
                     console.log(valid)
@@ -245,27 +249,27 @@ console.log(user.address)
                                 />
                             </div>
                         </div>
-                        {country.name !== user.address.country && 
-                         <div className="w-full">
-                            <Label >
-                                Phone
-                            </Label>
-                            <Input
-                                onChange={(e) => setPhone(e.target.value)}
-                                disabled={!country || !city ? true : false}
-                                name="phone"
-                                type='number'
-                                placeholder="Enter your phone number"
-                                id="phone"
-                                className="max-w-96 w-full"
-                            />
-                        </div>}
+                        {country.name !== user.address.country &&
+                            <div className="w-full">
+                                <Label >
+                                    Phone
+                                </Label>
+                                <Input
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    disabled={!country || !city ? true : false}
+                                    name="phone"
+                                    type='number'
+                                    placeholder="Enter your phone number"
+                                    id="phone"
+                                    className="max-w-96 w-full"
+                                />
+                            </div>}
                         {
                             (country?.name == user.address.country) ?
-                            <Button type='button' onClick={changeCountry}>Change Address</Button>
-                            :
-                            <InputOTPForm changeData={changeCountry} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeCountry} buttonTitle={"Change Address"} data={!country || !city || !_phone || !otpSent ? true : false} type="phone" label="Phone Verification" description={otpSent ? "Please enter the one-time password sent to your phone." : "Click on send to get an OTP for verification."} />
-                    }
+                                <Button type='button' onClick={changeCountry}>Change Address</Button>
+                                :
+                                <InputOTPForm changeData={changeCountry} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeCountry} buttonTitle={"Change Address"} data={!country || !city || !_phone || !otpSent ? true : false} type="phone" label="Phone Verification" description={otpSent ? "Please enter the one-time password sent to your phone." : "Click on send to get an OTP for verification."} />
+                        }
 
                     </div>
 

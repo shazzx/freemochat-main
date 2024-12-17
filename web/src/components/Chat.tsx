@@ -22,10 +22,12 @@ import { startCall } from "@/app/features/user/callSlice";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { format, formatDistanceToNow } from "date-fns";
 import { AlertDialogC } from "./AlertDialog";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useOnlineStatus, useUserDefaultMetric, useUserFriends } from "@/hooks/User/useUser";
 import MessageActionsDropdown from "./MessageActionsDropDown";
 import { v4 as uuidv4 } from 'uuid';
+import { domain } from "@/config/domain";
+import { MediaOpenModel } from "./MediaOpenModel";
 
 function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, isRecording, chatlistDetails, setIsRecording }: any) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
@@ -50,12 +52,19 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
     const emojiPickerRef = useRef(null)
     const queryClient = useQueryClient()
     const [width, setWidth] = useState(window.innerWidth)
+    const [_areFriends, setAreFriends] = useState(false)
+
+    const areFriends = async () => {
+        const { data } = await axiosClient.get("/user/areFriends", { params: { friendId: recepientDetails?.userId } })
+        setAreFriends(data)
+    }
 
     useEffect(() => {
+        areFriends()
         window.addEventListener("resize", () => {
             setWidth(window.innerWidth)
         })
-    }, [])
+    }, [recepientDetails])
 
     const userOnlineStatus = useOnlineStatus(recepientDetails?.userId)
 
@@ -268,6 +277,8 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
         }
     };
 
+    const [mediaOpenModel, setMediaOpenModel] = useState(false)
+    const [mediaOpenDetails, setMediaOpenDetails] = useState({ url: "", type: "" })
 
     const handleSendMessage: any = (e?: KeyboardEvent) => {
         if (inputValue.trim().length === 0) {
@@ -426,6 +437,10 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
 
+    useEffect(() => {
+        console.log(mediaOpenModel, 'media open model')
+    }, [mediaOpenModel])
+
 
     const userFriends = recepientDetails.type == "ChatGroup" && useUserFriends(user._id, recepientDetails?.groupId)
     const groupMemberToggle = useGroupMemberToggle(user._id, recepientDetails?.groupId)
@@ -525,7 +540,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
             <div className='flex items-center justify-between p-3 border border-muted'>
                 <div className='flex gap-2 items-center justify-center'>
                     <ChevronLeft cursor="pointer" onClick={() => setChatOpen(false)} />
-                    <div className='w-10 h-10 rounded-full flex items-center justify-center bg-accent overflow-hidden'>
+                    <Link to={domain + "/user/" + recepientDetails?.username} className='w-10 h-10 cursor-pointer rounded-full flex items-center justify-center bg-accent overflow-hidden'>
                         {recepientDetails?.type == "User" ? <Avatar className="h-10 w-10 flex items-center justify-center">
                             <AvatarImage src={recepientDetails?.profile} alt="Avatar" />
                             <AvatarFallback>{recepientDetails?.firstname[0]?.toUpperCase()}</AvatarFallback>
@@ -540,19 +555,22 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                 <AvatarFallback>{recepientDetails?.name[0]?.toUpperCase()}</AvatarFallback>
                             </Avatar>
                         }
-                    </div>
-                    <div className='flex flex-col gap-0'>
+                    </Link>
+                    <Link to={domain + "/user/" + recepientDetails?.username} className='flex flex-col gap-0'>
                         <h3 className='text-card-foreground text-sm'>{recepientDetails?.type == "User" ? recepientDetails?.fullname : recepientDetails?.name}</h3>
-                        <span className='text-muted-foreground text-xs'>
-                            {userOnlineStatus.isLoading && "loading..."}
-                            {
-                                (!userOnlineStatus.isLoading && !userOnlineStatus.data?.lastSeenAt) ? userOnlineStatus.data?.socketId ? "online" : "offline" : userOnlineStatus.data?.lastSeenAt && "last seen at " + format(userOnlineStatus.data?.lastSeenAt, 'h:mm a')
-                            }
-                        </span>
-                    </div>
+                        {_areFriends ?
+                            <span className='text-muted-foreground text-xs'>
+                                {userOnlineStatus.isLoading && "loading..."}
+                                {
+                                    (!userOnlineStatus.isLoading && !userOnlineStatus.data?.lastSeenAt) ? userOnlineStatus.data?.socketId ? "online" : "offline" : userOnlineStatus.data?.lastSeenAt && "last seen at " + format(userOnlineStatus.data?.lastSeenAt, 'h:mm a')
+                                }
+                            </span> :
+                            <span className="text-xs">@{recepientDetails?.username}</span>
+                        }
+                    </Link>
                 </div>
                 <div className="flex items-center justify-center gap-4 sm:mr-4">
-                    {recepientDetails?.type == "User" && <div className="flex gap-2 items-center justify-center">
+                    {(recepientDetails?.type == "User" && _areFriends) && <div className="flex gap-2 items-center justify-center">
                         {/* phone call icon */}
                         <svg onClick={initiateAudioCall} width="22" height="26" viewBox="0 0 22 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M0.564993 8.86603C0.0381881 7.61424 -0.0416895 6.21917 0.338876 4.9154C0.71962 3.61168 1.53755 2.47875 2.65534 1.70719L3.60324 1.02748C4.03508 0.732367 4.56517 0.617962 5.08019 0.708775C5.59522 0.799588 6.0544 1.08843 6.35907 1.51341L9.19392 5.60762C9.48843 6.03612 9.60287 6.56315 9.51258 7.07521C9.42229 7.58726 9.1345 8.04337 8.7112 8.34529C8.28618 8.65009 7.99736 9.10916 7.90654 9.62422C7.81572 10.1393 7.93012 10.6694 8.22526 11.1012L12.7351 17.542C12.8829 17.7564 13.0719 17.9393 13.291 18.08C13.5101 18.2207 13.755 18.3164 14.0114 18.3617C14.2679 18.4069 14.5307 18.4007 14.7848 18.3434C15.0388 18.2861 15.2789 18.1789 15.4911 18.0279C15.9196 17.7334 16.4466 17.619 16.9586 17.7093C17.4707 17.7996 17.9268 18.0874 18.2287 18.5107L21.085 22.5898C21.3801 23.0216 21.4945 23.5517 21.4037 24.0668C21.3129 24.582 21.0241 25.041 20.599 25.3458L19.6361 26.0041C18.5288 26.7904 17.1845 27.1715 15.8291 27.0834C14.4738 26.9953 13.1902 26.4431 12.1941 25.5197C7.29234 20.7599 3.34525 15.1073 0.564993 8.86603Z" fill="#433FFA" />
@@ -657,9 +675,17 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                             {message?.media && message.media.type == "audio" &&
                                                 <AudioPlayer src={message.media.url} duration={message.media.duration} />
                                             }
+                                            {mediaOpenModel &&
+                                                <MediaOpenModel mediaOpenDetails={mediaOpenDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                            }
                                             {message?.media && message.media.type == "image" &&
-                                                <div className="relative aspect-auto max-w-64 sm:max-w-96">
+
+                                                <div className="relative aspect-auto max-w-64 sm:max-w-96" onClick={() => {
+                                                    setMediaOpenModel(true)
+                                                    setMediaOpenDetails({ url: message.media.url, type: "image" })
+                                                }}>
                                                     <img src={message.media.url} alt="" onLoad={handleMediaLoad} />
+
                                                     {message.media.isUploaded == false &&
                                                         <div className='bg-card flex gap-4 p-2 w-full' >
                                                             <svg className="text-gray-700 animate-spin" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -801,11 +827,17 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                     <AudioPlayer src={message.media.url} duration={message.media.duration} />
                                                 }
                                                 {message?.media && message.media.type == "image" &&
-                                                    <div className="aspect-auto max-w-64 sm:max-w-96">
+                                                    <div className="aspect-auto max-w-64 sm:max-w-96" onClick={() => {
+                                                        setMediaOpenModel(true)
+                                                        setMediaOpenDetails({ url: message.media.url, type: "image" })
+                                                    }}>
                                                         <img src={message.media.url} alt="" />
+                                                        {mediaOpenModel &&
+                                                            <MediaOpenModel mediaOpenDetails={mediaOpenDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                                        }
                                                     </div>
-
                                                 }
+
                                                 {message?.media && message.media.type == "pdf" &&
                                                     <div className="aspect-auto cursor-pointer p-3 max-w-64 ">
                                                         <a href={message.media.url} download className="flex">

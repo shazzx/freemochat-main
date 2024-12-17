@@ -401,7 +401,15 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         }}>
                             {postData?.likesCount > 0 && "Likes " + postData?.likesCount}
                         </span>
-                        <span className='text-sm cursor-pointer'>
+                        <span onClick={() => {
+                            if (!model && width > 540) {
+                                dispatch(setOpen({ click: '', id: postData._id }))
+                                navigate("?model=post")
+                                setModelTrigger(true)
+                                return
+                            }
+                            setBottomCommentsState(true)
+                        }} className='text-sm cursor-pointer'>
                             {postData?.commentsCount > 0 && "Comments " + postData?.commentsCount}
                         </span >
                     </div>

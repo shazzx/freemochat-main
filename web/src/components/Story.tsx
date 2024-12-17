@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from './ui/button'
 import { EllipsisVertical } from 'lucide-react'
 import { CiSquareRemove } from 'react-icons/ci'
@@ -9,7 +9,7 @@ import { axiosClient } from '@/api/axiosClient'
 import { Link } from 'react-router-dom'
 import { domain } from '@/config/domain'
 import { MdCancel } from 'react-icons/md'
-import { format, formatDistance, formatDistanceToNow, subHours } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 
 function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStoryIndex, setStoryViewIndex, setStoryViewModelState, setOpenStory, pauseStory, startStory, removeStory }) {
     const [storyViewsData, setStoryViewsData] = useState(null)
@@ -26,14 +26,31 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
             console.log(stories[openedStoryIndex]?.stories[storyViewIndex]?._id, 'current story id')
         }
 
+        return () => {
+            setStoryViewsData(null)
+            setStoryViewersState(null)
+        }
+
     }, [stories, openedStoryIndex, storyViewIndex])
 
-    useEffect(() => {
-        console.log(storyViewsData)
-    }, [storyViewsData])
+    let storiesDifferenciation = []
+
+    for (let i = 0; i < stories[openedStoryIndex]?.stories?.length; i++) {
+        storiesDifferenciation.push(i)
+    }
+    console.log(storiesDifferenciation)
 
     return (
         <div className="relative h-screen z-50">
+            <div className='flex gap-1 mt-[2px]'>
+                {storiesDifferenciation.map((i) => {
+                    if (storyViewIndex == i) {
+                        return <div className='h-[2px] w-full bg-green-500'></div>
+                    }
+                    return <div className='h-[2px] w-full bg-gray-700'></div>
+                })}
+            </div>
+
             <div className="absolute w-full items-center p-2 flex  gap-2">
                 <div className='w-14 h-14 bg-accent flex items-center justify-center rounded-full overflow-hidden border-2 border-primary-active'>
                     <Avatar className="flex">
@@ -52,7 +69,7 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
                             @{stories[openedStoryIndex].user?.username}
                         </span>
 
-                        <p className="py-1 text-xs text-white" >{formatDistanceToNow(stories[openedStoryIndex]?.stories[storyViewIndex]?.createdAt, { addSuffix: true })}</p>
+                        <p className="py-1 text-xs text-white" >{formatDistanceToNow(stories[openedStoryIndex]?.stories[storyViewIndex]?.createdAt ?? Date.now(), { addSuffix: true })}</p>
                     </div>
                     {(stories[openedStoryIndex].user?.username == user.username) &&
                         < DropdownMenu >
@@ -63,13 +80,8 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md'>
                                 <DropdownMenuItem className=' cursor-pointer hover:bg-accent flex gap-2 p-2 items-center justify-center z-20' onClick={async () => {
-                                    // axiosClient.post("/stories/delete", { storyId: stories[openedStoryIndex]?.stories[storyViewIndex]?._id, url: stories[openedStoryIndex]?.stories[storyViewIndex]?._id })
                                     let storyId = stories[openedStoryIndex]?.stories[storyViewIndex]?._id
-                                    // let _stories = [...stories]
                                     removeStory.mutate({ storyId, openedStoryIndex, storyViewIndex, url: stories[openedStoryIndex]?.stories[storyViewIndex]?._id })
-                                    // _stories[openedStoryIndex].stories.splice(storyViewIndex, 1)
-                                    // setStories(_stories)
-                                    // setLoad(true)
                                     setOpenedStoryIndex(0)
                                     setStoryViewIndex(0)
                                     setStoryViewModelState(false)
@@ -84,7 +96,16 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
 
                 </div>
             </div>
-            <div className="flex items-center aspect-auto max-w-96 h-full justify-center overflow-hidden bg-dark ">
+            <div className="flex items-center aspect-auto max-w-96 h-full justify-center overflow-hidden bg-dark" onClick={() => {
+                if (storyViewIndex < stories[openedStoryIndex].stories.length - 1) {
+                    setStoryViewIndex(storyViewIndex + 1)
+                } else {
+                    setOpenedStoryIndex(-1)
+                    setStoryViewIndex(0)
+                    setStoryViewModelState(false)
+                    setOpenStory(false)
+                }
+            }}>
                 <img
                     onMouseDown={pauseStory}
                     onMouseUp={startStory}

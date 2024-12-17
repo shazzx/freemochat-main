@@ -95,7 +95,7 @@ export function LoginForm() {
                                 <Input
                                     id="username"
                                     type="text"
-                                    placeholder="type your email or username"
+                                    placeholder="type your username"
                                     {...register("username")}
                                     required
                                 />

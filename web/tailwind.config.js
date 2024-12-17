@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   darkMode: ["class"],
   content: [
     './pages/**/*.{ts,tsx}',
@@ -18,7 +18,7 @@ module.exports = {
       },
     },
     extend: {
-      maxHeight:{
+      maxHeight: {
         "128": "32rem",
         "custom-height": "500px"
       },

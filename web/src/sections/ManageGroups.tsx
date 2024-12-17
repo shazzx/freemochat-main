@@ -249,11 +249,11 @@ export function ManageGroups() {
                                 onChange={(event) =>
                                     table.getColumn("name")?.setFilterValue(event.target.value)
                                 }
-                                className="max-w-sm"
+                                className="max-w-sm bg-background-secondary "
                             />
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="ml-auto">
+                                    <Button variant="outline" className="ml-auto bg-background-secondary ">
                                         Columns
                                     </Button>
                                 </DropdownMenuTrigger>

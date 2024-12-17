@@ -71,39 +71,54 @@ function Stories() {
         getStories()
     }, [data])
 
+    const viewStory = async () => {
+        try {
+
+            const storyDetails = { storyId: stories[openedStoryIndex].stories[storyViewIndex]._id }
+            const { data } = await axiosClient.post("stories/view", storyDetails)
+            console.log(data)
+
+        } catch (error) {
+            console.log(error)
+        }
+
+    }
+
     let [openStory, setOpenStory] = useState(false)
     useEffect(() => {
         if (stories && stories.length > 0 && openedStoryIndex >= 0 && storyViewIndex >= 0 && !isPaused) {
             storyTimeRef.current = setInterval(() => {
                 if (openedStoryIndex == stories.length - 1 && storyViewIndex == stories[openedStoryIndex].stories.length - 1) {
-                    console.log('right equal')
-                    const storyDetails = { storyId: stories[openedStoryIndex].stories[storyViewIndex]._id }
-                    axiosClient.post("stories/view", storyDetails)
-                    setOpenedStoryIndex(0)
+                    viewStory()
+                    setOpenedStoryIndex(-1)
                     setStoryViewIndex(0)
                     setStoryViewModelState(false)
-                    clearInterval(storyTimeRef.current)
                     setOpenStory(false)
+                    console.log('right equal he bro', storyTimeRef)
                 }
 
                 if (openedStoryIndex < stories.length - 1 && storyViewIndex == stories[openedStoryIndex].stories.length - 1) {
                     setOpenedStoryIndex(openedStoryIndex + 1)
-                    const storyDetails = { storyId: stories[openedStoryIndex].stories[storyViewIndex]._id }
-                    axiosClient.post("stories/view", storyDetails)
+                    viewStory()
                     setStoryViewIndex(0)
                 }
 
                 if (storyViewIndex < stories[openedStoryIndex].stories.length - 1) {
-                    console.log(storyViewIndex)
-                    const storyDetails = { storyId: stories[openedStoryIndex].stories[storyViewIndex]._id }
-                    axiosClient.post("stories/view", storyDetails)
+                    viewStory()
                     setStoryViewIndex(storyViewIndex + 1)
                 }
+                console.log(storyViewIndex, 'story viewindex')
 
             }, 3000)
+        } else {
+            if (storyTimeRef.current) {
+                clearInterval(storyTimeRef.current)
+            }
         }
-        return () => clearInterval(storyTimeRef.current)
-    }, [openStory, storyViewIndex, openedStoryIndex, isPaused])
+        return () => {
+            clearInterval(storyTimeRef.current)
+        }
+    }, [openStory, storyViewIndex, openedStoryIndex, isPaused, stories])
 
 
     const pauseStory = () => {

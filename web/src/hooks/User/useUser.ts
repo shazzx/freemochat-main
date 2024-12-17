@@ -214,13 +214,8 @@ export const useRemoveStory = (userId: string) => {
             queryClient.invalidateQueries({ queryKey: ['stories', userId] })
 
         },
-        onSettled: (e) => {
-            console.log(e)
-            if (e) {
-                queryClient.invalidateQueries({ queryKey: ['stories', userId] })
-            }
-            // uncommeting this will refetch the comments again from the server to be in sync
-            // queryClient.invalidateQueries({ queryKey: ["comments"] })
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['stories', userId] })
         }
     })
 

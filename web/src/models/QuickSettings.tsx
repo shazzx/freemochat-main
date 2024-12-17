@@ -20,6 +20,7 @@ import ChangePhoneModel from "./ChangePhoneModel"
 import ChangeEmailModel from "./ChangeEmailModel"
 import ChangePasswordModel from "./ChangePasswordModel"
 import ForgetPasswordModel from "./ForgetPasswordModel"
+import { MdClose } from "react-icons/md"
 
 const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
@@ -124,8 +125,8 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     const [changeEmailModel, setChangeEmailModel] = useState(false)
     const [changePasswordModel, setChangePasswordModel] = useState(false)
     const [forgetPasswordModel, setForgetPasswordModel] = useState(false)
-    
-    
+
+
 
     const navigate = useNavigate()
 
@@ -146,13 +147,13 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                 changeEmailModel &&
                 <ChangeEmailModel setModelTrigger={setChangeEmailModel} />
             } */}
-                        {
+            {
                 changePasswordModel &&
-                <ChangePasswordModel setModelTrigger={setChangePasswordModel} setForgetPasswordModel={setForgetPasswordModel}/>
+                <ChangePasswordModel setModelTrigger={setChangePasswordModel} setForgetPasswordModel={setForgetPasswordModel} />
             }
-                   {
+            {
                 forgetPasswordModel &&
-                <ForgetPasswordModel setModelTrigger={setForgetPasswordModel}/>
+                <ForgetPasswordModel setModelTrigger={setForgetPasswordModel} />
             }
             {
                 profileForCrop && cropperModel &&
@@ -182,8 +183,10 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                 }} />
 
             }
-            <div className='z-10 max-w-[720px] w-full bg-background rounded-lg h-full overflow-auto'>
-
+            <div className='z-10 max-w-[720px] relative w-full bg-background rounded-lg h-full overflow-auto'>
+                <MdClose cursor="pointer" size={24} className='ml-auto absolute top-2 right-2 z-10'  onClick={() => {
+                    navigate('', { replace: true })
+                }} />
                 <div className="grid gap-8 p-1  overflow-y-auto relative">
                     <div className="flex flex-col items-center justify-center relative">
                         <div className='relative w-full max-h-64 roundd-md  overflow-hidden'>
@@ -371,7 +374,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
                                 <div className="flex gap-4 w-full">
                                     {/* <div className="w-full"> */}
-                                        {/* <div className="flex gap-2 items-center">
+                                    {/* <div className="flex gap-2 items-center">
                                             <Label className="mb-1">
                                                 Email
                                             </Label>
@@ -380,7 +383,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                             }} />
                                         </div> */}
 
-                                        {/* <Input
+                                    {/* <Input
                                             disabled
                                             name="email"
                                             // ref={emailRef}
@@ -388,9 +391,9 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                             id="email"
                                             defaultValue={email}
                                             className="max-w-96 w-full" */}
-                                        {/* // {...register("email")} */}
-                                        {/* /> */}
-                                        {/* {errors.email && <p>{errors.email.message}</p>} */}
+                                    {/* // {...register("email")} */}
+                                    {/* /> */}
+                                    {/* {errors.email && <p>{errors.email.message}</p>} */}
                                     {/* </div> */}
                                     <div className="w-full">
                                         <div className="flex gap-2 items-center">
@@ -421,7 +424,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                 <h2>Privacy</h2>
                                 <div className="flex w-full flex-col md:flex-row justify-start items-start gap-4">
                                     <Button type="button" onClick={() => {
-                                                setChangePasswordModel(true)
+                                        setChangePasswordModel(true)
                                     }}>Change Password</Button>
                                 </div>
                                 <Button type="submit">Save changes</Button>

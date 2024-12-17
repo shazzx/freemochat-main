@@ -161,6 +161,11 @@ export const usernameExists = z.object({
     username: z.string(),
 })
 
+
+export const areFriends = z.object({
+    friendId: z.string(),
+})
+
 export const verificationStatus = z.object({
     username: z.string().min(5),
     authId: z.string().refine(
@@ -187,4 +192,5 @@ export type ForgetPasswordRequestDTO = z.infer<typeof ForgetPasswordRequest>
 export type resendOTPDTO = z.infer<typeof resendOTP>
 export type resendOTPUserDTO = z.infer<typeof resendOTPUser>
 export type usernameExistsDTO = z.infer<typeof usernameExists>
+export type areFriendsDTO = z.infer<typeof areFriends>
 export type verificationStatusDTO = z.infer<typeof verificationStatus>

@@ -107,7 +107,7 @@ function ChatSidebar({ socket, setChatOpen, setChatlistDetails, setRecepientDeta
                 <Card x-chunk="dashboard-01-chunk-5" className="w-full bg-background-secondary h-full border-none ">
                     <CardContent className="flex flex-col gap-2 p-0">
                         {chatList?.users?.length > 0 ? chatList?.users?.map((chat, i) => (
-                            <div className="flex gap-4 cursor-pointer w-full p-4 bg-card hover:bg-accent" key={chat?._id} onClick={async () => {
+                            <div className="flex gap-4 cursor-pointer w-full p-4 bg-card border border-accent hover:bg-accent" key={chat?._id} onClick={async () => {
                                 setChatlistDetails({ chatId: chat._id, recepientId: chat.recepient._id, chatIndex: i })
                                 const response = await axiosClient.post("chatlist/messagesSeen", { chatlistId: chat._id, userId: user._id })
                                 defaultMetric.mutate('unreadChatlist')

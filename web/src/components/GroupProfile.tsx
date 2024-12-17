@@ -97,7 +97,7 @@ function GroupProfile() {
                 <div className='w-full h-full flex items-center justify-center'>loading...</div>
             }
             {isSuccess &&
-                <div className='w-full flex flex-col overflow-y-auto border-muted'>
+                <div className='w-full flex flex-col overflow-y-auto border-muted bg-background-secondary'>
 
                     {/* media model (when you click any media in the profile main page this model will open) */}
                     {mediaOpenModel && mediaOpenDetails &&

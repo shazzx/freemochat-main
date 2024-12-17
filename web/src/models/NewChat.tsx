@@ -50,6 +50,7 @@ function NewChat({ setChatOpen, setNewChatModelState, setRecepientDetails, frien
                                         <div className='flex flex-col gap-1 w-full bg-card cursor-pointer' onClick={() => {
                                             setRecepientDetails({ userId: friend?._id, username: friend?.username, profile: friend?.images?.profile, fullname: friend.firstname + " " + friend.lastname, firstname: friend.firstname, lastname: friend.lastname, type: "User" })
                                             setChatOpen(true)
+                                            navigate('', { replace: true })
                                         }}>
                                             <div className='flex-responsive items-center p-2 gap-2 relative w-full '>
                                                 <div className='flex w-full gap-2'>

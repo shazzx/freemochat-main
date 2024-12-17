@@ -48,6 +48,24 @@ export class UserService {
         return this.userModel.find()
     }
 
+
+    async areFriends(userId: string, friendId: string): Promise<any> {
+        console.log(userId, 'user Id', friendId, "friend Id")
+        const friends = await this.friendModel.findOne({
+            $or: [
+                { user: new Types.ObjectId(userId), friend: new Types.ObjectId(friendId) },
+                { user: new Types.ObjectId(friendId), friend: new Types.ObjectId(userId) }
+            ]
+        })
+        console.log(friends, 'isfrined')
+
+        if (friends) {
+            return true
+        }
+
+        return false
+    }
+
     async getFriends(cursor, userId, groupId) {
         const limit = 12
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};

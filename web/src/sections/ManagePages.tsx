@@ -114,7 +114,7 @@ export function ManagePages() {
             accessorKey: "createdAt",
             header: "Created At",
             cell: ({ row }) => (
-                <div className="capitalize">{format(row.getValue("createdAt") , 'MMM d, yyy h:mm a')}</div>
+                <div className="capitalize">{format(row.getValue("createdAt"), 'MMM d, yyy h:mm a')}</div>
             ),
         },
 
@@ -166,7 +166,7 @@ export function ManagePages() {
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
-        
+
         state: {
             sorting,
             columnFilters,
@@ -257,18 +257,18 @@ export function ManagePages() {
                                 />
                             </div>
                         </form> */}
-                        <div className="flex gap-2 items-center py-4">
+                        <div className="flex gap-2  items-center py-4">
                             <Input
                                 placeholder="Filter pages..."
                                 value={table.getColumn("name")?.getFilterValue() as string}
                                 onChange={(event) =>
                                     table.getColumn("name")?.setFilterValue(event.target.value)
                                 }
-                                className="max-w-sm"
+                                className="max-w-sm bg-background-secondary "
                             />
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="ml-auto">
+                                    <Button variant="outline" className="ml-auto bg-background-secondary ">
                                         Columns
                                     </Button>
                                 </DropdownMenuTrigger>

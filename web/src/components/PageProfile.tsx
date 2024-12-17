@@ -189,7 +189,7 @@ function PageProfile() {
                 <div className='w-full h-full flex items-center justify-center'>loading...</div>
             }
             {_pageData.isSuccess &&
-                <div className='w-full flex flex-col overflow-y-auto border-muted'>
+                <div className='w-full flex flex-col overflow-y-auto border-muted bg-background-secondary'>
                     {openQuickChat &&
                         <div ref={quickChatRef}>
                             <QuickChat target={!_pageData.isLoading && _pageData} />

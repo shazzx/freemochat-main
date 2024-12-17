@@ -11,6 +11,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { updateUser } from '@/app/features/user/userSlice'
 import emailValdator from "email-validator";
 import { Button } from '@/components/ui/button'
+import { MdClose } from 'react-icons/md'
 
 function ChangePasswordModel({ setModelTrigger, setForgetPasswordModel }) {
 
@@ -131,10 +132,10 @@ function ChangePasswordModel({ setModelTrigger, setForgetPasswordModel }) {
         setButtonState(false)
 
         mutation.mutate({
-                changePassword: {
-                    currentPassword: currentPassword,
-                    password: newPassword
-                }
+            changePassword: {
+                currentPassword: currentPassword,
+                password: newPassword
+            }
         })
     }
 
@@ -143,9 +144,12 @@ function ChangePasswordModel({ setModelTrigger, setForgetPasswordModel }) {
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
                 setModelTrigger(false)
             }}></div>
-            <Card className='z-10 p-6 border border-accent'>
-                <form action="">
 
+            <Card className='z-10 p-2 border border-accent'>
+                <MdClose cursor="pointer" size={18} className='ml-auto' onClick={() => {
+                    setModelTrigger(false)
+                }} />
+                <form action="" className='p-4'>
                     <div className="flex flex-col gap-4 w-full">
                         <div className="flex w-full flex-col justify-start items-start gap-4">
                             <div className="w-full">

@@ -71,7 +71,7 @@ const createPageModel: FC<any> = ({ setModelTrigger, createPage, editPage, editS
                 }} />
 
             }
-            <div className='z-10 w-fit bg-background rounded-lg h-full  border-2 border-accent shadow-md overflow-auto'>
+            <div className='z-10 w-fit dark:bg-background bg-background-secondary rounded-lg h-full  border-2 border-accent shadow-md overflow-auto'>
                 <div className="grid gap-8 p-1  overflow-y-auto relative">
                     <div className="flex flex-col items-center justify-center relative">
                         {/* cover image */}

@@ -19,6 +19,17 @@ export class FriendService {
 
     }
 
+    async areFriends(userId: string, friendId: string): Promise<any> {
+        const friends = await this.friendsModel.find({ user: new Types.ObjectId(userId), friend: new Types.ObjectId(userId) })
+        console.log(friends)
+
+        if (friends) {
+            return true
+        }
+
+        return false
+    }
+
     async updateOnlineFriends(userId: string): Promise<void> {
         const friends = await this.getFriends(userId)
         const onlineFriends = await Promise.all(

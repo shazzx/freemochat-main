@@ -65,8 +65,9 @@ export class StoriesService {
     async viewStory(storyId, userId) {
         const story = await this.storyModel.findById(storyId)
 
-        console.log(story, storyId, 'first')
+        console.log(story, storyId, 'inside view story method')
         if (story.user == userId) {
+            console.log('return null')
             return null
         }
 
@@ -80,10 +81,13 @@ export class StoriesService {
         }
 
         try {
+            console.log("story viewed")
             const storyViewed = await this.viewedStoriesModel.create({ storyId: new Types.ObjectId(storyId), userId: new Types.ObjectId(userId) })
+            console.log(storyViewed, 'storyviewed code below')
             return storyViewed
 
         } catch (error) {
+            console.log('this is error', error)
             if (error.name == "MongoServerError" && error.code == 11000) {
                 return null
             }

@@ -10,6 +10,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { updateUser } from '@/app/features/user/userSlice'
 import emailValdator from "email-validator";
+import { MdClose } from 'react-icons/md'
 
 function ChangeEmailModel({ setModelTrigger }) {
 
@@ -102,6 +103,9 @@ function ChangeEmailModel({ setModelTrigger }) {
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
                 setModelTrigger(false)
             }}></div>
+            <MdClose cursor="pointer" onClick={() => {
+                setModelTrigger(false)
+            }} />
             <Card className='z-10 p-6 border border-accent'>
                 <form action="">
 
