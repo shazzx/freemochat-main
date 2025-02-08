@@ -8,7 +8,7 @@ export class OtpService {
 
   async generateOtp(userId: string, type: string): Promise<string> {
     const otp = randomInt(100000, 999999).toString();
-    await this.redis.set(`otp:${type}:${userId}`, otp, 'EX', 300); // 5 minutes expiration
+    await this.redis.set(`otp:${type}:${userId}`, otp, 'EX', 300); 
     return otp;
   }
 
@@ -21,6 +21,29 @@ export class OtpService {
     }
     return false;
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
 
   // deprecated
 

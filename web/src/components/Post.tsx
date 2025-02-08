@@ -104,7 +104,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     useEffect(() => {
         window.addEventListener("resize", () => {
             setWidth(window.innerWidth)
-            // console.log(window.innerWidth)
         })
     }, [])
 

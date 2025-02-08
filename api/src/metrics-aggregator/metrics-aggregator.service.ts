@@ -27,7 +27,6 @@ export class MetricsAggregatorService {
         return { notification, requests, unreadChatlists }
     }
 
-
     async getAll() {
         return await this.counterModel.find()
     }
