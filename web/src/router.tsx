@@ -22,6 +22,7 @@ import YourAccount from "./components/YourAccount";
 import ForgetPassword from "./components/ForgetPassword";
 import TermsAndConditions from "./pages/user/TermsAndConditions";
 import PrivacyPolicy from "./pages/user/PrivacyPolicy";
+import ChildSafetyPolicy from "./pages/user/ChildrenPrivacy";
 
 export const router = createBrowserRouter([
     {
@@ -120,6 +121,10 @@ export const router = createBrowserRouter([
             {
                 path: "/privacy",
                 element: <PrivacyPolicy />,
+            },
+            {
+                path: "/children-privacy",
+                element: <ChildSafetyPolicy />,
             },
             {
                 path: "/terms",

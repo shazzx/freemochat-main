@@ -533,6 +533,28 @@ export class UserController {
         })
     }
 
+    @Public()
+    @Post('login/phone')
+    async loginUserWithPhone(
+        @Body(new ZodValidationPipe(LoginUser)) loginUserDTO: LoginUserDTO,
+        @Req() req: Request,
+        @Res({ passthrough: true }) response: Response) {
+        // username here is a phone number from user
+        const { username, password } = loginUserDTO
+        const user = await this.authService.validateUser(username, password)
+
+        console.log('validate user', user)
+        const payload = await this.authService.login(user)
+        console.log('payload ', payload)
+
+        response.cookie("accessToken", payload.access_token, {
+            sameSite: 'strict',
+            maxAge: 7 * 60 * 60 * 1000
+        }).json({
+            access_token: payload.access_token
+        })
+    }
+
     @Post('logout')
     async logoutUser(
         @Req() req: Request,

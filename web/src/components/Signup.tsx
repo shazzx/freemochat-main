@@ -19,10 +19,11 @@ import { useAppDispatch } from "@/app/hooks"
 import { Input } from "./ui/input"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { SignupSchema } from "@/utils/schemas/auth"
-import Selector from "./Selector"
 import { SelectScrollable } from "@/models/SelectScrollable"
-import phone from "phone"
+import logo from './../assets/logo.png'
 import { toast } from "react-toastify"
+import BottomLinks from "./BottomLinks"
+import { validatePhone } from "@/lib/utils"
 
 
 export function Signup() {
@@ -94,23 +95,18 @@ export function Signup() {
         }
     }, [country])
 
-    const valdatePhone = (_phone, country) => {
-        console.log(_phone, country)
-        return phone(_phone, { country })
-    }
+
     const onSubmit = (_data) => {
-        console.log(_data)
         if (!country || !city) {
             setSignupButtonState(false)
             toast.info("please select country and city")
             return
         }
 
-        let phone = valdatePhone(`${_data.phone}`, country["iso3"])
+        let phone = validatePhone(`${_data.phone}`, country["iso3"]) 
 
         if (phone.isValid) {
             let data = { ..._data, phone: phone.phoneNumber, address: { country: country.name, city, ..._data.address } }
-            console.log(data)
             mutateAsync(data)
             return
         }
@@ -119,14 +115,14 @@ export function Signup() {
     }
 
     useEffect(() => {
-        if(Object.keys(errors).length !== 0){
-            console.log(errors)
+        if (Object.keys(errors).length !== 0) {
             setSignupButtonState(false)
         }
     }, [errors])
 
     return (
-        <div className="w-screen h-screen flex items-center justify-center overflow-auto">
+        <div className="p-8 flex flex-col gap-8 items-center justify-center overflow-auto">
+            <h1 className="text-2xl font-bold "><img className="sm:h-[72px] h-16" src={logo} alt="" /></h1>
             <Card className="mx-auto max-w-md">
                 <CardHeader>
                     <CardTitle className="text-2xl">Sign Up</CardTitle>
@@ -314,6 +310,7 @@ export function Signup() {
 
                 </CardContent>
             </Card>
+            <BottomLinks />
         </div>
 
     )

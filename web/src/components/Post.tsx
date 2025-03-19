@@ -67,8 +67,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     const { user } = useAppSelector((state) => state.user)
     const shareRef = useRef(null)
     const [expanded, setExpanded] = useState(false)
-    const words = postData?.content?.split(' ')
-    const expandable = words?.slice(0, 40).join(' ')
+    const expandable = postData?.content?.slice(0, 360)
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
     const [likesModelState, setLikesModelState] = useState(false)
@@ -339,10 +338,14 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                     <div className='text-sm font-normal px-2 sm:px-0'>
 
                         {expanded ?
-                            postData?.content :
-                            <p className='break-words'>
+                            <p style={{whiteSpace: "pre-wrap"}} className='break-words'>
+
+                            {postData?.content}
+                        </p>
+                             :
+                            <p style={{whiteSpace: "pre-wrap"}} className='break-words'>
                                 {expandable}
-                                {expandable?.length > 40 && <>...{' '} <span className='text-primary text-sm cursor-pointer' onClick={() => setExpanded(true)}>Show more</span></>}
+                                {postData?.content?.length > 360 && <>...{' '} <span className='text-primary text-sm cursor-pointer' onClick={() => setExpanded(true)}>Show more</span></>}
                             </p>
                         }
                     </div>

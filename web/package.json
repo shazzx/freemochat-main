@@ -49,6 +49,7 @@
     "immer": "^10.1.1",
     "input-otp": "^1.2.4",
     "jwt-decode": "^4.0.0",
+    "libphonenumber-js": "^1.12.5",
     "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.368.0",

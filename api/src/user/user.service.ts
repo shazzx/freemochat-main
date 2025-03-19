@@ -471,7 +471,7 @@ export class UserService {
     }
 
     async findUser(username: string): Promise<any> {
-        let user = await this.userModel.findOne({ username })
+        let user = await this.userModel.findOne({ $or : [{username}, {phone: username}] })
         return user
     }
 }
