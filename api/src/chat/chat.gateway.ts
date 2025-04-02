@@ -48,7 +48,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let _user = JSON.parse(await this.cacheService.getOnlineUser(payload.senderDetails.targetId))
     console.log(recepient, _user, 'this is user and rec')
 
-
     this.logger.log(`Message received: ${payload.senderDetails.targetId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.targetId + " - " + payload.recepientDetails.username + " - " + payload.body}`);
 
     try {
@@ -320,11 +319,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
 
-  async sendNotification({ user, reciever }) {
+  async sendNotification({ user, reciever, type }: { user: Types.ObjectId | string, reciever: Types.ObjectId | string, type?: string }) {
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(reciever))
     const notification = await this.notificationModel.create(
       {
-        from: reciever,
+        from: type == 'request accepted' ? user : reciever,
         user: reciever,
         targetId: user,
         targetType: "user",
@@ -334,7 +333,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     )
 
     console.log(notification)
-    this.server.to(recepient?.socketId).emit('notification', {acceptedBy: user})
+    this.server.to(recepient?.socketId).emit('notification', { acceptedBy: user })
   }
 
 

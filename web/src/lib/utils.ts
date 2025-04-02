@@ -25,3 +25,14 @@ export function detectCountryFromNumber(phoneNumber) {
     return null;
   }
 }
+
+export const reactions = [
+  { emoji: '👍', name: 'Like' },
+  { emoji: '❤️', name: 'Love' },
+  { emoji: '😆', name: 'Haha' },
+  { emoji: '🤩', name: 'Wow' },
+  { emoji: '😢', name: 'Sad' },
+  { emoji: '😠', name: 'Angry' },
+  { emoji: '👏', name: 'Applause' },
+  { emoji: '🔥', name: 'Fire' },
+];

@@ -100,9 +100,9 @@ export function LoginWrapper() {
       console.log(phone)
 
       if (phone.isValid) {
-          mutation.mutate({...data, username: phone.phoneNumber})
-        }
-        return
+        mutation.mutate({ ...data, username: phone.phoneNumber })
+      }
+      return
     }
     mutation.mutate(data)
   }
@@ -116,13 +116,13 @@ export function LoginWrapper() {
 
   return (
     <Tabs defaultValue="email" className="w-full max-w-md mx-auto">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="email" onClick={() => {
+      <TabsList className="grid gap-1 w-full grid-cols-2 bg-background">
+        <TabsTrigger value="email" className="dark:bg-card bg-white data-[state=active]:bg-white border-accent border-1 data-[state=active]:border-b-4 data-[state=active]:border-primary-active data-[state=active]:px-1" onClick={() => {
           if (isPhoneTabActive) {
             setIsPhoneTabActive(false)
           }
         }}>Email</TabsTrigger>
-        <TabsTrigger value="phone" onClick={() => {
+        <TabsTrigger value="phone" className="dark:bg-card bg-white data-[state=active]:bg-white border-accent border-1 data-[state=active]:border-b-4 data-[state=active]:border-primary-active data-[state=active]:px-1" onClick={() => {
           if (!isPhoneTabActive) {
             setIsPhoneTabActive(true)
           }

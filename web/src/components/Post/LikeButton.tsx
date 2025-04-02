@@ -1,11 +1,5 @@
+import { reactions } from '@/lib/utils';
 import { useEffect, useRef, useState } from 'react'
-const reactions = [
-  { emoji: '❤️', name: 'Love' },
-  { emoji: '😆', name: 'Haha' },
-  { emoji: '😠', name: 'Angry' },
-  { emoji: '😢', name: 'Sad' },
-];
-
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 
 function LikeButton({ postData, mutate, pageIndex, postIndex }) {

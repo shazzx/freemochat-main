@@ -18,8 +18,7 @@ const ChildSafetyPolicy = () => {
           <p className="text-gray-700 leading-relaxed">
             Freedombook is committed to creating a safe, inclusive, and responsible social networking environment.
             We take child safety seriously and ensure that our platform adheres to industry best practices,
-            including compliance with Google Play's policies, COPPA (Children's Online Privacy Protection Act),
-            and GDPR-K (General Data Protection Regulation for Kids).
+            including compliance with Google Play's policies.
           </p>
         </section>
 
@@ -44,47 +43,39 @@ const ChildSafetyPolicy = () => {
         <section className="mb-8">
           <h2 className="text-2xl font-bold text-blue-800 mb-4">4. Privacy & Data Protection</h2>
           <ul className="list-disc pl-6 text-gray-700 space-y-2">
-            <li>Freedombook does not collect, store, or share personal data of children without parental consent.</li>
-            <li>Profile visibility settings allow minors to restrict access to their content.</li>
+            {/* <li>Freedombook does not collect, store, or share personal data of children without parental consent.</li> */}
+            {/* <li>Profile visibility settings allow minors to restrict access to their content.</li> */}
             <li>We use encryption and secure storage practices to protect user data.</li>
           </ul>
         </section>
-
+{/* 
         <section className="mb-8">
-          <h2 className="text-2xl font-bold text-blue-800 mb-4">5. Parental Controls & Guidance</h2>
-          <ul className="list-disc pl-6 text-gray-700 space-y-2">
-            <li>Parents and guardians can monitor and restrict access to certain app features.</li>
-            <li>Educational resources on online safety and digital well-being are provided within the app.</li>
-          </ul>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="text-2xl font-bold text-blue-800 mb-4">6. Messaging & Friend Requests</h2>
+          <h2 className="text-2xl font-bold text-blue-800 mb-4">5. Messaging & Friend Requests</h2>
           <ul className="list-disc pl-6 text-gray-700 space-y-2">
             <li>Users under 18 have default privacy settings restricting messaging from strangers.</li>
             <li>Stranger friend requests require approval before communication is enabled.</li>
             <li>AI-based detection identifies suspicious activities or harmful interactions.</li>
           </ul>
-        </section>
+        </section> */}
 
         <section className="mb-8">
-          <h2 className="text-2xl font-bold text-blue-800 mb-4">7. Reporting & Blocking</h2>
+          <h2 className="text-2xl font-bold text-blue-800 mb-4">5. Reporting</h2>
           <ul className="list-disc pl-6 text-gray-700 space-y-2">
             <li>Users can report inappropriate content, harassment, or safety concerns directly within the app.</li>
-            <li>The blocking feature allows users to prevent interactions with unwanted individuals.</li>
           </ul>
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-bold text-blue-800 mb-4">8. Compliance & Enforcement</h2>
+          {/* <h2 className="text-2xl font-bold text-blue-800 mb-4">6. Compliance & Enforcement</h2> */}
+          <h2 className="text-2xl font-bold text-blue-800 mb-4">6. Compliance</h2>
           <ul className="list-disc pl-6 text-gray-700 space-y-2">
-            <li>Freedombook adheres to Google Play's Families Policy, COPPA, and GDPR-K regulations.</li>
-            <li>Regular audits and updates ensure compliance with evolving safety standards.</li>
+            <li>Freedombook adheres to Google Play's.</li>
+            {/* <li>Regular audits and updates ensure compliance with evolving safety standards.</li> */}
           </ul>
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-bold text-blue-800 mb-4">9. Contact & Support</h2>
+          <h2 className="text-2xl font-bold text-blue-800 mb-4">7. Contact & Support</h2>
           <p className="text-gray-700 mb-2">For safety concerns or policy-related inquiries, contact us at:</p>
           <p className="flex items-center text-blue-600">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
