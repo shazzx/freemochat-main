@@ -83,21 +83,21 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
                                 formData.append('files', selectedMedia[i].file)
                             }
                         }
-                        if ((content.current.value.length > 12 || selectedMedia.length > 0) && !editPost) {
+                        if ((content.current.value.length > 1 || selectedMedia.length > 0) && !editPost) {
                             createPost({visibility: selected, content: content.current.value, formData, selectedMedia })
                             setUploading(true)
                             navigate('', { replace: true })
                             return
                         }
 
-                        if (content.current.value.length > 12 || selectedMedia.length > 0 && editPost) {
+                        if (content.current.value.length > 1 || selectedMedia.length > 0 && editPost) {
                             updatePost({ visibility: selected, content: content.current.value, formData, selectedMedia, media: postMedia, setModelTrigger })
                             setUploading(true)
                             navigate('', { replace: true })
                             return
                         }
 
-                        toast.info("Content must be atleats of 12 characters")
+                        toast.info("Please write something")
                     }}>
                         <div>
                             <h3 className="text-center text-lg sm:text-xl" >{editPost ? "Update Post" : "Create Post"}</h3>
