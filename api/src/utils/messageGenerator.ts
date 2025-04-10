@@ -1,10 +1,10 @@
 export const messageGenerator = (fullname: string, otp: string, type?: string) => {
     if(type == 'reset-password'){
-        return `Dear ${fullname},\n\nYour reset password link is ${otp}. It is valid for the next 5 minutes.\n\nThank you,\nFreedombook`;
+        return `Freedombook: Use this link to reset your password: ${otp}. Valid for 30 minutes.`;
     }
     if(type == 'register'){
-        return `Dear ${fullname},\n\nYour OTP is ${otp}. It is valid for the next 5 minutes.\n\nThank you,\nFreedombook`;
+        return `Freedombook: ${otp} is your verification code. Valid for 30 minutes.`;
     }else{
-        return `Dear ${fullname},\n\nYour OTP is ${otp}. It is valid for the next 5 minutes.\n\nIf you did not request this, please contact us immediately.\n\nThank you,\nFreedombook`;
+        return `Freedombook: ${otp} is your verification code. Valid for 30 minutes. Ignore if you didn't request this.`;
     }
 }

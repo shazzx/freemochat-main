@@ -9,7 +9,7 @@ export class UserService {
     constructor(@InjectModel(User.name) private readonly userModel: Model<User>) { }
 
     async getUsers(cursor, search: string) {
-        let limit = 10
+        let limit = 50
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
 
         // const query = search

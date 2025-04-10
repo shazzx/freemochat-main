@@ -8,7 +8,7 @@ export class OtpService {
 
   async generateOtp(userId: string, type: string): Promise<string> {
     const otp = randomInt(100000, 999999).toString();
-    await this.redis.set(`otp:${type}:${userId}`, otp, 'EX', 300); 
+    await this.redis.set(`otp:${type}:${userId}`, otp, 'EX', 1800); 
     return otp;
   }
 

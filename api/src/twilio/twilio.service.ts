@@ -33,6 +33,7 @@ export class TwilioService {
         body,
         from,
         to,
+        riskCheck: 'disable'
       });
       
       return message;
