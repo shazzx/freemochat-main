@@ -331,19 +331,22 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 <span className='text-muted-foreground text-xs'>{postData?.promotion?.length > 0 ? "sponsored" : date}</span>
                             </div>
                         </div>
-                        <DropdownMenuMain deletePost={deletePost} setConfirmModelState={setConfirmModelState} setReportModelState={setReportModelState} reportModelState={reportModelState} postPromotion={postPromotion} setPostPromotion={setPostPromotion} setEditPostModelState={setEditPostModelState} postBy={postData?.user == user._id || postData?.user?._id == user._id} />
+                        <DropdownMenuMain deletePost={deletePost} setConfirmModelState={setConfirmModelState} setReportModelState={setReportModelState} reportModelState={reportModelState} postPromotion={postPromotion} setPostPromotion={setPostPromotion} setEditPostModelState={setEditPostModelState} postBy={postData?.user == user._id || postData?.user?._id == user._id} copyPost={() => {
+                            navigator.clipboard.writeText(postData.content);
+                            toast.info("Post Copied")
+                        }} />
                     </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-2 text-2xl p-0 sm:px-3 font-bold">
                     <div className='text-sm font-normal px-2 sm:px-0'>
 
                         {expanded ?
-                            <p style={{whiteSpace: "pre-wrap"}} className='break-words'>
+                            <p style={{ whiteSpace: "pre-wrap" }} className='break-words'>
 
-                            {postData?.content}
-                        </p>
-                             :
-                            <p style={{whiteSpace: "pre-wrap"}} className='break-words'>
+                                {postData?.content}
+                            </p>
+                            :
+                            <p style={{ whiteSpace: "pre-wrap" }} className='break-words'>
                                 {expandable}
                                 {postData?.content?.length > 360 && <>...{' '} <span className='text-primary text-sm cursor-pointer' onClick={() => setExpanded(true)}>Show more</span></>}
                             </p>

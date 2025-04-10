@@ -10,9 +10,9 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MdDelete, MdEdit, MdReport, MdUpgrade } from "react-icons/md"
+import { MdCopyAll, MdDelete, MdEdit, MdReport, MdUpgrade } from "react-icons/md"
 
-export function DropdownMenuMain({ deletePost, setConfirmModelState, setReportModelState, reportModelState, postPromotion, setPostPromotion, postBy, setEditPostModelState }) {
+export function DropdownMenuMain({ deletePost, setConfirmModelState, setReportModelState, reportModelState, postPromotion, setPostPromotion, postBy, setEditPostModelState, copyPost }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -41,13 +41,18 @@ export function DropdownMenuMain({ deletePost, setConfirmModelState, setReportMo
                     }
 
                     {!postBy && <DropdownMenuItem onClick={() => {
-                        // console.log('yes', reportModelState)
                         setReportModelState(!reportModelState)
                     }} className="cursor-pointer">
                         <MdReport className="mr-2 h-4 w-4" />
                         <span>Report</span>
                     </DropdownMenuItem>}
 
+                    <DropdownMenuItem onClick={() => {
+                        copyPost()
+                    }} className="cursor-pointer">
+                        <MdCopyAll className="mr-2 h-4 w-4" />
+                        <span>Copy</span>
+                    </DropdownMenuItem>
                     {postBy && (location.pathname !==  '/' && location.pathname !==  '/groups' && location.pathname !==  '/pages'  ) && <DropdownMenuItem className="cursor-pointer" onClick={deletePost}>
                         <MdDelete className="mr-2 h-4 w-4" />
                         <span>Delete</span>

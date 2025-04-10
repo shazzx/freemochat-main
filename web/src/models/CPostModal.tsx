@@ -8,6 +8,7 @@ import { Loader } from "lucide-react"
 import { toast } from "react-toastify"
 import { useNavigate } from "react-router-dom"
 import CustomComboBox from "@/components/ComboboxTwo"
+import { Textarea } from "@/components/ui/textarea"
 
 const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetails, updatePost }) => {
     const [selectedMedia, setSelectedMedia] = useState([])
@@ -103,9 +104,8 @@ const CPostModal: FC<any> = ({ setModelTrigger, createPost, editPost, postDetail
                             <h3 className="text-center text-lg sm:text-xl" >{editPost ? "Update Post" : "Create Post"}</h3>
                         </div>
                         <div className={`w-full ${selectedMedia?.length > 0 || postDetails?.media?.length ? 'h-[240px]' : 'h-[360px]'} flex flex-col items-center`}>
-                            <textarea name="" className="border-accent border w-full bg-card h-full p-2" defaultValue={editPost && postDetails?.content} placeholder="write something" id="" ref={content}>
-
-                            </textarea>
+                            <Textarea name="create post" className="border-accent border w-full bg-card h-full p-2" defaultValue={editPost && postDetails?.content} placeholder="write something" id="" ref={content}>
+                            </Textarea>
                         </div>
                         <div>
                             <div className="w-full flex flex-col items-end justify-center gap-1 ">
