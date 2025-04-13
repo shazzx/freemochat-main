@@ -8,7 +8,7 @@ export class CGroupService {
     constructor(@InjectModel(ChatGroup.name) private chatGroupModel: Model<ChatGroup>) { }
 
     async getChatGroups(cursor: string, search: string) {
-        let limit = 10
+        let limit = 50
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
 
         // const query = search
@@ -18,9 +18,8 @@ export class CGroupService {
 
             const query: any = search
                 ?
-                { $or: [{ _id: new Types.ObjectId(search) }, {user: new Types.ObjectId(search)}], ..._cursor }
+                { $or: [{ _id: new Types.ObjectId(search) }, { user: new Types.ObjectId(search) }], ..._cursor }
                 : _cursor;
-                console.log(query)
 
             const groups = await this.chatGroupModel.aggregate([
                 { $match: query },

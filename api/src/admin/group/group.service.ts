@@ -8,12 +8,9 @@ export class GroupService {
     constructor(@InjectModel(Group.name) private readonly groupModel: Model<Group>) { }
 
     async getGroups(cursor: string, search: string) {
-        let limit = 10
+        let limit = 50
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
 
-        // const query = search
-        //     ? { handle: { $regex: search, $options: 'i' }, ..._cursor }
-        //     : _cursor;
         try {
 
             const query: any = search
@@ -27,11 +24,8 @@ export class GroupService {
                     query.$or.push({ _id: objectId });
                 }
             } catch (error) {
-                console.log(error)
+                // console.log(error)
             }
-
-            console.log(search, query)
-
 
             const groups = await this.groupModel.aggregate([
                 { $match: query },

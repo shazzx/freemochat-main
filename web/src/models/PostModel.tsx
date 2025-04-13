@@ -1,4 +1,3 @@
-
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import AudioRecorder from '@/components/MediaRecorder'
 import Post from '@/components/Post'

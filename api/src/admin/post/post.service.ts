@@ -15,7 +15,7 @@ export class PostService {
   ) { }
 
   async getPosts(cursor: string, search: string) {
-    let limit = 12
+    let limit = 50
     const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
 
 

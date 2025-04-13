@@ -4,12 +4,46 @@ import { ObjectId } from "mongoose";
 
 @Injectable()
 export class CacheService {
-
+  private readonly MAX_OTP_PER_DAY = 2;
   constructor(@Inject("REDIS_CLIENT") private readonly redis: Redis) {}
+
+
+  async checkOtpLimit(phoneNumber: string): Promise<boolean> {
+    const key = `otp:${phoneNumber}:${this.getCurrentDate()}`;
+    const count = await this.redis.get(key);
+
+    console.log(count, 'otp count', key)
+    return count !== null && parseInt(count, 10) >= (this.MAX_OTP_PER_DAY  || 2);
+  }
+  
+  async incrementOtpCount(phoneNumber: string): Promise<void> {
+    const key = `otp:${phoneNumber}:${this.getCurrentDate()}`;
+    const ttl = await this.redis.ttl(key);
+    console.log(ttl, key)
+    
+    const increment = await this.redis.incr(key);
+    console.log(increment, 'incremented')
+    
+    if (ttl < 0) {
+      const now = new Date();
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
+      const secondsUntilEndOfDay = Math.floor((endOfDay.getTime() - now.getTime()) / 1000);
+      
+      await this.redis.expire(key, secondsUntilEndOfDay);
+    }
+  }
+  
+  getCurrentDate(): string {
+    const date = new Date();
+    return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  }
 
   async get(key: string): Promise<string> {
     return this.redis.get(key);
   }
+
+  
 
   async set(key: string, value: any, expireIn: number) {
     await this.redis.set(key, value);

@@ -8,26 +8,23 @@ export class PageService {
     constructor(@InjectModel(Page.name) private pageModel: Model<Page>) { }
 
     async getPages(cursor: string, search: string) {
-        let limit = 10
+        let limit = 50
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
         try {
 
             const query: any = search
-                ? 
+                ?
                 { $or: [{ handle: { $regex: search, $options: 'i' } }], ..._cursor }
                 : _cursor;
 
-                try {
-                    const objectId = new Types.ObjectId(search);
-                    if(search){
-                        query.$or.push({ _id: objectId });
-                    }
-                  } catch (error) {
-                    console.log(error)
-                  }
-                
-
-            console.log(search, query)
+            try {
+                const objectId = new Types.ObjectId(search);
+                if (search) {
+                    query.$or.push({ _id: objectId });
+                }
+            } catch (error) {
+                // console.log(error)
+            }
 
             const pages = await this.pageModel.aggregate([
                 { $match: query },

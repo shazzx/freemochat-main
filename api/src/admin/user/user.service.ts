@@ -11,10 +11,8 @@ export class UserService {
     async getUsers(cursor, search: string) {
         let limit = 50
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
+        // await this.userModel.findOneAndUpdate({username: 'ahsanullah'}, {isActive: true, isPhoneVerified: true})
 
-        // const query = search
-        //     ? { username: { $regex: search, $options: 'i' }, ...cursor }
-        //     : _cursor;
         try {
 
             const query: any = search
