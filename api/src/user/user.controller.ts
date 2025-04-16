@@ -45,6 +45,12 @@ export class UserController {
         try {
             const { firstname, lastname, username, password, confirmPassword, address, phone, email } = createUserDTO
 
+            const userExists = await this.userService.findUser(email)
+
+            if (userExists) {
+                throw new BadRequestException("Email is already taken")
+            }
+
             await this.locationService.isValidAddress({ country: address.country, city: address.city })
 
             const tempSecret = uuidv4()
@@ -196,7 +202,7 @@ export class UserController {
             }
 
             if (type == 'email' && updatedData['email']) {
-                await this.userService.updateUser(user._id, { email: updatedData.email })
+                await this.userService.updateUser(user._id, { email: updatedData.email, isEmailVerified: true })
                 res.json({ success: true })
                 return
             }
@@ -246,11 +252,11 @@ export class UserController {
 
         } catch (error) {
             console.log(error)
-            if (error.name == "MongoServerError" && error.code == 11000) {
-                // res.status(400).json({ success: false, error: { message: error.keyPattern['email'] ? "Email Already Taken" : "Phone Already Taken" } })
-                res.status(400).json({ success: false, error: { message: "Phone Already Taken" } })
-                return
-            }
+            // if (error.name == "MongoServerError" && error.code == 11000) {
+            //     // res.status(400).json({ success: false, error: { message: error.keyPattern['email'] ? "Email Already Taken" : "Phone Already Taken" } })
+            //     res.status(400).json({ success: false, error: { message: "Phone Already Taken" } })
+            //     return
+            // }
             res.status(400).json({ success: false, error: { message: error.message } })
         }
     }
@@ -304,6 +310,10 @@ export class UserController {
 
             if (!user) {
                 throw new BadRequestException("User account deos not exist with this username")
+            }
+
+            if (!user.email) {
+                throw new BadRequestException("Your account doesn't have email. Contact us.")
             }
 
             const authId = uuidv4()
@@ -478,6 +488,10 @@ export class UserController {
                 throw new BadRequestException("User not found")
             }
 
+            if (!email && !user?.email) {
+                throw new BadRequestException("Please first add email address in your account.")
+            }
+
             if (type == 'email') {
                 let emailOTP = await this.otpService.generateOtp(user._id, 'email')
                 const message = messageGenerator(user.firstname + " " + user?.lastname, emailOTP)
@@ -504,6 +518,7 @@ export class UserController {
 
             throw new BadRequestException()
         } catch (err) {
+            console.log(err)
             res.status(err.statusCode || 500).json({ success: false, message: err.message })
         }
     }
@@ -742,6 +757,16 @@ export class UserController {
         console.log(updateUserDTO, images)
 
         let user = await this.userService.updateUser(sub, { ...updateUserDTO, ...images })
+
+        if (updateUserDTO.username) {
+            const accessToken = await this.authService.accessToken({ username: user.username, userId: user._id.toString() })
+            return res.cookie("accessToken", accessToken, {
+                sameSite: 'strict',
+                maxAge: 7 * 60 * 60 * 1000
+            }).json({
+                user
+            })
+        }
         res.json({ user })
     }
 

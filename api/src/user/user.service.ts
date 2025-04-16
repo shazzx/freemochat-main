@@ -461,7 +461,7 @@ export class UserService {
     }
 
     async updateUser(userId: string, updatedDetails: any) {
-        let updatedUser = this.userModel.findByIdAndUpdate(userId, { $set: { ...updatedDetails } }, { returnOriginal: false })
+        let updatedUser = this.userModel.findByIdAndUpdate(userId, { $set: { ...updatedDetails } }, { new: true })
         return updatedUser
     }
 

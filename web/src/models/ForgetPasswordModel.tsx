@@ -23,9 +23,19 @@ function ForgetPasswordModel({ setModelTrigger }) {
     const navigate = useNavigate()
 
     const otpResend = async (type: string) => {
-        const { data } = await axiosClient.post("/user/resend-otp-user/v2", { type, username: user.username })
-        if (data.success) {
-            toast.success(data.message)
+        try {
+            const { data } = await axiosClient.post("/user/resend-otp-user/v2", { type, username: user.username })
+            if (data.success) {
+                toast.success(data.message)
+            }
+        } catch (error) {
+            console.log(error.response.data)
+            if (!error.response.data.success) {
+                toast.info(error.response.data.message)
+                setOtpSent(false)
+                return
+            }
+            setOtpSent(false)
         }
     }
 
@@ -38,7 +48,7 @@ function ForgetPasswordModel({ setModelTrigger }) {
 
         } catch (error) {
             if (!error.response.data.success) {
-                toast.info(error.response.data.error.message)
+                toast.info(error.response.data.error.message || error.response.data.message)
                 setOtpSent(false)
                 setLoader(false)
                 setButtonState(true)
@@ -46,7 +56,6 @@ function ForgetPasswordModel({ setModelTrigger }) {
             }
             setLoader(false)
             setButtonState(true)
-            console.log(error.response.data.error.message)
             toast.info("Wrong or expired OTP")
             setOtpSent(false)
         }

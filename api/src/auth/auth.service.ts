@@ -41,6 +41,10 @@ export class AuthService {
             email: false
         }
 
+        if (!user.email && user.isPhoneVerified) {
+            return user
+        }
+
         if (user.isEmailVerified) {
             verification.email = true
         }
@@ -100,6 +104,10 @@ export class AuthService {
             user,
             access_token: this.jwtService.sign(payload, { secret: jwtConstants.secret, expiresIn: '48h' }),
         }
+    }
+
+    async accessToken({ username, userId }: { username: string, userId: string }) {
+        return this.jwtService.sign({ username, sub: userId }, { secret: jwtConstants.secret, expiresIn: '48h' })
     }
 
     async refreshToken(token) {

@@ -11,8 +11,10 @@ import { useNavigate } from 'react-router-dom'
 import { updateUser } from '@/app/features/user/userSlice'
 import emailValdator from "email-validator";
 import { MdClose } from 'react-icons/md'
+import { Button } from '@/components/ui/button'
 
-function ChangeEmailModel({ setModelTrigger }) {
+function
+    ChangeEmailModel({ setModalTrigger, notice }) {
 
     const { user } = useAppSelector((state) => state.user)
     const [email, setEmail] = useState(null)
@@ -101,14 +103,24 @@ function ChangeEmailModel({ setModelTrigger }) {
     return (
         <div className='fixed inset-0 z-50  w-screen overflow-hidden h-screen flex items-center justify-center top-0 right-0'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
-                setModelTrigger(false)
+                setModalTrigger(false)
             }}></div>
             <MdClose cursor="pointer" onClick={() => {
-                setModelTrigger(false)
+                setModalTrigger(false)
             }} />
-            <Card className='z-10 p-6 border border-accent'>
-                <form action="">
 
+            <Card className='z-10 p-6 border border-accent'>
+                {notice &&
+                    <div className='flex flex-col gap-3 py-3'>
+                        <h3 className='text-primary font-semibold'>Important Update</h3>
+                        <p className='word-break max-w-64'>We have changed our verification method from phone number to email.
+                        </p>
+                        <p className='word-break max-w-64'>
+                            Please provide your email for better security and to keep using your account.
+                        </p>
+                    </div>
+                }
+                <form action="">
                     <div className="flex flex-col gap-4 w-full">
                         <div className="w-full">
                             <Label >
@@ -128,10 +140,12 @@ function ChangeEmailModel({ setModelTrigger }) {
                             />
                             {/* {errors.phone && <p>{errors.phone.message}</p>} */}
                         </div>
-                        <InputOTPForm changeData={changeEmail} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeEmail} buttonTitle={"Change Email"} data={!email || !otpSent ? true : false} type="email" label="Email Verification" description={otpSent ? "Please enter the one-time password sent to your email." : "Click on send to get an OTP for verification."} />
-
+                        <InputOTPForm changeData={changeEmail} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeEmail} buttonTitle={notice ? "Update Email" : "Change Email"} data={!email || !otpSent ? true : false} type="email" label="Email Verification" description={otpSent ? "Please enter the one-time password sent to your email." : "Click on send to get an OTP for verification."} />
+                        {notice && <Button type="button" onClick={() => {
+                            setModalTrigger(false)
+                        }}>Skip for now</Button>
+                        }
                     </div>
-
                 </form>
             </Card>
         </div>

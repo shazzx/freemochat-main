@@ -64,8 +64,8 @@ export class User {
     @Prop({ type: Boolean, default: false })
     isEmailVerified: boolean;
 
-    // @Prop({ type: Boolean, default: false })
-    // isPhoneVerified: boolean;
+    @Prop({ type: Boolean, default: false })
+    isPhoneVerified: boolean;
 
     @Prop({ default: false })
     isActive: boolean

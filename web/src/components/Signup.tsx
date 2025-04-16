@@ -58,7 +58,7 @@ export function Signup() {
                 setSignupButtonState(false)
                 return
             }
-            showToast(e.message, "error")
+            showToast(e.response.data.message, "info")
             setSignupButtonState(false)
         }
     })
