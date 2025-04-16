@@ -36,40 +36,39 @@ export class UserController {
 
 
     @Public()
-    @Post("create")
+    @Post("create/v2")
     async createUser(
         @Body(new ZodValidationPipe(CreateUser)) createUserDTO: CreateUserDTO,
         @Req() req: Request,
         @Res() res: Response) {
 
         try {
-            const { firstname, lastname, username, password, confirmPassword, address, phone } = createUserDTO
+            const { firstname, lastname, username, password, confirmPassword, address, phone, email } = createUserDTO
 
             await this.locationService.isValidAddress({ country: address.country, city: address.city })
 
             const tempSecret = uuidv4()
 
-            let user = await this.userService.createUser({ firstname, lastname, username, password, confirmPassword, address, phone, tempSecret })
+            let user = await this.userService.createUser({ firstname, lastname, username, password, confirmPassword, address, phone, tempSecret, email })
 
             await this.locationService.checkAddressRegisteration(address)
 
             console.log("user created")
-            const phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
-            // const emailOTP = await this.otpService.generateOtp(user._id, 'email')
+            // const phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
+            const emailOTP = await this.otpService.generateOtp(user._id, 'email')
+            const message = messageGenerator(user.firstname + " " + user?.lastname, emailOTP, 'register')
 
-            // console.log('phoneOTP: ', phoneOTP, "tempSecret: ", tempSecret, "phone secret: ")
+            console.log('emailOTP: ', emailOTP, "tempSecret: ", tempSecret, "phone secret: ")
 
-            // await this.twilioService.sendEmail({
-            //     to: email,
-            //     from: 'freedombook99@gmail.com',
-            //     subject: "OTP Verification",
-            //     text: `Your email otp code is: ${emailOTP} `,
-            //     // html: emailData.html,
-            // })
+            await this.twilioService.sendEmail({
+                to: email,
+                from: process.env.VERIFY_EMAIL,
+                subject: "OTP Verification",
+                html: `<div>${message}</div>`,
+            })
 
-            const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP, 'register')
             console.log(message)
-            await this.twilioService.sendSMS(phone, message)
+            // await this.twilioService.sendSMS(phone, message)
             res.json({ success: true, tempSecret, username: user.username, message: "account created successfully", verification: "pending" })
 
         } catch (error) {
@@ -88,7 +87,7 @@ export class UserController {
     }
 
     @Public()
-    @Post('verify-otp')
+    @Post('verify-otp/v2')
     async veriyfOTP(
         @Body(new ZodValidationPipe(VerifyOTP)) verifyOTP: VerifyOTPDTO,
         @Req() req: Request,
@@ -96,7 +95,6 @@ export class UserController {
         const { username, authId, otp, type } = verifyOTP
         try {
             const user = await this.userService.findUser(username)
-            console.log(user, authId)
             if (!user) {
                 console.log('no user')
                 throw new BadRequestException()
@@ -108,8 +106,8 @@ export class UserController {
             }
 
 
-            let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
-            // let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
+            // let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
+            let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
 
             // if (!isValidEmailSecret && !isValidPhoneSecret) {
             //     throw new BadRequestException("OTP is not valid")
@@ -117,7 +115,7 @@ export class UserController {
 
 
 
-            if (!isValidPhoneSecret) {
+            if (!isValidEmailSecret) {
                 console.log('otp is not valid')
                 throw new BadRequestException("OTP is not valid")
             }
@@ -129,18 +127,18 @@ export class UserController {
             //     return res.json({ success: true, email: true, phone: true })
             // }
 
-            if (type == 'phone' && isValidPhoneSecret) {
-                console.log('type phone')
+            // if (type == 'phone' && isValidPhoneSecret) {
+            //     console.log('type phone')
 
-                await this.userService.updateUser(user._id, { tempSecret: null, isPhoneVerified: true, isActive: true })
-                return res.json({ success: true, phone: true })
-            }
-
-            // if (type == 'email' && isValidEmailSecret) {
-            //     console.log('just em')
-            //     await this.userService.updateUser(user._id, { isEmailVerified: true })
-            //     return res.json({ success: true, email: true })
+            //     await this.userService.updateUser(user._id, { tempSecret: null, isPhoneVerified: true, isActive: true })
+            //     return res.json({ success: true, phone: true })
             // }
+
+            if (type == 'email' && isValidEmailSecret) {
+                await this.userService.updateUser(user._id, { tempSecret: null, isEmailVerified: true, isActive: true })
+
+                return res.json({ success: true, email: true })
+            }
 
             // if (type == 'phone' && isValidPhoneSecret) {
             //     console.log('just phone')
@@ -156,7 +154,7 @@ export class UserController {
         }
     }
 
-    @Post('verify-otp-user')
+    @Post('verify-otp-user/v2')
     async veriyfOTPUser(
         @Body(new ZodValidationPipe(VerifyOTPUser)) verifyOTP: VerifyOTPUserDTO,
         @Req() req: Request,
@@ -169,7 +167,6 @@ export class UserController {
             }
 
             if (updatedData['address'] && user.address.country == updatedData.address.country) {
-                console.log('updating address')
 
                 await this.userService.updateUser(user._id, { address: updatedData.address })
                 res.json({ success: true })
@@ -178,15 +175,15 @@ export class UserController {
 
             console.log("username, updatedData, otp, type", username, updatedData, otp, type)
 
-            let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
-            // let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
+            // let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
+            let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
 
-            if (!isValidPhoneSecret) {
+            if (!isValidEmailSecret) {
                 throw new BadRequestException("OTP is not valid")
             }
 
 
-            if (type == 'phone' && updatedData['changePassword']) {
+            if (type == 'email' && updatedData['changePassword']) {
                 console.log('updating password', updatedData.changePassword)
                 let isValidPassword = await compare(updatedData.changePassword.currentPassword, user.password)
                 if (isValidPassword) {
@@ -198,24 +195,19 @@ export class UserController {
                 throw new BadRequestException("invalid current password")
             }
 
-            // if (type == 'email' && updatedData['email']) {
-            //     console.log('updatng emal', updatedData.email)
+            if (type == 'email' && updatedData['email']) {
+                await this.userService.updateUser(user._id, { email: updatedData.email })
+                res.json({ success: true })
+                return
+            }
 
-            //     await this.userService.updateUser(user._id, { email: updatedData.email })
-            //     res.json({ success: true })
-            //     return
-            // }
-
-            if (type == 'phone' && updatedData['address']) {
-                console.log('updating address')
-
+            if (type == 'email' && updatedData['address']) {
                 await this.userService.updateUser(user._id, { address: updatedData.address })
                 res.json({ success: true })
                 return
             }
 
-            if (type == 'phone' && updatedData['phone']) {
-                console.log('updating phone')
+            if (type == 'email' && updatedData['phone']) {
                 await this.userService.updateUser(user._id, { phone: updatedData.phone })
                 res.json({ success: true })
                 return
@@ -229,7 +221,7 @@ export class UserController {
         }
     }
 
-    @Post('change-current-password')
+    @Post('change-current-password/v2')
     async changeUserPassword(
         @Body(new ZodValidationPipe(ChangePassword)) changePasswordDTO: ChangePasswordDTO,
         @Req() req: Request,
@@ -244,7 +236,6 @@ export class UserController {
             }
 
             let isValidPassword = await compare(changePassword.currentPassword, user.password)
-            console.log(isValidPassword)
             if (isValidPassword) {
                 let hashedPassword = await this.cryptoService.hash(changePassword.password, 16)
                 await this.userService.updateUser(user._id, { password: hashedPassword })
@@ -264,7 +255,7 @@ export class UserController {
         }
     }
 
-    @Post('forget-password')
+    @Post('forget-password/v2')
     async forgetPassword(
         @Body(new ZodValidationPipe(ForgetPassword)) changePasswordDTO: ForgetPasswordDTO,
         @Req() req: Request,
@@ -279,14 +270,14 @@ export class UserController {
             }
 
 
-            let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
-            // let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
+            // let isValidPhoneSecret = await this.otpService.verifyOtp(user._id, otp, 'phone')
+            let isValidEmailSecret = await this.otpService.verifyOtp(user._id, otp, 'email')
 
-            if (!isValidPhoneSecret) {
+            if (!isValidEmailSecret) {
                 throw new BadRequestException("OTP is not valid")
             }
 
-            if (type == 'phone') {
+            if (type == 'email') {
                 let hashedPassword = await this.cryptoService.hash(changePassword.password, 16)
                 await this.userService.updateUser(user._id, { password: hashedPassword })
                 res.json({ success: true })
@@ -301,7 +292,7 @@ export class UserController {
     }
 
     @Public()
-    @Post('forget-password-request')
+    @Post('forget-password-request/v2')
     async forgetPasswordRequest(
         @Body(new ZodValidationPipe(ForgetPasswordRequest)) changePasswordDTO: ForgetPasswordRequestDTO,
         @Req() req: Request,
@@ -320,18 +311,25 @@ export class UserController {
             await this.cacheService.setForgetPassword(user._id, authId)
             const link = `https://www.freedombook.co/reset-password/${authId}?username=${user.username}`
             const message = messageGenerator(user.firstname + " " + user.lastname, link, 'reset-password')
-            await this.twilioService.sendSMS(user.phone, message)
+            // await this.twilioService.sendSMS(user.phone, message)
+            await this.twilioService.sendEmail({
+                to: user.email,
+                from: process.env.VERIFY_EMAIL,
+                subject: "OTP Verification",
+                text: message
+                // html: emailData.html,
+            })
+            return res.json({ success: true, message: "otp has been sent to your email" })
 
-            return res.json({ success: true, message: "otp has been sent to your phone" })
+            // return res.json({ success: true, message: "otp has been sent to your phone" })
 
         } catch (error) {
             res.status(400).json({ success: false, error: { message: error.message } })
-
         }
     }
 
     @Public()
-    @Post('forget-password-open')
+    @Post('forget-password-open/v2')
     async forgetPasswordPub(
         @Body(new ZodValidationPipe(ForgetPasswordPub)) changePasswordDTO: ForgetPasswordPubDTO,
         @Req() req: Request,
@@ -419,7 +417,7 @@ export class UserController {
 
 
     @Public()
-    @Post('resend-otp')
+    @Post('resend-otp/v2')
     async resendOTP(
         @Body(new ZodValidationPipe(resendOTP)) resendOTPDTO: resendOTPDTO,
         @Req() req: Request,
@@ -436,30 +434,30 @@ export class UserController {
                 throw new BadRequestException()
             }
 
-            // if (type == 'email') {
-            // let secret = this.otpService.generateSecret()
-            // let emailOTP = await this.otpService.generateOtp(user._id, 'email')
-            // console.log(emailOTP, 'email')
+            if (type == 'email') {
+                let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+                const message = messageGenerator(user.firstname + " " + user.lastname, emailOTP)
 
-            // await this.twilioService.sendEmail({
-            //     to: user.email,
-            //     from: 'freedombook99@gmail.com',
-            //     subject: "OTP Verification",
-            //     text: `Your email otp code is: ${emailOTP} `,
-            //     // html: emailData.html,
-            // })
-            //     return res.json({ success: true, message: "otp has been sent to your email" })
-            // }
-
-
-            if (type == 'phone') {
-                let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
-                console.log(phoneOTP, 'phone')
-                console.log(user.phone)
-                const message = messageGenerator(user.firstname + " " + user.lastname, phoneOTP)
-                await this.twilioService.sendSMS(user.phone, message)
-                return res.json({ success: true, message: "otp has been sent to your phone" })
+                await this.twilioService.sendEmail({
+                    to: user.email,
+                    from: process.env.VERIFY_EMAIL,
+                    subject: "OTP Verification",
+                    text: `Your email otp code is: ${emailOTP} `,
+                    // html: emailData.html,
+                })
+                return res.json({ success: true, message: "otp has been sent to your email" })
             }
+
+
+            // {phone otp}
+            // if (type == 'phone') {
+            //     let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
+            //     console.log(phoneOTP, 'phone')
+            //     console.log(user.phone)
+            //     const message = messageGenerator(user.firstname + " " + user.lastname, phoneOTP)
+            //     await this.twilioService.sendSMS(user.phone, message)
+            //     return res.json({ success: true, message: "otp has been sent to your phone" })
+            // }
 
             throw new BadRequestException()
         } catch (err) {
@@ -468,41 +466,41 @@ export class UserController {
     }
 
 
-    @Post('resend-otp-user')
+    @Post('resend-otp-user/v2')
     async resendOTPUser(
         @Body(new ZodValidationPipe(resendOTPUser)) resendOTPDTO: resendOTPUserDTO,
         @Req() req: Request,
         @Res() res: Response) {
-        const { username, type, phone } = resendOTPDTO
+        const { username, type, email } = resendOTPDTO
         try {
             const user = await this.userService.findUser(username)
             if (!user) {
-                throw new BadRequestException()
+                throw new BadRequestException("User not found")
             }
 
-            // if (type == 'email') {
-            //     let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+            if (type == 'email') {
+                let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+                const message = messageGenerator(user.firstname + " " + user?.lastname, emailOTP)
+                await this.twilioService.sendEmail({
+                    to: email || user.email,
+                    from: process.env.VERIFY_EMAIL,
+                    subject: "OTP Verification",
+                    text: message
+                    // html: emailData.html,
+                })
+                console.log(emailOTP, 'email')
+                return res.json({ success: true, message: "otp has been sent to your email" })
+            }
 
-            //     await this.twilioService.sendEmail({
-            //         to: user.email,
-            //         from: 'freedombook99@gmail.com',
-            //         subject: "OTP Verification",
-            //         text: `Your email otp code is: ${emailOTP} `,
-            //         // html: emailData.html,
-            //     })
-            //     console.log(emailOTP, 'email')
-            //     return res.json({ success: true, message: "otp has been sent to your email" })
+            // if (type == 'phone') {
+            //     let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
+            //     console.log(phoneOTP, 'phone send to', (phone || user.phone))
+            //     console.log(phone || user.phone)
+            //     const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP)
+            //     console.log(message)
+            //     await this.twilioService.sendSMS(user.phone, message)
+            //     return res.json({ success: true, message: "otp has been sent to your phone" })
             // }
-
-            if (type == 'phone') {
-                let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
-                console.log(phoneOTP, 'phone send to', (phone || user.phone))
-                console.log(phone || user.phone)
-                const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP)
-                console.log(message)
-                await this.twilioService.sendSMS(user.phone, message)
-                return res.json({ success: true, message: "otp has been sent to your phone" })
-            }
 
             throw new BadRequestException()
         } catch (err) {
@@ -512,18 +510,15 @@ export class UserController {
 
 
     @Public()
-    @Post('login')
+    @Post('login/v2')
     async loginUser(
         @Body(new ZodValidationPipe(LoginUser)) loginUserDTO: LoginUserDTO,
         @Req() req: Request,
         @Res({ passthrough: true }) response: Response) {
         const { username, password } = loginUserDTO
-        console.log(username, password)
         const user = await this.authService.validateUser(username, password)
 
-        console.log('validate user', user)
         const payload = await this.authService.login(user)
-        console.log('payload ', payload)
 
         response.cookie("accessToken", payload.access_token, {
             sameSite: 'strict',
@@ -668,8 +663,6 @@ export class UserController {
         console.log(offline, 'offline')
         response.json(online || offline)
     }
-
-
 
     @Post("pushToken")
     async userPushToken(

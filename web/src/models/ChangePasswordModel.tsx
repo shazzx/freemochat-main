@@ -39,7 +39,7 @@ function ChangePasswordModel({ setModelTrigger, setForgetPasswordModel }) {
     const verifyOTP = async (data: any) => {
         try {
 
-            const response = await axiosClient.post("/user/change-current-password", data, { timeout: 20000 })
+            const response = await axiosClient.post("/user/change-current-password/v2", data, { timeout: 20000 })
             toast.success('Password Changed')
             navigate('')
 

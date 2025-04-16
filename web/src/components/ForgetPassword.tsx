@@ -26,8 +26,7 @@ function ForgetPassword() {
 
     const verifyOTP = async (data: any) => {
         try {
-
-            const response = await axiosClient.post("/user/forget-password-open", data, { timeout: 30000 })
+            const response = await axiosClient.post("/user/forget-password-open/v2", data, { timeout: 30000 })
             toast.success('Password Changed')
             navigate('/login', { replace: true })
 
@@ -102,7 +101,7 @@ function ForgetPassword() {
         }
         setLoader(true)
         setButtonState(false)
-
+        console.log(newPassword, 'this is new password')
         mutation.mutate({
             changePassword: {
                 password: newPassword
@@ -150,7 +149,7 @@ function ForgetPassword() {
                         </div>
                         <Button disabled={newPassword != confirmPassword || loader} type="button" onClick={changePassword}>
                             {
-                                loader ? 
+                                loader ?
                                     <svg className="text-gray-700 animate-spin" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
                                         width="24" height="24">
                                         <path

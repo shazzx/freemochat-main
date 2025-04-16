@@ -23,7 +23,7 @@ function ChangeEmailModel({ setModelTrigger }) {
     const dispatch = useAppDispatch()
 
     const otpResend = async (type: string) => {
-        const { data } = await axiosClient.post("/user/resend-otp-user", { type, username: user.username })
+        const { data } = await axiosClient.post("/user/resend-otp-user/v2", { type, username: user.username, email })
         console.log(data)
         if (data.success) {
             toast.success(data.message)
@@ -33,14 +33,14 @@ function ChangeEmailModel({ setModelTrigger }) {
     const verifyOTP = async (data: any) => {
         try {
 
-            const response = await axiosClient.post("/user/verify-otp-user", data, { timeout: 20000 })
+            const response = await axiosClient.post("/user/verify-otp-user/v2", data, { timeout: 20000 })
 
             if (response.data.success) {
                 dispatch(updateUser({
                     email
                 }))
 
-                toast.success('Email Number Changed')
+                toast.success('Email Changed')
                 navigate('')
             }
 
@@ -123,6 +123,7 @@ function ChangeEmailModel({ setModelTrigger }) {
                                 id="email"
                                 // defaultValue={phone}
                                 className="max-w-96 w-full"
+                                disabled={otpSent}
                             // {...register("phone")}
                             />
                             {/* {errors.phone && <p>{errors.phone.message}</p>} */}

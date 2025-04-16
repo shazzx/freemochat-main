@@ -44,11 +44,11 @@ function AuthVerificationForm() {
 
     const verifyOTP = async (data: any) => {
         try {
-            const response = await axiosClient.post("/user/verify-otp", data, { timeout: 20000 })
+            const response = await axiosClient.post("/user/verify-otp/v2", data, { timeout: 20000 })
             console.log(response.data)
 
-            if (response.data.phone) {
-                dispatch(setVerificationStatus({ isPhoneVerified: true, success: true }))
+            if (response.data.email) {
+                dispatch(setVerificationStatus({ isEmailVerified: true, success: true }))
                 toast.success("Verified successfully")
                 navigate("/login")
             }
@@ -82,7 +82,7 @@ function AuthVerificationForm() {
     })
 
     const otpResend = async (type: string) => {
-        const { data } = await axiosClient.post("/user/resend-otp", { type, authId, username })
+        const { data } = await axiosClient.post("/user/resend-otp/v2", { type, authId, username })
         console.log(data)
         if (data.success) {
             toast.success(data.message)
@@ -122,13 +122,13 @@ function AuthVerificationForm() {
                         <InputOTPForm otpResend={otpResend} onSubmit={onSubmit} type="email" label="Email Verification" description="Please enter the one-time password sent to your email." />
 
                     } */}
-                    {verificationStatus.isPhoneVerified ?
+                    {verificationStatus.isEmailVerified ?
                         <div className="flex gap-2 items-center justify-center">
                             <FaCheckCircle className="text-green-500 text-3xl" />
-                            <span>Phone Is Verified</span>
+                            <span>Email is verified</span>
                         </div>
                         :
-                        <InputOTPForm otpResend={otpResend} onSubmit={onSubmit} type="phone" label="Phone Verification" description="Please enter the one-time password sent to your phone." />
+                        <InputOTPForm otpResend={otpResend} onSubmit={onSubmit} type="email" label="Email Verification" description="Please enter the one-time password sent to your email." />
 
                     }
                 </CardContent>

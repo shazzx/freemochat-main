@@ -23,8 +23,7 @@ function ForgetPasswordModel({ setModelTrigger }) {
     const navigate = useNavigate()
 
     const otpResend = async (type: string) => {
-        const { data } = await axiosClient.post("/user/resend-otp-user", { type, username: user.username })
-        console.log(data)
+        const { data } = await axiosClient.post("/user/resend-otp-user/v2", { type, username: user.username })
         if (data.success) {
             toast.success(data.message)
         }
@@ -33,7 +32,7 @@ function ForgetPasswordModel({ setModelTrigger }) {
     const verifyOTP = async (data: any) => {
         try {
 
-            const response = await axiosClient.post("/user/forget-password", data, { timeout: 30000 })
+            const response = await axiosClient.post("/user/forget-password/v2", data, { timeout: 30000 })
             toast.success('Password Changed')
             navigate('')
 
@@ -113,7 +112,7 @@ function ForgetPasswordModel({ setModelTrigger }) {
         setButtonState(false)
 
         mutation.mutate({
-            otp, type: 'phone', changePassword: {
+            otp, type: 'email', changePassword: {
                 password: newPassword
             }
         })
@@ -158,7 +157,7 @@ function ForgetPasswordModel({ setModelTrigger }) {
                                 />
                             </div>
                         </div>
-                        <InputOTPForm loader={loader} changeData={changePassword} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changePassword} buttonTitle={"Change Password"} data={!confirmPassword || !confirmPassword || !otpSent || !buttonState ? true : false} type="phone" label="Password Verification" description={otpSent ? "Please enter the one-time password sent to your email." : "Click on send to get an OTP for verification."} />
+                        <InputOTPForm loader={loader} changeData={changePassword} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changePassword} buttonTitle={"Change Password"} data={!confirmPassword || !confirmPassword || !otpSent || !buttonState ? true : false} type="email" label="Password Verification" description={otpSent ? "Please enter the one-time password sent to your email." : "Click on send to get an OTP for verification."} />
 
                     </div>
 

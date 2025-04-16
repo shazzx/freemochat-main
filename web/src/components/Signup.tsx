@@ -43,7 +43,7 @@ export function Signup() {
     const [city, setCity] = useState(null)
 
     const signupUser = async (_data) => {
-        const { data } = await axiosClient.post("/user/create", _data, { timeout: 30000 })
+        const { data } = await axiosClient.post("/user/create/v2", _data, { timeout: 30000 })
         return data
     }
 
@@ -103,7 +103,7 @@ export function Signup() {
             return
         }
 
-        let phone = validatePhone(`${_data.phone}`, country["iso3"]) 
+        let phone = validatePhone(`${_data.phone}`, country["iso3"])
 
         if (phone.isValid) {
             let data = { ..._data, phone: phone.phoneNumber, address: { country: country.name, city, ..._data.address } }
@@ -183,7 +183,7 @@ export function Signup() {
                                 {errors.phone && <p>{errors.phone.message}</p>}
                             </div>
 
-                            {/* <div className="grid gap-2">
+                            <div className="grid gap-2">
                                 <Label htmlFor="email">Email</Label>
                                 <Input
                                     type="email"
@@ -192,7 +192,7 @@ export function Signup() {
                                     {...register("email")}
                                 />
                                 {errors.email && <p>{errors.email.message}</p>}
-                            </div> */}
+                            </div>
 
                             <div className="flex gap-4 w-full">
                                 <div className="w-full">

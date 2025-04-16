@@ -37,57 +37,59 @@ export class AuthService {
         }
 
         let verification = {
-            phone: false
+            // phone: false
+            email: false
         }
 
-        // if (user.isEmailVerified) {
-        //     verification.email = true
+        if (user.isEmailVerified) {
+            verification.email = true
+        }
+
+        // if (user.isPhoneVerified) {
+        //     verification.phone = true
         // }
 
-        if (user.isPhoneVerified) {
-            verification.phone = true
-        }
-
-        if (verification.phone) {
+        if (verification.email) {
             return user
         }
 
         if (!user.tempSecret) {
             let tempSecret = uuidv4()
-            // let emailOTP = await this.otpService.generateOtp(user._id, 'email')
-            let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
-            console.log(phoneOTP)
+            let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+            // {Phone OTP Starts Here}
+            // let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
+            // console.log(phoneOTP)
+            // await this.twilioService.sendSMS(user.phone, message)
+            // {Phone OTP Ends Here}
 
-            // await this.twilioService.sendEmail({
-            //     to: user.email,
-            //     from: 'freedombook99@gmail.com',
-            //     subject: "OTP Verification",
-            //     text: `Your email otp code is: ${emailOTP} `,
-            //     // html: emailData.html,
-            // })
-            const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP)
+            const message = messageGenerator(user.firstname + " " + user?.lastname, emailOTP)
+
+            await this.twilioService.sendEmail({
+                to: user.email,
+                from: process.env.VERIFY_EMAIL,
+                subject: "OTP Verification",
+                text: message,
+                // html: emailData.html,
+            })
             console.log(message)
-            await this.twilioService.sendSMS(user.phone, message)
+
             await this.userService.updateUser(user._id, { tempSecret: tempSecret })
             throw new HttpException({ message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: { username, auth_id: tempSecret }, verification }, HttpStatus.BAD_REQUEST)
         }
-        // let emailOTP = await this.otpService.generateOtp(user._id, 'email')
-        let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
-        // await this.twilioService.sendEmail({
-        //     to: user.email,
-        //     from: 'freedombook99@gmail.com',
-        //     subject: "OTP Verification",
-        //     text: `Your email otp is: ${emailOTP} `,
-        //     // html: emailData.html,
-        // })
-        const message = messageGenerator(user.firstname + " " + user?.lastname, phoneOTP)
-        console.log(message)
-        await this.twilioService.sendSMS(user.phone, message)
+        let emailOTP = await this.otpService.generateOtp(user._id, 'email')
+        // let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
+        // await this.twilioService.sendSMS(user.phone, message)
+        const message = messageGenerator(user.firstname + " " + user?.lastname, emailOTP)
 
-        console.log(phoneOTP)
+        await this.twilioService.sendEmail({
+            to: user.email,
+            from: process.env.VERIFY_EMAIL,
+            subject: "OTP Verification",
+            text: message,
+            // html: emailData.html,
+        })
 
         throw new HttpException({ message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: { username, auth_id: user.tempSecret }, verification }, HttpStatus.BAD_REQUEST)
-
     }
 
     async login(user: any) {
@@ -103,23 +105,16 @@ export class AuthService {
     async refreshToken(token) {
         try {
             const payload = await this.jwtService.decode(token)
-
             const refresh_token = await this.redisService.getUserRefreshToken(payload.sub)
-
-            console.log(refresh_token, 'refresh token from redis')
-
             const { username, sub } = this.jwtService.verify(refresh_token, { secret: jwtConstants.secret })
-
             const access_token = this.jwtService.sign({ username, sub }, { secret: jwtConstants.secret, expiresIn: '100h' })
-            console.log('new access token')
             return access_token
         } catch (error) {
-            console.log(error)
             return false
         }
     }
 
-    async otpEmailVerification(userId, otpData) {
+    async otpEmailVerification(userId: string, otpData: { code: string }) {
         const otp = await this.otpModel.findOne({ user: userId })
         if (!otp) {
             throw new BadRequestException()
@@ -131,8 +126,7 @@ export class AuthService {
         return false
     }
 
-
-    async otpPhoneVerification(userId, otpData) {
+    async otpPhoneVerification(userId: string, otpData: { code: number }) {
         const otp = await this.otpModel.findOne({ user: userId })
         if (!otp) {
             throw new BadRequestException()

@@ -29,7 +29,7 @@ export class UserService {
     }
 
     async createUser(user: CreateUser): Promise<any> {
-        const { firstname, lastname, username, password, confirmPassword, address, phone, tempSecret } = user
+        const { firstname, lastname, username, password, confirmPassword, address, phone, tempSecret, email } = user
 
         if (password !== confirmPassword) {
             throw new BadRequestException(Error.WRONG_USERNAME_OR_PASSWORD)
@@ -37,7 +37,7 @@ export class UserService {
 
         let hashedPassword = await this.cryptoService.hash(password, 16)
 
-        const _user = await this.userModel.create({ firstname, lastname, username, password: hashedPassword, phone, address, tempSecret })
+        const _user = await this.userModel.create({ firstname, lastname, username, password: hashedPassword, phone, address, tempSecret, email })
 
         await this.metricsAggregatorService.incrementCount(null, GENERAL.COUNT, USER.USERS)
 
@@ -425,6 +425,7 @@ export class UserService {
                     cover: 1,
                     firstname: 1,
                     lastname: 1,
+                    email: 1,
                     followersCount: { $ifNull: ['$followersCount.count', 0] },
                     friendsCount: { $ifNull: ['$friendsCount.count', 0] },
                     bio: 1,
@@ -471,7 +472,7 @@ export class UserService {
     }
 
     async findUser(username: string): Promise<any> {
-        let user = await this.userModel.findOne({ $or : [{username}, {phone: username}] })
+        let user = await this.userModel.findOne({ $or: [{ username }, { email: username }] })
         return user
     }
 }

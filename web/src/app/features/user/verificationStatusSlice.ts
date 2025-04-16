@@ -1,10 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit"
 
 const initialState: {
-    verificationStatus: {isPhoneVerified: boolean, success: boolean}
+    verificationStatus: { isEmailVerified: boolean, success: boolean }
 } = {
     verificationStatus: {
-        isPhoneVerified: false,
+        isEmailVerified: false,
         success: false,
     }
 }
@@ -13,8 +13,8 @@ const verificationStatusSlice = createSlice({
     name: "verificationStatus",
     initialState,
     reducers: {
-        setVerificationStatus(state, action){
-            state.verificationStatus = {...state.verificationStatus, ...action.payload}
+        setVerificationStatus(state, action) {
+            state.verificationStatus = { ...state.verificationStatus, ...action.payload }
         },
         resetVerificatoinStatus(state, action) {
             state.verificationStatus = null

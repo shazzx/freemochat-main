@@ -1,5 +1,5 @@
 import { updateCover, updateProfile, updateUser } from "@/app/features/user/userSlice"
-import { useAppDispatch } from "@/app/hooks"
+import { useAppDispatch, useAppSelector } from "@/app/hooks"
 import ImageCropper from "@/components/ImageCropper"
 import Cover from "@/components/profile/Cover"
 import Profile from "@/components/profile/Profile"
@@ -143,10 +143,10 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                 changePhoneModel &&
                 <ChangePhoneModel setModelTrigger={setChangePhoneModel} />
             }
-            {/* {
+            {
                 changeEmailModel &&
                 <ChangeEmailModel setModelTrigger={setChangeEmailModel} />
-            } */}
+            }
             {
                 changePasswordModel &&
                 <ChangePasswordModel setModelTrigger={setChangePasswordModel} setForgetPasswordModel={setForgetPasswordModel} />
@@ -184,7 +184,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
             }
             <div className='z-10 max-w-[720px] relative w-full bg-background rounded-lg h-full overflow-auto'>
-                <MdClose cursor="pointer" size={24} className='ml-auto absolute top-2 right-2 z-10'  onClick={() => {
+                <MdClose cursor="pointer" size={24} className='ml-auto absolute top-2 right-2 z-10' onClick={() => {
                     navigate('', { replace: true })
                 }} />
                 <div className="grid gap-8 p-1  overflow-y-auto relative">
@@ -373,28 +373,28 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                 </div>
 
                                 <div className="flex gap-4 w-full">
-                                    {/* <div className="w-full"> */}
-                                    {/* <div className="flex gap-2 items-center">
+                                    <div className="w-full">
+                                        <div className="flex gap-2 items-center">
                                             <Label className="mb-1">
                                                 Email
                                             </Label>
                                             <PencilIcon size="16" className="cursor-pointer" onClick={() => {
                                                 setChangeEmailModel(true)
                                             }} />
-                                        </div> */}
+                                        </div>
 
-                                    {/* <Input
+                                        <Input
                                             disabled
                                             name="email"
                                             // ref={emailRef}
                                             placeholder="Enter your email"
                                             id="email"
                                             defaultValue={email}
-                                            className="max-w-96 w-full" */}
-                                    {/* // {...register("email")} */}
-                                    {/* /> */}
-                                    {/* {errors.email && <p>{errors.email.message}</p>} */}
-                                    {/* </div> */}
+                                            className="max-w-96 w-full"
+                                            {...register("email")}
+                                        />
+                                        {errors.email && <p>{errors.email.message}</p>}
+                                    </div>
                                     <div className="w-full">
                                         <div className="flex gap-2 items-center">
                                             <Label className="mb-1">

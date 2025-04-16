@@ -21,7 +21,7 @@ function YourAccount() {
     const verifyOTP = async (data: any) => {
         try {
 
-            const response = await axiosClient.post("/user/forget-password-request", data, { timeout: 30000 })
+            const response = await axiosClient.post("/user/forget-password-request/v2", data, { timeout: 30000 })
             console.log(response.data)
             setOtpSent(true)
 

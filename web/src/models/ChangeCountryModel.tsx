@@ -16,7 +16,6 @@ import { MdClose } from 'react-icons/md'
 function ChangeCountryModel({ setModelTrigger }) {
 
     const { user } = useAppSelector((state) => state.user)
-    console.log(user.address)
     const [country, setCountry] = useState({ name: user.address.country })
     const [cities, setCities] = useState(null)
     const [countries, setCountries] = useState(null)
@@ -129,21 +128,35 @@ function ChangeCountryModel({ setModelTrigger }) {
         // return response.data
     }
 
+    const _updateUser = async (data) => {
+        const formData = new FormData()
+        formData.append("userData", JSON.stringify(data))
+
+        try {
+            const response = await axiosClient.post("/user/update", formData, { headers: { "Content-Type": 'multipart/form-data' } })
+            if (response.status == 201) {
+                dispatch(updateUser(data))
+                toast.info("Address Changed")
+                setModelTrigger(false)
+                navigate('', { replace: true })
+            }
+        } catch (error) {
+            toast.info(error.message)
+
+        }
+
+    }
+
     const mutation = useMutation({
         mutationFn: async (data: {
-            otp?: string, type?: string, updatedData: {
-                phone?: string, address: {
-                    country: string,
-                    city: string,
-                    area: string
-                }
+            phone?: string, address: {
+                country: string,
+                city: string,
+                area: string
             }
         }): Promise<any> => {
-            let _data = {
-                username: user.username,
-                ...data
-            }
-            return await verifyOTP(_data)
+            _updateUser(data)
+            // return await verifyOTP(_data)
         },
         onError: (e: any) => {
             if (e.response.data.error.message) {
@@ -159,12 +172,10 @@ function ChangeCountryModel({ setModelTrigger }) {
     const changeCountry = async () => {
         if (country.name == user.address.country) {
             mutation.mutate({
-                updatedData: {
-                    address: {
-                        country: country.name,
-                        city,
-                        area: areaRef.current.value
-                    }
+                address: {
+                    country: country.name,
+                    city,
+                    area: areaRef.current.value
                 }
             })
             return
@@ -173,12 +184,10 @@ function ChangeCountryModel({ setModelTrigger }) {
 
         if (phone.isValid) {
             mutation.mutate({
-                otp, type: 'phone', updatedData: {
-                    phone: phone.phoneNumber, address: {
-                        country: country.name,
-                        city,
-                        area: areaRef.current.value
-                    }
+                phone: phone.phoneNumber, address: {
+                    country: country.name,
+                    city,
+                    area: areaRef.current.value
                 }
             })
             return
@@ -264,12 +273,14 @@ function ChangeCountryModel({ setModelTrigger }) {
                                     className="max-w-96 w-full"
                                 />
                             </div>}
-                        {
+                        <Button type='button' onClick={changeCountry}>Change Address</Button>
+
+                        {/* {
                             (country?.name == user.address.country) ?
                                 <Button type='button' onClick={changeCountry}>Change Address</Button>
                                 :
                                 <InputOTPForm changeData={changeCountry} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeCountry} buttonTitle={"Change Address"} data={!country || !city || !_phone || !otpSent ? true : false} type="phone" label="Phone Verification" description={otpSent ? "Please enter the one-time password sent to your phone." : "Click on send to get an OTP for verification."} />
-                        }
+                        } */}
 
                     </div>
 

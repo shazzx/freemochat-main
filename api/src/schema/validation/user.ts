@@ -14,6 +14,7 @@ export const CreateUser = z.object({
     lastname: z.string().optional(),
     username: z.string(),
     phone: z.string(),
+    email: z.string().email(),
     password: z.string(),
     confirmPassword: z.string(),
     address: z.object({
@@ -28,8 +29,9 @@ export const UpdateUser = z.object({
     firstname: z.string().optional(),
     lastname: z.string().optional(),
     username: z.string().optional(),
-    bio: z.string().optional(),
-    phone: z.number().optional(),
+    bio: z.string().nullable().optional(),
+    phone: z.string().optional(),
+    email: z.string().email().optional(),
     address: z.object({
         country: z.string().optional(),
         city: z.string().optional(),
@@ -86,6 +88,7 @@ export const VerifyOTPUser = z.object({
             currentPassword: z.string(),
         }).optional(),
         phone: z.string().optional(),
+        email: z.string().email(),
         address: z.object({
             country: z.string(),
             city: z.string(),
@@ -151,7 +154,7 @@ export const resendOTP = z.object({
 
 
 export const resendOTPUser = z.object({
-    phone: z.string().optional(),
+    email: z.string().optional(),
     username: z.string(),
     type: z.string(),
 })

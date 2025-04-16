@@ -6,17 +6,16 @@ export const SignupUserSchema = z.object({
   firstname: z.string(),
   lastname: z.string(),
   username: z.string(),
-  email: z.string().email(),
+  email: z.string().email({ message: "Provide valid email address" }),
   password: z.string(),
   confirmPassword: z.string()
 })
 
 
 export const LoginUserSchema = z.object({
-  username: z.string(),
+  username: z.string().or(z.string().email({ message: "Provide valid email address" })),
   password: z.string()
 })
-
 
 export const PageCreateSchema = yup.object().shape({
   name: yup
@@ -94,8 +93,8 @@ export const UserSchema = yup.object().shape({
   //   return true;
   // })
   // .required('Handle is required'),
-  // email: yup
-  // .string().email()
+  email: yup
+    .string().email(),
   // .required('emai is required'),
   // phone: yup.number().required('phone no is required'),
   // address: yup.object({
@@ -146,9 +145,9 @@ export const SignupSchema = yup.object().shape({
     //   return true;
     // })
     .required('username is required'),
-  // email: yup
-  //   .string().email()
-  //   .required('emai is required'),
+  email: yup
+    .string().email()
+    .required('emai is required'),
   phone: yup.string().required('phone no is required'),
   address: yup.object({
     // country: yup.string().required("country is required"),

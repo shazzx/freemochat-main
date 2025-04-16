@@ -107,17 +107,31 @@ function ChangePhoneModel({ setModelTrigger }) {
         // return response.data
     }
 
+        const _updateUser = async (data) => {
+            const formData = new FormData()
+            formData.append("userData", JSON.stringify(data))
+    
+            try {
+                const response = await axiosClient.post("/user/update", formData, { headers: { "Content-Type": 'multipart/form-data' } })
+                if (response.status == 201) {
+                    dispatch(updateUser(data))
+                    toast.info("Phone Number Changed")
+                    setModelTrigger(false)
+                    navigate('', { replace: true })
+                }
+            } catch (error) {
+                toast.info(error.message)
+    
+            }
+    
+        }
+
     const mutation = useMutation({
         mutationFn: async (data: {
-            otp: string, type: string, updatedData: {
                 phone: string,
-            }
         }): Promise<any> => {
-            let _data = {
-                username: user.username,
-                ...data
-            }
-            return await verifyOTP(_data)
+            // return await verifyOTP(_data)
+            return await _updateUser(data)
         },
         onError: (e: any) => {
             if (e.response.data.error.message) {
@@ -133,14 +147,9 @@ function ChangePhoneModel({ setModelTrigger }) {
     const changeCountry = async () => {
         let phone = validatePhone(_phone, user.country)
         if (phone.isValid) {
-
-
             mutation.mutate({
-                otp, type: 'phone', updatedData: {
                     phone: phone.phoneNumber
-                }
             })
-            console.log(otp)
             return
         }
         toast.info("phone number is not valid")
@@ -180,8 +189,8 @@ function ChangePhoneModel({ setModelTrigger }) {
                             />
                             {/* {errors.phone && <p>{errors.phone.message}</p>} */}
                         </div>
-                        <InputOTPForm changeData={changeCountry} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeCountry} buttonTitle={"Change Phone"} data={!_phone || !otpSent ? true : false} type="phone" label="Phone Verification" description={otpSent ? "Please enter the one-time password sent to your phone." : "Click on send to get an OTP for verification."} />
-
+                        {/* <InputOTPForm changeData={changeCountry} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeCountry} buttonTitle={"Change Phone"} data={!_phone || !otpSent ? true : false} type="phone" label="Phone Verification" description={otpSent ? "Please enter the one-time password sent to your phone." : "Click on send to get an OTP for verification."} /> */}
+                        <Button type="button" onClick={changeCountry}>Change</Button>
                     </div>
 
                 </form>
