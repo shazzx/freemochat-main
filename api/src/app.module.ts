@@ -51,12 +51,13 @@ import { PaymentModule } from './payment/payment.module';
         port: 6379
       }
     }),
- EventEmitterModule.forRoot(),
+    EventEmitterModule.forRoot(),
     UserModule,
     UploadModule,
     PostsModule,
     ConfigModule.forRoot({ isGlobal: true }),
-    MongooseModule.forRoot("mongodb://192.168.56.1:27017/freedombook"),
+    // MongooseModule.forRoot("mongodb://192.168.56.1:27017/freedombook"),
+    MongooseModule.forRoot("mongodb://localhost:27017/freedombook-prod2"),
     StoriesModule,
     SearchModule,
     PagesModule,
