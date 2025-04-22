@@ -54,6 +54,306 @@ interface PostProps {
     scrollRef?: any
 }
 
+// Create a separate SharedPostContent component
+// const SharedPostContent = ({ sharedPost, useLikePost, useBookmarkPost, type, isSearch, query }) => {
+//     const navigate = useNavigate();
+//     const [expanded, setExpanded] = useState(false);
+//     const expandable = sharedPost?.content?.slice(0, 360);
+//     const [width, setWidth] = useState(window.innerWidth);
+//     const [date, setDate] = useState("");
+//     const [_profile, setProfile] = useState(undefined);
+//     const [fullname, setFullname] = useState(undefined);
+
+//     useEffect(() => {
+//         window.addEventListener("resize", () => {
+//             setWidth(window.innerWidth);
+//         });
+//         return () => window.removeEventListener("resize", () => { });
+//     }, []);
+
+//     useEffect(() => {
+//         if (sharedPost) {
+//             let date = format(sharedPost.createdAt ?? Date.now(), 'MMM d, yyy h:mm a');
+//             setProfile(sharedPost?.target?.profile);
+//             setFullname(sharedPost?.target?.firstname + sharedPost?.target?.lastname);
+//             setDate(date);
+//         }
+//     }, [sharedPost]);
+
+//     const handleCardPress = () => {
+//         if (!sharedPost) return;
+
+//         const navigation = sharedPost?.type === "group"
+//             ? `${domain}/group/${sharedPost.target.handle}`
+//             : sharedPost?.type === "page"
+//                 ? `${domain}/page/${sharedPost.target.handle}`
+//                 : `${domain}/user/${sharedPost.target.username}`;
+
+//         navigate(navigation);
+//     };
+
+//     if (!sharedPost) return null;
+
+//     let navigation = sharedPost?.type == 'user' ? sharedPost?.target?.username : sharedPost?.target?.handle;
+
+//     return (
+//         <Card className="w-full border-muted mt-3 mb-2 bg-muted/30">
+//             <CardHeader className='p-3'>
+//                 <div className='flex items-center justify-between'>
+//                     <div className='flex gap-2' onClick={handleCardPress} style={{ cursor: 'pointer' }}>
+//                         {sharedPost.type == 'group'
+//                             ?
+//                             <div className='relative'>
+//                                 <Link to={navigation && `${domain}/${sharedPost?.type}/${navigation}`}>
+//                                     <div className='bg-accent w-8 h-8 flex items-center justify-center rounded-full overflow-hidden'>
+//                                         <Avatar>
+//                                             <AvatarImage src={_profile} alt="Avatar" />
+//                                             <AvatarFallback>{(sharedPost?.target?.name ? (sharedPost?.target?.name[0]?.toUpperCase()) + sharedPost?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
+//                                         </Avatar>
+//                                     </div>
+//                                 </Link>
+//                                 <Link to={sharedPost?.user?.username && `${domain}/user/${sharedPost?.user?.username}`}>
+//                                     <div className='absolute -bottom-1 border border-accent -right-1 bg-accent w-6 h-6 flex items-center justify-center rounded-full overflow-hidden'>
+//                                         <Avatar>
+//                                             <AvatarImage src={sharedPost.user.profile} alt="Avatar" />
+//                                             <AvatarFallback>{(sharedPost?.user?.firstname ? sharedPost?.user?.firstname[0]?.toUpperCase() : "D")}</AvatarFallback>
+//                                         </Avatar>
+//                                     </div>
+//                                 </Link>
+//                             </div>
+//                             :
+//                             <Link to={navigation && `${domain}/${sharedPost?.type}/${navigation}`}>
+//                                 <div className='bg-accent w-8 h-8 flex items-center justify-center rounded-full overflow-hidden'>
+//                                     {sharedPost?.type !== 'user' ?
+//                                         <Avatar>
+//                                             <AvatarImage src={_profile} alt="Avatar" />
+//                                             <AvatarFallback>{(sharedPost?.target?.name ? (sharedPost?.target?.name[0]?.toUpperCase()) + sharedPost?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
+//                                         </Avatar>
+//                                         :
+//                                         <Avatar>
+//                                             <AvatarImage src={_profile} alt="Avatar" />
+//                                             <AvatarFallback>{(sharedPost?.target?.firstname ? (sharedPost?.target?.firstname[0]?.toUpperCase()) + (sharedPost?.target?.lastname && sharedPost?.target?.lastname[0]?.toUpperCase()) : "D")}</AvatarFallback>
+//                                         </Avatar>
+//                                     }
+//                                 </div>
+//                             </Link>
+//                         }
+
+//                         <div className='flex flex-col gap-1'>
+//                             {sharedPost.type == 'group' ?
+//                                 <h3 className='text-card-foreground flex gap-2 text-xs'>
+//                                     <Link to={sharedPost?.user?.username && `${domain}/user/${sharedPost?.user?.username}`}>
+//                                         {sharedPost?.user?.firstname + " " + sharedPost?.user?.lastname}
+//                                     </Link>
+//                                     <Link to={navigation && `${domain}/${sharedPost?.type}/${navigation}`}>
+//                                         ({sharedPost?.target?.name || "Deleted"})
+//                                     </Link>
+//                                 </h3>
+//                                 :
+//                                 navigation ?
+//                                     <Link to={`${domain}/${sharedPost?.type}/${navigation}`}>
+//                                         <h3 className='text-card-foreground flex gap-2 text-xs'>{(sharedPost?.target?.firstname ? (sharedPost?.target?.firstname + " " + sharedPost?.target?.lastname) : sharedPost?.target?.name)}</h3>
+//                                     </Link>
+//                                     :
+//                                     <div>
+//                                         <h3 className='text-card-foreground flex gap-2 text-xs'>{(sharedPost?.target?.firstname ? (sharedPost?.target?.firstname + " " + sharedPost?.target?.lastname) : sharedPost?.target?.name || 'Deleted')}</h3>
+//                                     </div>
+//                             }
+//                             <span className='text-muted-foreground text-xs'>{date}</span>
+//                         </div>
+//                     </div>
+//                 </div>
+//             </CardHeader>
+//             <CardContent className="flex flex-col gap-2 text-sm p-0 sm:px-3 font-normal">
+//                 <div className='text-sm font-normal px-2 sm:px-0'>
+//                     {expanded ?
+//                         <p style={{ whiteSpace: "pre-wrap" }} className='break-words'>
+//                             {sharedPost?.content}
+//                         </p>
+//                         :
+//                         <p style={{ whiteSpace: "pre-wrap" }} className='break-words'>
+//                             {expandable}
+//                             {sharedPost?.content?.length > 360 && <>...{' '} <span className='text-primary text-xs cursor-pointer' onClick={() => setExpanded(true)}>Show more</span></>}
+//                         </p>
+//                     }
+//                 </div>
+//                 {
+//                     sharedPost && sharedPost.media &&
+//                     <div className='overflow-hidden aspect-auto max-w-xl flex items-center justify-center bg-background'>
+//                         {width > 540 ?
+//                             (sharedPost.media.length > 1 ?
+//                                 <PostMediaCarousel media={sharedPost?.media} /> :
+//                                 sharedPost.media[0]?.type == 'video' ?
+//                                     <AutoPlayVideo src={sharedPost?.media && sharedPost?.media[0]?.url} /> :
+//                                     <img className='object-contain max-h-[400px]' src={sharedPost?.media[0]?.url} alt="" />
+//                             ) :
+//                             <PostMediaCarousel mobile={true} media={sharedPost?.media} />
+//                         }
+//                     </div>
+//                 }
+//             </CardContent>
+//             <CardFooter className='py-2 px-3 flex gap-4 text-xs'>
+//                 <span className='cursor-pointer'>
+//                     {sharedPost?.likesCount > 0 && "Likes " + sharedPost?.likesCount}
+//                 </span>
+//                 <span className='cursor-pointer'>
+//                     {sharedPost?.commentsCount > 0 && "Comments " + sharedPost?.commentsCount}
+//                 </span>
+//             </CardFooter>
+//         </Card>
+//     );
+// };
+
+// Create a separate SharedPostContent component
+const SharedPostContent = ({ sharedPost, useLikePost, useBookmarkPost, type, isSearch, query }) => {
+    const navigate = useNavigate();
+    const [expanded, setExpanded] = useState(false);
+    const expandable = sharedPost?.content?.slice(0, 360);
+    const [width, setWidth] = useState(window.innerWidth);
+    const [date, setDate] = useState("");
+    const [_profile, setProfile] = useState(undefined);
+    const [fullname, setFullname] = useState(undefined);
+
+    useEffect(() => {
+        window.addEventListener("resize", () => {
+            setWidth(window.innerWidth);
+        });
+        return () => window.removeEventListener("resize", () => { });
+    }, []);
+
+    useEffect(() => {
+        if (sharedPost) {
+            let date = format(sharedPost.createdAt ?? Date.now(), 'MMM d, yyy h:mm a');
+            setProfile(sharedPost?.target?.profile);
+            setFullname(sharedPost?.target?.firstname + sharedPost?.target?.lastname);
+            setDate(date);
+        }
+    }, [sharedPost]);
+
+    const handleCardPress = () => {
+        if (!sharedPost) return;
+
+        const navigation = sharedPost?.type === "group"
+            ? `${domain}/group/${sharedPost.target.handle}`
+            : sharedPost?.type === "page"
+                ? `${domain}/page/${sharedPost.target.handle}`
+                : `${domain}/user/${sharedPost.target.username}`;
+
+        navigate(navigation);
+    };
+
+    if (!sharedPost) return null;
+
+    let navigation = sharedPost?.type == 'user' ? sharedPost?.target?.username : sharedPost?.target?.handle;
+
+    return (
+        <Card className="w-full border-muted bg-muted/30">
+            <CardHeader className='p-3'>
+                <div className='flex items-center justify-between'>
+                    <div className='flex gap-2' onClick={handleCardPress} style={{ cursor: 'pointer' }}>
+                        {sharedPost.type == 'group'
+                            ?
+                            <div className='relative '>
+                                <Link to={navigation && `${domain}/${sharedPost?.type}/${navigation}`}>
+                                    <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
+                                        <Avatar className='font-normal'>
+                                            <AvatarImage src={_profile} alt="Avatar" />
+                                            <AvatarFallback>{(sharedPost?.target?.name ? (sharedPost?.target?.name[0]?.toUpperCase()) + sharedPost?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
+                                        </Avatar>
+                                    </div>
+                                </Link>
+                                <Link to={sharedPost?.user?.username && `${domain}/user/${sharedPost?.user?.username}`}>
+                                    <div className='absolute -bottom-1 border border-accent -right-1 bg-accent w-8 h-8 flex items-center justify-center rounded-full overflow-hidden'>
+                                        <Avatar className='font-normal'>
+                                            <AvatarImage src={sharedPost.user.profile} alt="Avatar" />
+                                            <AvatarFallback>{(sharedPost?.user?.firstname ? sharedPost?.user?.firstname[0]?.toUpperCase() : "D")}</AvatarFallback>
+                                        </Avatar>
+                                    </div>
+                                </Link>
+                            </div>
+                            :
+                            <Link to={navigation && `${domain}/${sharedPost?.type}/${navigation}`}>
+                                <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
+                                    {sharedPost?.type !== 'user' ?
+                                        <Avatar className='font-normal'>
+                                            <AvatarImage src={_profile} alt="Avatar" />
+                                            <AvatarFallback>{(sharedPost?.target?.name ? (sharedPost?.target?.name[0]?.toUpperCase()) + sharedPost?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
+                                        </Avatar>
+                                        :
+                                        <Avatar className='font-normal'>
+                                            <AvatarImage src={_profile} alt="Avatar" />
+                                            <AvatarFallback>{(sharedPost?.target?.firstname ? (sharedPost?.target?.firstname[0]?.toUpperCase()) + (sharedPost?.target?.lastname && sharedPost?.target?.lastname[0]?.toUpperCase()) : "D")}</AvatarFallback>
+                                        </Avatar>
+                                    }
+                                </div>
+                            </Link>
+                        }
+
+                        <div className='flex flex-col gap-1'>
+                            {sharedPost.type == 'group' ?
+                                <h3 className='text-card-foreground flex gap-2 text-sm font-normal'>
+                                    <Link to={sharedPost?.user?.username && `${domain}/user/${sharedPost?.user?.username}`}>
+                                        {sharedPost?.user?.firstname + " " + sharedPost?.user?.lastname}
+                                    </Link>
+                                    <Link to={navigation && `${domain}/${sharedPost?.type}/${navigation}`}>
+                                        ({sharedPost?.target?.name || "Deleted"})
+                                    </Link>
+                                </h3>
+                                :
+                                navigation ?
+                                    <Link to={`${domain}/${sharedPost?.type}/${navigation}`}>
+                                        <h3 className='text-card-foreground flex gap-2 text-sm font-normal'>{(sharedPost?.target?.firstname ? (sharedPost?.target?.firstname + " " + sharedPost?.target?.lastname) : sharedPost?.target?.name)}</h3>
+                                    </Link>
+                                    :
+                                    <div>
+                                        <h3 className='text-card-foreground flex gap-2 text-sm font-normal'>{(sharedPost?.target?.firstname ? (sharedPost?.target?.firstname + " " + sharedPost?.target?.lastname) : sharedPost?.target?.name || 'Deleted')}</h3>
+                                    </div>
+                            }
+                            <span className='text-muted-foreground text-xs font-normal'>{date}</span>
+                        </div>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2 text-sm p-0 sm:px-3 font-normal">
+                <div className='text-sm font-normal px-2 sm:px-0'>
+                    {expanded ?
+                        <p style={{ whiteSpace: "pre-wrap" }} className='break-words'>
+                            {sharedPost?.content}
+                        </p>
+                        :
+                        <p style={{ whiteSpace: "pre-wrap" }} className='break-words'>
+                            {expandable}
+                            {sharedPost?.content?.length > 360 && <>...{' '} <span className='text-primary text-sm cursor-pointer' onClick={() => setExpanded(true)}>Show more</span></>}
+                        </p>
+                    }
+                </div>
+                {
+                    sharedPost && sharedPost.media &&
+                    <div className='overflow-hidden aspect-auto max-w-xl flex items-center justify-center bg-background'>
+                        {width > 540 ?
+                            (sharedPost.media.length > 1 ?
+                                <PostMediaCarousel media={sharedPost?.media} /> :
+                                sharedPost.media[0]?.type == 'video' ?
+                                    <AutoPlayVideo src={sharedPost?.media && sharedPost?.media[0]?.url} /> :
+                                    <img className='object-contain max-h-[400px]' src={sharedPost?.media[0]?.url} alt="" />
+                            ) :
+                            <PostMediaCarousel mobile={true} media={sharedPost?.media} />
+                        }
+                    </div>
+                }
+            </CardContent>
+            <CardFooter className='py-2 px-3 flex gap-4 text-sm'>
+                <span className='cursor-pointer font-normal'>
+                    {sharedPost?.likesCount > 0 && "Likes " + sharedPost?.likesCount}
+                </span>
+                <span className='cursor-pointer font-normal'>
+                    {sharedPost?.commentsCount > 0 && "Comments " + sharedPost?.commentsCount}
+                </span>
+            </CardFooter>
+        </Card>
+    );
+};
+
 const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useLikePost, useBookmarkPost, type, fetchNextPage, self, profile, isAdmin, isSearch, query, scrollRef }) => {
     const [shareState, setShareState] = useState(false)
     const [ref, inView] = useInView()
@@ -115,12 +415,10 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         }
 
         if (inView && fetchNextPage) {
-            // console.log('fetching')
             fetchNextPage()
         }
-        // if (inView) {
+
         if (inView && postData?.promotion?.length > 0 && postData?.promotion[0]?.active == 1) {
-            // console.log("promoted post view")
             // dispatch(insertViewedPost(postData._id))
             // viewPost()
         }
@@ -158,7 +456,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
     useEffect(() => {
         if (isOpen && videoRef.current?.pause && postData._id == id && click == 'comment') {
-            // console.log('yes')
             videoRef.current.play()
         }
 
@@ -169,8 +466,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
     let navigation = postData?.type == "user" ? postData?.target?.username : postData?.target?.handle
 
-    // console.log(postData)
-
+    // Check if the post has a shared post
+    const hasSharedPost = postData?.sharedPost && Object.keys(postData.sharedPost).length > 0;
 
     if (postData?.isUploaded == false) {
         return (
@@ -179,10 +476,10 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                     width="24" height="24">
                     <path
                         d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
-                        stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
+                        stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"></path>
                     <path
                         d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
-                        stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" className="text-white">
+                        stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" className="text-white">
                     </path>
                 </svg>
                 Uploading...
@@ -190,36 +487,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         )
     }
 
-    // let [isVisible, setIsVisible] = useState(false)
-
-    // useEffect(() => {
-    //     const options = {
-    //       root: null,
-    //       rootMargin: '0px',
-    //       threshold: 1,
-    //     };
-
-    //     const observer = new IntersectionObserver((entries) => {
-    //       entries.forEach((entry) => {
-    //         if (entry.isIntersecting) {
-    //           setIsVisible(true);
-    //         } else {
-    //           setIsVisible(false);
-    //         }
-    //       });
-    //     }, options);
-
-    //     return () => {
-    //         observer.unobserve(videoRef.current);
-    //     };
-    //   }, []);
-
-    //   useEffect(() => {
-    //     console.log(isVisible)
-    //   },[])
-
     const params = isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }
-
 
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} onClick={() => {
@@ -374,7 +642,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                                             <AutoPlayVideo src={postData?.media && postData?.media[0]?.url} />
 
-                                            // <video ref={videoRef} className='w-full max-h-[500px] h-full' autoPlay={false} src={postData?.media && postData?.media[0]?.url} controls></video>
                                             :
                                             <img className='object-contain max-h-[500px]' src={postData?.media[0]?.url} alt="" />
 
@@ -390,12 +657,26 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                         </div>
                     }
+
+                    {/* Display shared post if it exists */}
+                    {hasSharedPost && (
+                        <div className="px-2 sm:px-0 my-2">
+                            <SharedPostContent
+                                sharedPost={postData.sharedPost}
+                                useLikePost={useLikePost}
+                                useBookmarkPost={useBookmarkPost}
+                                type={type}
+                                isSearch={isSearch}
+                                query={query}
+                            />
+                        </div>
+                    )}
                 </CardContent>
                 <CardFooter className='py-2 gap-2 px-3 md:p-4 select-none flex flex-col'>
                     {postData?.media?.length > 1 &&
                         <div className='flex gap-2 p-2'>
-                            {postData?.media.map(() => (
-                                <div className='w-[6px] h-[6px] sm:w-2 sm:h-2 rounded-full bg-foreground'>
+                            {postData?.media.map((_, index) => (
+                                <div key={index} className='w-[6px] h-[6px] sm:w-2 sm:h-2 rounded-full bg-foreground'>
                                 </div>
                             ))}
                         </div>
@@ -418,8 +699,9 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                             {postData?.commentsCount > 0 && "Comments " + postData?.commentsCount}
                         </span >
                     </div>
-                    <div className='flex  items-center justify-between w-full '>
+                    <div className='flex items-center justify-between w-full'>
                         <LikeButton mutate={mutate} pageIndex={pageIndex} postIndex={postIndex} postData={postData} />
+
                         {/* 
                         <div className='flex gap-1 items-center cursor-pointer' onClick={async () => {
                             mutate({ postId: postData._id, pageIndex, postIndex, authorId: postData.user, type: postData?.type, targetId: postData?.targetId })

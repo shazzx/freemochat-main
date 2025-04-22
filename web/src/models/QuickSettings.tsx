@@ -15,12 +15,19 @@ import { useNavigate } from "react-router-dom"
 import { SelectScrollable } from "./SelectScrollable"
 import { axiosClient } from "@/api/axiosClient"
 import ChangeCountryModel from "./ChangeCountryModel"
-import { PencilIcon } from "lucide-react"
+import { CalendarIcon, ListIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react"
 import ChangePhoneModel from "./ChangePhoneModel"
 import ChangeEmailModel from "./ChangeEmailModel"
 import ChangePasswordModel from "./ChangePasswordModel"
 import ForgetPasswordModel from "./ForgetPasswordModel"
 import { MdClose } from "react-icons/md"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { format } from "date-fns"
+import { Card, CardContent } from "@/components/ui/card"
+import EducationForm from "./EducationForm"
+import WorkExperienceForm from "./WorkExperienceForm"
 
 const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
@@ -35,12 +42,20 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     let [coverUploadBlob, setCoverUploadBlob] = useState(undefined)
 
     // other states
-    // let [aspectRatio, setAspectRatio] = useState(undefined)
     let [uploadImageState, setUploadImageState] = useState(false)
     let [cropperModel, setCropperModel] = useState(false)
 
-    const { firstname, lastname, username, email, address, profile, cover, bio, phone } = user
+    // Modal states
+    const [changeCountryModel, setChangeCountryModel] = useState(false)
+    const [changePhoneModel, setChangePhoneModel] = useState(false)
+    const [changeEmailModel, setChangeEmailModel] = useState(false)
+    const [changePasswordModel, setChangePasswordModel] = useState(false)
+    const [forgetPasswordModel, setForgetPasswordModel] = useState(false)
+    const [educationFormOpen, setEducationFormOpen] = useState(false)
+    const [workExperienceFormOpen, setWorkExperienceFormOpen] = useState(false)
 
+    const { firstname, lastname, username, email, address, profile, cover, bio, phone, website, 
+            dateOfBirth, maritalStatus, socialMedia, education, workExperience } = user
 
     const dispatch = useAppDispatch()
 
@@ -56,9 +71,13 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     const areaRef = useRef<HTMLInputElement>()
     const currentPasswordRef = useRef<HTMLInputElement>()
     const newPasswordRef = useRef<HTMLInputElement>()
+    const websiteRef = useRef<HTMLInputElement>()
 
     const coverInputRef = useRef<HTMLInputElement>(null)
     const profileInputRef = useRef<HTMLInputElement>(null)
+
+    // Date state
+    const [date, setDate] = useState<Date | undefined>(dateOfBirth ? new Date(dateOfBirth) : undefined)
 
     const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
         resolver: yupResolver(UserSchema),
@@ -74,59 +93,43 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
         }
     }, [handleWatch, setValue]);
 
+    // Remove education item
+    const removeEducation = async (index) => {
+        try {
+            const updatedEducation = [...(user.education || [])];
+            updatedEducation.splice(index, 1);
+            
+            dispatch(updateUser({ ...user, education: updatedEducation }));
+            uploadSingle(null, null, { education: updatedEducation });
+        } catch (error) {
+            console.error("Failed to remove education", error);
+        }
+    };
+
+    // Remove work experience item
+    const removeWorkExperience = async (index) => {
+        try {
+            const updatedWorkExperience = [...(user.workExperience || [])];
+            updatedWorkExperience.splice(index, 1);
+            
+            dispatch(updateUser({ ...user, workExperience: updatedWorkExperience }));
+            uploadSingle(null, null, { workExperience: updatedWorkExperience });
+        } catch (error) {
+            console.error("Failed to remove work experience", error);
+        }
+    };
 
     const onSubmit = async (data) => {
         console.log(data)
 
+        // Add date of birth if set
+        if (date) {
+            data.dateOfBirth = date.toISOString();
+        }
+
         dispatch(updateUser(data))
         uploadSingle(null, null, data)
-
-        // let profile;
-        // if (uploadImageState) {
-        //     let profile = await uploadImage()
-        // }
-
-        // const updatedData = {
-        //     username: usernameRef.current.value,
-        //     firstname: firstnameRef.current.value,
-        //     lastname: lastnameRef.current.value,
-        //     email: emailRef.current.value,
-        //     images: {
-        //         cover: coverImage,
-        //         profile: profileImage
-        //     },
-        //     address: {
-        //         country: countryRef?.current.value,
-        //         city: cityRef?.current.value,
-        //     },
-        //     phone: phoneRef?.current.value,
-        //     currentPassword: currentPasswordRef?.current.value,
-        //     newPassword: newPasswordRef?.current.value,
-        // }
-        // console.log(updatedData?.images)
-        // mutation.mutate(updatedData)
     }
-
-
-    // const updateUserDetails = async (data) => {
-    //     let response = await axiosClient.post("/user/update", { updatedDetails: data })
-    //     dispatch(loginSuccess(response.data))
-    //     return response.data
-    // }
-
-    // const mutation = useMutation({
-    //     mutationFn: async (data) => {
-    //         return await updateUserDetails(data)
-    //     }
-    // })
-
-    const [changeCountryModel, setChangeCountryModel] = useState(false)
-    const [changePhoneModel, setChangePhoneModel] = useState(false)
-    const [changeEmailModel, setChangeEmailModel] = useState(false)
-    const [changePasswordModel, setChangePasswordModel] = useState(false)
-    const [forgetPasswordModel, setForgetPasswordModel] = useState(false)
-
-
 
     const navigate = useNavigate()
 
@@ -154,6 +157,28 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
             {
                 forgetPasswordModel &&
                 <ForgetPasswordModel setModelTrigger={setForgetPasswordModel} />
+            }
+            {
+                educationFormOpen && 
+                <EducationForm 
+                    setOpen={setEducationFormOpen} 
+                    onSave={(newEducation) => {
+                        const updatedEducation = [...(user.education || []), newEducation];
+                        dispatch(updateUser({ ...user, education: updatedEducation }));
+                        uploadSingle(null, null, { education: updatedEducation });
+                    }} 
+                />
+            }
+            {
+                workExperienceFormOpen && 
+                <WorkExperienceForm 
+                    setOpen={setWorkExperienceFormOpen} 
+                    onSave={(newExperience) => {
+                        const updatedWorkExperience = [...(user.workExperience || []), newExperience];
+                        dispatch(updateUser({ ...user, workExperience: updatedWorkExperience }));
+                        uploadSingle(null, null, { workExperience: updatedWorkExperience });
+                    }} 
+                />
             }
             {
                 profileForCrop && cropperModel &&
@@ -187,7 +212,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                 <MdClose cursor="pointer" size={24} className='ml-auto absolute top-2 right-2 z-10' onClick={() => {
                     navigate('', { replace: true })
                 }} />
-                <div className="grid gap-8 p-1  overflow-y-auto relative">
+                <div className="grid gap-8 p-1 overflow-y-auto relative">
                     <div className="flex flex-col items-center justify-center relative">
                         <div className='relative w-full max-h-64 roundd-md  overflow-hidden'>
                             <form className='image-upload_form'>
@@ -267,9 +292,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                         />
                                         {errors.lastname && <p>{errors.lastname.message}</p>}
                                     </div>
-
                                 </div>
-
 
                                 <div className="w-full">
                                     <div className="w-full">
@@ -305,6 +328,114 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                         {errors.username && <p>{errors.username.message}</p>}
                                     </div>
                                 </div>
+
+                                {/* Website Field */}
+                                <div className="w-full">
+                                    <div className="w-full">
+                                        <Label>
+                                            Website
+                                        </Label>
+                                        <Input
+                                            name="website"
+                                            placeholder="Enter your website"
+                                            ref={websiteRef}
+                                            id="website"
+                                            defaultValue={website}
+                                            className="max-w-96 w-full"
+                                            {...register("website")}
+                                        />
+                                        {errors.website && <p>{errors.website.message}</p>}
+                                    </div>
+                                </div>
+
+                                {/* Date of Birth Field */}
+                                <div className="w-full">
+                                    <Label>Date of Birth</Label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button 
+                                                variant="outline" 
+                                                className="w-full justify-start text-left font-normal max-w-96"
+                                            >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0">
+                                            <Calendar
+                                                mode="single"
+                                                selected={date}
+                                                onSelect={setDate}
+                                                initialFocus
+                                                disabled={(date) => date > new Date()}
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+
+                                {/* Marital Status */}
+                                <div className="w-full">
+                                    <Label>Marital Status</Label>
+                                    <Select defaultValue={maritalStatus || "single"} onValueChange={(value) => setValue("maritalStatus", value)}>
+                                        <SelectTrigger className="max-w-96 w-full">
+                                            <SelectValue placeholder="Select marital status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="single">Single</SelectItem>
+                                            <SelectItem value="married">Married</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Social Media Section */}
+                                <div className="w-full mt-4">
+                                    <h3 className="text-lg font-medium mb-2">Social Media</h3>
+                                    
+                                    <div className="w-full mb-2">
+                                        <Label>Facebook</Label>
+                                        <Input
+                                            name="socialMedia.facebook"
+                                            placeholder="Facebook profile URL"
+                                            defaultValue={socialMedia?.facebook}
+                                            className="max-w-96 w-full"
+                                            {...register("socialMedia.facebook")}
+                                        />
+                                    </div>
+                                    
+                                    <div className="w-full mb-2">
+                                        <Label>Instagram</Label>
+                                        <Input
+                                            name="socialMedia.instagram"
+                                            placeholder="Instagram profile URL"
+                                            defaultValue={socialMedia?.instagram}
+                                            className="max-w-96 w-full"
+                                            {...register("socialMedia.instagram")}
+                                        />
+                                    </div>
+                                    
+                                    <div className="w-full mb-2">
+                                        <Label>LinkedIn</Label>
+                                        <Input
+                                            name="socialMedia.linkedin"
+                                            placeholder="LinkedIn profile URL"
+                                            defaultValue={socialMedia?.linkedin}
+                                            className="max-w-96 w-full"
+                                            {...register("socialMedia.linkedin")}
+                                        />
+                                    </div>
+                                    
+                                    <div className="w-full mb-2">
+                                        <Label>WhatsApp</Label>
+                                        <Input
+                                            name="socialMedia.whatsapp"
+                                            placeholder="WhatsApp number"
+                                            defaultValue={socialMedia?.whatsapp}
+                                            className="max-w-96 w-full"
+                                            {...register("socialMedia.whatsapp")}
+                                        />
+                                    </div>
+                                </div>
+
                                 <div className="flex gap-2 items-center">
                                     <span className="my-2">Address</span >
                                     <PencilIcon size="16" className="cursor-pointer" onClick={() => {
@@ -365,11 +496,6 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                             {/* {errors.address?.area && <p>{errors.address.area.message}</p>} */}
                                         </div>
                                     </div>
-                                    {/* <Button 
-                                    className="max-w-40 p-0 my-4 border border-accent" 
-                                    onClick={() => {setChangeCountryModel(true)}}
-                                    type="button"
-                                    >Change Address</Button> */}
                                 </div>
 
                                 <div className="flex gap-4 w-full">
@@ -416,10 +542,71 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                         />
                                         {/* {errors.phone && <p>{errors.phone.message}</p>} */}
                                     </div>
-
                                 </div>
-
                             </div>
+
+                            {/* Education Section */}
+                            <div className="w-full flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                    <h2>Education</h2>
+                                    <PlusIcon size={18} className="cursor-pointer" onClick={() => setEducationFormOpen(true)} />
+                                </div>
+                                <div className="space-y-3">
+                                    {education && education.length > 0 ? (
+                                        education.map((edu, index) => (
+                                            <Card key={index} className="p-2">
+                                                <CardContent className="flex justify-between items-center p-2">
+                                                    <div>
+                                                        <h4 className="font-medium">{edu.institution}</h4>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {edu.degree} in {edu.fieldOfStudy} ({edu.startYear} - {edu.endYear || 'Present'})
+                                                        </p>
+                                                    </div>
+                                                    <TrashIcon 
+                                                        size={18} 
+                                                        className="cursor-pointer text-red-500" 
+                                                        onClick={() => removeEducation(index)} 
+                                                    />
+                                                </CardContent>
+                                            </Card>
+                                        ))
+                                    ) : (
+                                        <p className="text-center text-muted-foreground py-3">No education history added</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Work Experience Section */}
+                            <div className="w-full flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                    <h2>Work Experience</h2>
+                                    <PlusIcon size={18} className="cursor-pointer" onClick={() => setWorkExperienceFormOpen(true)} />
+                                </div>
+                                <div className="space-y-3">
+                                    {workExperience && workExperience.length > 0 ? (
+                                        workExperience.map((work, index) => (
+                                            <Card key={index} className="p-2">
+                                                <CardContent className="flex justify-between items-center p-2">
+                                                    <div>
+                                                        <h4 className="font-medium">{work.jobTitle} at {work.company}</h4>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {work.totalYears} years • {work.description}
+                                                        </p>
+                                                    </div>
+                                                    <TrashIcon 
+                                                        size={18} 
+                                                        className="cursor-pointer text-red-500" 
+                                                        onClick={() => removeWorkExperience(index)} 
+                                                    />
+                                                </CardContent>
+                                            </Card>
+                                        ))
+                                    ) : (
+                                        <p className="text-center text-muted-foreground py-3">No work experience added</p>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="w-full flex flex-col gap-2">
                                 <h2>Privacy</h2>
                                 <div className="flex w-full flex-col md:flex-row justify-start items-start gap-4">
@@ -431,7 +618,6 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                             </div>
                         </div>
                     </form>
-
                 </div>
             </div>
         </div>

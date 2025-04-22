@@ -1,5 +1,5 @@
 import { useDeleteComment, useLikeComment } from '@/hooks/Post/useComments'
-import { FC, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
 import { EllipsisVertical } from 'lucide-react'
@@ -7,25 +7,166 @@ import AudioPlayer from '@/AudioPlayer'
 import { toast } from 'react-toastify'
 import { Link } from 'react-router-dom'
 import { domain } from '@/config/domain'
+import { reactions } from '@/lib/utils'
 
 const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentIndex, userId, ref, editCommentModelState, setEditCommentModelState, setCommentDetails, isParent }) => {
-    const { mutate } = useLikeComment(comment?.post)
-    const deleteComment = useDeleteComment(comment?.post)
+    const [showReactions, setShowReactions] = useState(false);
+    const [selectedReaction, setSelectedReaction] = useState(null);
+    const timeoutRef = useRef(null);
+    const emojisRef = useRef(null);
+    const { mutate } = useLikeComment(comment?.post);
+    const deleteComment = useDeleteComment(comment?.post);
 
+    let [likeParentComment, setLikeParentComment] = useState(comment?.isLikedByUser);
 
-    let [likeParentComment, setLikeParentComment] = useState(comment?.isLikedByUser)
-    // if (inView) {
-    //     console.log('fetching')
-    //     fetchNextPage()
-    // }
-    console.log(comment)
+    // Find reaction index if there's a reaction
+    let reactionIndex = comment?.reaction ? reactions.findIndex((reaction) => {
+        if (reaction.name === comment.reaction) {
+            return reaction;
+        }
+    }) : -1;
+
+    const handleMouseDown = (e) => {
+        if (comment?.isLikedByUser) {
+            return;
+        }
+        timeoutRef.current = setTimeout(() => {
+            setShowReactions(true);
+        }, 500);
+    };
+
+    const handleMouseUp = (e) => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        if (!showReactions) {
+            likeComment();
+            setSelectedReaction(null);
+        }
+    };
+
+    const handleMouseLeave = (e) => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+    };
+
+    const handleTouchStart = (e) => {
+        e.preventDefault(); // Prevent mouse events from firing
+        handleMouseDown(e.touches[0]);
+    };
+    
+    const handleTouchEnd = (e) => {
+        e.preventDefault(); // Prevent mouse events from firing
+        handleMouseUp(e.changedTouches[0]);
+    };
+    
+    const handleTouchCancel = (e) => {
+        e.preventDefault(); // Prevent mouse events from firing
+        handleMouseLeave(e.changedTouches[0]);
+    };
+
+    const likeComment = (_reaction?: string) => {
+        if (!comment?._id) {
+            toast.info("please wait...");
+            return;
+        }
+        
+        let reaction = _reaction !== undefined ? reactions[_reaction]?.name : undefined;
+        const commentData = { 
+            userId: userId, 
+            commentId: comment?._id, 
+            pageIndex, 
+            commentIndex,
+            reaction 
+        };
+        
+        if (isParent) {
+            setLikeParentComment(!likeParentComment);
+        }
+        
+        mutate(commentData);
+    };
+
+    const handleReactionSelect = (reaction) => {
+        setSelectedReaction(reaction);
+        likeComment(reaction);
+        setShowReactions(false);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (emojisRef.current && !emojisRef.current.contains(event.target)) {
+                setShowReactions(false);
+            }
+        }
+
+        if (showReactions) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showReactions]);
+
+    const renderLikeButton = () => {
+        const isLiked = isParent ? likeParentComment : comment?.isLikedByUser;
+        const hasReaction = comment?.reaction && reactionIndex !== -1;
+
+        return (
+            <div className="relative select-none flex items-center cursor-pointer"
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+            >
+                {showReactions && (
+                    <div ref={emojisRef} className="absolute bottom-full left-0 mb-2 bg-background border border-accent rounded-full shadow-lg flex">
+                        {reactions.map((reaction, index) => (
+                            <button
+                                key={reaction.name}
+                                className="p-1 text-sm hover:bg-accent rounded-full"
+                                onClick={() => handleReactionSelect(index)}
+                                onTouchEnd={() => handleReactionSelect(index)}
+                            >
+                                {reaction.emoji}
+                            </button>
+                        ))}
+                    </div>
+                )}
+                
+                {hasReaction ? (
+                    <span className="flex items-center gap-1">
+                        <span className="text-sm">{reactions[reactionIndex]?.emoji}</span>
+                        <span className={`text-xs ${isLiked && "text-primary"}`}>
+                            {reactions[reactionIndex]?.name} {comment?.likedBy?.length > 0 && comment?.likedBy?.length}
+                        </span>
+                    </span>
+                ) : (
+                    <span className={`text-xs ${isLiked && "text-primary"}`}>
+                        Like {comment?.likedBy?.length > 0 && comment?.likedBy?.length}
+                    </span>
+                )}
+            </div>
+        );
+    };
+
     return (
         <div>
             {
                 comment?.audio?.src ?
-
                     <div className="flex gap-2 select-none" key={comment._id} ref={ref}>
-
                         <Link to={`${domain}/user/${comment.user.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
                                 <AvatarImage src={comment.user?.profile} alt="Avatar" />
@@ -51,28 +192,14 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                                     </DropdownMenu>}
                             </div>
                             <div className='flex px-2 gap-4 text-xs'>
-                                <span className={`cursor-pointer ${(isParent ? likeParentComment : comment?.isLikedByUser) && "text-primary"}`} onClick={async () => {
-                                    if (isParent) {
-                                        setLikeParentComment(!likeParentComment)
-                                    }
-                                    if (!comment?._id) {
-                                        toast.info("please wait...")
-                                        return
-                                    }
-
-                                    const commentData = { userId: userId, commentId: comment?._id, pageIndex, commentIndex }
-                                    mutate(commentData)
-                                }}>Like {comment?.likedBy?.length}</span>
+                                {renderLikeButton()}
                                 <span className='cursor-pointer' onClick={() => {
                                     reply({ ...comment, commentIndex })
                                 }}>{comment?.repliesCount > 0 ? "Replies " + comment.repliesCount : 'Reply'}</span>
-
-
                             </div>
                         </div>
                     </div> :
                     <div className="flex gap-2 select-none" key={comment._id} ref={ref}>
-
                         <Link to={`${domain}/user/${comment?.user?.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-card dark:bg-accent  w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
                                 <AvatarImage src={comment?.user?.profile} alt="Avatar" />
@@ -84,7 +211,7 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                                 <span className="font-medium">{comment?.user?.firstname} {comment?.user?.lastname}</span>
                             </Link>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-accent bg-card dark:bg-transparent text-sm rounded-lg ">
-                                <p >{comment?.content}</p>
+                                <p>{comment?.content}</p>
                                 {comment.user._id == userId &&
                                     < DropdownMenu >
                                         <DropdownMenuTrigger asChild className='cursor-pointer'>
@@ -102,19 +229,10 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                                     </DropdownMenu>}
                             </div>
                             <div className='flex px-2 gap-4 text-xs'>
-                                <span className={`cursor-pointer ${comment?.isLikedByUser && "text-primary"}`} onClick={async () => {
-                                    if (!comment?._id) {
-                                        toast.info("please wait...")
-                                        return
-                                    }
-                                    const commentData = { userId: userId, commentId: comment?._id, pageIndex, commentIndex }
-                                    mutate(commentData)
-                                }}>Like {comment?.likedBy?.length}</span>
+                                {renderLikeButton()}
                                 <span className='cursor-pointer' onClick={() => {
                                     reply({ ...comment, commentIndex })
                                 }}>{comment?.repliesCount > 0 ? "Replies " + comment.repliesCount : 'Reply'}</span>
-
-
                             </div>
                         </div>
                     </div>

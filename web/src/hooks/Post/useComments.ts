@@ -455,12 +455,12 @@ export const useLikeComment = (postId) => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (commentDetails: { userId: string, commentId: string, pageIndex: number, commentIndex: number }) => {
-      return likeComment({ targetId: commentDetails.commentId })
+    mutationFn: (commentDetails: { userId: string, commentId: string, pageIndex: number, commentIndex: number, reaction?: string }) => {
+      return likeComment({ targetId: commentDetails.commentId, reaction: commentDetails?.reaction })
     },
 
 
-    onMutate: async ({ commentId, commentIndex, pageIndex, userId }) => {
+    onMutate: async ({ commentId, commentIndex, pageIndex, reaction }) => {
       await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS, postId] })
       const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS, postId])
 
@@ -469,11 +469,15 @@ export const useLikeComment = (postId) => {
 
           if (draft.pages[pageIndex].comments[commentIndex] && draft.pages[pageIndex].comments[commentIndex]._id == commentId && draft.pages[pageIndex].comments[commentIndex].isLikedByUser) {
             draft.pages[pageIndex].comments[commentIndex].isLikedByUser = false
+            draft.pages[pageIndex].comments[commentIndex] = { ...draft.pages[pageIndex].comments[commentIndex], reaction: null }
+
             return draft
           }
 
           if (draft.pages[pageIndex].comments[commentIndex] && draft.pages[pageIndex].comments[commentIndex]._id == commentId && !draft.pages[pageIndex].comments[commentIndex].isLikedByUser) {
             draft.pages[pageIndex].comments[commentIndex].isLikedByUser = true
+            draft.pages[pageIndex].comments[commentIndex] = { ...draft.pages[pageIndex].comments[commentIndex], reaction }
+
             return draft
           }
 
@@ -510,12 +514,12 @@ export const useLikeReply = (commentId) => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (replyDetails: { userId: string, commentId: string, replyId: string, pageIndex: number, replyIndex: number }) => {
-      return likeReply({ targetId: replyDetails.replyId })
+    mutationFn: (replyDetails: { userId: string, commentId: string, replyId: string, pageIndex: number, replyIndex: number, reaction?: string }) => {
+      return likeReply({ targetId: replyDetails.replyId, reaction: replyDetails?.reaction })
     },
 
 
-    onMutate: async ({ replyId, replyIndex, commentId, pageIndex, userId }) => {
+    onMutate: async ({ replyId, replyIndex, commentId, pageIndex, reaction }) => {
       await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
       const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES, commentId])
 
@@ -525,11 +529,15 @@ export const useLikeReply = (commentId) => {
 
           if (draft.pages[pageIndex].replies[replyIndex] && draft.pages[pageIndex].replies[replyIndex]._id == replyId && draft.pages[pageIndex].replies[replyIndex].isLikedByUser) {
             draft.pages[pageIndex].replies[replyIndex].isLikedByUser = false
+            draft.pages[pageIndex].replies[replyIndex] = { ...draft.pages[pageIndex].replies[replyIndex], reaction: null }
+
             return draft
           }
 
           if (draft.pages[pageIndex].replies[replyIndex] && draft.pages[pageIndex].replies[replyIndex]._id == replyId && !draft.pages[pageIndex].replies[replyIndex].isLikedByUser) {
             draft.pages[pageIndex].replies[replyIndex].isLikedByUser = true
+            draft.pages[pageIndex].replies[replyIndex] = { ...draft.pages[pageIndex].replies[replyIndex], reaction }
+
             return draft
           }
 
