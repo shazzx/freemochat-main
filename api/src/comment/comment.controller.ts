@@ -31,7 +31,6 @@ export class CommentController {
 
   @Get()
   async comments(@Req() req) {
-    console.log(req.query)
     return await this.commentService.getComments(req.query.postId, req.query.cursor, req.user.sub)
   }
 

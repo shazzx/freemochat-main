@@ -99,6 +99,7 @@ export class CommentService {
             },
             {
                 $addFields: {
+                    reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     repliesCount: {
                         $ifNull: [
@@ -114,6 +115,7 @@ export class CommentService {
                     content: 1,
                     post: 1,
                     user: 1,
+                    reaction: 1,
                     repliesCount: { $ifNull: ['$repliesCount.count', 0] },
                     audio: 1,
                     likesCount: 1,
@@ -199,6 +201,7 @@ export class CommentService {
 
             {
                 $addFields: {
+                    reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                 },
             },
@@ -208,6 +211,7 @@ export class CommentService {
                     content: 1,
                     post: 1,
                     user: 1,
+                    reaction: 1,
                     parentId: 1,
                     type: 1,
                     audio: 1,

@@ -14,30 +14,33 @@ class Media {
 }
 
 
-@Schema({timestamps: true})
+@Schema({ timestamps: true })
 export class Post {
     @Prop({ type: Types.ObjectId, refPath: 'type', required: true, index: true })
     targetId: ObjectId
 
-    @Prop({type: String})
+    @Prop({ type: String })
     username: String
 
-    @Prop({Type: Boolean})
+    @Prop({ type: Boolean })
     isUploaded: Boolean
 
     @Prop({ type: Types.ObjectId, ref: "User", required: true, index: true })
     user: ObjectId
 
-    @Prop({type: String, required: true})
+    @Prop({ type: Types.ObjectId })
+    sharedPost: ObjectId
+
+    @Prop({ type: String, required: true })
     type: String;
 
-    @Prop({type: String})
+    @Prop({ type: String })
     content: String;
-    
-    @Prop({type: String, default: "public"})
+
+    @Prop({ type: String, default: "public" })
     visibility: String;
-    
-    @Prop({type: Array<Media>})
+
+    @Prop({ type: Array<Media> })
     media: Media[]
 
     @Prop()

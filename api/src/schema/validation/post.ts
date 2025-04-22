@@ -9,6 +9,13 @@ export const CreatePost = z.object({
     visibility: z.string()
 })
 
+export const CreateSharedPost = z.object({
+    sharedPostId: ValidMongoId,
+    content: z.string().optional(),
+    type: z.string(),
+    visibility: z.string()
+})
+
 export const UpdatePost = z.object({
     postId: ValidMongoId,
     content: z.string(),
@@ -49,6 +56,7 @@ export const GetPostLikes = z.object({
 
 export const LikeCommentOrReply = z.object({
     targetId: ValidMongoId,
+    reaction: z.string().optional()
 })
 
 
@@ -102,6 +110,7 @@ export const PromotionActivation = z.object({
 
 
 export type CreatePostDTO = z.infer<typeof CreatePost>
+export type CreateSharedPostDTO = z.infer<typeof CreateSharedPost>
 export type UpdatePostDTO = z.infer<typeof UpdatePost>
 export type DeletePostDTO = z.infer<typeof DeletePost>
 export type GetPostDTO = z.infer<typeof GetPost>

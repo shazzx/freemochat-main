@@ -69,6 +69,35 @@ export class User {
 
     @Prop({ default: false })
     isActive: boolean
+
+    @Prop({ type: [Object], default: [] })
+    education: Array<{
+        institution: string;
+        degree: string;
+        fieldOfStudy: string;
+        startYear: number;
+        endYear: number | null;
+        description: string;
+    }>;
+
+    @Prop({ type: [Object], default: [] })
+    workExperience: Array<{
+        jobTitle: string;
+        company: string;
+        totalYears: number;
+        description: string;
+    }>;
+
+    @Prop({ type: Object, default: {} })
+    socialMedia: {
+        facebook: string;
+        instagram: string;
+        linkedin: string;
+        whatsapp: string;
+    };
+
+    @Prop({ type: String, default: null })
+    website: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

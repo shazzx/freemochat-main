@@ -40,7 +40,29 @@ export const UpdateUser = z.object({
     images: z.object({
         profile: z.string().optional(),
         cover: z.string().optional(),
-    }).optional()
+    }).optional(),
+    education: z.array(z.object({
+        institution: z.string(),
+        degree: z.string(),
+        fieldOfStudy: z.string(),
+        startYear: z.number(),
+        endYear: z.number().nullable(),
+        description: z.string(),
+    })).optional(),
+    workExperience: z.array(z.object({
+        jobTitle: z.string(),
+        company: z.string(),
+        totalYears: z.number(),
+        description: z.string(),
+    })).optional(),
+    socialMedia: z.object({
+        facebook: z.string().optional(),
+        instagram: z.string().optional(),
+        linkedin: z.string().optional(),
+        whatsapp: z.string().optional(),
+    }).optional(),
+    website: z.string().optional(),
+
 })
 
 

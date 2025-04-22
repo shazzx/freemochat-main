@@ -14,7 +14,7 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, DeletePost, DeletePostDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import Stripe from 'stripe';
@@ -93,7 +93,7 @@ export class PostsController {
     @Get()
     async getPosts(@Req() req: Request, @Res() response: Response) {
         const { sub } = req.user
-        const { type, cursor, targetId, isSelf } = req.query as {type: string, cursor: string, targetId: string, isSelf: string}
+        const { type, cursor, targetId, isSelf } = req.query as { type: string, cursor: string, targetId: string, isSelf: string }
         response.json(await this.postService.getPosts(cursor, sub, targetId, type, isSelf))
     }
 
@@ -123,7 +123,7 @@ export class PostsController {
 
         const { sub } = req.user
         let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId)
-        
+
         let uploadedPost = await this.postService.createPost(
             {
                 ...createPostDTO,
@@ -135,6 +135,22 @@ export class PostsController {
         if (files.length > 0) {
             this.eventEmiiter.emit("files.uploaded", { uploadPromise, postId: uploadedPost._id.toString(), targetId, type: createPostDTO.type })
         }
+
+        res.json(uploadedPost)
+    }
+
+    @Post("create/shared")
+    async createSharedPost(@Body(new ZodValidationPipe(CreateSharedPost)) sharedPostData: CreateSharedPostDTO, @Req() req: Request, @Res() res: Response) {
+        const { sub } = req.user
+        let targetId = new Types.ObjectId(sub)
+
+        let uploadedPost = await this.postService.createSharedPost(
+            {
+                ...sharedPostData,
+                sharedPost: new Types.ObjectId(sharedPostData.sharedPostId),
+                targetId,
+                user: new Types.ObjectId(sub)
+            })
 
         res.json(uploadedPost)
     }
@@ -284,9 +300,10 @@ export class PostsController {
     @Post("like")
     async like(@Body(new ZodValidationPipe(LikePost)) body: LikePostDTO, @Req() req: Request, @Res() res: Response) {
         const { postId, authorId, type, targetId, reaction } = body
-        console.log('author', authorId, targetId)
+        console.log('author', authorId, targetId, reaction)
         const { sub } = req.user as { sub: string, username: string }
-        res.json(await this.postService.toggleLike(sub, postId, "post", authorId, type, targetId, reaction))
+
+        res.json(await this.postService.toggleLike({ userId: sub, targetId: postId, type: "post", authorId, targetType: type, _targetId: targetId, reaction }))
     }
 
 
@@ -307,14 +324,16 @@ export class PostsController {
 
     @Post("likeComment")
     async likeComment(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
-        const { targetId } = body
-        res.json(await this.postService.toggleLike(req.user.sub, targetId, "comment"))
+        const { targetId, reaction } = body
+        console.log('comment reaction', reaction)
+        res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "comment", reaction }))
     }
 
     @Post("likeReply")
     async likeReply(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
-        const { targetId } = body
-        res.json(await this.postService.toggleLike(req.user.sub, targetId, "reply"))
+        const { targetId, reaction } = body
+        console.log('reply reaction', reaction)
+        res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "reply", reaction }))
     }
 
     @Post("bookmark")
