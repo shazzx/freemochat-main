@@ -63,6 +63,13 @@ export const UpdateUser = z.object({
     }).optional(),
     website: z.string().optional(),
 
+    dateOfBirth: z.string()
+        .refine(value => !value || !isNaN(Date.parse(value)), {
+            message: 'Invalid date format'
+        })
+        .optional(),
+
+    maritalStatus: z.enum(['single', 'married']).nullable().optional(),
 })
 
 

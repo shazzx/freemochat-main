@@ -98,6 +98,12 @@ export class User {
 
     @Prop({ type: String, default: null })
     website: string;
+
+    @Prop({ nullable: true, type: Date })
+    dateOfBirth: Date;
+
+    @Prop({ enum: ['single', 'married'], nullable: true })
+    maritalStatus: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

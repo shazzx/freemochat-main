@@ -430,6 +430,8 @@ export class UserService {
                     education: 1,
                     workExperience: 1,
                     website: 1,
+                    dateOfBirth: 1,
+                    maritalStatus: 1,
                     followersCount: { $ifNull: ['$followersCount.count', 0] },
                     friendsCount: { $ifNull: ['$friendsCount.count', 0] },
                     bio: 1,

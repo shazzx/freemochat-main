@@ -56,6 +56,7 @@ export const GetPostLikes = z.object({
 
 export const LikeCommentOrReply = z.object({
     targetId: ValidMongoId,
+    authorId: ValidMongoId,
     reaction: z.string().optional()
 })
 

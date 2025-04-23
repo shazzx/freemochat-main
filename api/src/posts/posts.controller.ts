@@ -324,16 +324,16 @@ export class PostsController {
 
     @Post("likeComment")
     async likeComment(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
-        const { targetId, reaction } = body
-        console.log('comment reaction', reaction)
-        res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "comment", reaction }))
+        const { targetId, reaction, authorId } = body
+        console.log('comment reaction', reaction, req.user.sub)
+        res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "comment", reaction, targetType: 'user', authorId }))
     }
 
     @Post("likeReply")
     async likeReply(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
-        const { targetId, reaction } = body
-        console.log('reply reaction', reaction)
-        res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "reply", reaction }))
+        const { targetId, reaction, authorId } = body
+        console.log('reply reaction', reaction, req.user.sub)
+        res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "reply", reaction, targetType: 'user', authorId }))
     }
 
     @Post("bookmark")

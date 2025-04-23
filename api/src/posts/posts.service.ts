@@ -41,7 +41,7 @@ export class PostsService {
 
     async getPosts(cursor: string | null, userId: string, targetId: string, type: string, self: string) {
         let model = type + 's'
-        const limit = 5
+        const limit = 24
 
         // let visibility = self == 'true' ? {} : {}
         let visibility = {
