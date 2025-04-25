@@ -33,3 +33,4 @@ export class Page {
 }
 
 export const PageSchema = SchemaFactory.createForClass(Page)
+PageSchema.index({ handle: 1 });

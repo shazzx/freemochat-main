@@ -10,22 +10,23 @@ export class SearchController {
 
     constructor(private searchService: SearchService) { }
 
+
     @Get()
-    async search(@Query(new ZodValidationPipe(Search)) searchDTO: SearchDTO, @Req() req: Request, @Res() response: Response) {
-        let { type, query } = searchDTO
-        const { sub } = req.user
-        console.log(type, query, 'search request')        
-        const results = await this.searchService.search({ type, query }, sub)
-        response.json(results)
+    async search(
+        @Query('query') query: string,
+        @Query('type') type?: 'all' | 'users' | 'groups' | 'pages' | 'posts',
+        @Query('limit') limit = 5,
+        @Query('skip') skip = 0,
+    ) {
+        return this.searchService.search(query, type, limit, skip);
     }
 
+    // @Get('suggestions')
+    // async suggestions(@Query() searchDTO: SearchDTO, @Req() req: Request, @Res() response: Response) {
+    //     let { query } = searchDTO
 
-    @Get('suggestions')
-    async suggestions(@Query() searchDTO: SearchDTO, @Req() req: Request, @Res() response: Response) {
-        let { query } = searchDTO
-        
-        const results = await this.searchService.searchSuggestions( query )
-        console.log(results)
-        response.json(results)
-    }
+    //     const results = await this.searchService.searchSuggestions(query)
+    //     console.log(results)
+    //     response.json(results)
+    // }
 }

@@ -58,7 +58,10 @@ export class UploadService {
         if (contentType == 'image') {
             // processedContent = await this.optimizeImage(file);
             // console.log(processedContent, "processedContent")
-            moderationResult = await this.moderateImage(file);
+            const resizedImageForRekognition = await this.resizeImageForRekognition(file);
+            // Moderate using the resized version
+            moderationResult = await this.moderateImage(resizedImageForRekognition);
+
             // const uploadResult = await this.uploadToS3(file, fileName, contentType);
             // return {url: uploadResult, fileName, fileType: contentType};
             // console.log(moderationResult, "moderationresults")
@@ -92,6 +95,57 @@ export class UploadService {
             return { url: uploadResult, fileName, fileType: contentType, originalname };
         } else {
             throw new Error('Content violates moderation policies');
+        }
+    }
+
+    async resizeImageForRekognition(imageBuffer: Buffer): Promise<Buffer> {
+        const sharp = require('sharp');
+
+        try {
+            // Get image metadata first to make informed decisions
+            const metadata = await sharp(imageBuffer).metadata();
+            console.log(`Original image: ${metadata.width}x${metadata.height}, ${imageBuffer.length / (1024 * 1024)} MB`);
+
+            // Start with aggressive downsizing for very large images
+            const maxDimension = Math.max(metadata.width || 0, metadata.height || 0);
+            let targetWidth, targetHeight, quality;
+
+            if (maxDimension > 4000) {
+                // Very large image
+                targetWidth = 600;
+                quality = 30;
+            } else if (maxDimension > 2000) {
+                // Large image
+                targetWidth = 800;
+                quality = 40;
+            } else {
+                // Moderate sized image
+                targetWidth = 1000;
+                quality = 50;
+            }
+
+            // Process in a memory-efficient way
+            let resizedBuffer = await sharp(imageBuffer, { limitInputPixels: 100000000 })
+                .resize({ width: targetWidth, withoutEnlargement: true })
+                .jpeg({ quality: quality })
+                .toBuffer();
+
+            console.log(`Resized to: ${resizedBuffer.length / (1024 * 1024)} MB`);
+
+            // If still too big, try more extreme measures
+            if (resizedBuffer.length > 4.5 * 1024 * 1024) {
+                resizedBuffer = await sharp(resizedBuffer)
+                    .resize({ width: 500 })
+                    .jpeg({ quality: 20 })
+                    .toBuffer();
+                console.log(`Further resized to: ${resizedBuffer.length / (1024 * 1024)} MB`);
+            }
+
+            return resizedBuffer;
+
+        } catch (error) {
+            console.error('Error during image resizing:', error);
+            throw new Error(`Failed to resize image: ${error.message}`);
         }
     }
 

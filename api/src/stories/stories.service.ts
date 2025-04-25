@@ -108,7 +108,6 @@ export class StoriesService {
         return story
     }
 
-
     // async updateStory(username: string, storyDetails: any) {
     //     let user: any = await this.userService.getUser(username)
     //     let storyIndex = user.stories.findIndex(story => story.id === storyDetails.id)
