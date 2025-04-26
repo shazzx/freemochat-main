@@ -12,17 +12,14 @@ export class CacheService {
     const key = `otp:${phoneNumber}:${this.getCurrentDate()}`;
     const count = await this.redis.get(key);
 
-    console.log(count, 'otp count', key)
     return count !== null && parseInt(count, 10) >= (this.MAX_OTP_PER_DAY  || 2);
   }
   
   async incrementOtpCount(phoneNumber: string): Promise<void> {
     const key = `otp:${phoneNumber}:${this.getCurrentDate()}`;
     const ttl = await this.redis.ttl(key);
-    console.log(ttl, key)
     
     const increment = await this.redis.incr(key);
-    console.log(increment, 'incremented')
     
     if (ttl < 0) {
       const now = new Date();
@@ -54,7 +51,6 @@ export class CacheService {
     await this.redis.set(`refresh-token:${userId}`, token); 
     return true
     } catch (error) {
-      console.log(error)
       return false
     }
   }
@@ -73,7 +69,6 @@ export class CacheService {
     try {
     return await this.redis.get(`push-tokens:${userId}`); 
     } catch (error) {
-      console.log(error)
       return false
     }
   }
@@ -82,30 +77,24 @@ export class CacheService {
     try {
     return await this.redis.get(`refresh-token:${userId}`); 
     } catch (error) {
-      console.log(error)
       return error 
     }
   }
 
   async setForgetPassword(userId: string, authId: string): Promise<boolean> {
-    console.log(userId)
     try {
     let token = await this.redis.set(`authId:${userId}`, authId, 'EX', 600); 
-    console.log(token)
     return true
     } catch (error) {
-      console.log(error)
       return false
     }
   }
 
 
   async getForgetPassword(userId: string): Promise<string> {
-    console.log(userId)
     try {
     return await this.redis.get(`authId:${userId}`); 
     } catch (error) {
-      console.log(error)
       return error 
     }
   }
@@ -115,7 +104,6 @@ export class CacheService {
     await this.redis.del(`authId:${userId}`);
     return true
     } catch (error) {
-      console.log(error)
       return false
     }
   }
@@ -126,7 +114,6 @@ export class CacheService {
     await this.redis.del(`refresh-token:${userId}`);
     return true
     } catch (error) {
-      console.log(error)
       return false
     }
   }
@@ -168,7 +155,6 @@ export class CacheService {
 
 
   async getOnlineFriends(friends: any): Promise<any> {
-    console.log(friends, 'gettings online friends...')
     if(friends.length == 0){
       return []
     }

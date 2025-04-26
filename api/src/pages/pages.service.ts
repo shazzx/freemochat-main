@@ -18,7 +18,6 @@ export class PageService {
     ) { }
 
     async getPage(handle, userId) {
-        console.log(handle)
         const page = await this.pageModal.aggregate([
             { $match: { handle } },
             {
@@ -99,7 +98,6 @@ export class PageService {
             type: "page"
         };
 
-        console.log(pageDetails)
         const page = await this.pageModal.findById(pageDetails.pageId)
         if(!page){
             throw new  BadRequestException()
@@ -137,13 +135,11 @@ export class PageService {
     }
 
     async createPage(userDetails, pageDetails: any) {
-        console.log(pageDetails)
         let page = await this.pageModal.create({ admins: [userDetails.sub], user: userDetails.sub, ...pageDetails })
         return page
     }
 
     async updatePage(pageId: string, updatedDetails) {
-        console.log("page being updated...")
         let _updatedDetails = await this.pageModal.findByIdAndUpdate(pageId, { $set: updatedDetails }, { new: true })
         return _updatedDetails
     }

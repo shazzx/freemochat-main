@@ -14,7 +14,6 @@ export class GroupsService {
     ) { }
 
     async getGroup(handle, userId) {
-        console.log(handle, 'handle', userId, 'userid')
         const group = await this.groupModal.aggregate([
             { $match: { handle } },
             {
@@ -99,7 +98,6 @@ export class GroupsService {
         }
         const isSuperAdmin = group[0].user.toString() === userId;
         const isAdmin = group[0].admins.some(adminId => adminId.toString() === userId);
-        console.log(group[0], isSuperAdmin, isAdmin)
 
         let groupData = { ...group[0], isAdmin, isSuperAdmin }
         return groupData
@@ -124,7 +122,6 @@ export class GroupsService {
     }
 
     async toggleJoin(userId, groupDetails) {
-        console.log('grou service join method')
         const filter = {
             member: new Types.ObjectId(userId),
             groupId: new Types.ObjectId(groupDetails.groupId),
@@ -134,7 +131,6 @@ export class GroupsService {
 
         if (deleteResult.deletedCount === 0) {
             await this.memberModel.create(filter);
-            console.log(filter.groupId)
             await this.metricsAggregatorService.incrementCount(filter.groupId, "members", "group")
             return true;
         }
@@ -150,9 +146,7 @@ export class GroupsService {
 
 
     async updateGroup(groupId: string, updatedDetails) {
-        console.log(updatedDetails)
         let _updatedDetails = await this.groupModal.findByIdAndUpdate(groupId, { $set: updatedDetails }, { new: true })
-        console.log(_updatedDetails)
         return _updatedDetails
     }
 

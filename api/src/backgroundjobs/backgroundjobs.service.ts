@@ -12,7 +12,5 @@ export class BackgroundjobsService {
     async removeOldStories() {
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const stories = await this.storyModel.deleteMany({ createdAt: { $lt: twentyFourHoursAgo } });
-      console.log(stories)
-
     }
 }

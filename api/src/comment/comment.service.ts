@@ -238,13 +238,11 @@ export class CommentService {
         if (file) {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
-            console.log(fileType)
             try {
 
                 let fileUrl = await this.uploadService.uploadToS3(file.buffer, filename, fileType)
 
                 commentDetails = { ...commentDetails, audio: { src: fileUrl, duration: commentDetails.duration } }
-                console.log(fileUrl)
             } catch (error) {
                 console.log(error)
             }
@@ -281,17 +279,14 @@ export class CommentService {
     }
 
     async replyOnComment(replyDetails, postId: string, commentId: string, userId: string, file) {
-        console.log(replyDetails, postId, commentId, userId)
         if (file) {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
-            console.log(fileType)
             try {
 
                 let fileUrl = await this.uploadService.uploadToS3(file.buffer, filename, fileType)
 
                 replyDetails = { ...replyDetails, content: null, audio: { src: fileUrl, duration: replyDetails.duration } }
-                console.log(fileUrl)
             } catch (error) {
                 console.log(error)
             }

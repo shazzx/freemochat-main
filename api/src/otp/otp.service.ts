@@ -14,7 +14,6 @@ export class OtpService {
 
   async verifyOtp(userId: string, otp: string, type: string): Promise<boolean> {
     const storedOtp = await this.redis.get(`otp:${type}:${userId}`);
-    console.log(storedOtp)
     if (storedOtp === otp) {
       await this.redis.del(`otp:${type}:${userId}`);
       return true;

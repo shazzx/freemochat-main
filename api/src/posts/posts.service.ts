@@ -713,7 +713,6 @@ export class PostsService {
                 },
             },
         ]);
-        console.log(posts)
 
         const hasNextPage = posts.length > limit;
         const _posts = hasNextPage ? posts.slice(0, -1) : posts;
@@ -727,7 +726,6 @@ export class PostsService {
     }
 
     async getPostLikes(cursor, postId) {
-        console.log(postId, 'post id')
         const limit = 12
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
         let query = { ..._cursor, targetId: new Types.ObjectId(postId) }
@@ -1431,7 +1429,6 @@ export class PostsService {
 
 
     async feed(userId, cursor) {
-        console.log(userId, cursor)
         const limit = 12
 
         let visibility = {
@@ -2194,9 +2191,6 @@ export class PostsService {
             },
         ]);
 
-        console.log(posts)
-
-
         // if (posts.length == 0) {
         //     const posts = await this.viewPostsModel.aggregate([
         //         {
@@ -2386,7 +2380,6 @@ export class PostsService {
     }
 
     async viewPost({ userId, postId, type }: SViewPost) {
-        console.log(type)
         const post = await this.postModel.findById(postId)
         if (!post) {
             throw new BadRequestException()
@@ -2417,9 +2410,7 @@ export class PostsService {
         )
 
         const _promotedPost = await this.promotionModel.findOne({ postId: new Types.ObjectId(postId), active: 1 })
-        console.log((Number(_promotedPost.reach) + 1), Number(_promotedPost.reachTarget))
         if ((Number(_promotedPost.reach) + 1) >= Number(_promotedPost.reachTarget) && _promotedPost.reachStatus !== ReachStatus.COMPLETED) {
-            console.log('completed')
             _promotedPost.reachStatus = ReachStatus.COMPLETED
             _promotedPost.active = 0
             _promotedPost.reach = Number(_promotedPost.reach) + 1

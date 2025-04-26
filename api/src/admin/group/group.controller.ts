@@ -18,7 +18,6 @@ export class GroupController {
   @Get("groups")
   async getPages(@Req() req: Request, @Res() response: Response) {
     const { cursor, search } = req.query as {cursor: string, search: string}
-    console.log('groups')
     response.json(await this.groupService.getGroups(cursor, search))
   }
 
@@ -50,7 +49,6 @@ export class GroupController {
             let imageUrlSplit = images[i].split("/")
             let filename = imageUrlSplit[imageUrlSplit.length - 1]
             let deleted = await this.uploadService.deleteFromS3(filename)
-            console.log(deleted)
         }
     }
     res.json(await this.userGroupService.deleteGroup(groupId))

@@ -28,7 +28,6 @@ export class UserService {
             } catch (error) {
                 console.log(error)
             }
-            console.log(search, query)
 
             const users = await this.userModel.aggregate([
                 { $match: query },

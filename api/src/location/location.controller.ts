@@ -11,7 +11,6 @@ export class LocationController {
   @Get('cities')
   async getCities(@Query() query, @Res() res: Response) {
     const { country } = query
-    console.log(country, 'country', query)
     res.json(await this.locationService.getCities(country))
   }
 

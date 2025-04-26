@@ -10,7 +10,6 @@ export class FriendService {
     constructor(@InjectModel(Friend.name) private readonly friendsModel: Model<Friend>, private readonly cacheService: CacheService) { }
 
     async getFriends(userId: string, objectId?: boolean): Promise<any> {
-        console.log(userId)
         const friends = await this.friendsModel.find({ user: new Types.ObjectId(userId) })
         if (objectId) {
             return friends.map(f => f.friend)
@@ -21,7 +20,6 @@ export class FriendService {
 
     async areFriends(userId: string, friendId: string): Promise<any> {
         const friends = await this.friendsModel.find({ user: new Types.ObjectId(userId), friend: new Types.ObjectId(userId) })
-        console.log(friends)
 
         if (friends) {
             return true

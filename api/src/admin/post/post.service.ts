@@ -38,7 +38,6 @@ export class PostService {
       } catch (error) {
         console.log(error)
       }
-      console.log(query, search)
 
       const posts = await this.postModel.aggregate([
         { $match: query },
@@ -113,12 +112,10 @@ export class PostService {
   async deletePost(postDetails: { postId: string, media: { url: string } }) {
     if (postDetails.media) {
       const { media } = postDetails
-      console.log(media)
       for (let image in media) {
         let imageUrlSplit = media[image].url.split("/")
         let filename = imageUrlSplit[imageUrlSplit.length - 1]
         let deleted = await this.uploadService.deleteFromS3(filename)
-        console.log(deleted)
       }
     }
 

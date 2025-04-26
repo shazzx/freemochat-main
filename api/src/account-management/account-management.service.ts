@@ -15,8 +15,6 @@ export class AccountManagementService {
 
 
     async toggleSuspendUser(userId: string, reason: string): Promise<{ userId: string, suspended: boolean, message: string }> {
-        console.log(userId, reason)
-
         const deleteResult = await this.suspensionModel.deleteOne({ userId: new Types.ObjectId(userId) });
 
         if (deleteResult.deletedCount === 0) {

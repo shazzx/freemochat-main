@@ -22,7 +22,6 @@ export class ChatlistController {
     async removeChatList(@Req() req: Request, @Res() response: Response) {
         const { sub } = req.user as { username: string, sub: string }
         const { recepientId, lastMessageId } = req.body
-        console.log(lastMessageId, 'lastmessageid')
         response.json(await this.chatlistService.removeChat(sub, recepientId, lastMessageId))
     }
 }

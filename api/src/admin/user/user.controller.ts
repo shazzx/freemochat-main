@@ -19,7 +19,6 @@ export class UserController {
   @Get("users")
   async getUsers(@Req() req: Request, @Res() response: Response) {
     const { cursor, search } = req.query as { cursor: string, search: string }
-    console.log(req.query)
     const users = await this.adminUserService.getUsers(cursor, search)
     response.json(users)
   }
@@ -28,7 +27,6 @@ export class UserController {
   @Post("user/remove")
   async removeUser(@Req() req: Request, @Res() response: Response) {
     const { userId } = req.body
-    console.log(userId)
     response.json(await this.userService.deleteUser(userId))
   }
 

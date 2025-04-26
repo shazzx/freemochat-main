@@ -30,7 +30,6 @@ export class UserChatListService {
                 unreadCount: 0
             }
         );
-        console.log('decrementing', userId)
         await this.metricsAggregatorService.decrementCount(new Types.ObjectId(userId), 'unreadChatlist', 'user')
         return true
     }
@@ -44,7 +43,6 @@ export class UserChatListService {
         removeUser?: boolean,
         removeChat?: boolean,
     ): Promise<any> {
-        console.log(userId, recepientId, type, lastMessage, 'inside chatlist')
 
         // if (type == 'ChatGroup') {
         //     const userChat = await this.userChatListModel.findOne({
@@ -168,7 +166,6 @@ export class UserChatListService {
                 },
             }
         );
-        console.log(updated)
         return true
     }
 
@@ -184,8 +181,6 @@ export class UserChatListService {
 
     async removeChat(userId: string, recepientId: string, lastDeletedId: string) {
         let removedChat = await this.userChatListModel.findOneAndDelete({ user: userId, recepient: recepientId });
-
-        console.log('removechat')
 
         const result = await this.messageSoftDelete.findOneAndUpdate(
             {
@@ -205,7 +200,6 @@ export class UserChatListService {
                 runValidators: true // This ensures that any schema validators are run on insert
             }
         );
-        console.log(result)
         return removedChat
     }
 
@@ -216,7 +210,6 @@ export class UserChatListService {
             { removedAt: Date.now() },
             { new: true }
         );
-        console.log(removedUser)
         return removedUser
     }
 

@@ -183,9 +183,7 @@ export class CGroupsService {
 
 
     async updateGroup(groupId: string, updatedDetails) {
-        console.log(updatedDetails)
         let _updatedDetails = await this.chatGroupModel.findByIdAndUpdate(groupId, { $set: updatedDetails }, { new: true })
-        console.log(_updatedDetails)
         return _updatedDetails
     }
 

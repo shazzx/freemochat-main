@@ -17,10 +17,8 @@ export class JwtAuthGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
         const token = this.extractTokenFromHeader(request);
-        console.log('yes true admin route admin')
 
         if (!token) {
-            console.log('not token - unauthorized')
             throw new UnauthorizedException();
         }
         try {
@@ -30,11 +28,9 @@ export class JwtAuthGuard implements CanActivate {
                     secret: jwtConstants.secret
                 }
             );
-            console.log(payload, 'auth guard')
 
             request['admin'] = payload;
         } catch (error) {
-            console.log(error)
             throw new UnauthorizedException();
         }
         return true;

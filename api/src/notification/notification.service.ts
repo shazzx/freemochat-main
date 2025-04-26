@@ -24,10 +24,8 @@ export class NotificationService {
   }
 
   async createNotification(data: { from: Types.ObjectId, user: Types.ObjectId, targetId: Types.ObjectId, type: string, targetType?: string, value: string, handle?: string }) {
-    console.log(data)
     const notifications = await this.notificationModel.findOne({ user: data.user, type: data.type, from: data.from, targetId: data.targetId, targetType: data.targetType, handle: data?.handle })
     if (notifications) {
-      console.log('notfcaton exsts')
       return null
     }
     const notification = await this.notificationModel.create(data);
@@ -111,7 +109,6 @@ export class NotificationService {
     const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
     const query = { ..._cursor, user: new Types.ObjectId(userId) };
 
-    console.log(query, 'notifications query')
     const notifications = await this.notificationModel.aggregate([
       { $match: query },
       { $sort: { createdAt: -1 } },
@@ -142,8 +139,6 @@ export class NotificationService {
         },
       },
     ]);
-
-    console.log(notifications)
 
     const hasNextPage = notifications.length > limit;
     const _notifications = hasNextPage ? notifications.slice(0, -1) : notifications;

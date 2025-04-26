@@ -11,7 +11,6 @@ export class AuthService {
     async validateUser(username: string, password: string): Promise<any> {
         let user: any = await this.adminService.getAdmin(username)
         if (!user) {
-            console.log('unauthorized')
             throw new UnauthorizedException()
         }
 
@@ -39,7 +38,6 @@ export class AuthService {
             const access_token = this.jwtService.sign({ username: payload.username, sub: payload.sub }, { secret: jwtConstants.secret, expiresIn: '1h' })
             return access_token
         } catch (error) {
-            console.log(error)
             return false
         }
     }

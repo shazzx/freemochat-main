@@ -46,7 +46,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.targetId))
     let _user = JSON.parse(await this.cacheService.getOnlineUser(payload.senderDetails.targetId))
-    console.log(recepient, _user, 'this is user and rec')
 
     this.logger.log(`Message received: ${payload.senderDetails.targetId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.targetId + " - " + payload.recepientDetails.username + " - " + payload.body}`);
 
@@ -61,7 +60,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const chatlist = await this.chatlistService.createOrUpdateChatList(payload.senderDetails.targetId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body, messageId: message._id }, "Text")
 
       const userPushToken = await this.cacheService.getUserPushToken(payload.recepientDetails.targetId)
-      console.log(userPushToken, 'userpushtoken', payload.recepientDetails.targetId)
 
       const pushMessage = {
         // to: 'ExponentPushToken[g3lNZoCh-cv0PbpHf-bgNt]',
@@ -73,7 +71,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       };
 
       if (!recepient && userPushToken) {
-        console.log('socket id does not exists in redis db')
         await this.sendPushNotification(pushMessage)
         this.server.emit('chatlist', { users: chatlist })
         this.server.to(_user?.socketId).emit('chat', { ...payload, _id: message._id });
@@ -81,10 +78,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return
       }
 
-      console.log('socket id exists in redis db')
 
       if (!this.server.sockets.sockets.has(recepient?.socketId) && userPushToken) {
-        console.log('socket id does not exists in server connection')
         await this.sendPushNotification(pushMessage)
         this.server.emit('chatlist', { users: chatlist })
         this.server.to(_user?.socketId).emit('chat', { ...payload, _id: message._id });
@@ -107,7 +102,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientId))
 
     try {
-      console.log(payload, 'message deliverability payload')
       const chatlist = await this.chatlistService.updateMessageDeliverability(payload.recepientId, payload.senderId, new Types.ObjectId(payload.messageId))
 
       this.server.to(recepient?.socketId).emit('message-deliverability', { lastSeenMessageId: payload.messageId });
@@ -119,7 +113,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async sendPushNotification(message) {
-    console.log('sending push notification')
     await fetch('https://exp.host/--/api/v2/push/send', {
       method: 'POST',
       headers: {
@@ -162,18 +155,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const message = await this.messageService.createMessage({ type: payload.recepientDetails.type, sender: new Types.ObjectId(payload.senderDetails.targetId), recepient: new Types.ObjectId(payload.recepientDetails.targetId), content: payload.body, gateway: true, messageType: payload.messageType, })
-      console.log(members, 'members')
       members.forEach(async (memberId) => {
         await this.chatlistService.createOrUpdateChatList(memberId, payload.recepientDetails.targetId, payload.recepientDetails.type, { sender: payload.senderDetails.targetId, encryptedContent: payload.body, messageId: message._id }, "Text")
       })
 
-      console.log('sending to : ', payload.recepientDetails.targetId)
       this.server.to(payload.recepientDetails.targetId).emit('groupchat', { ...payload, _id: message._id });
       this.server.emit('chatlist', {})
       return payload;
     } catch (error) {
       const user = await this.cacheService.getOnlineUser(payload.senderDetails.targetId)
-      console.log(user)
       this.server.to(user?.socketId).emit("group-error", { message: "You are no longer part of the group" })
       this.logger.error(error)
     }
@@ -190,18 +180,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage("toggleJoin")
   async handleJoinGroup(client: Socket, payload: { userId: string, groupId: string, memberUsername: string, adminUsername: string, type?: string }) {
-    console.log(payload)
 
     if (payload?.type && payload?.type == 'leave') {
       const result = await this.memberService.toggleJoin(payload.userId, { groupId: payload.groupId, type: "chatgroup" }, payload.memberUsername, payload.adminUsername, payload.type)
-      console.log(result, 'inside type')
       return
     }
 
     const result = await this.memberService.toggleJoin(payload.userId, { groupId: payload.groupId, type: "chatgroup" }, payload.memberUsername, payload.adminUsername)
-    console.log(result, payload, 'togglejoin')
     const user = await this.cacheService.getOnlineUser(payload.userId)
-    console.log(user, 'toggle joing member')
     this.server.to(payload.groupId).emit("toggleJoin", { groupId: payload.groupId })
     this.server.to(user?.socketId).emit("toggleJoin", { groupId: payload.groupId })
   }
@@ -229,7 +215,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // calling logic
   @SubscribeMessage("initiate-call")
   async handleCallInitiation(@MessageBody() payload) {
-    console.log(payload)
     if (payload.recepientDetails && !payload.recepientDetails.userId) {
       throw new BadRequestException('recepient id required')
     }
@@ -252,7 +237,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } else {
 
       const userPushToken = await this.cacheService.getUserPushToken(_recepient?._id.toString())
-      console.log(userPushToken, 'userpushtoken', payload.recepientDetails.targetId)
 
       const pushMessage = {
         to: userPushToken,
@@ -262,13 +246,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       };
 
       if (!recepient && userPushToken) {
-        console.log('socket id does not exists in redis db')
         await this.sendPushNotification(pushMessage)
         return
       }
 
       if (!this.server.sockets.sockets.has(recepient?.socketId) && userPushToken) {
-        console.log('socket id does not exists in server connection')
         await this.sendPushNotification(pushMessage)
         return
       }
@@ -332,7 +314,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     )
 
-    console.log(notification)
     this.server.to(recepient?.socketId).emit('notification', { acceptedBy: user })
   }
 
@@ -345,9 +326,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async uploadSuccess(data) {
     let user = JSON.parse(await this.cacheService.getOnlineUser(data?.target?.targetId))
-    console.log(user, 'online user')
     this.server.to(user?.socketId).emit('upload-status', data)
-    console.log('listener called')
     // this.server.to(recepientId).emit('notification', event)
   }
 
@@ -368,7 +347,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const chatlist = await this.chatlistService.getChatLists(user[0]._id.toString())
       const groups = await this.memberService.getGroupIds(userId)
       groups.forEach((group) => {
-        console.log('joining', group)
         socket.join(group)
       })
 
@@ -408,7 +386,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private async notifyFriendsOfOnlineStatus(userId: string, isOnline: boolean) {
     const friends = await this.friendService.getFriends(userId);
     try {
-      console.log(friends, 'friends')
       for (const friendId of friends) {
         let userData = await this.cacheService.getOnlineUser(friendId)
         if (userData) {

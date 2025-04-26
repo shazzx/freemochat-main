@@ -13,7 +13,6 @@ export class MemberController {
   @Get()
   async getMembers(@Query(new ZodValidationPipe(GetMembers)) getMembersDTO: GetMembersDTO, @Req() req: Request, @Res() res: Response) {
     const { cursor, groupId } = getMembersDTO
-    console.log(cursor, groupId)
     
     res.json(
       await this.memberService.getMembers(cursor, groupId)

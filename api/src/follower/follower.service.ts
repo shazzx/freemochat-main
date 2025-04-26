@@ -14,8 +14,6 @@ export class FollowerService {
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
         let query = { ..._cursor, targetId: new Types.ObjectId(targetId), type }
 
-        console.log(query, 'follow query')
-
         const followers = await this.followerModel.aggregate([
             { $match: query },
             { $sort: { createdAt: -1 } },

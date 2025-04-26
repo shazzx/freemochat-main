@@ -45,7 +45,6 @@ export class GroupsController {
     @Get("handleExists")
     async handleExists(@Query(new ZodValidationPipe(GroupExists)) query: GroupExistsDTO, @Req() req: Request, @Res() res: Response) {
         const { handle } = query
-        console.log(handle)
         res.json(await this.groupsService.handleExists(handle))
     }
 
@@ -54,7 +53,6 @@ export class GroupsController {
     @Post("create")
     async createGroup(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
     @Body(new ZodValidationPipe(CreateGroup, true, "groupData")) body: CreateGroupDTO) {
-        console.log("files :", files, body)
         let { groupDetails } = body
 
         const uploadPromise = files.map((file) => {
@@ -113,7 +111,6 @@ export class GroupsController {
                     let imageUrlSplit = images[image].split("/")
                     let filename = imageUrlSplit[imageUrlSplit.length - 1]
                     let deleted = await this.uploadService.deleteFromS3(filename)
-                    console.log(deleted)
                 } else {
                     throw new BadRequestException()
                 }

@@ -20,9 +20,7 @@ export class AdminController {
             
         const { username, password } = req.body
         const user = await this.authService.validateUser(username, password)
-        console.log(user)
         const payload = await this.authService.login(user)
-        console.log(payload)
 
         response.cookie("admin-rf-token", payload.refresh_token, {
             httpOnly: true,
@@ -40,17 +38,12 @@ export class AdminController {
     @IsAdminRoute()
     @Post("refresh-token")
     async refreshToken(@Req() @Req() req: Request, @Res() response: Response) {
-        console.log('i got the request')
         const refreshToken = req.cookies['admin-rf-token']
         if (!refreshToken) {
             return new BadRequestException("something went wrong")
         }
 
-        console.log('refreshtoken request')
-
-        console.log(refreshToken, 'refresh')
         const accessToken = await this.authService.refreshToken(refreshToken)
-        console.log('after refresh token')
         return response.json({ accessToken })
     }
 
@@ -59,7 +52,6 @@ export class AdminController {
     @Get()
     async admin(@Req() req: Request, @Res() response: Response) {
         const {admin} = req as any
-        console.log(admin)
         response.json(await this.adminService.getAdmin("freedombook@admin"))
     }
 
@@ -75,7 +67,6 @@ export class AdminController {
     @UseGuards(JwtAuthGuard)
     @Get("reports")
     async reports(@Req() req: Request, @Res() response: Response) {
-        console.log('reports')
         const { cursor, search } = req.query as { cursor: string, search: string }
         response.json(await this.adminService.getReports(cursor, search))
     }
@@ -90,7 +81,6 @@ export class AdminController {
         @Body("adminData") adminData: string,
         resposne: Response) {
         const _adminData = adminData ? JSON.parse(adminData) : {}
-        console.log(_adminData, file)
         const { admin }: any = req
         const { sub } = admin
         let user = await this.adminService.updateAdmin(sub, _adminData, file)

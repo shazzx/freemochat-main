@@ -15,7 +15,6 @@ export class CommentController {
     @Res() response: Response) {
     const { commentDetails, postId } = JSON.parse(_commentDetails)
     const { sub } = req.user as { sub: string, username: string }
-    console.log(commentDetails, 'commentDetails', postId, sub, file)
     response.json(await this.commentService.commentOnPost(commentDetails, postId, sub, file))
   }
 
@@ -36,7 +35,6 @@ export class CommentController {
 
   @Get("comment/replies")
   async replies(@Req() req) {
-    console.log(req.query, 'query')
     return await this.commentService.getReplies(req.query.commentId, req.query.cursor, req.user.sub)
   }
 

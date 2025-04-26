@@ -254,7 +254,6 @@ export class PostsController {
     @Post("delete")
     async deletePost(@Body(new ZodValidationPipe(DeletePost)) deletePostDTO: DeletePostDTO, @Req() req, @Res() res: Response) {
         const { postDetails } = deletePostDTO
-        console.log(postDetails.media)
 
         const { sub } = req.user
 
@@ -268,7 +267,6 @@ export class PostsController {
             for (let image in media) {
                 if (typeof media[image].url == 'string') {
                     let imageUrlSplit = media[image].url.split("/")
-                    console.log(`deleting ${imageUrlSplit} from s3...`)
                     let filename = imageUrlSplit[imageUrlSplit.length - 1]
                     await this.uploadService.deleteFromS3(filename)
                 }
@@ -300,7 +298,6 @@ export class PostsController {
     @Post("like")
     async like(@Body(new ZodValidationPipe(LikePost)) body: LikePostDTO, @Req() req: Request, @Res() res: Response) {
         const { postId, authorId, type, targetId, reaction } = body
-        console.log('author', authorId, targetId, reaction)
         const { sub } = req.user as { sub: string, username: string }
 
         res.json(await this.postService.toggleLike({ userId: sub, targetId: postId, type: "post", authorId, targetType: type, _targetId: targetId, reaction }))
@@ -310,7 +307,6 @@ export class PostsController {
     @Get("likes")
     async getPostLikes(@Query(new ZodValidationPipe(GetPostLikes)) query: GetPostLikestDTO, @Req() req: Request, @Res() res: Response) {
         const { postId, cursor } = query
-        console.log(postId, cursor)
         res.json(await this.postService.getPostLikes(cursor, postId))
     }
 
@@ -325,14 +321,12 @@ export class PostsController {
     @Post("likeComment")
     async likeComment(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
         const { targetId, reaction, authorId } = body
-        console.log('comment reaction', reaction, req.user.sub)
         res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "comment", reaction, targetType: 'user', authorId }))
     }
 
     @Post("likeReply")
     async likeReply(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
         const { targetId, reaction, authorId } = body
-        console.log('reply reaction', reaction, req.user.sub)
         res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "reply", reaction, targetType: 'user', authorId }))
     }
 
@@ -347,7 +341,6 @@ export class PostsController {
     async getBookmarkedPosts(@Query(new ZodValidationPipe(Cursor)) cursorDTO: CursorDTO, @Req() req: Request, @Res() res: Response) {
         const { sub } = req.user
         const { cursor } = cursorDTO
-        console.log(cursor, 'bookmarks')
         res.json(await this.postService.getBookmarks(cursor, sub))
     }
 
@@ -362,7 +355,6 @@ export class PostsController {
     @Get("promotions")
     async getPromotions(@Query(new ZodValidationPipe(GetPromotions)) query: GetPromotionsDTO, @Req() req, @Res() res: Response) {
         const { cursor, reverse } = query
-        console.log(reverse, 'get promotions')
         res.json(await this.postService.getPromotions(cursor, req.user.sub, reverse))
     }
 
@@ -382,7 +374,6 @@ export class PostsController {
     async viewPost(@Body(new ZodValidationPipe(ViewPost)) viewPostDTO: ViewPostDTO, @Req() req, @Res() res: Response) {
         const { postId, type } = viewPostDTO
         const { sub } = req.user
-        console.log('viewPost......', postId, type)
         res.json(await this.postService.viewPost({ userId: sub, postId, type }))
     }
 
@@ -391,7 +382,6 @@ export class PostsController {
     async bulkViewPost(@Body(new ZodValidationPipe(BulkViewPost)) viewPostDTO: BulkViewPostDTO, @Req() req, @Res() res: Response) {
         const { viewedPosts } = viewPostDTO
         const { sub } = req.user
-        console.log('viewPost......', viewedPosts)
         res.json(await this.postService.bulkViewPosts({ userId: sub, postIds: viewedPosts }))
     }
 
@@ -406,7 +396,6 @@ export class PostsController {
     async promotionWebhook(@Req() req, @Res() res: Response) {
         const event = req.body;
 
-        console.log(event.type)
         const paymentIntent: any = event.data.object;
         const promotionId = paymentIntent.metadata
         // Handle the event
@@ -442,7 +431,6 @@ export class PostsController {
     @Post("promotion/activationToggle")
     async promotionActivationToggle(@Body(new ZodValidationPipe(PromotionActivation)) promotionActivationDTO: PromotionActivationDTO, @Req() req: Request, @Res() res: Response) {
         const { postId } = promotionActivationDTO
-        console.log('promotion activationToggle')
         res.json(await this.postService.promotionActivationToggle(postId))
     }
 

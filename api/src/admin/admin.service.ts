@@ -50,8 +50,6 @@ export class AdminService {
             ? { $or: [{_id: new Types.ObjectId(search)}, {postId: new Types.ObjectId(search)}], ..._cursor }
             : _cursor;
 
-            console.log(search)
-
         const reports = await this.reportModel.aggregate([
             { $match: query },
             { $sort: { createdAt: -1 } },
@@ -83,7 +81,6 @@ export class AdminService {
         const query = search
             ? { username: { $regex: search, $options: 'i' }, ..._cursor }
             : _cursor;
-        console.log(query)
 
         const camapaigns = await this.reportModel.aggregate([
             { $match: query },
@@ -104,7 +101,6 @@ export class AdminService {
         if (campaign.paymentDetails.paymentIntentId) {
             let paymentIntentId = campaign.paymentDetails.paymentIntentId
             let refundAmount = Number(campaign.paymentDetails.totalAmount) - (Number(campaign.reach) / 1000)
-            console.log(refundAmount)
             let refund = await this.paymentService.partialRefund(paymentIntentId, refundAmount)
             return refund
         }
@@ -207,13 +203,10 @@ export class AdminService {
                 profile = uploaded.url
             }
         }
-        console.log(profile)
 
         if (profile) {
             updatedDetails = { ...updatedDetails, profile }
         }
-
-        console.log(adminId, updatedDetails)
 
         let updatedAdmin = this.adminModel.findByIdAndUpdate(adminId, { $set: { ...updatedDetails } }, { returnOriginal: false })
         return updatedAdmin

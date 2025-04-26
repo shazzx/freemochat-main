@@ -1,6 +1,6 @@
 import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { PageService } from './pages.service';
-import {  Response } from 'express';
+import { Response } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { getFileType } from 'src/utils/getFileType';
 import { v4 as uuidv4 } from 'uuid'
@@ -15,10 +15,10 @@ import { Request } from 'types/global';
 @Controller('page')
 export class PageController {
     constructor(
-        private readonly pageService: PageService, 
+        private readonly pageService: PageService,
         private readonly uploadService: UploadService,
         private readonly eventEmiiter: EventEmitter2,
-    ) {}
+    ) { }
 
     @Get()
     async getPage(@Query(new ZodValidationPipe(Handle)) handleDTO: HandleDTO, @Req() req: Request, @Res() res: Response) {
@@ -30,41 +30,38 @@ export class PageController {
 
     @Post("follow")
     async followPage(@Body(new ZodValidationPipe(PageFollow)) body: PageFollowDTO, @Req() req: Request, @Res() res: Response) {
-        const { pageDetails} = body
+        const { pageDetails } = body
         const { sub } = req.user
         res.json(await this.pageService.toggleFollow(sub, pageDetails))
     }
 
     @Get("all")
     async getPages(@Req() req) {
-        const {sub} = req.user
+        const { sub } = req.user
         return await this.pageService.getPages(sub)
     }
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
     async createPage(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
-    @Body(new ZodValidationPipe(CreatePage, true, "pageData")) body: CreatePageDTO) {
-        console.log("files :", files, body)
+        @Body(new ZodValidationPipe(CreatePage, true, "pageData")) body: CreatePageDTO) {
         let { pageDetails } = body
-        console.log(pageDetails)
-
         const uploadPromise = files.map((file) => {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
             const originalname = file.originalname
             return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, originalname)
-            
+
         })
 
         const { username, sub } = req.user
 
         let page = await this.pageService.createPage(
-            { username, sub }, 
+            { username, sub },
             { ...pageDetails, isUploaded: files.length > 0 ? false : null }
         )
 
-        if(page){
+        if (page) {
             this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: page._id.toString(), images: {}, type: 'page' })
         }
 
@@ -74,12 +71,12 @@ export class PageController {
     @UseInterceptors(FilesInterceptor('files'))
     @Post("update")
     async updatePage(@Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[],
-    @Body(new ZodValidationPipe(UpdatePage, true, "pageData")) body: UpdatePageDTO) {
+        @Body(new ZodValidationPipe(UpdatePage, true, "pageData")) body: UpdatePageDTO) {
         let { pageDetails, pageId } = body
 
         let page = await this.pageService.getRawPage(pageId)
 
-        if(!page || page.isUploaded == false){
+        if (!page || page.isUploaded == false) {
             throw new BadRequestException()
         }
 
@@ -91,7 +88,7 @@ export class PageController {
         })
         let updatePage = await this.pageService.updatePage(pageId, { ...pageDetails, isUploaded: files.length > 0 ? false : null })
 
-        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: page._id.toString(), type: "page"})
+        this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: page._id.toString(), type: "page" })
 
         res.json(updatePage)
     }
@@ -106,16 +103,12 @@ export class PageController {
     async deletePage(@Body(new ZodValidationPipe(DeletePage)) body: DeletePageDTO, @Req() req: Request, @Res() res: Response) {
         const { pageDetails } = body
 
-        console.log(pageDetails)
-
         if (pageDetails.images) {
             const { images } = pageDetails
-            console.log(images)
             for (let image in images) {
                 let imageUrlSplit = images[image].split("/")
                 let filename = imageUrlSplit[imageUrlSplit.length - 1]
                 let deleted = await this.uploadService.deleteFromS3(filename)
-                console.log(deleted)
             }
         }
 

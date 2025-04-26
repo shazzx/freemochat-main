@@ -16,7 +16,6 @@ export class MetricsAggregatorService {
             },
             { upsert: true }
         )
-        console.log(targetId, name, type, "increment", counter)
         return counter
     }
 
@@ -55,8 +54,6 @@ export class MetricsAggregatorService {
                 $inc: { count: -1 }
             },
         )
-        console.log(targetId, name, type, 'decrement')
-
         return counter
     }
 
