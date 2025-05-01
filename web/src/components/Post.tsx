@@ -239,7 +239,8 @@ const SharedPostContent = ({ sharedPost, useLikePost, useBookmarkPost, type, isS
                 ? `${domain}/page/${sharedPost.target.handle}`
                 : `${domain}/user/${sharedPost.target.username}`;
 
-        navigate(navigation);
+        console.log(navigation, 'this is navigation')
+        // navigate(navigation);
     };
 
     if (!sharedPost) return null;
@@ -434,21 +435,21 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     }, [postData]);
 
 
-    useEffect(() => {
-        function handleClickOutside(event) {
-            if (shareRef.current && !shareRef.current.contains(event.target)) {
-                setShareState(false);
-            }
-        }
+    // useEffect(() => {
+    //     function handleClickOutside(event) {
+    //         if (shareRef.current && !shareRef.current.contains(event.target)) {
+    //             setShareState(false);
+    //         }
+    //     }
 
-        if (shareState) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
+    //     if (shareState) {
+    //         document.addEventListener('mousedown', handleClickOutside);
+    //     }
 
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [shareState])
+    //     return () => {
+    //         document.removeEventListener('mousedown', handleClickOutside);
+    //     };
+    // }, [shareState])
 
 
     const videoRef = useRef(null)
@@ -490,14 +491,10 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     const params = isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }
 
     return (
-        <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} onClick={() => {
-            if (shareState) {
-                setShareState(false)
-            }
-        }} key={postData && postData._id}>
+        <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} key={postData && postData._id}>
             {
                 editPostModelState &&
-                <CPostModal setModelTrigger={setEditPostModelState} editPost={true} postDetails={postData} updatePost={_updatePost} />
+                <CPostModal isShared={true} setModelTrigger={setEditPostModelState} editPost={true} postDetails={postData} updatePost={_updatePost} />
             }
             {searchParams.get("model") == "post" && width > 540 &&
                 modelTrigger &&
@@ -761,7 +758,9 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                         </div>
 
                         <div className='relative flex gap-0 items-center cursor-pointer z-10' onClick={() => {
-                            setShareState(!shareState)
+                            if(shareState == false){
+                                setShareState(true)
+                            }
                         }}>
                             <div className='flex flex-col gap-1 sm:flex-row items-center justify-center'>
                                 <PiShareFatLight className='size-[28px] sm:size-[34px]' />
@@ -773,7 +772,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                             </div>
                             {shareState &&
-                                <ShareModel postId={postData?._id} postType={postData?.type} setModelTrigger={setShareState} />
+                                <ShareModel key={type + "Posts"} sharedPost={postData?.sharedPost ? null : postData} postId={postData?._id} postType={postData?.type} setModelTrigger={setShareState} />
                             }
                             {/* <span className='text-sm sm:hidden'>25</span> */}
                         </div>

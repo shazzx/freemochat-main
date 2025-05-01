@@ -20,12 +20,16 @@ const educationSchema = yup.object().shape({
   current: yup.boolean()
 });
 
-export default function EducationForm({ setOpen, onSave }) {
-    const [isCurrentlyStudying, setIsCurrentlyStudying] = useState(false);
+export default function EducationForm({ setOpen, onSave, existingData = null }) {
+    // Set initial state for current studying based on existing data if provided
+    const [isCurrentlyStudying, setIsCurrentlyStudying] = useState(existingData?.current || false);
+    
+    // Set form title based on whether we're editing or creating
+    const formTitle = existingData ? "Edit Education" : "Add Education";
     
     const form = useForm({
         resolver: yupResolver(educationSchema),
-        defaultValues: {
+        defaultValues: existingData || {
             institution: '',
             degree: '',
             fieldOfStudy: '',
@@ -42,7 +46,7 @@ export default function EducationForm({ setOpen, onSave }) {
             data.endYear = null;
         }
         
-        onSave(data);
+        onSave(data, existingData ? true : false);
         setOpen(false);
     };
 
@@ -50,7 +54,7 @@ export default function EducationForm({ setOpen, onSave }) {
         <Dialog open={true} onOpenChange={setOpen}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Add Education</DialogTitle>
+                    <DialogTitle>{formTitle}</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -187,7 +191,7 @@ export default function EducationForm({ setOpen, onSave }) {
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit">Save</Button>
+                            <Button type="submit">{existingData ? "Update" : "Save"}</Button>
                         </div>
                     </form>
                 </Form>

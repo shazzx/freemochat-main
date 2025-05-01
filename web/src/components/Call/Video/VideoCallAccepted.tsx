@@ -32,7 +32,7 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
         })
     })
 
-    const appId = 'f41145d4d6fa4a3caab3104ac89622ec'
+  const appId = '07c0c67268b84af3a73d5ccc109fd264'
 
 
     const remoteUsers = useRemoteUsers();

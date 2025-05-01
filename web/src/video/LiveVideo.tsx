@@ -2,20 +2,22 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import {
-    LocalUser,
-    RemoteUser,
-    useJoin,
-    useLocalCameraTrack,
-    useLocalMicrophoneTrack,
-    usePublish,
-    useRemoteAudioTracks,
-    useRemoteUsers,
-  } from "agora-rtc-react";
+  LocalUser,
+  RemoteUser,
+  useJoin,
+  useLocalCameraTrack,
+  useLocalMicrophoneTrack,
+  usePublish,
+  useRemoteAudioTracks,
+  useRemoteUsers,
+} from "agora-rtc-react";
 
 
 export const LiveVideo = () => {
 
-  const appId = 'f41145d4d6fa4a3caab3104ac89622ec'
+  const appId = '07c0c67268b84af3a73d5ccc109fd264'
+
+
   // const agoraEngine = useRTCClient( AgoraRTC.createClient({ codec: "vp8", mode: "rtc" })); // Initialize Agora Client
   const { channelName } = useParams() //pull the channel name from the param
 
@@ -59,16 +61,16 @@ export const LiveVideo = () => {
   return (
     <>
       <div id='remoteVideoGrid'>
-        { 
+        {
           // Initialize each remote stream using RemoteUser component
           remoteUsers.map((user) => {
             console.log(user)
             return (
-            <div key={user.uid} className="remote-video-container">
-              <RemoteUser user={user} /> 
-            </div>
+              <div key={user.uid} className="remote-video-container">
+                <RemoteUser user={user} />
+              </div>
             )
-            }
+          }
           )
         }
       </div>
@@ -95,10 +97,10 @@ export const LiveVideo = () => {
               </button>
             </div>
             <button id="endConnection"
-                onClick={() => {
-                  setActiveConnection(false)
-                  navigate('/')
-                }}> Disconnect
+              onClick={() => {
+                setActiveConnection(false)
+                navigate('/')
+              }}> Disconnect
             </button>
           </div>
         </div>

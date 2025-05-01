@@ -15,20 +15,19 @@ const workExperienceSchema = yup.object().shape({
   company: yup.string().required('Company is required'),
   totalYears: yup.number().required('Years of experience is required').positive(),
   description: yup.string(),
-  current: yup.boolean()
 });
 
-export default function WorkExperienceForm({ setOpen, onSave }) {
-    const [currentlyWorking, setCurrentlyWorking] = useState(false);
+export default function WorkExperienceForm({ setOpen, onSave, existingData = null }) {
+    // Set form title based on whether we're editing or creating
+    const formTitle = existingData ? "Edit Work Experience" : "Add Work Experience";
     
     const form = useForm({
         resolver: yupResolver(workExperienceSchema),
-        defaultValues: {
+        defaultValues: existingData || {
             jobTitle: '',
             company: '',
             totalYears: '',
             description: '',
-            current: false
         }
     });
 
@@ -36,12 +35,7 @@ export default function WorkExperienceForm({ setOpen, onSave }) {
         // Convert totalYears to number
         data.totalYears = Number(data.totalYears);
         
-        // If currently working, handle accordingly
-        if (data.current) {
-            data.endDate = null;
-        }
-        
-        onSave(data);
+        onSave(data, existingData ? true : false);
         setOpen(false);
     };
 
@@ -49,7 +43,7 @@ export default function WorkExperienceForm({ setOpen, onSave }) {
         <Dialog open={true} onOpenChange={setOpen}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Add Work Experience</DialogTitle>
+                    <DialogTitle>{formTitle}</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -90,7 +84,7 @@ export default function WorkExperienceForm({ setOpen, onSave }) {
                                     <FormControl>
                                         <Input 
                                             type="number" 
-                                            placeholder="2" 
+                                            placeholder="Experience" 
                                             step="0.1"
                                             {...field}
                                             value={field.value || ''}
@@ -98,25 +92,6 @@ export default function WorkExperienceForm({ setOpen, onSave }) {
                                         />
                                     </FormControl>
                                     <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="current"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                                    <FormControl>
-                                        <Checkbox 
-                                            checked={field.value}
-                                            onCheckedChange={(checked) => {
-                                                field.onChange(checked);
-                                                setCurrentlyWorking(checked);
-                                            }}
-                                        />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">Currently Working Here</FormLabel>
                                 </FormItem>
                             )}
                         />
@@ -147,7 +122,7 @@ export default function WorkExperienceForm({ setOpen, onSave }) {
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit">Save</Button>
+                            <Button type="submit">{existingData ? "Update" : "Save"}</Button>
                         </div>
                     </form>
                 </Form>

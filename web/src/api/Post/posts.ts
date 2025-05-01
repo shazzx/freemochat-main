@@ -24,9 +24,9 @@ export async function fetchPostLikes(pageParam, postId) {
   return response.data;
 }
 
-export async function promotePost(postId, promotionDetails){
-  let { data } = await axiosClient.post("posts/promotion", { postId, promotionDetails, isApp: '0' }, {timeout: 20000})
-return data
+export async function promotePost(postId, promotionDetails) {
+  let { data } = await axiosClient.post("posts/promotion", { postId, promotionDetails, isApp: '0' }, { timeout: 20000 })
+  return data
 }
 
 export async function fetchPosts(pageParam: string | null, type: string, targetId?: string, isSelf?: boolean) {
@@ -47,6 +47,11 @@ export async function fetchPost(postId: string, type: string) {
 
 export async function createPost(formData: FormData) {
   const response = await axiosClient.post("/posts/create", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 2000000 })
+  return response.data;
+}
+
+export async function createSharedPost(data: any) {
+  const response = await axiosClient.post("/posts/create/shared", data)
   return response.data;
 }
 

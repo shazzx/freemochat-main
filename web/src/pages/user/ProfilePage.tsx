@@ -33,6 +33,7 @@ import Friends from './tabs/profile/Friends'
 import Followers from './tabs/profile/Followers'
 import QuickChat from '@/components/QuickChat'
 import BottomCreatePost from '@/models/BottomCreatePost'
+import { toast } from 'react-toastify'
 const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const localUserData = useAppSelector(data => data.user)
     const isSelf = role === 'self'
@@ -76,27 +77,37 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
         }
     }, [newPost])
 
-    const uploadSingle = async (media, type, completeUser) => {
-        const formData = new FormData()
-        if (media) {
-            formData.append("file", media, type)
+    const uploadSingle = async (media, type, completeUser, stayOnSettings) => {
+        try {
+            const formData = new FormData()
+            if (media) {
+                formData.append("file", media, type)
+            }
+            if (completeUser) {
+                formData.append('userData', JSON.stringify({ ...completeUser }))
+
+            } else {
+                formData.append('userData', JSON.stringify({}))
+            }
+
+            axiosClient.post("/user/update", formData, { headers: { "Content-Type": 'multipart/form-data' } })
+
+            if (!stayOnSettings) {
+                navigate("")
+            }
+
+            return true
+
+        } catch (error) {
+            toast.error(error.message)
+            return false
         }
-        if (completeUser) {
-            formData.append('userData', JSON.stringify({ ...completeUser }))
-
-        } else {
-            formData.append('userData', JSON.stringify({}))
-        }
-
-        axiosClient.post("/user/update", formData, { headers: { "Content-Type": 'multipart/form-data' } })
-        navigate("")
-
     }
 
     // post upload
     const _createPost = async ({ content, selectedMedia, formData, visibility }) => {
         let data;
-        let postDetails = { content, media: data, type: "user", visibility}
+        let postDetails = { content, media: data, type: "user", visibility }
         formData.append("postData", JSON.stringify(postDetails))
         createPost.mutate({ content, formData, selectedMedia, type: "user", target: user, isUploaded: false })
         setPostModal(false)
@@ -169,9 +180,9 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                 <div className='w-full h-full flex items-center justify-center'>loading...</div>
             }
 
-            {openQuickChat  && !isSelf  &&
+            {openQuickChat && !isSelf &&
                 <div ref={quickChatRef}>
-                    <QuickChat target={  { data: user, type: 'User' }} setOpenQuickChat={setOpenQuickChat} />
+                    <QuickChat target={{ data: user, type: 'User' }} setOpenQuickChat={setOpenQuickChat} />
                 </div>
             }
 
@@ -185,7 +196,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
                     {/* profile settings model */}
                     {searchParams.get("settings") && <QuickSettings user={localUserData.user} setModelTrigger={setProfileSettingsModel} uploadSingle={uploadSingle} />}
-                    {searchParams.get("createpost") && ( width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+                    {searchParams.get("createpost") && (width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
 
                     <div className='flex w-full flex-col items-center w-ful'>
                         <div className="flex max-w-5xl w-full flex-col justify-cente relative">

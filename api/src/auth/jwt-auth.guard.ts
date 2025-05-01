@@ -95,13 +95,13 @@ export class JwtAuthGuard implements CanActivate {
 
                 request['user'] = refreshToken_payload
 
-                const access_token = this.jwtService.sign({ username: refreshToken_payload.username, sub: refreshToken_payload.sub }, { secret: jwtConstants.secret, expiresIn: '1m' })
-
+                const access_token = this.jwtService.sign({ username: refreshToken_payload.username, sub: refreshToken_payload.sub }, { secret: jwtConstants.secret, expiresIn: '2h' })
 
                 response.cookie("accessToken", access_token, {
                     sameSite: 'strict',
                     maxAge: 7 * 60 * 60 * 1000
                 })
+
                 return true
             }
             throw new UnauthorizedException(err.message);

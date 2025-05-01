@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useAppSelector } from '@/app/hooks';
 import { toast } from 'react-toastify';
 import { produce } from 'immer'
-import { bookmarkPost, createPost, fetchFeed, fetchPost, fetchPostLikes, fetchPosts, likePost, promotePost, removePost, updatePost } from '@/api/Post/posts';
+import { bookmarkPost, createPost, createSharedPost, fetchFeed, fetchPost, fetchPostLikes, fetchPosts, likePost, promotePost, removePost, updatePost } from '@/api/Post/posts';
 import { UrlObject } from 'url';
 import { axiosClient } from '@/api/axiosClient';
 import { redirectToCheckout } from '@/utils/redirectToCheckout';
@@ -175,6 +175,102 @@ export const useCreatePost = (key: string, targetId?: string) => {
       //   })
       //   return updatedPosts
       // });
+
+      return
+    }
+  })
+
+  return {
+    data,
+    isPending,
+    isSuccess,
+    mutateAsync,
+    mutate
+  }
+}
+
+export const useCreateSharedPost = (key: string, targetId?: string) => {
+  const { user } = useAppSelector((state) => state.user)
+  const queryClient = useQueryClient()
+  const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+    mutationFn: (postDetails: { sharedPostId: string, content: string, type: string, visibility: string, sharedPost: any, target: any, targetId: string }) => {
+      return createSharedPost({
+        sharedPostId: postDetails?.sharedPostId,
+        content: postDetails.content,
+        type: postDetails.type,
+        targetId: postDetails.targetId,
+        visibility: postDetails.visibility,
+      })
+    },
+
+
+    onMutate: async ({ content, sharedPost, type, target, targetId }) => {
+      await queryClient.cancelQueries({ queryKey: [key, targetId] })
+      const previousPosts = queryClient.getQueryData([key, targetId])
+      await queryClient.cancelQueries({ queryKey: ['feed'] })
+      const previousFeed = queryClient.getQueryData(['feed'])
+      queryClient.setQueryData(['feed'], (pages: any) => {
+        const updatedPosts = produce(pages, (draft: any) => {
+          if (draft?.pages && draft?.pages[0].posts) {
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), type, target: target, user: user._id, sharedPost, media: null, isUploaded: null })
+            return draft
+          }
+
+          // if (!draft?.pages || !draft?.pages[0].posts) {
+          //   draft =
+          //   {
+          //     pages: [{
+          //       posts: [{ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: user, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null }],
+          //       nextCursor: null,
+          //     }, { pageParams: [null] }]
+          //   }
+          //   return draft
+          // }
+        })
+        return updatedPosts
+      });
+
+      queryClient.setQueryData([key, targetId], (pages: any) => {
+        const updatedPosts = produce(pages, (draft: any) => {
+          if (draft?.pages && draft?.pages[0].posts) {
+            // console.log(pages, 'user')
+
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), type, target: target, user: user._id, sharedPost, media: null, isUploaded: null })
+            return draft
+          }
+
+          // if (!draft?.pages || !draft?.pages[0].posts) {
+          //   draft =
+          //   {
+          //     pages: [{
+          //       posts: [{ isBookmarkedByUser: false, isLikedByUser: selectedMedia.length > 0 ? false : null, content, createdAt: Date.now(), target: user, user: user._id, media: selectedMedia, isUploaded: false }],
+          //       nextCursor: null,
+          //     }, { pageParams: [null] }]
+          //   }
+          //   return draft
+          // }
+        })
+        return updatedPosts
+      });
+      return { previousPosts, previousFeed };
+    },
+
+    onError: (err, newComment, context) => {
+      // console.log(err)
+      // toast.error(err.message)
+      queryClient.setQueryData([key, targetId], context.previousPosts)
+    },
+    onSettled: (data) => {
+      if (data.isUploaded == null) {
+        queryClient.invalidateQueries({ queryKey: [key, targetId] })
+        if (key == 'groupPosts') {
+          queryClient.invalidateQueries({ queryKey: ['groupFeed'] })
+        }
+        if (key == 'pagePosts') {
+          queryClient.invalidateQueries({ queryKey: ['pageFeed'] })
+        }
+        queryClient.invalidateQueries({ queryKey: ['feed'] })
+      }
 
       return
     }

@@ -18,7 +18,7 @@ import { toast } from "react-toastify";
 
 const AudioCall = ({ channel, callDetails, cancelCall }) => {
   const recepient = callDetails.recepientDetails
-  const appId = 'f41145d4d6fa4a3caab3104ac89622ec'
+  const appId = '07c0c67268b84af3a73d5ccc109fd264'
   const { socket } = useAppSelector((state) => state.socket)
   const { user } = useAppSelector((state) => state.user)
 
