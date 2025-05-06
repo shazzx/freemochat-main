@@ -11,7 +11,7 @@ import Profile from '@/components/profile/Profile'
 import ProfileMedia from '@/components/ProfileMedia'
 // import ProfileMedia from '@/components/ProfileMedia'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useBookmarkPost, useCreatePost, useLikePost, useUpdatePost, useUserPosts } from '@/hooks/Post/usePost'
 import { useMedia } from '@/hooks/useMedia'
@@ -34,6 +34,8 @@ import Followers from './tabs/profile/Followers'
 import QuickChat from '@/components/QuickChat'
 import BottomCreatePost from '@/models/BottomCreatePost'
 import { toast } from 'react-toastify'
+import { Label } from '@/components/ui/label'
+import { format } from 'date-fns'
 const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const localUserData = useAppSelector(data => data.user)
     const isSelf = role === 'self'
@@ -46,7 +48,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     let user = isSelf ? localUserData.user : query.isFetched && query?.data
     console.log(query)
 
-    const { _id, firstname, lastname, username, email, bio, areFriends, isFollowed, friendRequest, followersCount, friendsCount, address, profile, cover } = !isSelf ? query.isFetched && !query.isError && user : user
+    const { _id, firstname, lastname, username, email, bio, areFriends, isFollowed, friendRequest, followersCount, friendsCount, address, profile, cover, workExperience, education, maritalStatus, dateOfBirth, socialMedia } = !isSelf ? query.isFetched && !query.isError && user : user
 
     const friendRequestToggle = useFriendRequestToggle(username)
     const removeFriend = useRemoveFriend(username, _id && _id)
@@ -462,6 +464,116 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                     <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>{address?.area}</div>
                                                 </div>
                                             }
+
+                                            {dateOfBirth &&
+                                                <div className='flex w-full flex-col gap-2'>
+                                                    <div>
+                                                        Date Of Birth
+                                                    </div>
+                                                    <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>{format(dateOfBirth, "PPP")}</div>
+                                                </div>
+                                            }
+
+                                            {maritalStatus &&
+                                                <div className='flex w-full flex-col gap-2'>
+                                                    <div>
+                                                        Marital Status
+                                                    </div>
+                                                    <div className='bg-gray-100 dark:bg-card p-2 px-3 rounded-md w-full sm:max-w-64'>{maritalStatus}</div>
+                                                </div>
+                                            }
+
+
+                                            <div className="w-full mt-4">
+                                                <h3 className="text-lg font-medium mb-2">Social Media</h3>
+
+                                                <div className="w-full mb-2">
+                                                    <Label>Facebook</Label>
+                                                    <Input
+                                                        name="socialMedia.facebook"
+                                                        placeholder="Facebook profile URL"
+                                                        defaultValue={socialMedia?.facebook}
+                                                        className="max-w-96 w-full"
+                                                    />
+                                                </div>
+
+                                                <div className="w-full mb-2">
+                                                    <Label>Instagram</Label>
+                                                    <Input
+                                                        name="socialMedia.instagram"
+                                                        placeholder="Instagram profile URL"
+                                                        defaultValue={socialMedia?.instagram}
+                                                        className="max-w-96 w-full"
+                                                    />
+                                                </div>
+
+                                                <div className="w-full mb-2">
+                                                    <Label>LinkedIn</Label>
+                                                    <Input
+                                                        name="socialMedia.linkedin"
+                                                        placeholder="LinkedIn profile URL"
+                                                        defaultValue={socialMedia?.linkedin}
+                                                        className="max-w-96 w-full"
+                                                    />
+                                                </div>
+
+                                                <div className="w-full mb-2">
+                                                    <Label>WhatsApp</Label>
+                                                    <Input
+                                                        name="socialMedia.whatsapp"
+                                                        placeholder="WhatsApp number"
+                                                        defaultValue={socialMedia?.whatsapp}
+                                                        className="max-w-96 w-full"
+                                                    />
+                                                </div>
+                                            </div>
+
+
+                                            {/* Education Section */}
+                                            <div className="w-full flex flex-col gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    <h2>Education</h2>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {education &&
+                                                        education.map((edu, index) => (
+                                                            <Card key={index} className="p-2 max-w-xl">
+                                                                <CardContent className="flex justify-between items-center p-2">
+                                                                    <div>
+                                                                        <h4 className="font-medium">{edu.institution}</h4>
+                                                                        <p className="text-sm text-muted-foreground">
+                                                                            {edu.degree} in {edu.fieldOfStudy} ({edu.startYear} - {edu.endYear || 'Present'})
+                                                                        </p>
+                                                                    </div>
+                                                                </CardContent>
+                                                            </Card>
+                                                        ))
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            <div className="w-full flex flex-col gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    <h2>Work Experience</h2>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {workExperience &&
+                                                        workExperience.map((work, index) => (
+                                                            <Card key={index} className="p-2 max-w-xl">
+                                                                <CardContent className="flex justify-between items-center p-2">
+                                                                    <div>
+                                                                        <h4 className="font-medium">{work.jobTitle} at {work.company}</h4>
+                                                                        <p className="text-sm text-muted-foreground">
+                                                                            {work.totalYears} years • {work.description}
+                                                                        </p>
+                                                                    </div>
+                                                                </CardContent>
+                                                            </Card>
+                                                        ))
+                                                    }
+                                                </div>
+                                            </div>
+
                                         </div>
                                     </div>
 
