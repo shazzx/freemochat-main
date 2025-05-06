@@ -276,7 +276,7 @@ const MainHome = ({ children }: any) => {
                 <form onSubmit={async (e) => {
                   e.preventDefault()
                   let val = searchQuery.split(' ')
-                  navigate(`/search?query=${val.join("")}&&type=default`)
+                  navigate(`/search?query=${val.join("")}&type=all`)
                 }}>
                   <div className="hidden sm:flex  sm:relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -313,7 +313,7 @@ const MainHome = ({ children }: any) => {
                             <div className="px-4 py-2 flex justify-between cursor-pointer hover:bg-accent" onClick={() => {
                               setSearchSuggestionsState(false)
                               searchRef.current.value = suggestion.value
-                              navigate(`/search?query=${suggestion.value}&&type=default`)
+                              navigate(`/search?query=${suggestion.value}&type=all`)
                             }}>
                               <span >{suggestion.value}</span>
                               {/* <span className="px-2 py-1 bg-primary-active rounded-lg">{suggestion.type} </span> */}

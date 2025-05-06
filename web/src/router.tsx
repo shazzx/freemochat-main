@@ -6,7 +6,6 @@ import MessagesSection from "./sections/MessagesSection";
 import PagesSection from "./sections/PagesSection";
 import Groups from "./sections/GroupSection";
 import Bookmarked from "./sections/BookmarkedSection";
-import CampaignSection from "./sections/CampaignSection";
 import AuthVerificationForm from "./components/Auth/AuthVerificationForm";
 import ProfilePage from "./pages/user/ProfilePage";
 import GroupProfile from "./components/GroupProfile";
@@ -17,12 +16,13 @@ import { LoginForm } from "./components/Login";
 import PublicRoute from "./components/PublicRoute";
 import { Signup } from "./components/Signup";
 import ManagePages from "./sections/ManagePages";
-import SearchSection from "./sections/SearchSection";
+import SearchSection from "./sections/SearchSectionNew";
 import YourAccount from "./components/YourAccount";
 import ForgetPassword from "./components/ForgetPassword";
 import TermsAndConditions from "./pages/user/TermsAndConditions";
 import PrivacyPolicy from "./pages/user/PrivacyPolicy";
 import ChildSafetyPolicy from "./pages/user/ChildrenPrivacy";
+import ReelsFeed from "./sections/ReelsFeed";
 
 export const router = createBrowserRouter([
     {
@@ -32,6 +32,11 @@ export const router = createBrowserRouter([
             {
                 path: "/",
                 element: <MainHome children={<FeedSection />} />,
+                index: true
+            },
+            {
+                path: "/reels",
+                element: <ReelsFeed />,
                 index: true
             },
             {
