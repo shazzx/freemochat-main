@@ -503,6 +503,8 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                             className="max-w-96 w-full"
                                             {...register("socialMedia.facebook")}
                                         />
+                                        {errors.socialMedia?.facebook && <p>{errors.socialMedia.facebook.message}</p>}
+
                                     </div>
 
                                     <div className="w-full mb-2">
@@ -514,6 +516,8 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                             className="max-w-96 w-full"
                                             {...register("socialMedia.instagram")}
                                         />
+                                        {errors.socialMedia?.instagram && <p>{errors.socialMedia.instagram.message}</p>}
+
                                     </div>
 
                                     <div className="w-full mb-2">
@@ -525,6 +529,8 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                             className="max-w-96 w-full"
                                             {...register("socialMedia.linkedin")}
                                         />
+                                        {errors.socialMedia?.linkedin && <p>{errors.socialMedia.linkedin.message}</p>}
+
                                     </div>
 
                                     <div className="w-full mb-2">
@@ -536,6 +542,8 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                             className="max-w-96 w-full"
                                             {...register("socialMedia.whatsapp")}
                                         />
+                                        {errors.socialMedia?.whatsapp && <p>{errors.socialMedia.whatsapp.message}</p>}
+
                                     </div>
                                 </div>
 

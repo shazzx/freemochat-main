@@ -158,9 +158,9 @@ export const UpdateUserSchema = yup.object().shape({
     })
   ).optional(),
   socialMedia: yup.object({
-    facebook: yup.string().optional(),
-    instagram: yup.string().optional(),
-    linkedin: yup.string().optional(),
+    facebook: yup.string().url("Enter valid url").optional(),
+    instagram: yup.string().url("Enter valid url").optional(),
+    linkedin: yup.string().url("Enter valid url").optional(),
     whatsapp: yup.string().optional(),
   }).optional(),
   website: yup.string()

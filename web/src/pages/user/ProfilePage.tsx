@@ -36,6 +36,8 @@ import BottomCreatePost from '@/models/BottomCreatePost'
 import { toast } from 'react-toastify'
 import { Label } from '@/components/ui/label'
 import { format } from 'date-fns'
+import { FiExternalLink } from "react-icons/fi";
+
 const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const localUserData = useAppSelector(data => data.user)
     const isSelf = role === 'self'
@@ -483,50 +485,76 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                 </div>
                                             }
 
+                                            {(socialMedia?.facebook || socialMedia?.instagram || socialMedia?.linkedin || socialMedia?.whatsapp) &&
+                                                <div className="w-full mt-4">
+                                                    <h3 className="text-lg font-medium mb-2">Social Media</h3>
 
-                                            <div className="w-full mt-4">
-                                                <h3 className="text-lg font-medium mb-2">Social Media</h3>
+                                                    {socialMedia?.facebook &&
+                                                        <div className="relative max-w-96 mb-2">
+                                                            <Label>Facebook</Label>
+                                                            <a target="_blank" href={socialMedia.facebook}>
+                                                                <Input
+                                                                    name="socialMedia.facebook"
+                                                                    placeholder="Facebook profile URL"
+                                                                    defaultValue={socialMedia?.facebook}
+                                                                    className="max-w-96 w-full text-primary"
+                                                                />
+                                                                <div className='absolute top-7 right-0 p-2'>
+                                                                    <FiExternalLink className='text-primary' />
+                                                                </div>
+                                                            </a>
 
-                                                <div className="w-full mb-2">
-                                                    <Label>Facebook</Label>
-                                                    <Input
-                                                        name="socialMedia.facebook"
-                                                        placeholder="Facebook profile URL"
-                                                        defaultValue={socialMedia?.facebook}
-                                                        className="max-w-96 w-full"
-                                                    />
-                                                </div>
+                                                        </div>
+                                                    }
+                                                    {socialMedia?.instagram &&
+                                                        <div className="relative relative max-w-96 mb-2">
+                                                            <Label>Instagram</Label>
+                                                            <a target="_blank" href={socialMedia.instagram}>
+                                                                <Input
+                                                                    name="socialMedia.instagram"
+                                                                    placeholder="Instagram profile URL"
+                                                                    defaultValue={socialMedia?.instagram}
+                                                                    className="max-w-96 w-full text-primary"
+                                                                />
+                                                                <div className='absolute top-7 right-0 p-2'>
+                                                                    <FiExternalLink className='text-primary' />
+                                                                </div>
+                                                            </a>
+                                                        </div>}
 
-                                                <div className="w-full mb-2">
-                                                    <Label>Instagram</Label>
-                                                    <Input
-                                                        name="socialMedia.instagram"
-                                                        placeholder="Instagram profile URL"
-                                                        defaultValue={socialMedia?.instagram}
-                                                        className="max-w-96 w-full"
-                                                    />
-                                                </div>
+                                                    {socialMedia?.linkedin &&
+                                                        <div className="relative max-w-96 mb-2">
+                                                            <Label>LinkedIn</Label>
+                                                            <a target="_blank" href={socialMedia.linkedin}>
+                                                                <Input
+                                                                    name="socialMedia.linkedin"
+                                                                    placeholder="LinkedIn profile URL"
+                                                                    defaultValue={socialMedia?.linkedin}
+                                                                    className="max-w-96 w-full text-primary"
+                                                                />
+                                                                <div className='absolute top-7 right-0 p-2'>
+                                                                    <FiExternalLink className='text-primary' />
+                                                                </div>
+                                                            </a>
 
-                                                <div className="w-full mb-2">
-                                                    <Label>LinkedIn</Label>
-                                                    <Input
-                                                        name="socialMedia.linkedin"
-                                                        placeholder="LinkedIn profile URL"
-                                                        defaultValue={socialMedia?.linkedin}
-                                                        className="max-w-96 w-full"
-                                                    />
-                                                </div>
+                                                        </div>}
+                                                    {socialMedia?.whatsapp &&
+                                                        < div className="relative max-w-96 mb-2">
+                                                            <Label>WhatsApp</Label>
+                                                            <a target="_blank" href={`https://wa.me/${socialMedia.whatsapp}`}>
+                                                                <Input
+                                                                    name="socialMedia.whatsapp"
+                                                                    placeholder="WhatsApp number"
+                                                                    defaultValue={socialMedia?.whatsapp}
+                                                                    className="max-w-96 w-full text-primary cursor-pointer"
+                                                                />
+                                                                <div className='absolute top-7 right-0 p-2'>
+                                                                    <FiExternalLink className='text-primary' />
+                                                                </div>
 
-                                                <div className="w-full mb-2">
-                                                    <Label>WhatsApp</Label>
-                                                    <Input
-                                                        name="socialMedia.whatsapp"
-                                                        placeholder="WhatsApp number"
-                                                        defaultValue={socialMedia?.whatsapp}
-                                                        className="max-w-96 w-full"
-                                                    />
-                                                </div>
-                                            </div>
+                                                            </a>
+                                                        </div>}
+                                                </div>}
 
 
                                             {/* Education Section */}
