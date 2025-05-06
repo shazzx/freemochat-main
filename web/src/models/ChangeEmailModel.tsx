@@ -14,7 +14,7 @@ import { MdClose } from 'react-icons/md'
 import { Button } from '@/components/ui/button'
 
 function
-    ChangeEmailModel({ setModalTrigger, notice }) {
+    ChangeEmailModel({ setModalTrigger, notice }: {setModalTrigger: Function, notice?: boolean}) {
 
     const { user } = useAppSelector((state) => state.user)
     const [email, setEmail] = useState(null)

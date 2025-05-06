@@ -32,7 +32,7 @@ function PostSection() {
 
     return (
         <div className='w-full z-10 flex justify-center md:justify-normal overflow-y-auto border-muted px-4 md:px-6 lg:px-24'>
-            {postModal && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+            {postModal && <CPostModal  setModelTrigger={setPostModal} createPost={_createPost} />}
             <div className='max-w-xl w-full flex flex-col gap-2'>
                 <div className='max-w-xl w-full flex flex-col gap-2 relative py-4'>
                     <div className='flex w-full items-center  flex-col gap-2  '>

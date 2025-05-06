@@ -1,3 +1,4 @@
+import { Group } from "./types";
 
 export function GroupList({ groups }: { groups: Group[] }) {
     return (

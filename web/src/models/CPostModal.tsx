@@ -11,7 +11,7 @@ import CustomComboBox from "@/components/ComboboxTwo"
 import { Textarea } from "@/components/ui/textarea"
 import { TUser } from "@/utils/types/TUser"
 
-const CPostModal: FC<{ setModelTrigger: Function, createPost: Function, editPost: boolean, postDetails: { _id: string, content: string, isShared: string, user: TUser, targetId: string, target: any, media: any }, updatePost: Function, isShared: boolean }> = ({ setModelTrigger, createPost, editPost, postDetails, updatePost, isShared }) => {
+const CPostModal: FC<{ setModelTrigger?: Function, createPost?: Function, editPost?: boolean, postDetails?: { _id: string, content: string, isShared: string, user: TUser, targetId: string, target: any, media: any }, updatePost?: Function, isShared?: boolean }> = ({ setModelTrigger, createPost, editPost, postDetails, updatePost, isShared }) => {
     const [selectedMedia, setSelectedMedia] = useState([])
     const [emojiPickerState, setEmojiPickerState] = useState(false)
     const [selected, setSelected] = useState("public")

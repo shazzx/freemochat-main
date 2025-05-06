@@ -107,6 +107,75 @@ export const UserSchema = yup.object().shape({
   // confirmPassword: yup.string().required().oneOf([yup.ref('password'), null], "Passwords Must Match")
 });
 
+export const UpdateUserSchema = yup.object().shape({
+  firstname: yup.string()
+    .min(3, 'Name must be at least 3 characters')
+    .max(36, 'Name must not exceed 36 characters')
+    .optional(),
+  lastname: yup.string()
+    .min(3, 'Name must be at least 3 characters')
+    .max(36, 'Name must not exceed 36 characters')
+    .optional(),
+  username: yup.string()
+    .min(6, 'Username must be at least 6 characters')
+    .max(30, 'Username must not exceed 30 characters')
+    .matches(/^[a-z0-9_]+$/, 'Handle must contain only lowercase letters, numbers, and underscores')
+    .test('unique-handle', 'This handle is already taken', async (value) => {
+      if (value && value.length >= 6) {
+        try {
+          const response = await axiosClient.post(`user/username-exists`, { username: value });
+          return response.data.success;
+        } catch (error) {
+          console.error('Error checking handle availability:', error);
+          return false; // Assume available in case of error
+        }
+      }
+      return true; // Skip validation if less than 6 characters
+    })
+    .optional(),
+  email: yup
+    .string().email(),
+  bio: yup.string()
+    .max(160, "Bio should not exceed 160 characters")
+    .nullable()
+    .optional(),
+  education: yup.array(
+    yup.object({
+      institution: yup.string().required('Institution is required'),
+      degree: yup.string().required('Degree is required'),
+      fieldOfStudy: yup.string().required('Field of study is required'),
+      startYear: yup.number().required('Start year is required'),
+      endYear: yup.number().nullable(),
+      description: yup.string().required('Description is required'),
+    })
+  ).optional(),
+  workExperience: yup.array(
+    yup.object({
+      jobTitle: yup.string().required('Job title is required'),
+      company: yup.string().required('Company is required'),
+      totalYears: yup.number().required('Total years is required'),
+      description: yup.string().required('Description is required'),
+    })
+  ).optional(),
+  socialMedia: yup.object({
+    facebook: yup.string().optional(),
+    instagram: yup.string().optional(),
+    linkedin: yup.string().optional(),
+    whatsapp: yup.string().optional(),
+  }).optional(),
+  website: yup.string()
+    .optional(),
+  dateOfBirth: yup.string()
+    .test('valid-date', 'Invalid date format', (value) => {
+      return !value || !isNaN(Date.parse(value));
+    })
+    .optional(),
+  maritalStatus: yup.string()
+    .oneOf(['single', 'married', null], 'Marital status must be either single or married')
+    .nullable()
+    .optional(),
+});
+
 
 export const SignupSchema = yup.object().shape({
   firstname: yup.string()

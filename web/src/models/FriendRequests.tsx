@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 import { MdGroup } from "react-icons/md"
 import { useAcceptFriendRequest, useUserRequests } from "@/hooks/User/useUser"
 import { toast } from "react-toastify"
+import { Link } from "react-router-dom"
 
 function FriendRequests({ setFriendRequestState }) {
     const { data, isSuccess, isLoading } = useUserRequests()
@@ -18,6 +19,7 @@ function FriendRequests({ setFriendRequestState }) {
             <div className="absolute top-0 right-0 h-screen w-screen z-10" onClick={() => {
                 setFriendRequestState(false)
             }}></div>
+
             <Card className=" p-1 w-full h-full md:w-[360px] bg-background md:h-[400px] absolute top-14 md:top-9 z-50 md:right-36 sm:border-2 sm:border-accent">
                 <CardHeader className="p-4">
                     <div className="flex gap-2 items-center">
@@ -33,18 +35,22 @@ function FriendRequests({ setFriendRequestState }) {
                                 request = request.sender
                                 return (
                                     <div className="p-2 flex justify-between w-full bg-card text-white">
-                                        <div className="flex gap-1">
-                                            <div className='w-14 h-14 flex flex-col items-center justify-center rounded-lg border-primary border-2 bg-card overflow-hidden'>
-                                                <Avatar>
-                                                    <AvatarImage src={request?.profile} alt="Avatar" />
-                                                    <AvatarFallback className='text-xl text-foreground'>{request?.firstname[0]?.toUpperCase() + request?.lastname[0]?.toUpperCase()}</AvatarFallback>
-                                                </Avatar>
+                                        <Link to={`/user/${request.username}`} onClick={() => {
+                                            setFriendRequestState(false)
+                                        }}>
+                                            <div className="flex gap-1">
+                                                <div className='w-14 h-14 flex flex-col items-center justify-center rounded-lg border-primary border-2 bg-card overflow-hidden'>
+                                                    <Avatar>
+                                                        <AvatarImage src={request?.profile} alt="Avatar" />
+                                                        <AvatarFallback className='text-xl text-foreground'>{request?.firstname[0]?.toUpperCase() + request?.lastname[0]?.toUpperCase()}</AvatarFallback>
+                                                    </Avatar>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-lg leading-tight text-foreground">{request?.firstname + " " + request?.lastname}</span>
+                                                    <span className="text-md text-foreground" >@{request?.username}</span>
+                                                </div>
                                             </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-lg leading-tight text-foreground">{request?.firstname + " " + request?.lastname}</span>
-                                                <span className="text-md text-foreground" >@{request?.username}</span>
-                                            </div>
-                                        </div>
+                                        </Link>
                                         <div className="flex items-center justify-center">
                                             <Button className="text-sm" onClick={async () => {
                                                 acceptFriendRequest.mutate({ recepientId: request?._id, pageIndex: i, requestIndex: re, username: request.username })

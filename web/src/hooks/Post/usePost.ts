@@ -193,7 +193,7 @@ export const useCreateSharedPost = (key: string, targetId?: string) => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (postDetails: { sharedPostId: string, content: string, type: string, visibility: string, sharedPost: any, target: any, targetId: string }) => {
+    mutationFn: (postDetails: { sharedPostId: string, content: string, type: string, visibility: string, sharedPost: any, target: any, targetId?: string }) => {
       return createSharedPost({
         sharedPostId: postDetails?.sharedPostId,
         content: postDetails.content,

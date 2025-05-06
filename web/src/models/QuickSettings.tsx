@@ -6,16 +6,14 @@ import Profile from "@/components/profile/Profile"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { UserSchema } from "@/utils/schemas/auth"
+import { UpdateUserSchema, UserSchema } from "@/utils/schemas/auth"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { Label } from "@radix-ui/react-dropdown-menu"
 import { FC, FormEvent, useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
-import { SelectScrollable } from "./SelectScrollable"
-import { axiosClient } from "@/api/axiosClient"
 import ChangeCountryModel from "./ChangeCountryModel"
-import { CalendarIcon, ListIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react"
+import { CalendarIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react"
 import ChangePhoneModel from "./ChangePhoneModel"
 import ChangeEmailModel from "./ChangeEmailModel"
 import ChangePasswordModel from "./ChangePasswordModel"
@@ -52,11 +50,11 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     const [changeEmailModel, setChangeEmailModel] = useState(false)
     const [changePasswordModel, setChangePasswordModel] = useState(false)
     const [forgetPasswordModel, setForgetPasswordModel] = useState(false)
-    
+
     // Form states
     const [educationFormOpen, setEducationFormOpen] = useState(false)
     const [workExperienceFormOpen, setWorkExperienceFormOpen] = useState(false)
-    
+
     // Edit states
     const [currentEditingEducation, setCurrentEditingEducation] = useState(null)
     const [currentEditingWorkExperience, setCurrentEditingWorkExperience] = useState(null)
@@ -87,7 +85,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     const [date, setDate] = useState<Date | undefined>(dateOfBirth ? new Date(dateOfBirth) : undefined)
 
     const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
-        resolver: yupResolver(UserSchema),
+        resolver: yupResolver(UpdateUserSchema),
         mode: 'onChange',
     });
 
@@ -122,26 +120,26 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     const handleEducationSave = async (educationData, isEdit) => {
         try {
             let updatedEducation;
-            
+
             if (isEdit && currentEditingEducation) {
                 // Update existing item at index
                 updatedEducation = [...(user.education || [])];
                 updatedEducation[currentEditingEducation.index] = educationData;
-                
+
                 toast.success("Education updated successfully");
             } else {
                 // Add new item
                 updatedEducation = [...(user.education || []), educationData];
-                
+
                 toast.success("Education added successfully");
             }
-            
+
             dispatch(updateUser({ ...user, education: updatedEducation }));
             const isUpdated = await uploadSingle(null, null, { education: updatedEducation }, true);
-            
+
             // Reset the current editing state
             setCurrentEditingEducation(null);
-            
+
             return isUpdated;
         } catch (error) {
             console.error("Failed to save education", error);
@@ -154,26 +152,26 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     const handleWorkExperienceSave = async (workData, isEdit) => {
         try {
             let updatedWorkExperience;
-            
+
             if (isEdit && currentEditingWorkExperience) {
                 // Update existing item at index
                 updatedWorkExperience = [...(user.workExperience || [])];
                 updatedWorkExperience[currentEditingWorkExperience.index] = workData;
-                
+
                 toast.success("Work experience updated successfully");
             } else {
                 // Add new item
                 updatedWorkExperience = [...(user.workExperience || []), workData];
-                
+
                 toast.success("Work experience added successfully");
             }
-            
+
             dispatch(updateUser({ ...user, workExperience: updatedWorkExperience }));
             const isUpdated = await uploadSingle(null, null, { workExperience: updatedWorkExperience }, true);
-            
+
             // Reset the current editing state
             setCurrentEditingWorkExperience(null);
-            
+
             return isUpdated;
         } catch (error) {
             console.error("Failed to save work experience", error);
@@ -255,7 +253,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
             }
             {
                 changeEmailModel &&
-                <ChangeEmailModel setModelTrigger={setChangeEmailModel} />
+                <ChangeEmailModel setModalTrigger={setChangeEmailModel} />
             }
             {
                 changePasswordModel &&
@@ -481,7 +479,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                 {/* Marital Status */}
                                 <div className="w-full">
                                     <Label>Marital Status</Label>
-                                    <Select defaultValue={maritalStatus || "single"} onValueChange={(value) => setValue("maritalStatus", value)}>
+                                    <Select defaultValue={maritalStatus || "single"} onValueChange={(value: any) => setValue("maritalStatus", value)}>
                                         <SelectTrigger className="max-w-96 w-full">
                                             <SelectValue placeholder="Select marital status" />
                                         </SelectTrigger>
