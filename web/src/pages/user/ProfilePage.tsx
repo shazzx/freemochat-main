@@ -507,7 +507,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                         </div>
                                                     }
                                                     {socialMedia?.instagram &&
-                                                        <div className="relative relative max-w-96 mb-2">
+                                                        <div className="relative max-w-96 mb-2">
                                                             <Label>Instagram</Label>
                                                             <a target="_blank" href={socialMedia.instagram}>
                                                                 <Input
