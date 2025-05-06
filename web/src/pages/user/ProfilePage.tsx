@@ -48,9 +48,8 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const acceptFriendRequest = useAcceptFriendRequest()
     // const rejectFriendRequest = useRejectFriendRequest()
     let user = isSelf ? localUserData.user : query.isFetched && query?.data
-    console.log(query)
 
-    const { _id, firstname, lastname, username, email, bio, areFriends, isFollowed, friendRequest, followersCount, friendsCount, address, profile, cover, workExperience, education, maritalStatus, dateOfBirth, socialMedia } = !isSelf ? query.isFetched && !query.isError && user : user
+    const { _id, firstname, lastname, username, email, bio, areFriends, isFollowed, friendRequest, followersCount, friendsCount, address, profile, cover, workExperience, education, maritalStatus, dateOfBirth, socialMedia, website } = !isSelf ? query.isFetched && !query.isError && user : user
 
     const friendRequestToggle = useFriendRequestToggle(username)
     const removeFriend = useRemoveFriend(username, _id && _id)
@@ -485,6 +484,23 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                 </div>
                                             }
 
+                                            {website && 
+                                            <div className="relative max-w-96 mb-2">
+                                                <Label>Website</Label>
+                                                <a target="_blank" href={website}>
+                                                    <Input
+                                                        name="website"
+                                                        placeholder="Website Url"
+                                                        defaultValue={website}
+                                                        className="max-w-96 w-full text-primary"
+                                                    />
+                                                    <div className='absolute top-7 right-0 p-2'>
+                                                        <FiExternalLink className='text-primary' />
+                                                    </div>
+                                                </a>
+
+                                            </div>}
+
                                             {(socialMedia?.facebook || socialMedia?.instagram || socialMedia?.linkedin || socialMedia?.whatsapp) &&
                                                 <div className="w-full mt-4">
                                                     <h3 className="text-lg font-medium mb-2">Social Media</h3>
@@ -507,7 +523,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                         </div>
                                                     }
                                                     {socialMedia?.instagram &&
-                                                        <div className="relative max-w-96 mb-2">
+                                                        <div className="relative relative max-w-96 mb-2">
                                                             <Label>Instagram</Label>
                                                             <a target="_blank" href={socialMedia.instagram}>
                                                                 <Input

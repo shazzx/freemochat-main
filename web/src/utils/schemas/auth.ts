@@ -163,8 +163,7 @@ export const UpdateUserSchema = yup.object().shape({
     linkedin: yup.string().url("Enter valid url").optional(),
     whatsapp: yup.string().optional(),
   }).optional(),
-  website: yup.string()
-    .optional(),
+  website: yup.string().url("Enter valid url").optional(),
   dateOfBirth: yup.string()
     .test('valid-date', 'Invalid date format', (value) => {
       return !value || !isNaN(Date.parse(value));
