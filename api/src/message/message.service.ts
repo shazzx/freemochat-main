@@ -41,10 +41,10 @@ export class MessageService {
       return { messages: [], nextCursor: null };
     }
 
-    const softDelete = await this.messageSoftDelete.findOne({user: new Types.ObjectId(userId), recepient: new Types.ObjectId(recepientId)})
-// console.log(softDelete)
-    const _cursor = cursor && softDelete ? { createdAt: { $lt: new Date(cursor) }, _id: {$gt: softDelete.lastDeletedId} } : cursor ? {createdAt: { $lt: new Date(cursor)}} : softDelete ? {_id: {$gt: softDelete.lastDeletedId}} : {}
-    
+    const softDelete = await this.messageSoftDelete.findOne({ user: new Types.ObjectId(userId), recepient: new Types.ObjectId(recepientId) })
+    // console.log(softDelete)
+    const _cursor = cursor && softDelete ? { createdAt: { $lt: new Date(cursor) }, _id: { $gt: softDelete.lastDeletedId } } : cursor ? { createdAt: { $lt: new Date(cursor) } } : softDelete ? { _id: { $gt: softDelete.lastDeletedId } } : {}
+
     // let query = { ..._cursor, $or: [{ sender: userId, recepient: recepientId }, { sender: recepientId, recepient: userId }] }
     let query;
     let messages;
@@ -59,17 +59,17 @@ export class MessageService {
 
     }
     if (isChatGroup == 1) {
-    const _cursor = 
-    (cursor && softDelete) ? { createdAt: { $lt: new Date(cursor)}, _id: {$gt: softDelete.lastDeletedId } } 
-    : 
-    cursor ?  {createdAt: { $lt: new Date(cursor)}} : softDelete ?  {_id: {$gt: softDelete.lastDeletedId}} : {};
+      const _cursor =
+        (cursor && softDelete) ? { createdAt: { $lt: new Date(cursor) }, _id: { $gt: softDelete.lastDeletedId } }
+          :
+          cursor ? { createdAt: { $lt: new Date(cursor) } } : softDelete ? { _id: { $gt: softDelete.lastDeletedId } } : {};
 
       query = { ..._cursor, recepient: new Types.ObjectId(recepientId) }
 
       // console.log(query)
-      
+
       messages = await this.messageModel.aggregate([
-        { $match: { ...query}},
+        { $match: { ...query } },
         { $sort: { createdAt: -1 } },
         { $limit: limit + 1 },
         {
@@ -142,7 +142,7 @@ export class MessageService {
       throw new BadRequestException("Please provide proper details")
     }
 
-    
+
     const hasNextPage = messages.length > limit;
     const _messages = hasNextPage ? messages.slice(0, -1).reverse() : messages.reverse();
     const nextCursor = hasNextPage ? _messages[0].createdAt.toISOString() : null;
@@ -160,11 +160,17 @@ export class MessageService {
   }
 
 
-  async removeMessage(userId, messageId) {
+  async removeMessage(recepientId: string, userId: string, messageId: string, senderId: string) {
+    const message = 'you deleted this message'
     const deletedMessage = await this.messageModel.updateOne(
       { _id: messageId },
-      { $push: { deletedFor: { userId, deletedAt: Date.now() } } }
+      { $push: { deletedFor: { userId, deletedAt: Date.now() } }, content: message, media: null }
     )
+
+    if (deletedMessage.acknowledged) {
+      await this.chatlistService.updateChatlistLastMessage(recepientId, userId, {encryptedContent: message, messageId: new Types.ObjectId(messageId), sender: senderId})
+    }
+
     return deletedMessage
   }
 }

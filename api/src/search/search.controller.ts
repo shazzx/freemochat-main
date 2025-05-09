@@ -21,12 +21,12 @@ export class SearchController {
         return this.searchService.search(query, type, limit, skip);
     }
 
-    // @Get('suggestions')
-    // async suggestions(@Query() searchDTO: SearchDTO, @Req() req: Request, @Res() response: Response) {
-    //     let { query } = searchDTO
+    @Get('suggestions')
+    async suggestions(@Query() searchDTO: SearchDTO, @Req() req: Request, @Res() response: Response) {
+        let { query } = searchDTO
 
-    //     const results = await this.searchService.searchSuggestions(query)
-    //     console.log(results)
-    //     response.json(results)
-    // }
+        const results = await this.searchService.searchSuggestions(query)
+        console.log(results)
+        response.json(results)
+    }
 }

@@ -35,6 +35,9 @@ export class Post {
     type: String;
 
     @Prop({ type: String })
+    postType: String;
+
+    @Prop({ type: String })
     content: String;
 
     @Prop({ type: String, default: "public" })

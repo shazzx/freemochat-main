@@ -152,6 +152,20 @@ export class UserChatListService {
         return chatListUser
     }
 
+    async updateChatlistLastMessage(
+        recepientId: string,
+        senderId: string,
+        lastMessage: { sender: string, encryptedContent: string, messageId: Types.ObjectId }) {
+        const updated = await this.userChatListModel.updateOne(
+            { recepient: recepientId, user: senderId },
+            {
+                $set: {
+                    lastMessage
+                },
+            }
+        );
+        return true
+    }
 
     async updateMessageDeliverability(
         recepientId: string,

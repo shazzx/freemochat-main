@@ -47,7 +47,7 @@ export class AdminService {
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
 
         const query = search
-            ? { $or: [{_id: new Types.ObjectId(search)}, {postId: new Types.ObjectId(search)}], ..._cursor }
+            ? { $or: [{ _id: new Types.ObjectId(search) }, { postId: new Types.ObjectId(search) }], ..._cursor }
             : _cursor;
 
         const reports = await this.reportModel.aggregate([
@@ -131,12 +131,12 @@ export class AdminService {
                 this.campaignModel.find()
                     .sort({ createdAt: -1 })
                     .limit(4)
-                    .lean(),
+                    .lean() as any,
 
                 this.reportModel.find()
                     .sort({ createdAt: -1 })
                     .limit(4)
-                    .lean()
+                    .lean() as any
             ]);
 
             const result = await this.counterModel.aggregate([

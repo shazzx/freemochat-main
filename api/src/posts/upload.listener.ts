@@ -117,12 +117,14 @@ export class UploadListener {
                 await this.postsService.deletePost(postId);
             }
 
-            await this.chatGateway.uploadSuccess({ isSuccess: false, target: {
-                targetId,
-                type,
-                error,
-                invalidate: "posts"
-            } })
+            await this.chatGateway.uploadSuccess({
+                isSuccess: false, target: {
+                    targetId,
+                    type,
+                    error,
+                    invalidate: "posts"
+                }
+            })
         }
     }
 
@@ -185,20 +187,20 @@ export class UploadListener {
         }
     }
 
-    
+
     @OnEvent("messageMedia.upload")
-    async handleMessageMediaUpload({ uploadPromise, messageId, messageDetails, userId}: {
+    async handleMessageMediaUpload({ uploadPromise, messageId, messageDetails, userId }: {
         uploadPromise: any,
         messageId: string,
         userId: string,
-        messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number} }
+        messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number } }
     }) {
         try {
             const file = await Promise.all(uploadPromise)
             console.log(file[0].url, file[0].fileType)
-            let messageUpdate = await this.messageService.updateMessage(messageId, { media: {...messageDetails.media, url: file[0].url, type: file[0].fileType, isUploaded: true } })
+            let messageUpdate = await this.messageService.updateMessage(messageId, { media: { ...messageDetails.media, url: file[0].url, type: file[0].fileType, isUploaded: true } })
             console.log(messageUpdate)
-            await this.chatGateway.sendMessage({...messageDetails, media: {...messageDetails.media, url: file[0].url, isUploaded: true }})
+            await this.chatGateway.sendMessage({ ...messageDetails, media: { ...messageDetails.media, url: file[0].url, isUploaded: true } })
             console.log('success', messageDetails)
             await this.chatGateway.uploadSuccess({
                 isSuccess: true, target: {
@@ -211,7 +213,7 @@ export class UploadListener {
             })
         } catch (error) {
             console.error(`Error uploading media for message ${messageId}:`, error);
-            await this.messageService.removeMessage(userId, messageId)
+            await this.messageService.removeMessage(messageDetails.recepient.toString(), userId, messageId, messageDetails.sender.toString())
         }
     }
 }

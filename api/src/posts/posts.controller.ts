@@ -1,9 +1,9 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { PostsService } from './posts.service';
 import { Response } from 'express';
 import { Types } from 'mongoose'
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
 import { v4 as uuidv4 } from 'uuid'
 import { getFileType } from 'src/utils/getFileType';
@@ -14,7 +14,7 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateReel, CreateReelDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO } from 'src/schema/validation/global';
 import Stripe from 'stripe';
@@ -97,6 +97,13 @@ export class PostsController {
         response.json(await this.postService.getPosts(cursor, sub, targetId, type, isSelf))
     }
 
+    @Get('reels')
+    async getReels(@Req() req: Request, @Res() response: Response) {
+        const { sub } = req.user
+        const { type, cursor, targetId, isSelf } = req.query as { type: string, cursor: string, targetId: string, isSelf: string }
+        response.json(await this.postService.getReels(cursor, sub, targetId, type, isSelf))
+    }
+
     @Get("post")
     async getPost(@Query(new ZodValidationPipe(GetPost)) query: GetPostDTO, @Req() req: Request, @Res() response: Response) {
         const { sub } = req.user
@@ -115,10 +122,11 @@ export class PostsController {
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
     async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
+        console.log('posts is there ', files)
         const uploadPromise = files.map((file) => {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
-            return this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
+            return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
         })
 
         const { sub } = req.user
@@ -129,6 +137,7 @@ export class PostsController {
                 ...createPostDTO,
                 isUploaded: files.length > 0 ? false : null,
                 targetId,
+                postType: 'post',
                 user: new Types.ObjectId(sub)
             })
 
@@ -138,6 +147,40 @@ export class PostsController {
 
         res.json(uploadedPost)
     }
+
+
+    @UseInterceptors(FileInterceptor('file'))
+    @Post("create/reel")
+    async createReel(@Body(new ZodValidationPipe(CreateReel, true, "reelData")) reelData: CreateReelDTO, @Req() req: Request, @Res() res: Response, @UploadedFile() file: Express.Multer.File) {
+        console.log('reel is there ', file)
+
+        if (!file) {
+            throw new BadRequestException("file is required")
+        }
+
+        const fileType = getFileType(file.mimetype)
+        const filename = uuidv4()
+        const uploadPromise = [this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname, true)]
+
+        console.log(file, 'file')
+
+        const { sub } = req.user
+        let targetId = new Types.ObjectId(sub)
+
+        let uploadedPost = await this.postService.createPost(
+            {
+                ...reelData,
+                isUploaded: false,
+                postType: 'reel',
+                targetId,
+                user: new Types.ObjectId(sub)
+            })
+
+        this.eventEmiiter.emit("files.uploaded", { uploadPromise, postId: uploadedPost._id.toString(), targetId, type: reelData.type })
+
+        res.json(uploadedPost)
+    }
+
 
     @Post("create/shared")
     async createSharedPost(@Body(new ZodValidationPipe(CreateSharedPost)) sharedPostData: CreateSharedPostDTO, @Req() req: Request, @Res() res: Response) {

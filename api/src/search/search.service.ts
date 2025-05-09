@@ -64,9 +64,52 @@ export class SearchService {
       case 'posts':
         return {
           posts: await this.postModel.find({
-              content: { $regex: query, $options: 'i' }
-            }).limit(limit).skip(skip).exec()
+            content: { $regex: query, $options: 'i' }
+          }).limit(limit).skip(skip).exec()
         };
     }
   }
+  async searchSuggestions(query: string) {
+    let _query = query.split(" ")
+    const regexPattern = new RegExp(_query.join(""), 'i');
+
+    const aggregationPipeline = [
+      {
+        $match: {
+          $or: [
+            { username: { $regex: regexPattern }, isActive: true },
+            { handle: { $regex: regexPattern } },
+          ],
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          value: { $ifNull: ['$username', '$handle'] },
+          type: {
+            $cond: {
+              if: { $ifNull: ['$username', false] },
+              then: 'user',
+              else: { $cond: [{ $ifNull: ['$handle', false] }, 'group', 'page'] },
+            },
+          },
+        },
+      },
+      {
+        $limit: 10,
+      },
+    ];
+
+    const [userResults, groupResults, pageResults] = await Promise.all([
+      this.userModel.aggregate(aggregationPipeline),
+      this.groupModel.aggregate(aggregationPipeline),
+      this.pageModel.aggregate(aggregationPipeline),
+    ]);
+
+    return [...userResults, ...groupResults, ...pageResults]
+      .sort((a, b) => a.value.localeCompare(b.value))
+      .slice(0, 10);
+  }
+
+
 }

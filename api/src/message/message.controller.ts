@@ -34,18 +34,18 @@ export class MessageController {
     const fileType = getFileType(file.mimetype)
     const filename = uuidv4()
 
-    if(fileType == 'unsupported'){
+    if (fileType == 'unsupported') {
       throw new BadRequestException("Unsupported file")
     }
 
-    const {sub} = req.user
+    const { sub } = req.user
 
     const uploadPromise = this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-    
+
     let message = await this.messageService.createMessage({ type, content, sender: new Types.ObjectId(sender), recepient: new Types.ObjectId(recepient), media: { url: localUrl, ...mediaDetails, isUploaded: false }, messageType })
 
-    this.eventEmiiter.emit("messageMedia.upload", { uploadPromise: [uploadPromise], messageId: message._id.toString(), userId: sub, messageDetails: { type, content, sender: new Types.ObjectId(sender), recepient: new Types.ObjectId(recepient), media: { ...mediaDetails }, messageType }})
- 
+    this.eventEmiiter.emit("messageMedia.upload", { uploadPromise: [uploadPromise], messageId: message._id.toString(), userId: sub, messageDetails: { type, content, sender: new Types.ObjectId(sender), recepient: new Types.ObjectId(recepient), media: { ...mediaDetails }, messageType } })
+
     res.json(message)
   }
 
@@ -68,7 +68,7 @@ export class MessageController {
     @Res() res: Response) {
 
     const { sub } = req.user
-    const { messageId } = removeMessageDTO
-    res.json(await this.messageService.removeMessage(sub, messageId))
+    const { messageId, recepientId, senderId } = removeMessageDTO
+    res.json(await this.messageService.removeMessage(recepientId, sub, messageId, senderId))
   }
 }

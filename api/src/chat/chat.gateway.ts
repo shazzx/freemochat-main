@@ -72,6 +72,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (!recepient && userPushToken) {
         await this.sendPushNotification(pushMessage)
+        this.server.emit('self-response', { ...payload, _id: message._id })
         this.server.emit('chatlist', { users: chatlist })
         this.server.to(_user?.socketId).emit('chat', { ...payload, _id: message._id });
 
@@ -81,11 +82,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (!this.server.sockets.sockets.has(recepient?.socketId) && userPushToken) {
         await this.sendPushNotification(pushMessage)
+        this.server.emit('self-response', { ...payload, _id: message._id })
         this.server.emit('chatlist', { users: chatlist })
         this.server.to(_user?.socketId).emit('chat', { ...payload, _id: message._id });
         return
       }
 
+      this.server.emit('self-response', { ...payload, _id: message._id })
       this.server.to(recepient?.socketId).emit('chat', { ...payload, _id: message._id });
       this.server.to(_user?.socketId).emit('chat', { ...payload, _id: message._id });
       this.server.to(_user?.socketId).emit('chatlist', { users: chatlist })
@@ -326,6 +329,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async uploadSuccess(data) {
     let user = JSON.parse(await this.cacheService.getOnlineUser(data?.target?.targetId))
+    this.server.emit('upload-status', data)
     this.server.to(user?.socketId).emit('upload-status', data)
     // this.server.to(recepientId).emit('notification', event)
   }

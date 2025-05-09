@@ -1,4 +1,4 @@
-import {z} from 'zod'
+import { z } from 'zod'
 import { Cursor, ValidMongoId } from './global'
 
 export const CreateMessage = z.object({
@@ -21,7 +21,9 @@ export const GetMessages = Cursor.extend({
 })
 
 export const RemoveMessage = z.object({
-    messageId: ValidMongoId.optional(),
+    messageId: ValidMongoId,
+    recepientId: ValidMongoId,
+    senderId: ValidMongoId
 })
 
 export type CreateMessageDTO = z.infer<typeof CreateMessage>

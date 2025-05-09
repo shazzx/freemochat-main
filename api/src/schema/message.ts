@@ -10,7 +10,7 @@ class Media {
     isUploaded: String;
 }
 
-@Schema()
+@Schema({ timestamps: true })
 export class Message {
     @Prop()
     type: String;
@@ -18,7 +18,7 @@ export class Message {
     @Prop({ type: Types.ObjectId, ref: "User" })
     sender: ObjectId
 
-    @Prop({type: String, enum: ["Text", "Voice", "File", "Image", "Video", "Audio Call", "Video Call", "Group", "Info"]})
+    @Prop({ type: String, enum: ["Text", "Voice", "File", "Image", "Video", "Audio Call", "Video Call", "Group", "Info"] })
     messageType: string;
 
     @Prop({ type: Types.ObjectId })
@@ -32,9 +32,8 @@ export class Message {
 
     @Prop({ type: [{ userId: Types.ObjectId, deletedAt: Date }] })
     deletedFor: Array<{ userId: ObjectId, deletedAt: Date }>
-
-    @Prop({ type: Date, default: Date.now })
-    createdAt: Date;
+    // @Prop({ type: Date, default: Date.now })
+    // createdAt: Date;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message)

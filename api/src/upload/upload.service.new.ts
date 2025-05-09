@@ -1,10 +1,10 @@
 import { Injectable, UnprocessableEntityException, UnsupportedMediaTypeException } from '@nestjs/common';
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { 
-  MediaConvertClient, 
-  CreateJobCommand,
-  GetJobCommand,
-  DescribeEndpointsCommand
+import {
+    MediaConvertClient,
+    CreateJobCommand,
+    GetJobCommand,
+    DescribeEndpointsCommand
 } from '@aws-sdk/client-mediaconvert';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
@@ -53,7 +53,7 @@ export class UploadService {
         this.rekognitionClient = new RekognitionClient(awsConfig);
         this.s3Client = new S3Client(awsConfig);
         this.textractClient = new TextractClient(awsConfig);
-        
+
         // Initialize MediaConvert client
         this.mediaConvertClient = new MediaConvertClient({
             ...awsConfig,
@@ -104,11 +104,11 @@ export class UploadService {
         } else if (contentType == 'video') {
             const inputInfo = await this.getVideoInfo(file);
             console.log(inputInfo);
-            
+
             if (!inputInfo.format.includes('mp4') && !inputInfo.format.includes('mov')) {
                 throw new UnprocessableEntityException('Unsupported video format. Only MP4 and MOV are supported.');
             }
-            
+
             // If it's a reel, use MediaConvert for optimal social media formatting
             if (isReel) {
                 return await this.processReelVideo(file, fileName, originalname);
@@ -126,7 +126,7 @@ export class UploadService {
             console.log(contentType, 'contenttype');
             throw new Error('Unsupported file type');
         }
-        
+
         console.log(moderationResult);
 
         if (moderationResult.isSafe) {
@@ -143,28 +143,28 @@ export class UploadService {
             const inputKey = `temp/input/${fileName}`;
             await this.uploadToS3(file, inputKey, 'video/mp4');
             const inputPath = `s3://${this.bucketName}/${inputKey}`;
-            
+
             // 2. Set up output path with unique identifier
             const uniqueId = uuidv4();
             const outputKey = `processed/reels/${fileName.split('.')[0]}-${uniqueId}.mp4`;
             const outputPath = `s3://${this.bucketName}/${outputKey}`;
-            
+
             // 3. Create the MediaConvert job for reel optimization
             const jobId = await this.createMediaConvertJob(inputPath, outputPath);
-            
+
             // 4. Wait for the job to complete (with timeout)
             await this.waitForMediaConvertJob(jobId);
-            
+
             // 5. Clean up temp input file
             await this.deleteFromS3(inputKey);
-            
+
             // 6. Return the optimized video URL
             const outputUrl = `https://${this.bucketName}.s3.amazonaws.com/${outputKey}`;
-            
-            return { 
-                url: outputUrl, 
-                fileName: outputKey, 
-                fileType: 'video', 
+
+            return {
+                url: outputUrl,
+                fileName: outputKey,
+                fileType: 'video',
                 originalname,
                 isOptimized: true
             };
@@ -174,90 +174,119 @@ export class UploadService {
         }
     }
 
-    private async createMediaConvertJob(inputPath: string, outputPath: string) {
-        // Setup job parameters optimized for reels/social media
-        const jobParams: any = {
-            Role: process.env.AWS_MEDIACONVERT_ROLE,
-            Settings: {
-                Inputs: [
-                    {
-                        FileInput: inputPath,
-                    },
-                ],
-                OutputGroups: [
-                    {
-                        Name: "Reel Output",
-                        OutputGroupSettings: {
-                            Type: "FILE_GROUP_SETTINGS",
-                            FileGroupSettings: {
-                                Destination: outputPath,
-                            },
-                        },
-                        Outputs: [
-                            {
-                                // Remove the preset to avoid conflicts with our custom settings
-                                // Preset: "System-Generic_Hd_Mp4_Avc_Aac_16x9_1280x720p_24Hz_4.5Mbps",
-                                NameModifier: "-reel",
-                                VideoDescription: {
-                                    CodecSettings: {
-                                        Codec: "H_264",
-                                        H264Settings: {
-                                            RateControlMode: "QVBR",
-                                            QvbrSettings: {
-                                                QvbrQualityLevel: 8,
-                                                QvbrQualityLevelFineTune: 0,
-                                            },
-                                            MaxBitrate: 4500000,
-                                            SceneChangeDetect: "TRANSITION_DETECTION",
-                                            QualityTuningLevel: "MULTI_PASS_HQ",
-                                            FramerateControl: "INITIALIZE_FROM_SOURCE",
-                                            CodecProfile: "HIGH",
-                                            GopSize: 60, // 2 seconds at 30fps, good for social media
-                                            GopClosedCadence: 1,
-                                            SpatialAdaptiveQuantization: "ENABLED",
-                                            TemporalAdaptiveQuantization: "ENABLED",
-                                            FlickerAdaptiveQuantization: "ENABLED",
-                                        },
-                                    },
-                                    Width: 1080,  // Setting dimensions explicitly for social media format
-                                    Height: 1920, // 9:16 aspect ratio for reels/stories
-                                },
-                                AudioDescriptions: [
-                                    {
-                                        CodecSettings: {
-                                            Codec: "AAC",
-                                            AacSettings: {
-                                                Bitrate: 128000,
-                                                CodecProfile: "LC",
-                                                CodingMode: "CODING_MODE_2_0",
-                                                SampleRate: 48000,
-                                            },
-                                        },
-                                    },
-                                ],
-                                ContainerSettings: {
-                                    Container: "MP4",
-                                    Mp4Settings: {
-                                        CslgAtom: "INCLUDE",
-                                        FreeSpaceBox: "EXCLUDE",
-                                        MoovPlacement: "PROGRESSIVE_DOWNLOAD",
-                                    },
-                                },
-                            },
-                        ],
-                    },
-                ],
-            },
-        };
-    
+    private async createMediaConvertJob(inputPath: string, outputPath: string): Promise<string> {
         try {
+            console.log(`Creating MediaConvert job: ${inputPath} → ${outputPath}`);
+
+            // Create basic job parameters structure
+            const jobParams: any = {
+                Role: process.env.AWS_MEDIACONVERT_ROLE,
+                Settings: {
+                    Inputs: [
+                        {
+                            FileInput: inputPath,
+                            AudioSelectors: {
+                                'Audio Selector 1': {
+                                    DefaultSelection: 'DEFAULT'
+                                }
+                            },
+                            VideoSelector: {},
+                            TimecodeSource: 'ZEROBASED'
+                        }
+                    ],
+                    OutputGroups: [
+                        {
+                            Name: 'Social Media Optimized',
+                            OutputGroupSettings: {
+                                Type: 'FILE_GROUP_SETTINGS',
+                                FileGroupSettings: {
+                                    Destination: outputPath
+                                }
+                            },
+                            Outputs: [
+                                {
+                                    // Video configuration optimized for social media
+                                    VideoDescription: {
+                                        ScalingBehavior: 'DEFAULT',
+                                        Width: 1080,
+                                        Height: 1920,
+                                        CodecSettings: {
+                                            Codec: 'H_264',
+                                            H264Settings: {
+                                                MaxBitrate: 6000000,
+                                                RateControlMode: 'QVBR',
+                                                QvbrSettings: {
+                                                    QvbrQualityLevel: 8
+                                                },
+                                                FramerateControl: 'INITIALIZE_FROM_SOURCE',
+                                                ProfileLevel: 'HIGH',
+                                                GopSize: 2, // Short GOP for better scrubbing
+                                                GopClosedCadence: 1,
+                                                GopBReference: 'ENABLED',
+                                                AdaptiveQuantization: 'non-Auto',
+                                                SpatialAdaptiveQuantization: 'ENABLED',
+                                                TemporalAdaptiveQuantization: 'ENABLED',
+                                                FlickerAdaptiveQuantization: 'ENABLED',
+                                                EntropyEncoding: 'CABAC',
+                                                Slices: 1
+                                            }
+                                        },
+                                        AfdSignaling: 'NONE',
+                                        DropFrameTimecode: 'ENABLED',
+                                        RespondToAfd: 'NONE'
+                                    },
+                                    // Audio configuration
+                                    AudioDescriptions: [
+                                        {
+                                            AudioTypeControl: 'FOLLOW_INPUT',
+                                            CodecSettings: {
+                                                Codec: 'AAC',
+                                                AacSettings: {
+                                                    Bitrate: 320000,
+                                                    CodingMode: 'CODING_MODE_2_0',
+                                                    SampleRate: 48000
+                                                }
+                                            },
+                                            LanguageCodeControl: 'FOLLOW_INPUT',
+                                            AudioSourceName: 'Audio Selector 1'
+                                        }
+                                    ],
+                                    ContainerSettings: {
+                                        Container: 'MP4',
+                                        Mp4Settings: {
+                                            CslgAtom: 'INCLUDE',
+                                            FreeSpaceBox: 'EXCLUDE',
+                                            MoovPlacement: 'PROGRESSIVE_DOWNLOAD',
+                                            MpegtsScte35Esam: 'NONE'
+                                        }
+                                    },
+                                    Extension: 'mp4',
+                                    NameModifier: '-social'
+                                }
+                            ]
+                        }
+                    ],
+                    TimecodeConfig: {
+                        Source: 'ZEROBASED'
+                    }
+                },
+                StatusUpdateInterval: 'SECONDS_60',
+                Priority: 0
+            };
+
+            // Create the MediaConvert job
             const command = new CreateJobCommand(jobParams);
             const response = await this.mediaConvertClient.send(command);
-            console.log(`MediaConvert job created with ID: ${response.Job.Id}`);
+
+            if (!response.Job || !response.Job.Id) {
+                throw new Error('Failed to create MediaConvert job: no job ID returned');
+            }
+
+            console.log(`MediaConvert job created successfully. Job ID: ${response.Job.Id}`);
             return response.Job.Id;
         } catch (error) {
             console.error('Error creating MediaConvert job:', error);
-            throw error;
+            throw new Error(`Failed to create MediaConvert job: ${error.message}`);
         }
     }
 

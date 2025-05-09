@@ -1,11 +1,5 @@
 import { Injectable, UnprocessableEntityException, UnsupportedMediaTypeException } from '@nestjs/common';
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { 
-  MediaConvertClient, 
-  CreateJobCommand,
-  GetJobCommand,
-  DescribeEndpointsCommand
-} from '@aws-sdk/client-mediaconvert';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
 import { InjectModel } from '@nestjs/mongoose';
@@ -21,7 +15,6 @@ import { Readable } from 'stream';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { v4 as uuidv4 } from 'uuid';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
@@ -30,8 +23,6 @@ export class UploadService {
     private rekognitionClient: RekognitionClient;
     private s3Client: S3Client;
     private textractClient: TextractClient;
-    private mediaConvertClient: MediaConvertClient;
-    private mediaConvertEndpoint: string;
     private bucketName: string;
 
     constructor(
@@ -53,39 +44,6 @@ export class UploadService {
         this.rekognitionClient = new RekognitionClient(awsConfig);
         this.s3Client = new S3Client(awsConfig);
         this.textractClient = new TextractClient(awsConfig);
-        
-        // Initialize MediaConvert client
-        this.mediaConvertClient = new MediaConvertClient({
-            ...awsConfig,
-            // MediaConvert needs a specific endpoint that we'll fetch on service initialization
-        });
-
-        // Initialize MediaConvert endpoint
-        this.initializeMediaConvert();
-    }
-
-    private async initializeMediaConvert() {
-        try {
-            const { Endpoints } = await this.mediaConvertClient.send(new DescribeEndpointsCommand({}));
-            if (Endpoints && Endpoints.length > 0) {
-                this.mediaConvertEndpoint = Endpoints[0].Url;
-                // Update the client with the correct endpoint
-                this.mediaConvertClient = new MediaConvertClient({
-                    region: process.env.AWS_S3_REGION,
-                    credentials: {
-                        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-                        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-                    },
-                    endpoint: this.mediaConvertEndpoint
-                });
-                console.log(`MediaConvert endpoint initialized: ${this.mediaConvertEndpoint}`);
-            } else {
-                throw new Error('Failed to retrieve MediaConvert endpoints');
-            }
-        } catch (error) {
-            console.error('Error initializing MediaConvert:', error);
-            throw error;
-        }
     }
 
     async processAndUploadContent(
@@ -93,41 +51,44 @@ export class UploadService {
         fileName: string,
         contentType: string,
         originalname?: string,
-        isReel: boolean = false,
     ) {
         let processedContent: Buffer;
         let moderationResult: { isSafe: boolean; labels: string[] } | string;
 
         if (contentType == 'image') {
+            // processedContent = await this.optimizeImage(file);
+            // console.log(processedContent, "processedContent")
             const resizedImageForRekognition = await this.resizeImageForRekognition(file);
+            // Moderate using the resized version
             moderationResult = await this.moderateImage(resizedImageForRekognition);
+
+            // const uploadResult = await this.uploadToS3(file, fileName, contentType);
+            // return {url: uploadResult, fileName, fileType: contentType};
+            // console.log(moderationResult, "moderationresults")
         } else if (contentType == 'video') {
             const inputInfo = await this.getVideoInfo(file);
-            console.log(inputInfo);
-            
-            if (!inputInfo.format.includes('mp4') && !inputInfo.format.includes('mov')) {
-                throw new UnprocessableEntityException('Unsupported video format. Only MP4 and MOV are supported.');
+            console.log(inputInfo)
+            if (!inputInfo.format.includes('mp4') || !inputInfo.format.includes('mov')) {
+                throw new UnprocessableEntityException()
             }
-            
-            // If it's a reel, use MediaConvert for optimal social media formatting
-            if (isReel) {
-                return await this.processReelVideo(file, fileName, originalname);
-            } else {
-                moderationResult = await this.moderateVideo(file, fileName);
-                return { url: moderationResult, fileName, fileType: contentType, originalname };
-            }
+            // processedContent = await this.optimizeVideo(file, inputInfo);
+            moderationResult = await this.moderateVideo(file, fileName);
+            return { url: moderationResult, fileName, fileType: contentType, originalname };
+
         } else if (contentType == 'pdf') {
             processedContent = file; // No optimization for PDF
             moderationResult = await this.moderatePdf(file);
         } else if (contentType == 'audio') {
             const uploadResult = await this.uploadToS3(file, fileName, contentType);
             return { url: uploadResult, fileName, fileType: contentType };
-        } else {
-            console.log(contentType, 'contenttype');
+        }
+
+
+        else {
+            console.log(contentType, 'contenttype')
             throw new Error('Unsupported file type');
         }
-        
-        console.log(moderationResult);
+        console.log(moderationResult)
 
         if (moderationResult.isSafe) {
             const uploadResult = await this.uploadToS3(file, fileName, contentType);
@@ -135,164 +96,6 @@ export class UploadService {
         } else {
             throw new Error('Content violates moderation policies');
         }
-    }
-
-    async processReelVideo(file: Buffer, fileName: string, originalname?: string) {
-        try {
-            // 1. Upload the original file to S3 first
-            const inputKey = `temp/input/${fileName}`;
-            await this.uploadToS3(file, inputKey, 'video/mp4');
-            const inputPath = `s3://${this.bucketName}/${inputKey}`;
-            
-            // 2. Set up output path with unique identifier
-            const uniqueId = uuidv4();
-            const outputKey = `processed/reels/${fileName.split('.')[0]}-${uniqueId}.mp4`;
-            const outputPath = `s3://${this.bucketName}/${outputKey}`;
-            
-            // 3. Create the MediaConvert job for reel optimization
-            const jobId = await this.createMediaConvertJob(inputPath, outputPath);
-            
-            // 4. Wait for the job to complete (with timeout)
-            await this.waitForMediaConvertJob(jobId);
-            
-            // 5. Clean up temp input file
-            await this.deleteFromS3(inputKey);
-            
-            // 6. Return the optimized video URL
-            const outputUrl = `https://${this.bucketName}.s3.amazonaws.com/${outputKey}`;
-            
-            return { 
-                url: outputUrl, 
-                fileName: outputKey, 
-                fileType: 'video', 
-                originalname,
-                isOptimized: true
-            };
-        } catch (error) {
-            console.error('Error processing reel video:', error);
-            throw new Error(`Failed to process reel video: ${error.message}`);
-        }
-    }
-
-    private async createMediaConvertJob(inputPath: string, outputPath: string) {
-        // Setup job parameters optimized for reels/social media
-        const jobParams: any = {
-            Role: process.env.AWS_MEDIACONVERT_ROLE,
-            Settings: {
-                Inputs: [
-                    {
-                        FileInput: inputPath,
-                    },
-                ],
-                OutputGroups: [
-                    {
-                        Name: "Reel Output",
-                        OutputGroupSettings: {
-                            Type: "FILE_GROUP_SETTINGS",
-                            FileGroupSettings: {
-                                Destination: outputPath,
-                            },
-                        },
-                        Outputs: [
-                            {
-                                // Remove the preset to avoid conflicts with our custom settings
-                                // Preset: "System-Generic_Hd_Mp4_Avc_Aac_16x9_1280x720p_24Hz_4.5Mbps",
-                                NameModifier: "-reel",
-                                VideoDescription: {
-                                    CodecSettings: {
-                                        Codec: "H_264",
-                                        H264Settings: {
-                                            RateControlMode: "QVBR",
-                                            QvbrSettings: {
-                                                QvbrQualityLevel: 8,
-                                                QvbrQualityLevelFineTune: 0,
-                                            },
-                                            MaxBitrate: 4500000,
-                                            SceneChangeDetect: "TRANSITION_DETECTION",
-                                            QualityTuningLevel: "MULTI_PASS_HQ",
-                                            FramerateControl: "INITIALIZE_FROM_SOURCE",
-                                            CodecProfile: "HIGH",
-                                            GopSize: 60, // 2 seconds at 30fps, good for social media
-                                            GopClosedCadence: 1,
-                                            SpatialAdaptiveQuantization: "ENABLED",
-                                            TemporalAdaptiveQuantization: "ENABLED",
-                                            FlickerAdaptiveQuantization: "ENABLED",
-                                        },
-                                    },
-                                    Width: 1080,  // Setting dimensions explicitly for social media format
-                                    Height: 1920, // 9:16 aspect ratio for reels/stories
-                                },
-                                AudioDescriptions: [
-                                    {
-                                        CodecSettings: {
-                                            Codec: "AAC",
-                                            AacSettings: {
-                                                Bitrate: 128000,
-                                                CodecProfile: "LC",
-                                                CodingMode: "CODING_MODE_2_0",
-                                                SampleRate: 48000,
-                                            },
-                                        },
-                                    },
-                                ],
-                                ContainerSettings: {
-                                    Container: "MP4",
-                                    Mp4Settings: {
-                                        CslgAtom: "INCLUDE",
-                                        FreeSpaceBox: "EXCLUDE",
-                                        MoovPlacement: "PROGRESSIVE_DOWNLOAD",
-                                    },
-                                },
-                            },
-                        ],
-                    },
-                ],
-            },
-        };
-    
-        try {
-            const command = new CreateJobCommand(jobParams);
-            const response = await this.mediaConvertClient.send(command);
-            console.log(`MediaConvert job created with ID: ${response.Job.Id}`);
-            return response.Job.Id;
-        } catch (error) {
-            console.error('Error creating MediaConvert job:', error);
-            throw error;
-        }
-    }
-
-    private async waitForMediaConvertJob(jobId: string, maxAttempts = 60) {
-        console.log(`Waiting for MediaConvert job ${jobId} to complete...`);
-        let attempts = 0;
-        let jobStatus;
-
-        while (attempts < maxAttempts) {
-            try {
-                const command = new GetJobCommand({ Id: jobId });
-                const response = await this.mediaConvertClient.send(command);
-                jobStatus = response.Job.Status;
-
-                console.log(`Job status: ${jobStatus} (attempt ${attempts + 1}/${maxAttempts})`);
-
-                if (jobStatus === 'COMPLETE') {
-                    console.log(`MediaConvert job ${jobId} completed successfully`);
-                    return response.Job;
-                } else if (jobStatus === 'ERROR') {
-                    throw new Error(`MediaConvert job failed: ${response.Job.ErrorMessage}`);
-                } else if (jobStatus === 'CANCELED') {
-                    throw new Error('MediaConvert job was canceled');
-                }
-
-                // Wait before checking again (5 seconds)
-                await new Promise(resolve => setTimeout(resolve, 5000));
-                attempts++;
-            } catch (error) {
-                console.error(`Error checking MediaConvert job status: ${error}`);
-                throw error;
-            }
-        }
-
-        throw new Error(`MediaConvert job ${jobId} did not complete within the expected time`);
     }
 
     async resizeImageForRekognition(imageBuffer: Buffer): Promise<Buffer> {
@@ -512,7 +315,7 @@ export class UploadService {
             Bucket: this.bucketName,
             Key: fileName,
             Body: file,
-            ContentType: contentType,
+            // ContentType: contentType,
         });
 
         try {
@@ -525,6 +328,7 @@ export class UploadService {
     }
 
     async deleteFromS3(key: string) {
+        const bucketName = this.configService.get('AWS_S3_BUCKET_NAME');
         const command = new DeleteObjectCommand({
             Bucket: this.bucketName,
             Key: key,
