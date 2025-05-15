@@ -434,6 +434,7 @@ export class UserService {
                     maritalStatus: 1,
                     followersCount: { $ifNull: ['$followersCount.count', 0] },
                     friendsCount: { $ifNull: ['$friendsCount.count', 0] },
+                    autoScrollSettings: 1,
                     bio: 1,
                     address: 1,
                     phone: 1,

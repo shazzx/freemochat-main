@@ -97,19 +97,11 @@ export class PostsController {
         response.json(await this.postService.getPosts(cursor, sub, targetId, type, isSelf))
     }
 
-    @Get('reels')
-    async getReels(@Req() req: Request, @Res() response: Response) {
-        const { sub } = req.user
-        const { type, cursor, targetId, isSelf } = req.query as { type: string, cursor: string, targetId: string, isSelf: string }
-        response.json(await this.postService.getReels(cursor, sub, targetId, type, isSelf))
-    }
-
-    @Get("post")
-    async getPost(@Query(new ZodValidationPipe(GetPost)) query: GetPostDTO, @Req() req: Request, @Res() response: Response) {
-        const { sub } = req.user
-        const { type, postId } = query
-        response.json(await this.postService.getPost(sub, postId, type))
-    }
+    // @Public()
+    // @Get('/bulkupdate')
+    // async bulkUpdatePost(){
+    //     await this.postService.bulkUpdate()
+    // }
 
     @Get('feed')
     async feed(@Req() req: Request, @Res() response: Response) {
@@ -118,6 +110,19 @@ export class PostsController {
         response.json(await this.postService.feed(user.sub, cursor))
     }
 
+    @Get('reels')
+    async getReelsFeed(@Req() req: Request, @Res() response: Response) {
+        const user = req.user
+        const cursor = req.query.cursor
+        response.json(await this.postService.getReelsFeed(user.sub, cursor))
+    }
+
+    @Get("post")
+    async getPost(@Query(new ZodValidationPipe(GetPost)) query: GetPostDTO, @Req() req: Request, @Res() response: Response) {
+        const { sub } = req.user
+        const { type, postId } = query
+        response.json(await this.postService.getPost(sub, postId, type))
+    }
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
@@ -152,7 +157,6 @@ export class PostsController {
     @UseInterceptors(FileInterceptor('file'))
     @Post("create/reel")
     async createReel(@Body(new ZodValidationPipe(CreateReel, true, "reelData")) reelData: CreateReelDTO, @Req() req: Request, @Res() res: Response, @UploadedFile() file: Express.Multer.File) {
-        console.log('reel is there ', file)
 
         if (!file) {
             throw new BadRequestException("file is required")
@@ -160,9 +164,7 @@ export class PostsController {
 
         const fileType = getFileType(file.mimetype)
         const filename = uuidv4()
-        const uploadPromise = [this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname, true)]
-
-        console.log(file, 'file')
+        const uploadPromise = [this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)]
 
         const { sub } = req.user
         let targetId = new Types.ObjectId(sub)
@@ -176,7 +178,7 @@ export class PostsController {
                 user: new Types.ObjectId(sub)
             })
 
-        this.eventEmiiter.emit("files.uploaded", { uploadPromise, postId: uploadedPost._id.toString(), targetId, type: reelData.type })
+        this.eventEmiiter.emit("reel.upload", { uploadPromise, postId: uploadedPost._id.toString(), targetId, type: reelData.type, postType: 'reel' })
 
         res.json(uploadedPost)
     }
@@ -191,6 +193,7 @@ export class PostsController {
             {
                 ...sharedPostData,
                 sharedPost: new Types.ObjectId(sharedPostData.sharedPostId),
+                postType: 'post',
                 targetId,
                 user: new Types.ObjectId(sub)
             })
@@ -423,9 +426,9 @@ export class PostsController {
 
     @Post("view/bulk")
     async bulkViewPost(@Body(new ZodValidationPipe(BulkViewPost)) viewPostDTO: BulkViewPostDTO, @Req() req, @Res() res: Response) {
-        const { viewedPosts } = viewPostDTO
+        const { viewedPosts, type } = viewPostDTO
         const { sub } = req.user
-        res.json(await this.postService.bulkViewPosts({ userId: sub, postIds: viewedPosts }))
+        res.json(await this.postService.bulkViewPosts({ userId: sub, postIds: viewedPosts, type }))
     }
 
     // @Public()

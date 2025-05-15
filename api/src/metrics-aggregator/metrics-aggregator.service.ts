@@ -7,14 +7,15 @@ import { Counter } from 'src/schema/Counter';
 export class MetricsAggregatorService {
     constructor(@InjectModel(Counter.name) private readonly counterModel: Model<Counter>) { }
 
-    async incrementCount(targetId: Types.ObjectId, name: string, type: string) {
+    async incrementCount(targetId: Types.ObjectId, name: string, type: string, session?: any) {
         let counter = await this.counterModel.updateOne(
             { targetId, name, type },
             {
                 $setOnInsert: { targetId, name, type },
                 $inc: { count: 1 }
             },
-            { upsert: true }
+            { upsert: true, session }
+            
         )
         return counter
     }

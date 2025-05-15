@@ -51,6 +51,17 @@ export class User {
         videos: string[];
     };
 
+    @Prop({
+        type: Object, default: {
+            autoScroll: false,
+            autoScrollDelay: null
+        }
+    })
+    autoScrollSettings: {
+        autoScroll: boolean;
+        autoScrollDelay: number | null;
+    };
+
     // auth related
     // @Prop({type: String, required: true})
     // emailSecret: string;

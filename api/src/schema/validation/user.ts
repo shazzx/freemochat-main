@@ -70,6 +70,10 @@ export const UpdateUser = z.object({
         .optional(),
 
     maritalStatus: z.enum(['single', 'married']).nullable().optional(),
+    autoScrollSettings: z.object({
+        autoScroll: z.boolean().optional(),
+        autoScrollDelay: z.number().optional().nullable(),
+    }).optional(),
 })
 
 

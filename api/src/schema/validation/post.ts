@@ -102,6 +102,7 @@ export const ViewPost = z.object({
 
 
 export const BulkViewPost = z.object({
+    type: z.string(),
     viewedPosts: z.array(z.string()),
 })
 

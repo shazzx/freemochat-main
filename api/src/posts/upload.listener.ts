@@ -128,6 +128,52 @@ export class UploadListener {
         }
     }
 
+    @OnEvent("reel.upload")
+    async handleReelUploadEvent({ uploadPromise, postId, targetId, type, uploadType }: {
+        uploadPromise: any,
+        postId: string,
+        targetId: Types.ObjectId,
+        type: string
+        uploadType?: string
+        _postData?: any
+    }) {
+        try {
+            const videos = await Promise.all(uploadPromise)
+
+            let postMedia = []
+            for (let video of videos) {
+                if (video.fileType == 'video') {
+                    postMedia.push({ type: 'video', url: video.url })
+                }
+            }
+
+            const postDetails = { media: postMedia, isUploaded: null }
+            await this.postsService.updatePost(postId, postDetails);
+            await this.chatGateway.uploadSuccess({
+                isSuccess: true, target: {
+                    targetId,
+                    type,
+                    invalidate: "reels"
+                }
+            })
+        } catch (error) {
+            console.error(`Error uploading media for post ${postId}:`, error);
+            if (uploadType !== 'update') {
+                await this.postsService.deletePost(postId);
+            }
+
+            await this.chatGateway.uploadSuccess({
+                isSuccess: false, target: {
+                    targetId,
+                    type,
+                    error,
+                    invalidate: "reels"
+                }
+            })
+        }
+    }
+
+
     @OnEvent("profiles.upload")
     async handleProfilesUpload({ uploadPromise, targetId, type }: {
         uploadPromise: any,

@@ -1,6 +1,6 @@
 import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ObjectId, Types } from 'mongoose';
+import { Model, ObjectId, startSession, Types } from 'mongoose';
 import { LocationService } from 'src/location/location.service';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 import { NotificationService } from 'src/notification/notification.service';
@@ -725,442 +725,445 @@ export class PostsService {
         // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
     }
 
-    async getReels(cursor: string | null, userId: string, targetId: string, type: string, self: string) {
-        let model = type + 's'
-        const limit = 24
+    // async getReels(cursor: string | null, userId: string, targetId: string, type: string, self: string) {
+    //     let model = type + 's'
+    //     const limit = 14
 
-        // let visibility = self == 'true' ? {} : {}
-        let visibility = {
-            $or: [
-                { visibility: 'public' },
-                { $and: [{ visibility: 'private' }, { user: new Types.ObjectId(userId) }] }
-            ]
-        }
+    //     // let visibility = self == 'true' ? {} : {}
+    //     let visibility = {
+    //         $or: [
+    //             { visibility: 'public' },
+    //             { $and: [{ visibility: 'private' }, { user: new Types.ObjectId(userId) }] }
+    //         ]
+    //     }
 
-        const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility } : { ...visibility };
-        let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type, postType: 'reel' } : { ..._cursor, type }
+    //     const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility } : { ...visibility };
+    //     let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type } : { ..._cursor, type }
 
-        const reels = await this.postModel.aggregate([
-            { $match: query },
-            { $sort: { createdAt: -1 } },
-            { $limit: limit + 1 },
-            {
-                $lookup: {
-                    from: model,
-                    localField: "targetId",
-                    foreignField: "_id",
-                    as: "target"
-                }
-            },
-            {
-                $addFields: {
-                    userObjectId: {
-                        $cond: {
-                            if: { $eq: ["$type", "group"] },
-                            then: {
-                                $cond: {
-                                    if: { $eq: [{ $type: "$user" }, "string"] },
-                                    then: { $toObjectId: "$user" },
-                                    else: "$user"
-                                }
-                            },
-                            else: null
-                        }
-                    }
-                }
-            },
-            {
-                $lookup: {
-                    from: "users",
-                    let: { userId: "$userObjectId", postType: "$type" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ["$$postType", "group"] },
-                                        { $eq: ["$_id", "$$userId"] }
-                                    ]
-                                }
-                            }
-                        },
-                        { $limit: 1 }
-                    ],
-                    as: "userDetails"
-                }
-            },
-            {
-                $addFields: {
-                    user: {
-                        $cond: {
-                            if: { $eq: ["$type", "group"] },
-                            then: {
-                                $cond: {
-                                    if: { $gt: [{ $size: "$userDetails" }, 0] },
-                                    then: { $arrayElemAt: ["$userDetails", 0] },
-                                    else: null
-                                }
-                            },
-                            else: "$user"
-                        }
-                    }
-                }
-            },
-            {
-                $unwind: "$target"
-            },
-            {
-                $lookup: {
-                    from: 'posts',
-                    let: { sharedPostId: '$sharedPost' },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $ne: ['$$sharedPostId', null] },
-                                        { $eq: ['$_id', '$$sharedPostId'] }
-                                    ]
-                                }
-                            }
-                        },
-                        // Target lookup for shared post
-                        {
-                            $lookup: {
-                                from: 'users',
-                                localField: 'targetId',
-                                foreignField: '_id',
-                                as: 'userTarget'
-                            }
-                        },
-                        {
-                            $lookup: {
-                                from: 'groups',
-                                localField: 'targetId',
-                                foreignField: '_id',
-                                as: 'groupTarget'
-                            }
-                        },
-                        {
-                            $lookup: {
-                                from: 'pages',
-                                localField: 'targetId',
-                                foreignField: '_id',
-                                as: 'pageTarget'
-                            }
-                        },
-                        // Handle user for shared post
-                        {
-                            $addFields: {
-                                userObjectId: {
-                                    $cond: {
-                                        if: { $eq: ["$type", "group"] },
-                                        then: {
-                                            $cond: {
-                                                if: { $eq: [{ $type: "$user" }, "string"] },
-                                                then: { $toObjectId: "$user" },
-                                                else: "$user"
-                                            }
-                                        },
-                                        else: null
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            $lookup: {
-                                from: "users",
-                                let: { userId: "$userObjectId", postType: "$type" },
-                                pipeline: [
-                                    {
-                                        $match: {
-                                            $expr: {
-                                                $and: [
-                                                    { $eq: ["$$postType", "group"] },
-                                                    { $eq: ["$_id", "$$userId"] }
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    { $limit: 1 }
-                                ],
-                                as: "userDetails"
-                            }
-                        },
-                        {
-                            $lookup: {
-                                from: 'users',
-                                localField: 'user',
-                                foreignField: '_id',
-                                as: 'regularUserDetails'
-                            }
-                        },
-                        {
-                            $addFields: {
-                                user: {
-                                    $cond: {
-                                        if: { $eq: ["$type", "group"] },
-                                        then: {
-                                            $cond: {
-                                                if: { $gt: [{ $size: "$userDetails" }, 0] },
-                                                then: { $arrayElemAt: ["$userDetails", 0] },
-                                                else: null
-                                            }
-                                        },
-                                        else: {
-                                            $cond: {
-                                                if: { $gt: [{ $size: "$regularUserDetails" }, 0] },
-                                                then: { $arrayElemAt: ["$regularUserDetails", 0] },
-                                                else: "$user"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        // Handle likes for shared post
-                        {
-                            $lookup: {
-                                from: 'likes',
-                                let: { postId: '$_id' },
-                                pipeline: [
-                                    {
-                                        $match: {
-                                            $expr: {
-                                                $and: [
-                                                    { $eq: ['$targetId', '$$postId'] },
-                                                    { $eq: ['$userId', new Types.ObjectId(userId)] },
-                                                    { $eq: ['$type', "post"] },
-                                                ],
-                                            },
-                                        },
-                                    },
-                                ],
-                                as: 'userLike',
-                            },
-                        },
-                        // Handle bookmarks for shared post
-                        {
-                            $lookup: {
-                                from: 'bookmarks',
-                                let: { postId: '$_id' },
-                                pipeline: [
-                                    {
-                                        $match: {
-                                            $expr: {
-                                                $and: [
-                                                    { $eq: ['$postId', '$$postId'] },
-                                                    { $eq: ['$userId', new Types.ObjectId(userId)] },
-                                                ],
-                                            },
-                                        },
-                                    },
-                                ],
-                                as: 'userBookmark',
-                            },
-                        },
-                        // Handle counters for shared post
-                        {
-                            $lookup: {
-                                from: 'counters',
-                                let: { postId: '$_id' },
-                                pipeline: [
-                                    {
-                                        $match: {
-                                            $expr: {
-                                                $and: [
-                                                    { $eq: ['$targetId', '$$postId'] },
-                                                    { $eq: ['$name', 'post'] },
-                                                    { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                ],
-                                as: 'counters'
-                            }
-                        },
-                        // Combine fields for shared post
-                        {
-                            $addFields: {
-                                target: {
-                                    $switch: {
-                                        branches: [
-                                            { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-                                        ],
-                                        default: null
-                                    }
-                                },
-                                likesCount: {
-                                    $ifNull: [
-                                        { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
-                                        0
-                                    ]
-                                },
-                                commentsCount: {
-                                    $ifNull: [
-                                        { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
-                                        0
-                                    ]
-                                },
-                                bookmarksCount: {
-                                    $ifNull: [
-                                        { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
-                                        0
-                                    ]
-                                },
-                                isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
-                                reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
-                                isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
-                            }
-                        },
-                        // Project shared post fields
-                        {
-                            $project: {
-                                _id: 1,
-                                content: 1,
-                                media: 1,
-                                user: 1,
-                                promotion: 1,
-                                isUploaded: 1,
-                                target: 1,
-                                reaction: 1,
-                                likesCount: { $ifNull: ['$likesCount.count', 0] },
-                                commentsCount: { $ifNull: ['$commentsCount.count', 0] },
-                                bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
-                                isLikedByUser: 1,
-                                targetId: 1,
-                                type: 1,
-                                isBookmarkedByUser: 1,
-                                updatedAt: 1,
-                                createdAt: 1
-                            }
-                        }
-                    ],
-                    as: 'sharedPostDetails'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'likes',
-                    let: { postId: '$_id' },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$targetId', '$$postId'] },
-                                        { $eq: ['$userId', new Types.ObjectId(userId)] },
-                                        { $eq: ['$type', "post"] },
-                                    ],
-                                },
-                            },
-                        },
-                    ],
-                    as: 'userLike',
-                },
-            },
-            {
-                $lookup: {
-                    from: 'bookmarks',
-                    let: { postId: '$_id' },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$postId', '$$postId'] },
-                                        { $eq: ['$userId', new Types.ObjectId(userId)] },
-                                    ],
-                                },
-                            },
-                        },
-                    ],
-                    as: 'userBookmark',
-                },
-            },
-            {
-                $lookup: {
-                    from: 'counters',
-                    let: { postId: '$_id' },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$targetId', '$$postId'] },
-                                        { $eq: ['$name', 'post'] },
-                                        { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
-                                    ]
-                                }
-                            }
-                        }
-                    ],
-                    as: 'counters'
-                }
-            },
-            {
-                $addFields: {
-                    reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
-                    isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
-                    isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
-                    likesCount: {
-                        $ifNull: [
-                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
-                            { count: 0 }
-                        ]
-                    },
-                    commentsCount: {
-                        $ifNull: [
-                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
-                            { count: 0 }
-                        ]
-                    },
-                    bookmarksCount: {
-                        $ifNull: [
-                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
-                            { count: 0 }
-                        ]
-                    }
-                },
-            },
-            {
-                $project: {
-                    _id: 1,
-                    content: 1,
-                    media: 1,
-                    user: 1,
-                    target: 1,
-                    reaction: 1,
-                    likesCount: { $ifNull: ['$likesCount.count', 0] },
-                    commentsCount: { $ifNull: ['$commentsCount.count', 0] },
-                    bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
-                    isLikedByUser: 1,
-                    targetId: 1,
-                    type: 1,
-                    isBookmarkedByUser: 1,
-                    updatedAt: 1,
-                    createdAt: 1,
-                    sharedPost: {
-                        $cond: {
-                            if: { $gt: [{ $size: '$sharedPostDetails' }, 0] },
-                            then: { $arrayElemAt: ['$sharedPostDetails', 0] },
-                            else: null
-                        }
-                    }
-                },
-            },
-        ]);
+    //     console.log('reels query', query)
 
-        const hasNextPage = reels.length > limit;
-        const _reels = hasNextPage ? reels.slice(0, -1) : reels;
-        const nextCursor = hasNextPage ? _reels[_reels.length - 1].createdAt.toISOString() : null;
+    //     const reels = await this.postModel.aggregate([
+    //         { $match: query },
+    //         { $sort: { createdAt: -1 } },
+    //         { $limit: limit + 1 },
+    //         {
+    //             $lookup: {
+    //                 from: model,
+    //                 localField: "targetId",
+    //                 foreignField: "_id",
+    //                 as: "target"
+    //             }
+    //         },
+    //         {
+    //             $addFields: {
+    //                 userObjectId: {
+    //                     $cond: {
+    //                         if: { $eq: ["$type", "group"] },
+    //                         then: {
+    //                             $cond: {
+    //                                 if: { $eq: [{ $type: "$user" }, "string"] },
+    //                                 then: { $toObjectId: "$user" },
+    //                                 else: "$user"
+    //                             }
+    //                         },
+    //                         else: null
+    //                     }
+    //                 }
+    //             }
+    //         },
+    //         {
+    //             $lookup: {
+    //                 from: "users",
+    //                 let: { userId: "$userObjectId", postType: "$type" },
+    //                 pipeline: [
+    //                     {
+    //                         $match: {
+    //                             $expr: {
+    //                                 $and: [
+    //                                     { $eq: ["$$postType", "group"] },
+    //                                     { $eq: ["$_id", "$$userId"] }
+    //                                 ]
+    //                             }
+    //                         }
+    //                     },
+    //                     { $limit: 1 }
+    //                 ],
+    //                 as: "userDetails"
+    //             }
+    //         },
+    //         {
+    //             $addFields: {
+    //                 user: {
+    //                     $cond: {
+    //                         if: { $eq: ["$type", "group"] },
+    //                         then: {
+    //                             $cond: {
+    //                                 if: { $gt: [{ $size: "$userDetails" }, 0] },
+    //                                 then: { $arrayElemAt: ["$userDetails", 0] },
+    //                                 else: null
+    //                             }
+    //                         },
+    //                         else: "$user"
+    //                     }
+    //                 }
+    //             }
+    //         },
+    //         {
+    //             $unwind: "$target"
+    //         },
+    //         {
+    //             $lookup: {
+    //                 from: 'posts',
+    //                 let: { sharedPostId: '$sharedPost' },
+    //                 pipeline: [
+    //                     {
+    //                         $match: {
+    //                             $expr: {
+    //                                 $and: [
+    //                                     { $ne: ['$$sharedPostId', null] },
+    //                                     { $eq: ['$_id', '$$sharedPostId'] }
+    //                                 ]
+    //                             }
+    //                         }
+    //                     },
+    //                     // Target lookup for shared post
+    //                     {
+    //                         $lookup: {
+    //                             from: 'users',
+    //                             localField: 'targetId',
+    //                             foreignField: '_id',
+    //                             as: 'userTarget'
+    //                         }
+    //                     },
+    //                     {
+    //                         $lookup: {
+    //                             from: 'groups',
+    //                             localField: 'targetId',
+    //                             foreignField: '_id',
+    //                             as: 'groupTarget'
+    //                         }
+    //                     },
+    //                     {
+    //                         $lookup: {
+    //                             from: 'pages',
+    //                             localField: 'targetId',
+    //                             foreignField: '_id',
+    //                             as: 'pageTarget'
+    //                         }
+    //                     },
+    //                     // Handle user for shared post
+    //                     {
+    //                         $addFields: {
+    //                             userObjectId: {
+    //                                 $cond: {
+    //                                     if: { $eq: ["$type", "group"] },
+    //                                     then: {
+    //                                         $cond: {
+    //                                             if: { $eq: [{ $type: "$user" }, "string"] },
+    //                                             then: { $toObjectId: "$user" },
+    //                                             else: "$user"
+    //                                         }
+    //                                     },
+    //                                     else: null
+    //                                 }
+    //                             }
+    //                         }
+    //                     },
+    //                     {
+    //                         $lookup: {
+    //                             from: "users",
+    //                             let: { userId: "$userObjectId", postType: "$type" },
+    //                             pipeline: [
+    //                                 {
+    //                                     $match: {
+    //                                         $expr: {
+    //                                             $and: [
+    //                                                 { $eq: ["$$postType", "group"] },
+    //                                                 { $eq: ["$_id", "$$userId"] }
+    //                                             ]
+    //                                         }
+    //                                     }
+    //                                 },
+    //                                 { $limit: 1 }
+    //                             ],
+    //                             as: "userDetails"
+    //                         }
+    //                     },
+    //                     {
+    //                         $lookup: {
+    //                             from: 'users',
+    //                             localField: 'user',
+    //                             foreignField: '_id',
+    //                             as: 'regularUserDetails'
+    //                         }
+    //                     },
+    //                     {
+    //                         $addFields: {
+    //                             user: {
+    //                                 $cond: {
+    //                                     if: { $eq: ["$type", "group"] },
+    //                                     then: {
+    //                                         $cond: {
+    //                                             if: { $gt: [{ $size: "$userDetails" }, 0] },
+    //                                             then: { $arrayElemAt: ["$userDetails", 0] },
+    //                                             else: null
+    //                                         }
+    //                                     },
+    //                                     else: {
+    //                                         $cond: {
+    //                                             if: { $gt: [{ $size: "$regularUserDetails" }, 0] },
+    //                                             then: { $arrayElemAt: ["$regularUserDetails", 0] },
+    //                                             else: "$user"
+    //                                         }
+    //                                     }
+    //                                 }
+    //                             }
+    //                         }
+    //                     },
+    //                     // Handle likes for shared post
+    //                     {
+    //                         $lookup: {
+    //                             from: 'likes',
+    //                             let: { postId: '$_id' },
+    //                             pipeline: [
+    //                                 {
+    //                                     $match: {
+    //                                         $expr: {
+    //                                             $and: [
+    //                                                 { $eq: ['$targetId', '$$postId'] },
+    //                                                 { $eq: ['$userId', new Types.ObjectId(userId)] },
+    //                                                 { $eq: ['$type', "post"] },
+    //                                             ],
+    //                                         },
+    //                                     },
+    //                                 },
+    //                             ],
+    //                             as: 'userLike',
+    //                         },
+    //                     },
+    //                     // Handle bookmarks for shared post
+    //                     {
+    //                         $lookup: {
+    //                             from: 'bookmarks',
+    //                             let: { postId: '$_id' },
+    //                             pipeline: [
+    //                                 {
+    //                                     $match: {
+    //                                         $expr: {
+    //                                             $and: [
+    //                                                 { $eq: ['$postId', '$$postId'] },
+    //                                                 { $eq: ['$userId', new Types.ObjectId(userId)] },
+    //                                             ],
+    //                                         },
+    //                                     },
+    //                                 },
+    //                             ],
+    //                             as: 'userBookmark',
+    //                         },
+    //                     },
+    //                     // Handle counters for shared post
+    //                     {
+    //                         $lookup: {
+    //                             from: 'counters',
+    //                             let: { postId: '$_id' },
+    //                             pipeline: [
+    //                                 {
+    //                                     $match: {
+    //                                         $expr: {
+    //                                             $and: [
+    //                                                 { $eq: ['$targetId', '$$postId'] },
+    //                                                 { $eq: ['$name', 'post'] },
+    //                                                 { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+    //                                             ]
+    //                                         }
+    //                                     }
+    //                                 }
+    //                             ],
+    //                             as: 'counters'
+    //                         }
+    //                     },
+    //                     // Combine fields for shared post
+    //                     {
+    //                         $addFields: {
+    //                             target: {
+    //                                 $switch: {
+    //                                     branches: [
+    //                                         { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+    //                                         { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+    //                                         { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+    //                                     ],
+    //                                     default: null
+    //                                 }
+    //                             },
+    //                             likesCount: {
+    //                                 $ifNull: [
+    //                                     { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
+    //                                     0
+    //                                 ]
+    //                             },
+    //                             commentsCount: {
+    //                                 $ifNull: [
+    //                                     { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
+    //                                     0
+    //                                 ]
+    //                             },
+    //                             bookmarksCount: {
+    //                                 $ifNull: [
+    //                                     { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
+    //                                     0
+    //                                 ]
+    //                             },
+    //                             isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
+    //                             reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
+    //                             isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
+    //                         }
+    //                     },
+    //                     // Project shared post fields
+    //                     {
+    //                         $project: {
+    //                             _id: 1,
+    //                             content: 1,
+    //                             media: 1,
+    //                             user: 1,
+    //                             promotion: 1,
+    //                             isUploaded: 1,
+    //                             target: 1,
+    //                             reaction: 1,
+    //                             likesCount: { $ifNull: ['$likesCount.count', 0] },
+    //                             commentsCount: { $ifNull: ['$commentsCount.count', 0] },
+    //                             bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
+    //                             isLikedByUser: 1,
+    //                             targetId: 1,
+    //                             type: 1,
+    //                             isBookmarkedByUser: 1,
+    //                             updatedAt: 1,
+    //                             createdAt: 1
+    //                         }
+    //                     }
+    //                 ],
+    //                 as: 'sharedPostDetails'
+    //             }
+    //         },
+    //         {
+    //             $lookup: {
+    //                 from: 'likes',
+    //                 let: { postId: '$_id' },
+    //                 pipeline: [
+    //                     {
+    //                         $match: {
+    //                             $expr: {
+    //                                 $and: [
+    //                                     { $eq: ['$targetId', '$$postId'] },
+    //                                     { $eq: ['$userId', new Types.ObjectId(userId)] },
+    //                                     { $eq: ['$type', "post"] },
+    //                                 ],
+    //                             },
+    //                         },
+    //                     },
+    //                 ],
+    //                 as: 'userLike',
+    //             },
+    //         },
+    //         {
+    //             $lookup: {
+    //                 from: 'bookmarks',
+    //                 let: { postId: '$_id' },
+    //                 pipeline: [
+    //                     {
+    //                         $match: {
+    //                             $expr: {
+    //                                 $and: [
+    //                                     { $eq: ['$postId', '$$postId'] },
+    //                                     { $eq: ['$userId', new Types.ObjectId(userId)] },
+    //                                 ],
+    //                             },
+    //                         },
+    //                     },
+    //                 ],
+    //                 as: 'userBookmark',
+    //             },
+    //         },
+    //         {
+    //             $lookup: {
+    //                 from: 'counters',
+    //                 let: { postId: '$_id' },
+    //                 pipeline: [
+    //                     {
+    //                         $match: {
+    //                             $expr: {
+    //                                 $and: [
+    //                                     { $eq: ['$targetId', '$$postId'] },
+    //                                     { $eq: ['$name', 'post'] },
+    //                                     { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+    //                                 ]
+    //                             }
+    //                         }
+    //                     }
+    //                 ],
+    //                 as: 'counters'
+    //             }
+    //         },
+    //         {
+    //             $addFields: {
+    //                 reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
+    //                 isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
+    //                 isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
+    //                 likesCount: {
+    //                     $ifNull: [
+    //                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
+    //                         { count: 0 }
+    //                     ]
+    //                 },
+    //                 commentsCount: {
+    //                     $ifNull: [
+    //                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
+    //                         { count: 0 }
+    //                     ]
+    //                 },
+    //                 bookmarksCount: {
+    //                     $ifNull: [
+    //                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
+    //                         { count: 0 }
+    //                     ]
+    //                 }
+    //             },
+    //         },
+    //         {
+    //             $project: {
+    //                 _id: 1,
+    //                 content: 1,
+    //                 media: 1,
+    //                 user: 1,
+    //                 target: 1,
+    //                 reaction: 1,
+    //                 likesCount: { $ifNull: ['$likesCount.count', 0] },
+    //                 commentsCount: { $ifNull: ['$commentsCount.count', 0] },
+    //                 bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
+    //                 isLikedByUser: 1,
+    //                 targetId: 1,
+    //                 type: 1,
+    //                 isBookmarkedByUser: 1,
+    //                 updatedAt: 1,
+    //                 createdAt: 1,
+    //                 sharedPost: {
+    //                     $cond: {
+    //                         if: { $gt: [{ $size: '$sharedPostDetails' }, 0] },
+    //                         then: { $arrayElemAt: ['$sharedPostDetails', 0] },
+    //                         else: null
+    //                     }
+    //                 }
+    //             },
+    //         },
+    //     ]);
 
-        const results = { posts: _reels, nextCursor };
-        return results
-    }
+    //     const hasNextPage = reels.length > limit;
+    //     const _reels = hasNextPage ? reels.slice(0, -1) : reels;
+    //     const nextCursor = hasNextPage ? _reels[_reels.length - 1].createdAt.toISOString() : null;
+
+    //     const results = { reels: _reels, nextCursor };
+    //     console.log(results, 'reels results')
+    //     return results
+    // }
 
     async getPostLikes(cursor, postId) {
         const limit = 12
@@ -1875,7 +1878,17 @@ export class PostsService {
             ]
         }
 
-        const query = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility } : { ...visibility };
+        // const query = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility, postType: 'post' } : { ...visibility, postType: 'post' };
+        const query = cursor
+            ? {
+                createdAt: { $lt: new Date(cursor) },
+                ...visibility,
+                postType: { $in: ['post'] }
+            }
+            : {
+                ...visibility,
+                postType: { $in: ['post'] }
+            };
 
         // const posts = await this.postModel.aggregate([
         //     { $match: query },
@@ -2816,6 +2829,269 @@ export class PostsService {
         return results
     }
 
+    async getReelsFeed(userId, cursor) {
+        const limit = 16
+
+        let visibility = {
+            $or: [
+                { visibility: 'public' },
+                { $and: [{ visibility: 'private' }, { user: new Types.ObjectId(userId) }] }
+            ]
+        }
+
+        const query = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility, postType: 'reel', isUploaded: true } : { ...visibility, postType: 'reel', isUploaded: true };
+
+
+        const reels = await this.postModel.aggregate([
+            { $match: query },
+            { $sort: { createdAt: -1 } },
+            { $limit: limit + 1 },
+            // Target lookup section - Look up possible targets from different collections
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'targetId',
+                    foreignField: '_id',
+                    as: 'userTarget'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'groups',
+                    localField: 'targetId',
+                    foreignField: '_id',
+                    as: 'groupTarget'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'pages',
+                    localField: 'targetId',
+                    foreignField: '_id',
+                    as: 'pageTarget'
+                }
+            },
+            // Handle user object ID conversion for group posts
+            {
+                $addFields: {
+                    userObjectId: {
+                        $cond: {
+                            if: { $eq: ["$type", "group"] },
+                            then: {
+                                $cond: {
+                                    if: { $eq: [{ $type: "$user" }, "string"] },
+                                    then: { $toObjectId: "$user" },
+                                    else: "$user"
+                                }
+                            },
+                            else: null
+                        }
+                    }
+                }
+            },
+
+            {
+                $lookup: {
+                    from: "users",
+                    let: { userId: "$userObjectId", postType: "$type" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$$postType", "group"] },
+                                        { $eq: ["$_id", "$$userId"] }
+                                    ]
+                                }
+                            }
+                        },
+                        { $limit: 1 }
+                    ],
+                    as: "userDetails"
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    as: 'regularUserDetails'
+                }
+            },
+            {
+                $addFields: {
+                    user: {
+                        $cond: {
+                            if: { $eq: ["$type", "group"] },
+                            then: {
+                                $cond: {
+                                    if: { $gt: [{ $size: "$userDetails" }, 0] },
+                                    then: { $arrayElemAt: ["$userDetails", 0] },
+                                    else: null
+                                }
+                            },
+                            else: {
+                                $cond: {
+                                    if: { $gt: [{ $size: "$regularUserDetails" }, 0] },
+                                    then: { $arrayElemAt: ["$regularUserDetails", 0] },
+                                    else: "$user"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            // Bookmark lookup for main post
+            {
+                $lookup: {
+                    from: 'bookmarks',
+                    let: { postId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$postId', '$$postId'] },
+                                        { $eq: ['$userId', new Types.ObjectId(userId)] },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                    as: 'userBookmark',
+                },
+            },
+            // Like lookup for main post
+            {
+                $lookup: {
+                    from: 'likes',
+                    let: { postId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$postId'] },
+                                        { $eq: ['$userId', new Types.ObjectId(userId)] },
+                                        { $eq: ['$type', "post"] },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                    as: 'userLike',
+                },
+            },
+            // Counter lookup for main post
+            {
+                $lookup: {
+                    from: 'counters',
+                    let: { postId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$postId'] },
+                                        { $eq: ['$name', 'post'] },
+                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares', 'videoViews']] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'counters'
+                }
+            },
+            // Combine fields for main post
+            {
+                $addFields: {
+                    target: {
+                        $switch: {
+                            branches: [
+                                { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                            ],
+                            default: null
+                        }
+                    },
+                    videoViewsCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'videoViews'] } } }, 0] },
+                            0
+                        ]
+                    },
+                    likesCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
+                            0
+                        ]
+                    },
+                    commentsCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
+                            0
+                        ]
+                    },
+                    sharesCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'shares'] } } }, 0] },
+                            0
+                        ]
+                    },
+                    bookmarksCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
+                            0
+                        ]
+                    },
+                    isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
+                    reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
+                    isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
+                }
+            },
+            // Final projection
+            {
+                $project: {
+                    _id: 1,
+                    content: 1,
+                    media: 1,
+                    user: 1,
+                    promotion: 1,
+                    isUploaded: 1,
+                    target: 1,
+                    reaction: 1,
+                    videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
+                    likesCount: { $ifNull: ['$likesCount.count', 0] },
+                    commentsCount: { $ifNull: ['$commentsCount.count', 0] },
+                    sharesCount: { $ifNull: ['$sharesCount.count', 0] },
+                    bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
+                    isLikedByUser: 1,
+                    targetId: 1,
+                    type: 1,
+                    isBookmarkedByUser: 1,
+                    updatedAt: 1,
+                    createdAt: 1,
+                    // sharedPost: {
+                    //     $cond: {
+                    //         if: { $gt: [{ $size: '$sharedPostDetails' }, 0] },
+                    //         then: { $arrayElemAt: ['$sharedPostDetails', 0] },
+                    //         else: null
+                    //     }
+                    // }
+                },
+            },
+        ]);
+
+        const hasNextPage = reels.length > limit;
+        const _reels = hasNextPage ? reels.slice(0, -1) : reels;
+        const nextCursor = hasNextPage ? _reels[_reels.length - 1].createdAt.toISOString() : null;
+
+        const results = { posts: _reels, nextCursor };
+        return results
+    }
+
     async viewPost({ userId, postId, type }: SViewPost) {
         const post = await this.postModel.findById(postId)
         if (!post) {
@@ -2861,32 +3137,152 @@ export class PostsService {
         return viewedPost
     }
 
-    async bulkViewPosts({ userId, postIds }: SBulkViewPost) {
+    // async bulkViewPosts({ userId, postIds, type }: SBulkViewPost) {
 
+    //     try {
+    //         let viewPosts = postIds.map(
+    //             async (postId) => {
+    //                 const post = await this.postModel.findById(postId)
+    //                 if (!post) {
+    //                     throw new BadRequestException()
+    //                 }
+    //                 await this.viewPostsModel.updateOne(
+    //                     { type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) },
+    //                     { $setOnInsert: { type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) } },
+    //                     { upsert: true }
+    //                 )
+
+    //                 if (type == 'video') {
+    //                     await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postId), 'post', "videoViews")
+    //                 }
+    //             })
+
+    //         if (Promise.all(viewPosts)) {
+    //             return true
+    //         }
+    //     } catch (error) {
+    //         return false
+    //     }
+
+    // }
+
+    async bulkViewPosts({ userId, postIds, type }: SBulkViewPost) {
+        console.log(userId, postIds, type);
         try {
-            let viewPosts = postIds.map(async (postId) => {
-                const post = await this.postModel.findById(postId)
-                if (!post) {
-                    throw new BadRequestException()
-                }
-                // if (String(post.user) != userId) {
-                await this.viewPostsModel.updateOne(
-                    { type: "normal", userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) },
-                    { $setOnInsert: { type: 'normal', userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) } },
-                    { upsert: true }
-                )
-                // }
-            })
+            // Convert userId to ObjectId once
+            const userObjectId = new Types.ObjectId(userId);
 
-            if (Promise.all(viewPosts)) {
-                return true
+            // Convert postIds to ObjectIds
+            const postObjectIds = postIds.map(id => new Types.ObjectId(id));
+
+            // Verify all posts exist in a single query
+            const existingPosts = await this.postModel.find({
+                _id: { $in: postObjectIds }
+            }, { _id: 1 }).lean();
+
+            console.log(existingPosts, 'existing posts');
+
+            if (existingPosts.length !== postIds.length) {
+                throw new BadRequestException('One or more posts do not exist');
+            }
+
+            // Start a MongoDB session for transaction
+            // const session = await startSession();
+            // session.startTransaction();
+
+            try {
+                // Create bulk operations for inserting unique views
+                const bulkOps = postObjectIds.map(postId => ({
+                    updateOne: {
+                        filter: {
+                            type,
+                            userId: userObjectId,
+                            postId
+                        },
+                        update: {
+                            $setOnInsert: {
+                                type,
+                                userId: userObjectId,
+                                postId,
+                                createdAt: new Date()
+                            }
+                        },
+                        upsert: true
+                    }
+                }));
+
+                // Execute bulk operation with unordered option to continue on error
+                const result = await this.viewPostsModel.bulkWrite(bulkOps, {
+                    // session,
+                    ordered: false
+                });
+
+                // Determine which posts were newly viewed
+                const newlyViewedCount = result.upsertedCount;
+
+                // Only increment video view counters for newly viewed posts
+                if (type === 'video' && newlyViewedCount > 0) {
+                    // Get the post IDs that were newly viewed
+                    // Convert the upsertedIds object keys back to the original post IDs
+                    const newlyViewedPostIds = [];
+
+                    // For each upserted document, find its corresponding postId
+                    for (const key in result.upsertedIds) {
+                        // The key will be the index in the original bulkOps array
+                        const index = parseInt(key);
+                        // Get the original postId from our bulkOps array
+                        const originalPostId = postObjectIds[index];
+                        newlyViewedPostIds.push(originalPostId);
+                    }
+
+                    // Batch increment counters for all newly viewed videos
+                    const incrementOps = newlyViewedPostIds.map(postId => ({
+                        updateOne: {
+                            filter: { _id: postId },
+                            update: { $inc: { videoViews: 1 } }
+                        }
+                    }));
+
+                    // Execute the increment operations if there are any
+                    if (incrementOps.length > 0) {
+                        await this.postModel.bulkWrite(incrementOps, {
+                            // session
+                        });
+                    }
+
+                    // Alternative: If using separate metrics collection
+                    if (newlyViewedPostIds.length > 0) {
+                        await Promise.all(
+                            newlyViewedPostIds.map(postId =>
+                                this.metricsAggregatorService.incrementCount(
+                                    postId,
+                                    'post',
+                                    "videoViews",
+                                    // session
+                                )
+                            )
+                        );
+                    }
+                }
+
+                // Commit the transaction
+                // await session.commitTransaction();
+                return true;
+
+            } catch (error) {
+                // If any operation fails, abort the transaction
+                // await session.abortTransaction();
+                console.error('Error in bulkViewPosts transaction:', error);
+                return false;
+                // } finally {
+                // End session regardless of outcome
+                // session.endSession();
             }
         } catch (error) {
-            return false
+            console.error('Error in bulkViewPosts:', error);
+            return false;
         }
-
     }
-
     async testingPromotedPosts(address) {
         // await this.postModel.deleteMany()
         // await this.promotionModel.deleteMany()
@@ -3796,6 +4192,9 @@ export class PostsService {
 
     async createSharedPost(postData: any) {
         const post = await this.postModel.create({ ...postData })
+        console.log(postData)
+
+        await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postData?.sharedPost), "post", "shares")
 
         return await post.populate([
             {
@@ -3812,6 +4211,22 @@ export class PostsService {
     async updatePost(postId: string, postDetails: any) {
         const updatedPost = await this.postModel.findByIdAndUpdate(postId, { $set: { ...postDetails } }, { new: true })
         return updatedPost
+    }
+
+    async bulkUpdate() {
+        try {
+            const result = await this.postModel.updateMany(
+                { postType: 'post' },
+                { postType: 'reel' }
+            );
+
+            console.log(`Updated ${result.modifiedCount} documents`);
+            return result;
+        } catch (error) {
+            console.error('Error updating documents:', error);
+            throw error;
+        }
+
     }
 
     async deletePost(postId: any) {
