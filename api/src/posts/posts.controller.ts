@@ -97,6 +97,13 @@ export class PostsController {
         response.json(await this.postService.getPosts(cursor, sub, targetId, type, isSelf))
     }
 
+    @Get('reels')
+    async getReels(@Req() req: Request, @Res() response: Response) {
+        const { sub } = req.user
+        const { cursor, targetId } = req.query as { type: string, cursor: string, targetId: string }
+        response.json(await this.postService.getReels(cursor, sub, targetId, 'user'))
+    }
+
     // @Public()
     // @Get('/bulkupdate')
     // async bulkUpdatePost(){
@@ -107,10 +114,11 @@ export class PostsController {
     async feed(@Req() req: Request, @Res() response: Response) {
         const user = req.user
         const cursor = req.query.cursor
-        response.json(await this.postService.feed(user.sub, cursor))
+        const reelsCursor = req.query.reelsCursor
+        response.json(await this.postService.feed(user.sub, cursor, reelsCursor))
     }
 
-    @Get('reels')
+    @Get('reelsFeed')
     async getReelsFeed(@Req() req: Request, @Res() response: Response) {
         const user = req.user
         const cursor = req.query.cursor
@@ -156,31 +164,42 @@ export class PostsController {
 
     @UseInterceptors(FileInterceptor('file'))
     @Post("create/reel")
-    async createReel(@Body(new ZodValidationPipe(CreateReel, true, "reelData")) reelData: CreateReelDTO, @Req() req: Request, @Res() res: Response, @UploadedFile() file: Express.Multer.File) {
-
+    async createReel(
+        @Body(new ZodValidationPipe(CreateReel, true, "reelData")) reelData: CreateReelDTO,
+        @Req() req: Request,
+        @Res() res: Response,
+        @UploadedFile() file: Express.Multer.File
+    ) {
         if (!file) {
-            throw new BadRequestException("file is required")
+            throw new BadRequestException("file is required");
         }
 
-        const fileType = getFileType(file.mimetype)
-        const filename = uuidv4()
-        const uploadPromise = [this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)]
+        const fileType = getFileType(file.mimetype);
+        const filename = uuidv4();
+        const uploadPromise = [this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)];
 
-        const { sub } = req.user
-        let targetId = new Types.ObjectId(sub)
+        const { sub } = req.user;
+        let targetId = new Types.ObjectId(sub);
 
-        let uploadedPost = await this.postService.createPost(
-            {
-                ...reelData,
-                isUploaded: false,
-                postType: 'reel',
-                targetId,
-                user: new Types.ObjectId(sub)
-            })
+        let uploadedPost = await this.postService.createPost({
+            ...reelData,
+            isUploaded: false,
+            postType: 'reel',
+            targetId,
+            user: new Types.ObjectId(sub)
+        });
 
-        this.eventEmiiter.emit("reel.upload", { uploadPromise, postId: uploadedPost._id.toString(), targetId, type: reelData.type, postType: 'reel' })
+        this.eventEmiiter.emit("reel.upload", {
+            uploadPromise,
+            postId: uploadedPost._id.toString(),
+            targetId,
+            type: reelData.type,
+            postType: 'reel',
+            fileBuffer: file.buffer,
+            filename
+        });
 
-        res.json(uploadedPost)
+        res.json(uploadedPost);
     }
 
 

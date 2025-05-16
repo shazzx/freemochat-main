@@ -9,6 +9,12 @@ import { GroupsService } from "src/groups/groups.service";
 import { UploadService } from "src/upload/upload.service";
 import { MessageService } from "src/message/message.service";
 import { CGroupsService } from "src/cgroups/cgroups.service";
+import * as os from 'os';
+import ffmpeg from 'fluent-ffmpeg';
+import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
+import * as fs from 'fs-extra';
+import path from 'path';
+ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 @Injectable()
 export class UploadListener {
@@ -128,26 +134,76 @@ export class UploadListener {
         }
     }
 
+    // @OnEvent("reel.upload")
+    // async handleReelUploadEvent({ uploadPromise, postId, targetId, type, uploadType }: {
+    //     uploadPromise: any,
+    //     postId: string,
+    //     targetId: Types.ObjectId,
+    //     type: string
+    //     uploadType?: string
+    //     _postData?: any
+    // }) {
+    //     try {
+    //         const videos = await Promise.all(uploadPromise)
+
+    //         let postMedia = []
+    //         for (let video of videos) {
+    //             if (video.fileType == 'video') {
+    //                 postMedia.push({ type: 'video', url: video.url })
+    //             }
+    //         }
+
+    //         const postDetails = { media: postMedia, isUploaded: null }
+    //         await this.postsService.updatePost(postId, postDetails);
+    //         await this.chatGateway.uploadSuccess({
+    //             isSuccess: true, target: {
+    //                 targetId,
+    //                 type,
+    //                 invalidate: "reels"
+    //             }
+    //         })
+    //     } catch (error) {
+    //         console.error(`Error uploading media for post ${postId}:`, error);
+    //         if (uploadType !== 'update') {
+    //             await this.postsService.deletePost(postId);
+    //         }
+
+    //         await this.chatGateway.uploadSuccess({
+    //             isSuccess: false, target: {
+    //                 targetId,
+    //                 type,
+    //                 error,
+    //                 invalidate: "reels"
+    //             }
+    //         })
+    //     }
+    // }
+
     @OnEvent("reel.upload")
-    async handleReelUploadEvent({ uploadPromise, postId, targetId, type, uploadType }: {
-        uploadPromise: any,
-        postId: string,
-        targetId: Types.ObjectId,
-        type: string
-        uploadType?: string
-        _postData?: any
+    async handleReelUploadEvent({
+        uploadPromise,
+        postId,
+        targetId,
+        type,
+        uploadType,
+        fileBuffer,
+        filename
     }) {
         try {
-            const videos = await Promise.all(uploadPromise)
+            // Wait for video upload to complete
+            const videos = await Promise.all(uploadPromise);
 
-            let postMedia = []
+            let postMedia = [];
             for (let video of videos) {
                 if (video.fileType == 'video') {
-                    postMedia.push({ type: 'video', url: video.url })
+                    postMedia.push({ type: 'video', url: video.url });
                 }
             }
 
-            const postDetails = { media: postMedia, isUploaded: null }
+            const thumbnail = await this.generateAndUploadThumbnail(postId, fileBuffer, filename, targetId, type);
+            console.log(thumbnail, 'thumbnail')
+
+            const postDetails = { media: [{ ...postMedia[0], thumbnail: thumbnail.url }], isUploaded: null }
             await this.postsService.updatePost(postId, postDetails);
             await this.chatGateway.uploadSuccess({
                 isSuccess: true, target: {
@@ -158,20 +214,113 @@ export class UploadListener {
             })
         } catch (error) {
             console.error(`Error uploading media for post ${postId}:`, error);
+
             if (uploadType !== 'update') {
                 await this.postsService.deletePost(postId);
             }
 
             await this.chatGateway.uploadSuccess({
-                isSuccess: false, target: {
+                isSuccess: false,
+                target: {
                     targetId,
                     type,
                     error,
                     invalidate: "reels"
                 }
-            })
+            });
         }
     }
+
+    // Generate and upload thumbnail
+    private async generateAndUploadThumbnail(
+        postId: string,
+        videoBuffer: Buffer,
+        filename: string,
+        targetId: Types.ObjectId,
+        type: string
+    ) {
+        try {
+            // Generate thumbnail from video
+            const thumbnailBuffer = await this.extractThumbnail(videoBuffer);
+
+            if (!thumbnailBuffer) {
+                console.warn('Could not generate thumbnail for video');
+
+                // Still notify success even if thumbnail fails
+                await this.chatGateway.uploadSuccess({
+                    isSuccess: true,
+                    target: {
+                        targetId,
+                        type,
+                        invalidate: "reels"
+                    }
+                });
+
+                return;
+            }
+
+            // Upload thumbnail to storage
+            const thumbnailFilename = `${filename}_thumbnail`;
+            const thumbnail = await this.uploadService.processAndUploadContent(
+                thumbnailBuffer,
+                thumbnailFilename,
+                'image',
+                `${thumbnailFilename}.jpg`
+            );
+
+            return thumbnail
+        } catch (error) {
+            console.error(`Error generating thumbnail for post ${postId}:`, error);
+        }
+    }
+
+    // Extract thumbnail from video using fluent-ffmpeg
+    private async extractThumbnail(videoBuffer: Buffer): Promise<Buffer> {
+        return new Promise<Buffer>(async (resolve, reject) => {
+            try {
+                // Create temporary directories and files
+                const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'reel-thumb-'));
+                const videoPath = path.join(tempDir, 'video.mp4');
+                const thumbnailPath = path.join(tempDir, 'thumbnail.jpg');
+
+                // Write video buffer to temporary file
+                await fs.writeFile(videoPath, videoBuffer);
+
+                // Use fluent-ffmpeg to extract thumbnail
+                ffmpeg(videoPath)
+                    .on('error', async (err) => {
+                        console.error('Error generating thumbnail:', err);
+                        await fs.remove(tempDir).catch(e => console.error('Error cleaning temp dir:', e));
+                        resolve(null); // Return null instead of rejecting to continue the flow
+                    })
+                    .on('end', async () => {
+                        try {
+                            // Read the thumbnail file
+                            const thumbnailBuffer = await fs.readFile(thumbnailPath);
+
+                            // Clean up temp directory
+                            await fs.remove(tempDir).catch(e => console.error('Error cleaning temp dir:', e));
+
+                            resolve(thumbnailBuffer);
+                        } catch (readError) {
+                            console.error('Error reading thumbnail:', readError);
+                            await fs.remove(tempDir).catch(e => console.error('Error cleaning temp dir:', e));
+                            resolve(null);
+                        }
+                    })
+                    .screenshots({
+                        timestamps: ['15%'], // Take screenshot at 15% of the video duration
+                        filename: 'thumbnail.jpg',
+                        folder: tempDir,
+                        size: '640x?', // 640px width, maintain aspect ratio
+                    });
+            } catch (err) {
+                console.error('Error in thumbnail extraction:', err);
+                resolve(null); // Return null instead of rejecting to continue the flow
+            }
+        });
+    }
+
 
 
     @OnEvent("profiles.upload")

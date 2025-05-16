@@ -10,6 +10,9 @@ class Media {
     type: string;
 
     @Prop()
+    thumbnail: string;
+
+    @Prop()
     name: string;
 }
 
