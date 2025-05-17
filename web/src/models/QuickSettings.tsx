@@ -224,13 +224,11 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
         uploadSingle(null, null, data)
     }
 
-    // Handle closing education form
     const handleCloseEducationForm = () => {
         setEducationFormOpen(false);
         setCurrentEditingEducation(null);
     };
 
-    // Handle closing work experience form
     const handleCloseWorkExperienceForm = () => {
         setWorkExperienceFormOpen(false);
         setCurrentEditingWorkExperience(null);

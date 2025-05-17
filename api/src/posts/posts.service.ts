@@ -52,7 +52,7 @@ export class PostsService {
         }
 
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility } : { ...visibility };
-        let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type } : { ..._cursor, type }
+        let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type, postType: 'post' } : { ..._cursor, type, postType: 'post' }
 
         // const posts = await this.postModel.aggregate([
         //     { $match: query },
@@ -1160,7 +1160,7 @@ export class PostsService {
         const _reels = hasNextPage ? reels.slice(0, -1) : reels;
         const nextCursor = hasNextPage ? _reels[_reels.length - 1].createdAt.toISOString() : null;
 
-        const results = { reels: _reels, nextCursor };
+        const results = { posts: _reels, nextCursor };
         return results
     }
 
@@ -2362,7 +2362,7 @@ export class PostsService {
     // }
 
     async feed(userId, cursor, reelsCursor) {
-        const postLimit = 12
+        const postLimit = 3
         const reelsLimit = 3
 
         let visibility = {
@@ -3883,11 +3883,12 @@ export class PostsService {
     }
 
 
-    async toggleBookmark(userId: string, postId: string, targetId: string, type: string): Promise<boolean> {
+    async toggleBookmark(userId: string, postId: string, targetId: string, type: string, postType: string): Promise<boolean> {
         const filter = {
             userId: new Types.ObjectId(userId),
             targetId: new Types.ObjectId(targetId),
             postId: new Types.ObjectId(postId),
+            postType,
             type
         };
         const deleteFilter = {
@@ -3906,10 +3907,10 @@ export class PostsService {
         return false;
     }
 
-    async getBookmarks(cursor, userId) {
+    async getBookmarks(cursor, userId, postType) {
         const limit = 5
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
-        let query = { ..._cursor, userId: new Types.ObjectId(userId) }
+        let query = { ..._cursor, userId: new Types.ObjectId(userId), postType}
 
         const bookmarks = await this.bookmarkModel.aggregate([
             { $match: query },

@@ -16,9 +16,11 @@ export class Bookmark extends Document {
 
   @Prop({ type: Types.ObjectId, ref: 'Post' })
   postId: Types.ObjectId;
+
+  @Prop({default: 'post'})
+  postType: string;
 }
 
 export const BookmarkSchema = SchemaFactory.createForClass(Bookmark);
 
-BookmarkSchema.index({ userId: 1, postId: 1 }, { unique: true });
-BookmarkSchema.index({ userId: 1 });
+BookmarkSchema.index({ userId: 1, postId: 1}, { unique: true });
