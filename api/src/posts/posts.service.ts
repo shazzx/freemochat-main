@@ -727,7 +727,7 @@ export class PostsService {
 
     async getReels(cursor: string | null, userId: string, targetId: string, type: string) {
         let model = type + 's'
-        const limit = 14
+        const limit = 18
 
         // let visibility = self == 'true' ? {} : {}
         let visibility = {
@@ -2662,6 +2662,7 @@ export class PostsService {
                                 promotion: 1,
                                 isUploaded: 1,
                                 target: 1,
+                                postType: 1,
                                 reaction: 1,
                                 likesCount: { $ifNull: ['$likesCount.count', 0] },
                                 commentsCount: { $ifNull: ['$commentsCount.count', 0] },
@@ -2839,13 +2840,13 @@ export class PostsService {
                     isUploaded: 1,
                     target: 1,
                     reaction: 1,
+                    postType: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
                     isLikedByUser: 1,
                     targetId: 1,
                     type: 1,
-                    postType: 1, // Added postType field to identify posts vs reels
                     isBookmarkedByUser: 1,
                     updatedAt: 1,
                     createdAt: 1,
@@ -2885,8 +2886,654 @@ export class PostsService {
             hasMoreReels: hasNextReelsPage
         };
     }
-    async getReelsFeed(userId, cursor) {
-        const limit = 16
+
+    // async videosFeed(userId, cursor) {
+    //     const videoLimit = 10;
+
+    //     let visibility = {
+    //         $or: [
+    //             { visibility: 'public' },
+    //             { $and: [{ visibility: 'private' }, { user: new Types.ObjectId(userId) }] }
+    //         ]
+    //     };
+
+    //     // Videos query - only posts that have video media
+    //     const videosQuery = cursor
+    //         ? {
+    //             createdAt: { $lt: new Date(cursor) },
+    //             ...visibility,
+    //             postType: "post",
+    //             'media.type': 'video'  // Only include posts with video media
+    //         }
+    //         : {
+    //             ...visibility,
+    //             postType: "post",
+    //             'media.type': 'video'  // Only include posts with video media
+    //         };
+
+    //     // Pipeline to process videos with required lookups
+    //     const videosPipeline: any = [
+    //         { $match: videosQuery },
+    //         { $sort: { createdAt: -1 } },
+    //         { $limit: videoLimit + 1 },
+
+    //         // Target lookup section - Look up possible targets from different collections
+    //         {
+    //             $lookup: {
+    //                 from: 'users',
+    //                 localField: 'targetId',
+    //                 foreignField: '_id',
+    //                 as: 'userTarget'
+    //             }
+    //         },
+    //         {
+    //             $lookup: {
+    //                 from: 'groups',
+    //                 localField: 'targetId',
+    //                 foreignField: '_id',
+    //                 as: 'groupTarget'
+    //             }
+    //         },
+    //         {
+    //             $lookup: {
+    //                 from: 'pages',
+    //                 localField: 'targetId',
+    //                 foreignField: '_id',
+    //                 as: 'pageTarget'
+    //             }
+    //         },
+
+    //         // Handle user object ID conversion for group posts
+    //         {
+    //             $addFields: {
+    //                 userObjectId: {
+    //                     $cond: {
+    //                         if: { $eq: ["$type", "group"] },
+    //                         then: {
+    //                             $cond: {
+    //                                 if: { $eq: [{ $type: "$user" }, "string"] },
+    //                                 then: { $toObjectId: "$user" },
+    //                                 else: "$user"
+    //                             }
+    //                         },
+    //                         else: null
+    //                     }
+    //                 }
+    //             }
+    //         },
+
+    //         // User lookup for post
+    //         {
+    //             $lookup: {
+    //                 from: "users",
+    //                 let: { userId: "$userObjectId", postType: "$type" },
+    //                 pipeline: [
+    //                     {
+    //                         $match: {
+    //                             $expr: {
+    //                                 $and: [
+    //                                     { $eq: ["$$postType", "group"] },
+    //                                     { $eq: ["$_id", "$$userId"] }
+    //                                 ]
+    //                             }
+    //                         }
+    //                     },
+    //                     { $limit: 1 }
+    //                 ],
+    //                 as: "userDetails"
+    //             }
+    //         },
+    //         {
+    //             $lookup: {
+    //                 from: 'users',
+    //                 localField: 'user',
+    //                 foreignField: '_id',
+    //                 as: 'regularUserDetails'
+    //             }
+    //         },
+    //         {
+    //             $addFields: {
+    //                 user: {
+    //                     $cond: {
+    //                         if: { $eq: ["$type", "group"] },
+    //                         then: {
+    //                             $cond: {
+    //                                 if: { $gt: [{ $size: "$userDetails" }, 0] },
+    //                                 then: { $arrayElemAt: ["$userDetails", 0] },
+    //                                 else: null
+    //                             }
+    //                         },
+    //                         else: {
+    //                             $cond: {
+    //                                 if: { $gt: [{ $size: "$regularUserDetails" }, 0] },
+    //                                 then: { $arrayElemAt: ["$regularUserDetails", 0] },
+    //                                 else: "$user"
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         },
+
+    //         // Bookmark lookup for post
+    //         {
+    //             $lookup: {
+    //                 from: 'bookmarks',
+    //                 let: { postId: '$_id' },
+    //                 pipeline: [
+    //                     {
+    //                         $match: {
+    //                             $expr: {
+    //                                 $and: [
+    //                                     { $eq: ['$postId', '$$postId'] },
+    //                                     { $eq: ['$userId', new Types.ObjectId(userId)] },
+    //                                 ],
+    //                             },
+    //                         },
+    //                     },
+    //                 ],
+    //                 as: 'userBookmark',
+    //             },
+    //         },
+
+    //         // Like lookup for post
+    //         {
+    //             $lookup: {
+    //                 from: 'likes',
+    //                 let: { postId: '$_id' },
+    //                 pipeline: [
+    //                     {
+    //                         $match: {
+    //                             $expr: {
+    //                                 $and: [
+    //                                     { $eq: ['$targetId', '$$postId'] },
+    //                                     { $eq: ['$userId', new Types.ObjectId(userId)] },
+    //                                     { $eq: ['$type', "post"] },
+    //                                 ],
+    //                             },
+    //                         },
+    //                     },
+    //                 ],
+    //                 as: 'userLike',
+    //             },
+    //         },
+
+    //         // Counter lookup for post
+    //         {
+    //             $lookup: {
+    //                 from: 'counters',
+    //                 let: { postId: '$_id' },
+    //                 pipeline: [
+    //                     {
+    //                         $match: {
+    //                             $expr: {
+    //                                 $and: [
+    //                                     { $eq: ['$targetId', '$$postId'] },
+    //                                     { $eq: ['$name', 'post'] },
+    //                                     { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+    //                                 ]
+    //                             }
+    //                         }
+    //                     }
+    //                 ],
+    //                 as: 'counters'
+    //             }
+    //         },
+
+    //         // Combine fields for post
+    //         {
+    //             $addFields: {
+    //                 target: {
+    //                     $switch: {
+    //                         branches: [
+    //                             { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+    //                             { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+    //                             { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+    //                         ],
+    //                         default: null
+    //                     }
+    //                 },
+    //                 likesCount: {
+    //                     $ifNull: [
+    //                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
+    //                         0
+    //                     ]
+    //                 },
+    //                 commentsCount: {
+    //                     $ifNull: [
+    //                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
+    //                         0
+    //                     ]
+    //                 },
+    //                 bookmarksCount: {
+    //                     $ifNull: [
+    //                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
+    //                         0
+    //                     ]
+    //                 },
+    //                 isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
+    //                 reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
+    //                 isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
+    //                 // Filter media to only include videos
+    //                 videoMedia: {
+    //                     $filter: {
+    //                         input: '$media',
+    //                         as: 'mediaItem',
+    //                         cond: { $eq: ['$mediaItem.type', 'video'] }
+    //                     }
+    //                 },
+    //                 // Get only the first video
+    //                 firstVideo: {
+    //                     $arrayElemAt: [
+    //                         {
+    //                             $filter: {
+    //                                 input: '$media',
+    //                                 as: 'mediaItem',
+    //                                 cond: { $eq: ['$mediaItem.type', 'video'] }
+    //                             }
+    //                         },
+    //                         0
+    //                     ]
+    //                 }
+    //             }
+    //         },
+
+    //         // Final projection with video filtering
+    //         {
+    //             $project: {
+    //                 _id: 1,
+    //                 content: 1,
+    //                 // Only include the first video media
+    //                 media: {
+    //                     $cond: {
+    //                         if: { $gt: [{ $size: '$videoMedia' }, 0] },
+    //                         then: [{ $arrayElemAt: ['$videoMedia', 0] }],
+    //                         else: []
+    //                     }
+    //                 },
+    //                 user: 1,
+    //                 promotion: 1,
+    //                 isUploaded: 1,
+    //                 target: 1,
+    //                 reaction: 1,
+    //                 postType: 1,
+    //                 likesCount: { $ifNull: ['$likesCount.count', 0] },
+    //                 commentsCount: { $ifNull: ['$commentsCount.count', 0] },
+    //                 bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
+    //                 isLikedByUser: 1,
+    //                 targetId: 1,
+    //                 type: 1,
+    //                 isBookmarkedByUser: 1,
+    //                 updatedAt: 1,
+    //                 createdAt: 1
+    //             },
+    //         },
+    //         // Filter out posts with no videos
+    //         {
+    //             $match: {
+    //                 "media.0": { $exists: true }
+    //             }
+    //         }
+    //     ];
+
+    //     // Execute the query
+    //     const videosResult = await this.postModel.aggregate(videosPipeline);
+
+    //     // Process pagination and ensure all posts have videos
+    //     const filteredVideos = videosResult.filter(post => post.media && post.media.length > 0);
+    //     const hasNextPage = videosResult.length > videoLimit;
+    //     const videos = hasNextPage ? filteredVideos.slice(0, videoLimit) : filteredVideos;
+    //     const nextCursor = hasNextPage && videos.length > 0
+    //         ? videos[videos.length - 1].createdAt.toISOString()
+    //         : null;
+
+    //     return {
+    //         videos,
+    //         nextCursor,
+    //         hasMore: hasNextPage
+    //     };
+    // }
+
+    async videosFeed(userId: string, cursor: string, postId?: string) {
+        const videoLimit = 4;
+
+        let visibility: any = {
+            $or: [
+                { visibility: 'public' },
+                { $and: [{ visibility: 'private' }, { user: new Types.ObjectId(userId) }] }
+            ]
+        };
+
+        // Base query for video posts
+        let videosQuery = {
+            ...visibility,
+            postType: "post",
+            'media.type': 'video'
+        };
+
+        // Add cursor condition if provided (always maintain cursor pagination)
+        if (cursor) {
+            videosQuery['createdAt'] = { $lt: new Date(cursor) };
+        }
+
+        // Add postId condition if provided
+        if (postId) {
+            try {
+                // When both postId and cursor are provided, we'll use $or to satisfy either condition
+                if (cursor) {
+                    videosQuery = {
+                        $or: [
+                            // Match by postId
+                            {
+                                ...visibility,
+                                postType: "post",
+                                'media.type': 'video',
+                                _id: { $gte: new Types.ObjectId(postId) }
+                            },
+                            // Or match by cursor
+                            {
+                                ...visibility,
+                                postType: "post",
+                                'media.type': 'video',
+                                createdAt: { $lt: new Date(cursor) }
+                            }
+                        ]
+                    };
+                } else {
+                    // Only postId provided
+                    videosQuery._id = { $gte: new Types.ObjectId(postId) };
+                }
+            } catch (error) {
+                console.error("Invalid postId format:", error);
+                // Keep the original query if postId is invalid
+            }
+        }
+
+        // Pipeline to process videos with required lookups
+        const videosPipeline: any = [
+            { $match: videosQuery },
+            { $sort: { createdAt: -1 } },
+            { $limit: videoLimit + 1 },
+
+            // Target lookup section - Look up possible targets from different collections
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'targetId',
+                    foreignField: '_id',
+                    as: 'userTarget'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'groups',
+                    localField: 'targetId',
+                    foreignField: '_id',
+                    as: 'groupTarget'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'pages',
+                    localField: 'targetId',
+                    foreignField: '_id',
+                    as: 'pageTarget'
+                }
+            },
+
+            // Handle user object ID conversion for group posts
+            {
+                $addFields: {
+                    userObjectId: {
+                        $cond: {
+                            if: { $eq: ["$type", "group"] },
+                            then: {
+                                $cond: {
+                                    if: { $eq: [{ $type: "$user" }, "string"] },
+                                    then: { $toObjectId: "$user" },
+                                    else: "$user"
+                                }
+                            },
+                            else: null
+                        }
+                    }
+                }
+            },
+
+            // User lookup for post
+            {
+                $lookup: {
+                    from: "users",
+                    let: { userId: "$userObjectId", postType: "$type" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$$postType", "group"] },
+                                        { $eq: ["$_id", "$$userId"] }
+                                    ]
+                                }
+                            }
+                        },
+                        { $limit: 1 }
+                    ],
+                    as: "userDetails"
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    as: 'regularUserDetails'
+                }
+            },
+            {
+                $addFields: {
+                    user: {
+                        $cond: {
+                            if: { $eq: ["$type", "group"] },
+                            then: {
+                                $cond: {
+                                    if: { $gt: [{ $size: "$userDetails" }, 0] },
+                                    then: { $arrayElemAt: ["$userDetails", 0] },
+                                    else: null
+                                }
+                            },
+                            else: {
+                                $cond: {
+                                    if: { $gt: [{ $size: "$regularUserDetails" }, 0] },
+                                    then: { $arrayElemAt: ["$regularUserDetails", 0] },
+                                    else: "$user"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+
+            // Bookmark lookup for post
+            {
+                $lookup: {
+                    from: 'bookmarks',
+                    let: { postId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$postId', '$$postId'] },
+                                        { $eq: ['$userId', new Types.ObjectId(userId)] },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                    as: 'userBookmark',
+                },
+            },
+
+            // Like lookup for post
+            {
+                $lookup: {
+                    from: 'likes',
+                    let: { postId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$postId'] },
+                                        { $eq: ['$userId', new Types.ObjectId(userId)] },
+                                        { $eq: ['$type', "post"] },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                    as: 'userLike',
+                },
+            },
+
+            // Counter lookup for post
+            {
+                $lookup: {
+                    from: 'counters',
+                    let: { postId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$postId'] },
+                                        { $eq: ['$name', 'post'] },
+                                        { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'counters'
+                }
+            },
+
+            // Combine fields for post
+            {
+                $addFields: {
+                    target: {
+                        $switch: {
+                            branches: [
+                                { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                            ],
+                            default: null
+                        }
+                    },
+                    likesCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
+                            0
+                        ]
+                    },
+                    commentsCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
+                            0
+                        ]
+                    },
+                    bookmarksCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
+                            0
+                        ]
+                    },
+                    isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
+                    reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
+                    isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
+                    // Filter media to only include videos
+                    videoMedia: {
+                        $filter: {
+                            input: '$media',
+                            as: 'mediaItem',
+                            cond: { $eq: ['$$mediaItem.type', 'video'] }
+                        }
+                    },
+                    // Get only the first video
+                    firstVideo: {
+                        $arrayElemAt: [
+                            {
+                                $filter: {
+                                    input: '$media',
+                                    as: 'mediaItem',
+                                    cond: { $eq: ['$$mediaItem.type', 'video'] }
+                                }
+                            },
+                            0
+                        ]
+                    }
+                }
+            },
+
+            // Final projection with video filtering
+            {
+                $project: {
+                    _id: 1,
+                    content: 1,
+                    // Only include the first video media
+                    media: {
+                        $cond: {
+                            if: { $gt: [{ $size: '$videoMedia' }, 0] },
+                            then: [{ $arrayElemAt: ['$videoMedia', 0] }],
+                            else: []
+                        }
+                    },
+                    user: 1,
+                    promotion: 1,
+                    isUploaded: 1,
+                    target: 1,
+                    reaction: 1,
+                    postType: 1,
+                    likesCount: { $ifNull: ['$likesCount.count', 0] },
+                    commentsCount: { $ifNull: ['$commentsCount.count', 0] },
+                    bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
+                    isLikedByUser: 1,
+                    targetId: 1,
+                    type: 1,
+                    isBookmarkedByUser: 1,
+                    updatedAt: 1,
+                    createdAt: 1
+                },
+            },
+            // Filter out posts with no videos
+            {
+                $match: {
+                    "media.0": { $exists: true }
+                }
+            }
+        ];
+
+        // Execute the query
+        const videosResult = await this.postModel.aggregate(videosPipeline);
+
+        // Process pagination and ensure all posts have videos
+        const filteredVideos = videosResult.filter(post => post.media && post.media.length > 0);
+        const hasNextPage = videosResult.length > videoLimit;
+        const videos = hasNextPage ? filteredVideos.slice(0, videoLimit) : filteredVideos;
+        const nextCursor = hasNextPage && videos.length > 0
+            ? videos[videos.length - 1].createdAt.toISOString()
+            : null;
+
+        return {
+            posts: videos,
+            nextCursor,
+            hasMore: hasNextPage
+        };
+    }
+
+    async reelsFeed(userId, cursor) {
+        const limit = 18
 
         let visibility = {
             $or: [
@@ -3910,7 +4557,7 @@ export class PostsService {
     async getBookmarks(cursor, userId, postType) {
         const limit = 5
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
-        let query = { ..._cursor, userId: new Types.ObjectId(userId), postType}
+        let query = { ..._cursor, userId: new Types.ObjectId(userId), postType }
 
         const bookmarks = await this.bookmarkModel.aggregate([
             { $match: query },

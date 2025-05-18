@@ -118,11 +118,19 @@ export class PostsController {
         response.json(await this.postService.feed(user.sub, cursor, reelsCursor))
     }
 
+    @Get('videosFeed')
+    async videosFeed(@Req() req: Request, @Res() response: Response) {
+        const user = req.user
+        const cursor = req.query.cursor as string
+        const postId = req.query.postId as string
+        response.json(await this.postService.videosFeed(user.sub, cursor, postId))
+    }
+
     @Get('reelsFeed')
-    async getReelsFeed(@Req() req: Request, @Res() response: Response) {
+    async reelsFeed(@Req() req: Request, @Res() response: Response) {
         const user = req.user
         const cursor = req.query.cursor
-        response.json(await this.postService.getReelsFeed(user.sub, cursor))
+        response.json(await this.postService.reelsFeed(user.sub, cursor))
     }
 
     @Get("post")
