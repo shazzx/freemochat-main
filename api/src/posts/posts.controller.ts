@@ -129,8 +129,9 @@ export class PostsController {
     @Get('reelsFeed')
     async reelsFeed(@Req() req: Request, @Res() response: Response) {
         const user = req.user
-        const cursor = req.query.cursor
-        response.json(await this.postService.reelsFeed(user.sub, cursor))
+        const cursor = req.query.cursor as string
+        const postId = req.query.postId as string
+        response.json(await this.postService.reelsFeed(user.sub, cursor, postId))
     }
 
     @Get("post")

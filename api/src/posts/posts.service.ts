@@ -2389,8 +2389,8 @@ export class PostsService {
     //     return results
     // }
 
-    async feed(userId, cursor, reelsCursor) {
-        const postLimit = 3
+    async feed(userId: string, cursor: string, reelsCursor: string) {
+        const postLimit = 18
         const reelsLimit = 3
 
         let visibility = {
@@ -3237,9 +3237,9 @@ export class PostsService {
     // }
 
     async videosFeed(userId: string, cursor: string, postId?: string) {
-        const videoLimit = 4;
+        const videoLimit = 18;
 
-        console.log('videosFeed initial data', userId, cursor, postId)
+        console.log('videosFeed params:', { userId, cursor, postId });
 
         let visibility: any = {
             $or: [
@@ -3248,58 +3248,50 @@ export class PostsService {
             ]
         };
 
-        // Base query for video posts
-        let videosQuery = {
+        // Build our query based on inputs
+        let matchQuery: any = {
             ...visibility,
             postType: "post",
             'media.type': 'video'
         };
 
-        // Add cursor condition if provided (always maintain cursor pagination)
-        if (cursor) {
-            videosQuery['createdAt'] = { $lt: new Date(cursor) };
-        }
-
-        // Add postId condition if provided
-        if (postId) {
+        // If we have a postId, use it as our starting point
+        if (postId && !cursor) {
             try {
-                // When both postId and cursor are provided, we'll use $or to satisfy either condition
-                if (cursor) {
-                    videosQuery = {
-                        $or: [
-                            // Match by postId
-                            {
-                                ...visibility,
-                                postType: "post",
-                                'media.type': 'video',
-                                _id: { $gte: new Types.ObjectId(postId) }
-                            },
-                            // Or match by cursor
-                            {
-                                ...visibility,
-                                postType: "post",
-                                'media.type': 'video',
-                                createdAt: { $lt: new Date(cursor) }
-                            }
-                        ]
-                    };
+                // First, fetch the postId item to get its creation date
+                // We'll need this to use as a reference point
+                const initialPost = await this.postModel.findOne({
+                    _id: new Types.ObjectId(postId),
+                    ...visibility
+                }).lean();
+
+                if (initialPost) {
+                    console.log(`Found initial post with ID ${postId}, created at ${initialPost.createdAt}`);
+
+                    // Set up a query for posts created at the same time or earlier
+                    // This ensures we include the initial post and anything newer
+                    matchQuery.createdAt = { $lte: initialPost.createdAt };
                 } else {
-                    // Only postId provided
-                    videosQuery._id = { $gte: new Types.ObjectId(postId) };
+                    console.log(`Initial post with ID ${postId} not found, using regular feed`);
                 }
             } catch (error) {
-                console.error("Invalid postId format:", error);
-                // Keep the original query if postId is invalid
+                console.error("Invalid postId format or error fetching:", error);
             }
+        }
+        // Standard cursor-based pagination when no initial postId or when loading more
+        else if (cursor) {
+            matchQuery.createdAt = { $lt: new Date(cursor) };
         }
 
         // Pipeline to process videos with required lookups
         const videosPipeline: any = [
-            { $match: videosQuery },
+            { $match: matchQuery },
+            // Sort by newest first
             { $sort: { createdAt: -1 } },
-            { $limit: videoLimit + 1 },
+            // Limit to slightly more than what we need, to account for filtering
+            { $limit: videoLimit + 2 },
 
-            // Target lookup section - Look up possible targets from different collections
+            // Target lookup section and all the rest of your pipeline...
             {
                 $lookup: {
                     from: 'users',
@@ -3520,7 +3512,6 @@ export class PostsService {
                 }
             },
 
-            // Final projection with video filtering
             {
                 $project: {
                     _id: 1,
@@ -3557,19 +3548,36 @@ export class PostsService {
                 }
             }
         ];
-
-        // Execute the query
         const videosResult = await this.postModel.aggregate(videosPipeline);
 
-        // Process pagination and ensure all posts have videos
-        const filteredVideos = videosResult.filter(post => post.media && post.media.length > 0);
-        const hasNextPage = videosResult.length > videoLimit;
-        const videos = hasNextPage ? filteredVideos.slice(0, videoLimit) : filteredVideos;
+        // If we're using an initial postId, make sure it's the first in the list
+        let processedVideos = videosResult;
+
+        if (postId && !cursor && videosResult.length > 0) {
+            const initialPostIndex = videosResult.findIndex(post => post._id.toString() === postId);
+
+            if (initialPostIndex > 0) {
+                // Remove it from its current position
+                const initialPost = videosResult.splice(initialPostIndex, 1)[0];
+                // Add it to the start
+                processedVideos = [initialPost, ...videosResult];
+                console.log(`Moved initial post to first position`);
+            } else if (initialPostIndex === 0) {
+                console.log(`Initial post already at first position`);
+            } else {
+                console.log(`Initial post not found in results, using feed as-is`);
+            }
+        }
+
+        // Ensure we don't exceed our limit
+        const hasNextPage = processedVideos.length > videoLimit;
+        const videos = hasNextPage ? processedVideos.slice(0, videoLimit) : processedVideos;
+
         const nextCursor = hasNextPage && videos.length > 0
             ? videos[videos.length - 1].createdAt.toISOString()
             : null;
 
-        console.log(videos.length, 'videos length', videosResult.length, 'videosResult length')
+        console.log(`Returning ${videos.length} videos, hasNextPage: ${hasNextPage}`);
 
         return {
             posts: videos,
@@ -3578,21 +3586,54 @@ export class PostsService {
         };
     }
 
-    async reelsFeed(userId, cursor) {
-        const limit = 18
+    async reelsFeed(userId, cursor, postId) {
+        const limit = 18;
+
+        console.log('reelsFeed params:', { userId, cursor, postId });
 
         let visibility = {
             $or: [
                 { visibility: 'public' },
                 { $and: [{ visibility: 'private' }, { user: new Types.ObjectId(userId) }] }
             ]
+        };
+
+        // Build our query based on inputs
+        let matchQuery = {
+            ...visibility,
+            postType: 'reel',
+            isUploaded: null
+        };
+
+        // If we have an postId, use it as our starting point
+        if (postId && !cursor) {
+            try {
+                // First, fetch the postId item to get its creation date
+                const initialReel = await this.postModel.findOne({
+                    _id: new Types.ObjectId(postId),
+                    ...visibility,
+                    postType: 'reel'
+                }).lean();
+
+                if (initialReel) {
+                    console.log(`Found initial reel with ID ${postId}, created at ${initialReel.createdAt}`);
+
+                    // Set up a query for reels created at the same time or earlier
+                    matchQuery['createdAt'] = { $lte: initialReel.createdAt };
+                } else {
+                    console.log(`Initial reel with ID ${postId} not found, using regular feed`);
+                }
+            } catch (error) {
+                console.error("Invalid postId format or error fetching:", error);
+            }
+        }
+        // Standard cursor-based pagination when no initial reel or when loading more
+        else if (cursor) {
+            matchQuery['createdAt'] = { $lt: new Date(cursor) };
         }
 
-        const query = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility, postType: 'reel', isUploaded: null } : { ...visibility, postType: 'reel', isUploaded: null };
-
-
         const reels = await this.postModel.aggregate([
-            { $match: query },
+            { $match: matchQuery },
             { $sort: { createdAt: -1 } },
             { $limit: limit + 1 },
             // Target lookup section - Look up possible targets from different collections
@@ -3832,13 +3873,33 @@ export class PostsService {
                 },
             },
         ]);
+        // If we're using an postId, make sure it's the first in the list
+        let processedReels = reels;
 
-        const hasNextPage = reels.length > limit;
-        const _reels = hasNextPage ? reels.slice(0, -1) : reels;
-        const nextCursor = hasNextPage ? _reels[_reels.length - 1].createdAt.toISOString() : null;
+        if (postId && !cursor && reels.length > 0) {
+            const initialReelIndex = reels.findIndex(reel => reel._id.toString() === postId);
+
+            if (initialReelIndex > 0) {
+                // Remove it from its current position
+                const initialReel = reels.splice(initialReelIndex, 1)[0];
+                // Add it to the start
+                processedReels = [initialReel, ...reels];
+                console.log(`Moved initial reel to first position`);
+            } else if (initialReelIndex === 0) {
+                console.log(`Initial reel already at first position`);
+            } else {
+                console.log(`Initial reel not found in results, using feed as-is`);
+            }
+        }
+
+        const hasNextPage = processedReels.length > limit;
+        const _reels = hasNextPage ? processedReels.slice(0, limit) : processedReels;
+        const nextCursor = hasNextPage && _reels.length > 0
+            ? _reels[_reels.length - 1].createdAt.toISOString()
+            : null;
 
         const results = { posts: _reels, nextCursor };
-        return results
+        return results;
     }
 
     async viewPost({ userId, postId, type }: SViewPost) {

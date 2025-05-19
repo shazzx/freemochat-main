@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
+import { NotificationService } from 'src/notification/notification.service';
 import { Comment } from 'src/schema/comment';
 import { UploadService } from 'src/upload/upload.service';
 import { getFileType } from 'src/utils/getFileType';
@@ -13,7 +14,7 @@ export class CommentService {
         @InjectModel(Comment.name) private readonly commentModel: Model<Comment>,
         private readonly uploadService: UploadService,
         private readonly metricsAggregatorService: MetricsAggregatorService,
-
+        private readonly notificationService: NotificationService,
     ) { }
 
     async getComments(postId, cursor, userId: string) {
@@ -248,6 +249,17 @@ export class CommentService {
             }
         }
 
+
+        // await this.notificationService.createNotification(
+        //     {
+        //         from: new Types.ObjectId(userId),
+        //         user: new Types.ObjectId(authorId),
+        //         targetId: new Types.ObjectId(targetId),
+        //         type,
+        //         targetType,
+        //         value: reaction ? `has reacted on your ${type} (${reactions[reaction] || reaction})` : `has liked your ${type}`
+        //     }
+        // )
 
         const comment = await this.commentModel.create({ ...commentDetails, post: postId, user: new Types.ObjectId(userId), type: 'comment' })
         await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postId), "post", "comments")
