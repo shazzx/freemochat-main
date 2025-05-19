@@ -531,7 +531,7 @@ export class PostsService {
                                                 $and: [
                                                     { $eq: ['$targetId', '$$postId'] },
                                                     { $eq: ['$name', 'post'] },
-                                                    { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+                                                    { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares']] }
                                                 ]
                                             }
                                         }
@@ -565,6 +565,12 @@ export class PostsService {
                                         0
                                     ]
                                 },
+                                sharesCount: {
+                                    $ifNull: [
+                                        { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'shares'] } } }, 0] },
+                                        0
+                                    ]
+                                },
                                 bookmarksCount: {
                                     $ifNull: [
                                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
@@ -589,6 +595,7 @@ export class PostsService {
                                 reaction: 1,
                                 likesCount: { $ifNull: ['$likesCount.count', 0] },
                                 commentsCount: { $ifNull: ['$commentsCount.count', 0] },
+                                sharesCount: { $ifNull: ['$sharesCount.count', 0] },
                                 bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
                                 isLikedByUser: 1,
                                 targetId: 1,
@@ -652,7 +659,7 @@ export class PostsService {
                                     $and: [
                                         { $eq: ['$targetId', '$$postId'] },
                                         { $eq: ['$name', 'post'] },
-                                        { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares']] }
                                     ]
                                 }
                             }
@@ -678,6 +685,12 @@ export class PostsService {
                             { count: 0 }
                         ]
                     },
+                    sharesCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'shares'] } } }, 0] },
+                            { count: 0 }
+                        ]
+                    },
                     bookmarksCount: {
                         $ifNull: [
                             { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
@@ -696,6 +709,7 @@ export class PostsService {
                     reaction: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
+                    sharesCount: { $ifNull: ['$sharesCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
                     isLikedByUser: 1,
                     targetId: 1,
@@ -1609,7 +1623,7 @@ export class PostsService {
                                                 $and: [
                                                     { $eq: ['$targetId', '$$postId'] },
                                                     { $eq: ['$name', 'post'] },
-                                                    { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+                                                    { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares']] }
                                                 ]
                                             }
                                         }
@@ -1643,6 +1657,12 @@ export class PostsService {
                                         0
                                     ]
                                 },
+                                sharesCount: {
+                                    $ifNull: [
+                                        { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'shares'] } } }, 0] },
+                                        0
+                                    ]
+                                },
                                 bookmarksCount: {
                                     $ifNull: [
                                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
@@ -1667,6 +1687,7 @@ export class PostsService {
                                 reaction: 1,
                                 likesCount: { $ifNull: ['$likesCount.count', 0] },
                                 commentsCount: { $ifNull: ['$commentsCount.count', 0] },
+                                sharesCount: { $ifNull: ['$sharesCount.count', 0] },
                                 bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
                                 isLikedByUser: 1,
                                 targetId: 1,
@@ -1787,7 +1808,7 @@ export class PostsService {
                                     $and: [
                                         { $eq: ['$targetId', '$$postId'] },
                                         { $eq: ['$name', 'post'] },
-                                        { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares']] }
                                     ]
                                 }
                             }
@@ -1824,6 +1845,12 @@ export class PostsService {
                             { count: 0 }
                         ]
                     },
+                    sharesCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'shares'] } } }, 0] },
+                            { count: 0 }
+                        ]
+                    },
                     bookmarksCount: {
                         $ifNull: [
                             { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
@@ -1845,6 +1872,7 @@ export class PostsService {
                     reaction: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
+                    sharesCount: { $ifNull: ['$sharesCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
                     isLikedByUser: 1,
                     targetId: 1,
@@ -2607,7 +2635,7 @@ export class PostsService {
                                                 $and: [
                                                     { $eq: ['$targetId', '$$postId'] },
                                                     { $eq: ['$name', 'post'] },
-                                                    { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+                                                    { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares']] }
                                                 ]
                                             }
                                         }
@@ -2641,6 +2669,12 @@ export class PostsService {
                                         0
                                     ]
                                 },
+                                sharesCount: {
+                                    $ifNull: [
+                                        { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'shares'] } } }, 0] },
+                                        0
+                                    ]
+                                },
                                 bookmarksCount: {
                                     $ifNull: [
                                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
@@ -2667,6 +2701,7 @@ export class PostsService {
                                 likesCount: { $ifNull: ['$likesCount.count', 0] },
                                 commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                                 bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
+                                sharesCount: { $ifNull: ['$sharesCount.count', 0] },
                                 isLikedByUser: 1,
                                 targetId: 1,
                                 type: 1,
@@ -2784,7 +2819,7 @@ export class PostsService {
                                     $and: [
                                         { $eq: ['$targetId', '$$postId'] },
                                         { $eq: ['$name', 'post'] },
-                                        { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares']] }
                                     ]
                                 }
                             }
@@ -2818,6 +2853,12 @@ export class PostsService {
                             0
                         ]
                     },
+                    sharesCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'shares'] } } }, 0] },
+                            0
+                        ]
+                    },
                     bookmarksCount: {
                         $ifNull: [
                             { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
@@ -2844,6 +2885,7 @@ export class PostsService {
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
+                    sharesCount: { $ifNull: ['$sharesCount.count', 0] },
                     isLikedByUser: 1,
                     targetId: 1,
                     type: 1,
@@ -3197,6 +3239,8 @@ export class PostsService {
     async videosFeed(userId: string, cursor: string, postId?: string) {
         const videoLimit = 4;
 
+        console.log('videosFeed initial data', userId, cursor, postId)
+
         let visibility: any = {
             $or: [
                 { visibility: 'public' },
@@ -3524,6 +3568,8 @@ export class PostsService {
         const nextCursor = hasNextPage && videos.length > 0
             ? videos[videos.length - 1].createdAt.toISOString()
             : null;
+
+        console.log(videos.length, 'videos length', videosResult.length, 'videosResult length')
 
         return {
             posts: videos,
@@ -4896,7 +4942,6 @@ export class PostsService {
 
     async createSharedPost(postData: any) {
         const post = await this.postModel.create({ ...postData })
-        console.log(postData)
 
         await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postData?.sharedPost), "post", "shares")
 
