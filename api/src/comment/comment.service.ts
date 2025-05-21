@@ -234,7 +234,24 @@ export class CommentService {
         return results
     }
 
-    async commentOnPost(commentDetails, postId: string, userId: string, file) {
+    async commentOnPost({
+        commentDetails,
+        postId,
+        userId,
+        targetId,
+        targetType,
+        type,
+        authorId,
+        file }: {
+            commentDetails: { content: string, duration: string, audio?: { src: string, duration: string } },
+            postId: string,
+            userId: string,
+            targetId: string,
+            targetType: string,
+            type: string,
+            authorId: string,
+            file: Express.Multer.File
+        }) {
 
         if (file) {
             const fileType = getFileType(file.mimetype)
@@ -250,19 +267,20 @@ export class CommentService {
         }
 
 
-        // await this.notificationService.createNotification(
-        //     {
-        //         from: new Types.ObjectId(userId),
-        //         user: new Types.ObjectId(authorId),
-        //         targetId: new Types.ObjectId(targetId),
-        //         type,
-        //         targetType,
-        //         value: reaction ? `has reacted on your ${type} (${reactions[reaction] || reaction})` : `has liked your ${type}`
-        //     }
-        // )
+
 
         const comment = await this.commentModel.create({ ...commentDetails, post: postId, user: new Types.ObjectId(userId), type: 'comment' })
         await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postId), "post", "comments")
+        await this.notificationService.createNotification(
+            {
+                from: new Types.ObjectId(userId),
+                user: new Types.ObjectId(authorId),
+                targetId: new Types.ObjectId(targetId),
+                type,
+                targetType,
+                value: `has commented on your ${type}`
+            }
+        )
         return comment
     }
 
@@ -290,7 +308,20 @@ export class CommentService {
         return deletedComment
     }
 
-    async replyOnComment(replyDetails, postId: string, commentId: string, userId: string, file) {
+    async replyOnComment({ replyDetails, postId, commentId, userId, authorId, commentAuthorId, targetId, targetType, type, file }:
+        {
+            replyDetails: { content: string, duration: string, audio?: { src: string, duration: string } },
+            postId: string,
+            commentId: string,
+            userId: string,
+            targetId: string,
+            targetType: string,
+            type: string,
+            authorId: string,
+            commentAuthorId: string,
+            file: Express.Multer.File
+        }
+    ) {
         if (file) {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
@@ -313,9 +344,55 @@ export class CommentService {
                 parentId: new Types.ObjectId(commentId)
             })
         await this.metricsAggregatorService.incrementCount(new Types.ObjectId(commentId), "comment", "replies")
+
+
+        await this.notificationService.createNotification(
+            {
+                from: new Types.ObjectId(userId),
+                user: new Types.ObjectId(authorId),
+                targetId: new Types.ObjectId(targetId),
+                type,
+                targetType,
+                value: `has replied on your ${type}`
+            }
+        )
+
+
+
+        await this.notificationService.createNotification(
+            {
+                from: new Types.ObjectId(userId),
+                user: new Types.ObjectId(commentAuthorId),
+                targetId: new Types.ObjectId(targetId),
+                type,
+                targetType,
+                value: `has replied on your comment`
+            }
+        )
+        this.sendNotificationsToTargetRecepients({ commentId, commentAuthorId, postAuthorId: authorId, targetId, targetType, type, userId })
         return reply
     }
 
+    async sendNotificationsToTargetRecepients({ commentId, userId, postAuthorId, commentAuthorId, targetId, targetType, type }: { commentId: string, userId: string, commentAuthorId: string, targetId: string, targetType: string, type: string, postAuthorId: string }) {
+        const replies = await this.commentModel.find({ type: 'reply', commentId }).populate("user")
+
+        replies.forEach(async (reply: any) => {
+            if ((postAuthorId == reply.user._id.toString()) || (commentAuthorId == reply.user._id.toString())) {
+                return
+            }
+            await this.notificationService.createNotification(
+                {
+                    from: new Types.ObjectId(userId),
+                    user: new Types.ObjectId(reply.user._id.toString()),
+                    targetId: new Types.ObjectId(targetId),
+                    type,
+                    targetType,
+                    value: `has replied on the comment you have also replied on`
+                }
+            )
+        })
+
+    }
 
     async updateReply(replyDetails, replyId: string, userId: string) {
         const reply = await this.commentModel.findOneAndUpdate({ _id: new Types.ObjectId(replyId), user: new Types.ObjectId(userId) }, { content: replyDetails.content })

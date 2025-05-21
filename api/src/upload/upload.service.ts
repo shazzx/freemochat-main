@@ -1,10 +1,10 @@
 import { Injectable, UnprocessableEntityException, UnsupportedMediaTypeException } from '@nestjs/common';
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { 
-  MediaConvertClient, 
-  CreateJobCommand,
-  GetJobCommand,
-  DescribeEndpointsCommand
+import {
+    MediaConvertClient,
+    CreateJobCommand,
+    GetJobCommand,
+    DescribeEndpointsCommand
 } from '@aws-sdk/client-mediaconvert';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
@@ -22,6 +22,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { v4 as uuidv4 } from 'uuid';
+import { PostsService } from 'src/posts/posts.service';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
@@ -53,7 +54,7 @@ export class UploadService {
         this.rekognitionClient = new RekognitionClient(awsConfig);
         this.s3Client = new S3Client(awsConfig);
         this.textractClient = new TextractClient(awsConfig);
-        
+
         // Initialize MediaConvert client
         this.mediaConvertClient = new MediaConvertClient({
             ...awsConfig,
@@ -104,11 +105,11 @@ export class UploadService {
         } else if (contentType == 'video') {
             const inputInfo = await this.getVideoInfo(file);
             console.log(inputInfo);
-            
+
             if (!inputInfo.format.includes('mp4') && !inputInfo.format.includes('mov')) {
                 throw new UnprocessableEntityException('Unsupported video format. Only MP4 and MOV are supported.');
             }
-            
+
             // If it's a reel, use MediaConvert for optimal social media formatting
             if (isReel) {
                 return await this.processReelVideo(file, fileName, originalname);
@@ -126,7 +127,7 @@ export class UploadService {
             console.log(contentType, 'contenttype');
             throw new Error('Unsupported file type');
         }
-        
+
         console.log(moderationResult);
 
         if (moderationResult.isSafe) {
@@ -137,34 +138,455 @@ export class UploadService {
         }
     }
 
+    // async watermarkVideoFromSignedUrl(
+    //     signedUrl: string,
+    //     options: {
+    //         watermarkImagePath?: string;
+    //         position?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'center';
+    //         opacity?: number;
+    //         scale?: number;
+    //         text?: string;
+    //         fontColor?: string;
+    //         fontSize?: number;
+    //     } = {}
+    // ): Promise<string> {
+    //     // Use node-fetch to download from URL
+    //     const fetch = require('node-fetch');
+
+    //     try {
+    //         // Set defaults for options
+    //         const watermarkImagePath = options.watermarkImagePath || 'api/assets/freedombook-logo.png'
+    //         const position = options.position || 'bottomRight';
+    //         const opacity = options.opacity || 0.8;
+    //         const scale = options.scale || 0.15; // Scale factor for the watermark image
+    //         const useImageWatermark = !options.text; // If text is provided, use text watermark instead
+
+    //         // Position mapping for overlay filter (image watermark)
+    //         const positionMap = {
+    //             topLeft: '10:10',
+    //             topRight: 'main_w-overlay_w-10:10',
+    //             bottomLeft: '10:main_h-overlay_h-10',
+    //             bottomRight: 'main_w-overlay_w-10:main_h-overlay_h-10',
+    //             center: '(main_w-overlay_w)/2:(main_h-overlay_h)/2'
+    //         };
+
+    //         console.log(`Starting watermark process for video: ${signedUrl}`);
+
+    //         // 1. Download the video from the signed URL
+    //         console.log(`Downloading video from signed URL...`);
+    //         const response = await fetch(signedUrl);
+    //         if (!response.ok) {
+    //             throw new Error(`Failed to download video: ${response.statusText}`);
+    //         }
+    //         const videoBuffer = Buffer.from(await response.arrayBuffer());
+    //         console.log(`Video downloaded, size: ${videoBuffer.length / (1024 * 1024)} MB`);
+
+    //         // 2. Create temporary files for processing
+    //         const tempInputPath = path.join(os.tmpdir(), `input-${Date.now()}.mp4`);
+    //         const tempOutputPath = path.join(os.tmpdir(), `output-${Date.now()}.mp4`);
+
+    //         // 3. Write the downloaded buffer to a temporary file
+    //         await fs.promises.writeFile(tempInputPath, videoBuffer);
+    //         console.log(`Video saved to temporary file: ${tempInputPath}`);
+
+    //         // 4. Check if watermark image exists
+    //         if (useImageWatermark && !fs.existsSync(watermarkImagePath)) {
+    //             console.warn(`Watermark image not found at ${watermarkImagePath}, falling back to text watermark`);
+    //             options.text = 'FreedomBook'; // Fallback text
+    //             options.fontColor = 'white';
+    //             options.fontSize = 24;
+    //         }
+
+    //         // 5. Apply watermark
+    //         console.log(useImageWatermark)
+    //         console.log(`Applying ${useImageWatermark ? 'image' : 'text'} watermark...`);
+    //         await new Promise<void>((resolve, reject) => {
+    //             let ffmpegCommand = ffmpeg(tempInputPath);
+
+    //             if (useImageWatermark && fs.existsSync(watermarkImagePath)) {
+    //                 // Apply image watermark
+    //                 ffmpegCommand = ffmpegCommand
+    //                     .input(watermarkImagePath)
+    //                     .complexFilter([
+    //                         // Scale the watermark image
+    //                         `[1:v]scale=iw*${scale}:-1[watermark]`,
+    //                         // Set opacity and position for the watermark
+    //                         `[watermark]format=rgba,colorchannelmixer=a=${opacity}[watermark1]`,
+    //                         // Overlay the watermark on the video
+    //                         `[0:v][watermark1]overlay=${positionMap[position]}[outv]`
+    //                     ], 'outv');
+    //             } else {
+    //                 // Fallback to text watermark if image is not provided
+    //                 ffmpegCommand = ffmpegCommand.videoFilters({
+    //                     filter: 'drawtext',
+    //                     options: {
+    //                         text: options.text || 'FreedomBook',
+    //                         fontsize: options.fontSize || 24,
+    //                         fontcolor: options.fontColor || 'white',
+    //                         x: 'main_w-tw-10',
+    //                         y: 'main_h-th-10',
+    //                         shadowcolor: 'black',
+    //                         shadowx: 2,
+    //                         shadowy: 2,
+    //                         alpha: opacity.toString()
+    //                     }
+    //                 });
+    //             }
+
+    //             ffmpegCommand
+    //                 .output(tempOutputPath)
+    //                 .outputOptions([
+    //                     '-codec:a copy',  // Copy audio codec
+    //                     '-q:v 1'          // High quality
+    //                 ])
+    //                 .on('start', (commandLine) => {
+    //                     console.log(`FFmpeg watermarking started: ${commandLine}`);
+    //                 })
+    //                 .on('progress', (progress) => {
+    //                     console.log(`Watermarking progress: ${progress.percent}% done`);
+    //                 })
+    //                 .on('end', () => {
+    //                     console.log('Watermarking completed');
+    //                     resolve();
+    //                 })
+    //                 .on('error', (err) => {
+    //                     console.error('Error during watermarking:', err);
+    //                     reject(err);
+    //                 })
+    //                 .run();
+    //         });
+
+    //         // 6. Read the processed file
+    //         console.log(`Reading watermarked video...`);
+    //         const processedBuffer = await fs.promises.readFile(tempOutputPath);
+
+    //         // 7. Generate a unique filename for the watermarked video
+    //         const originalFilename = decodeURIComponent(new URL(signedUrl).pathname.split('/').pop() || 'video');
+    //         const fileNameWithoutExt = originalFilename.split('.')[0];
+    //         const watermarkedFileName = `${fileNameWithoutExt}-watermarked-${Date.now()}.mp4`;
+
+    //         // 8. Upload to S3
+    //         console.log(`Uploading watermarked video to S3...`);
+    //         const uploadResult = await this.uploadToS3(processedBuffer, watermarkedFileName, 'video/mp4');
+    //         console.log(`Watermarked video uploaded to: ${uploadResult}`);
+
+    //         // 9. Clean up temporary files
+    //         console.log(`Cleaning up temporary files...`);
+    //         await fs.promises.unlink(tempInputPath).catch(() => { });
+    //         await fs.promises.unlink(tempOutputPath).catch(() => { });
+
+    //         console.log(`Watermark process completed successfully`);
+    //         return uploadResult;
+    //     } catch (error) {
+    //         console.error('Error watermarking video:', error);
+    //         throw error;
+    //     }
+    // }
+    async watermarkVideoFromSignedUrl(
+        signedUrl: string,
+        options: {
+            watermarkImagePath?: string;
+            position?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'center';
+            opacity?: number;
+            scale?: number;
+            text?: string;
+            fontColor?: string;
+            fontSize?: number;
+        } = {},
+        shouldUpdatePost?: boolean,
+        postService?: PostsService,
+        postDetails?: { postId: string, media: { type: string, url: string, thumbnail: string }[], isUploaded: null }
+    ): Promise<string> {
+        // Use node-fetch to download from URL
+        const fetch = require('node-fetch');
+
+        try {
+            // Default path is in assets directory relative to this file
+            const defaultImagePath = path.join(__dirname, '..', '..', 'assets', 'freedombook-logo.png');
+            const watermarkImagePath = options.watermarkImagePath || defaultImagePath;
+
+            const position = options.position || 'bottomRight';
+            const opacity = options.opacity || 0.8;
+            const scale = options.scale || 0.45;
+
+            // Check if watermark image exists
+            const imageExists = fs.existsSync(watermarkImagePath);
+
+            if (!imageExists) {
+                console.warn(`Watermark image not found at ${watermarkImagePath}`);
+                console.log(`Full path attempted: ${path.resolve(watermarkImagePath)}`);
+
+                if (!options.text) {
+                    options.text = 'FreedomBook'; // Fallback text
+                }
+            } else {
+                console.log(`Found watermark image at: ${watermarkImagePath}`);
+            }
+
+            console.log(`Starting watermark process for video: ${signedUrl}`);
+
+            // 1. Download the video from the signed URL
+            console.log(`Downloading video from signed URL...`);
+            const response = await fetch(signedUrl);
+            if (!response.ok) {
+                throw new Error(`Failed to download video: ${response.statusText}`);
+            }
+            const videoBuffer = Buffer.from(await response.arrayBuffer());
+            console.log(`Video downloaded, size: ${videoBuffer.length / (1024 * 1024)} MB`);
+
+            // 2. Create temporary files for processing
+            const tempInputPath = path.join(os.tmpdir(), `input-${Date.now()}.mp4`);
+            const tempOutputPath = path.join(os.tmpdir(), `output-${Date.now()}.mp4`);
+
+            // 3. Write the downloaded buffer to a temporary file
+            await fs.promises.writeFile(tempInputPath, videoBuffer);
+            console.log(`Video saved to temporary file: ${tempInputPath}`);
+
+            // 4. Apply watermark - text watermark is much more reliable, so we'll use that as a fallback
+            console.log(`Using ${imageExists ? 'image' : 'text'} watermark...`);
+
+            // First try with text watermark (works more consistently across FFmpeg versions)
+            if (!imageExists || options.text) {
+                await new Promise<void>((resolve, reject) => {
+                    const text = options.text || 'FreedomBook';
+                    const fontSize = options.fontSize || 24;
+                    const fontColor = options.fontColor || 'white';
+
+                    // Position mapping for text
+                    let x, y;
+                    switch (position) {
+                        case 'topLeft':
+                            x = '10';
+                            y = '10';
+                            break;
+                        case 'topRight':
+                            x = 'w-tw-10';
+                            y = '10';
+                            break;
+                        case 'bottomLeft':
+                            x = '10';
+                            y = 'h-th-10';
+                            break;
+                        case 'bottomRight':
+                            x = 'w-tw-10';
+                            y = 'h-th-10';
+                            break;
+                        case 'center':
+                            x = '(w-tw)/2';
+                            y = '(h-th)/2';
+                            break;
+                    }
+
+                    ffmpeg(tempInputPath)
+                        .videoFilters({
+                            filter: 'drawtext',
+                            options: {
+                                text: text,
+                                fontsize: fontSize,
+                                fontcolor: fontColor,
+                                x: x,
+                                y: y,
+                                shadowcolor: 'black',
+                                shadowx: 2,
+                                shadowy: 2
+                            }
+                        })
+                        .output(tempOutputPath)
+                        .outputOptions([
+                            '-codec:a copy',  // Copy audio codec
+                            '-q:v 1'          // High quality
+                        ])
+                        .on('start', (commandLine) => {
+                            console.log(`FFmpeg text watermarking started: ${commandLine}`);
+                        })
+                        .on('progress', (progress) => {
+                            if (progress.percent) {
+                                console.log(`Watermarking progress: ${Math.round(progress.percent)}% done`);
+                            }
+                        })
+                        .on('end', () => {
+                            console.log('Text watermarking completed');
+                            resolve();
+                        })
+                        .on('error', (err) => {
+                            console.error('Error during text watermarking:', err);
+                            reject(err);
+                        })
+                        .run();
+                });
+            } else {
+                // Try image watermark with a very simple approach
+                try {
+                    await new Promise<void>((resolve, reject) => {
+                        // Position mapping for overlay
+                        let overlayPos;
+                        switch (position) {
+                            case 'topLeft':
+                                overlayPos = '10:10';
+                                break;
+                            case 'topRight':
+                                overlayPos = 'main_w-overlay_w-10:10';
+                                break;
+                            case 'bottomLeft':
+                                overlayPos = '10:main_h-overlay_h-10';
+                                break;
+                            case 'bottomRight':
+                                overlayPos = 'main_w-overlay_w-10:main_h-overlay_h-10';
+                                break;
+                            case 'center':
+                                overlayPos = '(main_w-overlay_w)/2:(main_h-overlay_h)/2';
+                                break;
+                        }
+
+                        // Create a temporary scaled watermark first
+                        const tempWatermarkPath = path.join(os.tmpdir(), `watermark-${Date.now()}.png`);
+
+                        // Two-step process: first scale the watermark image
+                        ffmpeg(watermarkImagePath)
+                            .outputOptions(['-vf', `scale=iw*${scale}:-1`])
+                            .output(tempWatermarkPath)
+                            .on('end', () => {
+                                console.log('Watermark scaled successfully');
+
+                                // Then overlay the watermark on the video
+                                ffmpeg(tempInputPath)
+                                    .input(tempWatermarkPath)
+                                    .complexFilter([
+                                        `overlay=${overlayPos}`
+                                    ])
+                                    .outputOptions([
+                                        '-codec:a copy',  // Copy audio codec
+                                        '-q:v 1'          // High quality
+                                    ])
+                                    .output(tempOutputPath)
+                                    .on('start', (commandLine) => {
+                                        console.log(`FFmpeg overlay started: ${commandLine}`);
+                                    })
+                                    .on('progress', (progress) => {
+                                        if (progress.percent) {
+                                            console.log(`Overlay progress: ${Math.round(progress.percent)}% done`);
+                                        }
+                                    })
+                                    .on('end', () => {
+                                        console.log('Overlay completed');
+                                        // Clean up the temporary watermark
+                                        fs.unlink(tempWatermarkPath, () => { });
+                                        resolve();
+                                    })
+                                    .on('error', (err) => {
+                                        console.error('Error during overlay:', err);
+                                        // Clean up the temporary watermark
+                                        fs.unlink(tempWatermarkPath, () => { });
+                                        reject(err);
+                                    })
+                                    .run();
+                            })
+                            .on('error', (err) => {
+                                console.error('Error scaling watermark:', err);
+                                reject(err);
+                            })
+                            .run();
+                    });
+                } catch (imageError) {
+                    console.error('Image watermark failed, falling back to text watermark:', imageError);
+
+                    // If image watermarking fails, fall back to text watermark
+                    await new Promise<void>((resolve, reject) => {
+                        ffmpeg(tempInputPath)
+                            .videoFilters({
+                                filter: 'drawtext',
+                                options: {
+                                    text: 'FreedomBook',
+                                    fontsize: 24,
+                                    fontcolor: 'white',
+                                    x: 'w-tw-10',
+                                    y: 'h-th-10',
+                                    shadowcolor: 'black',
+                                    shadowx: 2,
+                                    shadowy: 2
+                                }
+                            })
+                            .output(tempOutputPath)
+                            .outputOptions([
+                                '-codec:a copy',
+                                '-q:v 1'
+                            ])
+                            .on('end', () => {
+                                console.log('Fallback text watermarking completed');
+                                resolve();
+                            })
+                            .on('error', (err) => {
+                                console.error('Error during fallback text watermarking:', err);
+                                reject(err);
+                            })
+                            .run();
+                    });
+                }
+            }
+
+            // 5. Read the processed file
+            console.log(`Reading watermarked video...`);
+            const processedBuffer = await fs.promises.readFile(tempOutputPath);
+
+            // 6. Generate a unique filename for the watermarked video
+            const originalFilename = decodeURIComponent(new URL(signedUrl).pathname.split('/').pop() || 'video');
+            const fileNameWithoutExt = originalFilename.split('.')[0];
+            const watermarkedFileName = `${fileNameWithoutExt}-watermarked-${Date.now()}.mp4`;
+
+            // 7. Upload to S3
+            console.log(`Uploading watermarked video to S3...`);
+            const uploadResult = await this.uploadToS3(processedBuffer, watermarkedFileName, 'video/mp4');
+            console.log(`Watermarked video uploaded to: ${uploadResult}`);
+
+            // 8. Clean up temporary files
+            console.log(`Cleaning up temporary files...`);
+            await fs.promises.unlink(tempInputPath).catch(() => { });
+            await fs.promises.unlink(tempOutputPath).catch(() => { });
+
+            console.log(`Watermark process completed successfully`);
+
+            if (shouldUpdatePost && postService && postDetails) {
+                const updateData = { ...postDetails, media: [{ ...postDetails.media[0], watermarkUrl: uploadResult }] }
+                console.log(postDetails, 'provided data')
+                console.log(updateData, 'updating post with updated data')
+                postService.updatePost(postDetails.postId, updateData)
+                console.log('all done')
+            }
+            return uploadResult;
+        } catch (error) {
+            console.error('Error watermarking video:', error);
+            throw error;
+        }
+    }
+
     async processReelVideo(file: Buffer, fileName: string, originalname?: string) {
         try {
             // 1. Upload the original file to S3 first
             const inputKey = `temp/input/${fileName}`;
             await this.uploadToS3(file, inputKey, 'video/mp4');
             const inputPath = `s3://${this.bucketName}/${inputKey}`;
-            
+
             // 2. Set up output path with unique identifier
             const uniqueId = uuidv4();
             const outputKey = `processed/reels/${fileName.split('.')[0]}-${uniqueId}.mp4`;
             const outputPath = `s3://${this.bucketName}/${outputKey}`;
-            
+
             // 3. Create the MediaConvert job for reel optimization
             const jobId = await this.createMediaConvertJob(inputPath, outputPath);
-            
+
             // 4. Wait for the job to complete (with timeout)
             await this.waitForMediaConvertJob(jobId);
-            
+
             // 5. Clean up temp input file
             await this.deleteFromS3(inputKey);
-            
+
             // 6. Return the optimized video URL
             const outputUrl = `https://${this.bucketName}.s3.amazonaws.com/${outputKey}`;
-            
-            return { 
-                url: outputUrl, 
-                fileName: outputKey, 
-                fileType: 'video', 
+
+            return {
+                url: outputUrl,
+                fileName: outputKey,
+                fileType: 'video',
                 originalname,
                 isOptimized: true
             };
@@ -249,7 +671,7 @@ export class UploadService {
                 ],
             },
         };
-    
+
         try {
             const command = new CreateJobCommand(jobParams);
             const response = await this.mediaConvertClient.send(command);

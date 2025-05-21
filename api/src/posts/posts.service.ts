@@ -599,6 +599,7 @@ export class PostsService {
                                 bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
                                 isLikedByUser: 1,
                                 targetId: 1,
+                                postType: 1,
                                 type: 1,
                                 isBookmarkedByUser: 1,
                                 updatedAt: 1,
@@ -714,6 +715,7 @@ export class PostsService {
                     isLikedByUser: 1,
                     targetId: 1,
                     type: 1,
+                    postType: 1,
                     isBookmarkedByUser: 1,
                     updatedAt: 1,
                     createdAt: 1,
@@ -1692,6 +1694,7 @@ export class PostsService {
                                 isLikedByUser: 1,
                                 targetId: 1,
                                 type: 1,
+                                postType: 1,
                                 isBookmarkedByUser: 1,
                                 updatedAt: 1,
                                 createdAt: 1
@@ -1877,6 +1880,7 @@ export class PostsService {
                     isLikedByUser: 1,
                     targetId: 1,
                     type: 1,
+                    postType: 1,
                     isBookmarkedByUser: 1,
                     updatedAt: 1,
                     createdAt: 1,
@@ -4853,7 +4857,7 @@ export class PostsService {
 
     }
 
-    async toggleLike({ userId, targetId, type, authorId, _targetId, targetType, reaction }: { userId: string, targetId: string, type: 'post' | 'comment' | 'reply', authorId?: string, targetType?: string, _targetId?: string, reaction?: string }): Promise<boolean> {
+    async toggleLike({ userId, targetId, type, authorId, _targetId, targetType, reaction }: { userId: string, targetId: string, type: 'post' | 'reel' | 'comment' | 'reply', authorId?: string, targetType?: string, _targetId?: string, reaction?: string }): Promise<boolean> {
 
         let filter: {
             userId: Types.ObjectId,

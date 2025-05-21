@@ -13,9 +13,18 @@ export class CommentController {
   async comment(@Req() req: Request, @Res() res: Response, @UploadedFile() file: Express.Multer.File,
     @Body("commentDetails") _commentDetails: string,
     @Res() response: Response) {
-    const { commentDetails, postId } = JSON.parse(_commentDetails)
+    const { commentDetails, postId, type, targetType, targetId, authorId } = JSON.parse(_commentDetails)
     const { sub } = req.user as { sub: string, username: string }
-    response.json(await this.commentService.commentOnPost(commentDetails, postId, sub, file))
+    response.json(await this.commentService.commentOnPost({
+      commentDetails,
+      postId,
+      userId: sub,
+      targetId,
+      targetType,
+      type,
+      authorId,
+      file
+    }))
   }
 
   @UseInterceptors(FileInterceptor('file'))
@@ -23,9 +32,30 @@ export class CommentController {
   async reply(@Req() req: Request, @Res() res: Response, @UploadedFile() file: Express.Multer.File,
     @Body("replyData") replyData: string,
     @Res() response: Response) {
-    const { replyDetails, postId, commentId } = JSON.parse(replyData)
+    const {
+      replyDetails,
+      postId,
+      commentId,
+      type,
+      targetType,
+      targetId,
+      authorId,
+      commentAuthorId
+    } = JSON.parse(replyData)
     const { sub } = req.user as { sub: string, username: string }
-    response.json(await this.commentService.replyOnComment(replyDetails, postId, commentId, sub, file))
+    response.json(await this.commentService.replyOnComment(
+      {
+        replyDetails,
+        postId,
+        commentId,
+        userId: sub,
+        type,
+        targetType,
+        targetId,
+        authorId,
+        commentAuthorId,
+        file
+      }))
   }
 
   @Get()
@@ -44,7 +74,7 @@ export class CommentController {
     @Body("replyData") replyData: string,
     @Res() response: Response) {
     const { replyDetails, replyId } = JSON.parse(replyData)
-    const {sub} = req.user as {sub: string}
+    const { sub } = req.user as { sub: string }
     response.json(await this.commentService.updateReply(replyDetails, replyId, sub))
   }
 
@@ -60,15 +90,15 @@ export class CommentController {
 
   @Delete("comment")
   async deleteComment(@Req() req: Request) {
-    const {sub} = req.user as {sub: string}
+    const { sub } = req.user as { sub: string }
     const { commentDetails } = req.query
-    
+
     return await this.commentService.removeComment(commentDetails, sub)
   }
 
   @Delete("comment/reply")
   async deleteReply(@Req() req: Request) {
-    const {sub} = req.user as {sub: string}
+    const { sub } = req.user as { sub: string }
     const { replyDetails } = req.query
     return await this.commentService.removeReply(replyDetails, sub)
   }

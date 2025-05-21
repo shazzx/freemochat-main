@@ -113,8 +113,8 @@ export class PostsController {
     @Get('feed')
     async feed(@Req() req: Request, @Res() response: Response) {
         const user = req.user
-        const cursor = req.query.cursor
-        const reelsCursor = req.query.reelsCursor
+        const cursor = req.query.cursor as string
+        const reelsCursor = req.query.reelsCursor as string
         response.json(await this.postService.feed(user.sub, cursor, reelsCursor))
     }
 
@@ -132,6 +132,36 @@ export class PostsController {
         const cursor = req.query.cursor as string
         const postId = req.query.postId as string
         response.json(await this.postService.reelsFeed(user.sub, cursor, postId))
+    }
+
+    @Post('watermarkReels')
+    async watermarkReels(@Req() req: Request, @Res() response: Response) {
+        const user = req.user
+        const { reelUrl, postId } = req.body
+
+        console.log(reelUrl, postId, 'reel details')
+        const post = await this.postService._getPost(postId)
+
+        if (!post) {
+            throw new BadRequestException("No post found")
+        }
+
+        console.log(post)
+
+        if (post.postType !== 'reel') {
+            throw new BadRequestException("Provided post is not a reel")
+        }
+
+        if (post.media[0]['watermarkUrl']) {
+            throw new BadRequestException("Your reel has already watermarked video")
+        }
+
+        const watermarkUrl = await this.uploadService.watermarkVideoFromSignedUrl(reelUrl)
+
+        post.media[0]['watermarkUrl'] = watermarkUrl
+        post.save()
+
+        response.json({ watermarkUrl })
     }
 
     @Get("post")

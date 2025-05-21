@@ -1,19 +1,22 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { ObjectId, Types } from "mongoose";
-import { Promotion } from "./promotion";
 
 class Media {
+
+    @Prop()
+    name: string;
+
     @Prop()
     url: string;
+
+    @Prop()
+    watermarkUrl: string;
 
     @Prop()
     type: string;
 
     @Prop()
     thumbnail: string;
-
-    @Prop()
-    name: string;
 }
 
 

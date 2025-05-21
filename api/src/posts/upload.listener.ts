@@ -200,10 +200,10 @@ export class UploadListener {
                 }
             }
 
-            const thumbnail = await this.generateAndUploadThumbnail(postId, fileBuffer, filename, targetId, type);
-            console.log(thumbnail, 'thumbnail')
 
-            const postDetails = { media: [{ ...postMedia[0], thumbnail: thumbnail.url }], isUploaded: null }
+            const thumbnail = await this.generateAndUploadThumbnail(postId, fileBuffer, filename, targetId, type);
+            const media = [{ ...postMedia[0], thumbnail: thumbnail.url }]
+            const postDetails = { media, isUploaded: null }
             await this.postsService.updatePost(postId, postDetails);
             await this.chatGateway.uploadSuccess({
                 isSuccess: true, target: {
@@ -212,6 +212,9 @@ export class UploadListener {
                     invalidate: "reels"
                 }
             })
+
+            this.uploadService.watermarkVideoFromSignedUrl(postMedia[0].url, {}, true, this.postsService, { postId, ...postDetails, media })
+            console.log('All Proccesing Completed')
         } catch (error) {
             console.error(`Error uploading media for post ${postId}:`, error);
 
