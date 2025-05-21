@@ -215,7 +215,7 @@ export class PostsController {
 
         const fileType = getFileType(file.mimetype);
         const filename = uuidv4();
-        const uploadPromise = [this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)];
+        const uploadPromise = [this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname, true)];
 
         const { sub } = req.user;
         let targetId = new Types.ObjectId(sub);

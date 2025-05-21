@@ -98,190 +98,174 @@ export class UploadService {
     ) {
         let processedContent: Buffer;
         let moderationResult: { isSafe: boolean; labels: string[] } | string;
+        try {
 
-        if (contentType == 'image') {
-            const resizedImageForRekognition = await this.resizeImageForRekognition(file);
-            moderationResult = await this.moderateImage(resizedImageForRekognition);
-        } else if (contentType == 'video') {
-            const inputInfo = await this.getVideoInfo(file);
-            console.log(inputInfo);
+            if (contentType == 'image') {
+                const resizedImageForRekognition = await this.resizeImageForRekognition(file);
+                moderationResult = await this.moderateImage(resizedImageForRekognition);
+            } else if (contentType == 'video') {
 
-            if (!inputInfo.format.includes('mp4') && !inputInfo.format.includes('mov')) {
-                throw new UnprocessableEntityException('Unsupported video format. Only MP4 and MOV are supported.');
-            }
 
-            // If it's a reel, use MediaConvert for optimal social media formatting
-            if (isReel) {
-                return await this.processReelVideo(file, fileName, originalname);
+                const inputInfo = await this.getVideoInfo(file);
+                console.log(inputInfo);
+
+                // if (!inputInfo.format.includes('mp4') && !inputInfo.format.includes('mov')) {
+                //     throw new UnprocessableEntityException('Unsupported video format. Only MP4 and MOV are supported.');
+                // }
+
+                // If it's a reel, use MediaConvert for optimal social media formatting
+                const fileSizeInMB = file.length / (1024 * 1024);
+                console.log(`Video file size: ${fileSizeInMB.toFixed(2)} MB`);
+                if ((isReel || (fileSizeInMB > 10))) {
+                    if (isReel) {
+                        const videoDuration = await this.getVideoDuration(file);
+                        console.log(`Video duration: ${videoDuration} seconds`);
+                        if (videoDuration > 90) {
+                            throw new UnprocessableEntityException('Reel videos must be 90 seconds or less.');
+                        }
+                    }
+                    // Process video based on size and type
+                    console.log(`Optimizing video - ${isReel ? 'Reel' : 'Large video'}`);
+                    // Use FFmpeg optimization instead of MediaConvert
+                    const optimizedVideo = await this.optimizeVideoWithFFmpeg(file, fileName, isReel);
+                    // const uploadResult = await this.uploadToS3(optimizedVideo, fileName, 'video/mp4');
+                    // return await this.processReelVideo(file, fileName, originalname);
+                    moderationResult = await this.moderateVideo(optimizedVideo, fileName);
+                    return { url: moderationResult, fileName, fileType: contentType, originalname };
+                } else {
+                    console.log('processing normal video')
+                    moderationResult = await this.moderateVideo(file, fileName);
+                    return { url: moderationResult, fileName, fileType: contentType, originalname };
+                }
+
+            } else if (contentType == 'pdf') {
+                processedContent = file; // No optimization for PDF
+                moderationResult = await this.moderatePdf(file);
+            } else if (contentType == 'audio') {
+                const uploadResult = await this.uploadToS3(file, fileName, contentType);
+                return { url: uploadResult, fileName, fileType: contentType };
             } else {
-                moderationResult = await this.moderateVideo(file, fileName);
-                return { url: moderationResult, fileName, fileType: contentType, originalname };
+                console.log(contentType, 'contenttype');
+                throw new Error('Unsupported file type');
             }
-        } else if (contentType == 'pdf') {
-            processedContent = file; // No optimization for PDF
-            moderationResult = await this.moderatePdf(file);
-        } else if (contentType == 'audio') {
-            const uploadResult = await this.uploadToS3(file, fileName, contentType);
-            return { url: uploadResult, fileName, fileType: contentType };
-        } else {
-            console.log(contentType, 'contenttype');
-            throw new Error('Unsupported file type');
-        }
 
-        console.log(moderationResult);
+            console.log(moderationResult);
 
-        if (moderationResult.isSafe) {
-            const uploadResult = await this.uploadToS3(file, fileName, contentType);
-            return { url: uploadResult, fileName, fileType: contentType, originalname };
-        } else {
-            throw new Error('Content violates moderation policies');
+            if (moderationResult.isSafe) {
+                const uploadResult = await this.uploadToS3(file, fileName, contentType);
+                return { url: uploadResult, fileName, fileType: contentType, originalname };
+            } else {
+                throw new Error('Content violates moderation policies');
+            }
+        } catch (error) {
+            console.log(error)
         }
     }
 
-    // async watermarkVideoFromSignedUrl(
-    //     signedUrl: string,
-    //     options: {
-    //         watermarkImagePath?: string;
-    //         position?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'center';
-    //         opacity?: number;
-    //         scale?: number;
-    //         text?: string;
-    //         fontColor?: string;
-    //         fontSize?: number;
-    //     } = {}
-    // ): Promise<string> {
-    //     // Use node-fetch to download from URL
-    //     const fetch = require('node-fetch');
+    private async getVideoDuration(videoBuffer: Buffer): Promise<number> {
+        console.log('getting duration')
+        return new Promise((resolve, reject) => {
+            const inputStream = new Readable();
+            inputStream.push(videoBuffer);
+            inputStream.push(null);
 
-    //     try {
-    //         // Set defaults for options
-    //         const watermarkImagePath = options.watermarkImagePath || 'api/assets/freedombook-logo.png'
-    //         const position = options.position || 'bottomRight';
-    //         const opacity = options.opacity || 0.8;
-    //         const scale = options.scale || 0.15; // Scale factor for the watermark image
-    //         const useImageWatermark = !options.text; // If text is provided, use text watermark instead
+            ffmpeg(inputStream).ffprobe((err, metadata) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
 
-    //         // Position mapping for overlay filter (image watermark)
-    //         const positionMap = {
-    //             topLeft: '10:10',
-    //             topRight: 'main_w-overlay_w-10:10',
-    //             bottomLeft: '10:main_h-overlay_h-10',
-    //             bottomRight: 'main_w-overlay_w-10:main_h-overlay_h-10',
-    //             center: '(main_w-overlay_w)/2:(main_h-overlay_h)/2'
-    //         };
+                // Get duration in seconds
+                const duration = metadata.format.duration;
+                resolve(duration);
+            });
+        });
+    }
 
-    //         console.log(`Starting watermark process for video: ${signedUrl}`);
+    private async optimizeVideoWithFFmpeg(file: Buffer, fileName: string, isReel: boolean = false): Promise<Buffer> {
+        // Create temporary files
+        const tempInputPath = path.join(os.tmpdir(), `input-${Date.now()}.mp4`);
+        const tempOutputPath = path.join(os.tmpdir(), `output-${Date.now()}.mp4`);
 
-    //         // 1. Download the video from the signed URL
-    //         console.log(`Downloading video from signed URL...`);
-    //         const response = await fetch(signedUrl);
-    //         if (!response.ok) {
-    //             throw new Error(`Failed to download video: ${response.statusText}`);
-    //         }
-    //         const videoBuffer = Buffer.from(await response.arrayBuffer());
-    //         console.log(`Video downloaded, size: ${videoBuffer.length / (1024 * 1024)} MB`);
+        // Write the input buffer to a temporary file
+        await fs.promises.writeFile(tempInputPath, file);
 
-    //         // 2. Create temporary files for processing
-    //         const tempInputPath = path.join(os.tmpdir(), `input-${Date.now()}.mp4`);
-    //         const tempOutputPath = path.join(os.tmpdir(), `output-${Date.now()}.mp4`);
+        // Calculate file size for adaptive settings
+        const fileSizeInMB = file.length / (1024 * 1024);
 
-    //         // 3. Write the downloaded buffer to a temporary file
-    //         await fs.promises.writeFile(tempInputPath, videoBuffer);
-    //         console.log(`Video saved to temporary file: ${tempInputPath}`);
+        // Adaptive settings based on file size
+        let compressionLevel, videoBitrate, audioBitrate, preset;
 
-    //         // 4. Check if watermark image exists
-    //         if (useImageWatermark && !fs.existsSync(watermarkImagePath)) {
-    //             console.warn(`Watermark image not found at ${watermarkImagePath}, falling back to text watermark`);
-    //             options.text = 'FreedomBook'; // Fallback text
-    //             options.fontColor = 'white';
-    //             options.fontSize = 24;
-    //         }
+        if (fileSizeInMB > 50) {
+            // Very large videos
+            compressionLevel = 26;
+            videoBitrate = '2500k';
+            audioBitrate = '96k';
+            preset = 'veryfast';
+        } else if (fileSizeInMB > 20) {
+            // Large videos
+            compressionLevel = 24;
+            videoBitrate = '3000k';
+            audioBitrate = '128k';
+            preset = 'faster';
+        } else {
+            // Medium videos
+            compressionLevel = 22;
+            videoBitrate = '3500k';
+            audioBitrate = '128k';
+            preset = 'medium';
+        }
 
-    //         // 5. Apply watermark
-    //         console.log(useImageWatermark)
-    //         console.log(`Applying ${useImageWatermark ? 'image' : 'text'} watermark...`);
-    //         await new Promise<void>((resolve, reject) => {
-    //             let ffmpegCommand = ffmpeg(tempInputPath);
+        return new Promise((resolve, reject) => {
+            const ffmpegCommand = ffmpeg(tempInputPath)
+                .outputOptions([
+                    `-c:v libx264`,             // Video codec
+                    `-crf ${compressionLevel}`,  // Compression level
+                    `-preset ${preset}`,         // Encoding speed/compression tradeoff
+                    `-b:v ${videoBitrate}`,      // Video bitrate
+                    `-c:a aac`,                  // Audio codec
+                    `-b:a ${audioBitrate}`,      // Audio bitrate
+                    '-movflags faststart',       // Optimize for web streaming
+                    '-pix_fmt yuv420p'           // Compatible pixel format
+                ])
+                .output(tempOutputPath)
+                .on('start', (commandLine) => {
+                    console.log(`FFmpeg started: ${commandLine}`);
+                })
+                .on('progress', (progress) => {
+                    if (progress.percent) {
+                        console.log(`Encoding: ${Math.round(progress.percent)}% done`);
+                    }
+                })
+                .on('end', async () => {
+                    console.log('Video optimization completed');
+                    try {
+                        const outputBuffer = await fs.promises.readFile(tempOutputPath);
 
-    //             if (useImageWatermark && fs.existsSync(watermarkImagePath)) {
-    //                 // Apply image watermark
-    //                 ffmpegCommand = ffmpegCommand
-    //                     .input(watermarkImagePath)
-    //                     .complexFilter([
-    //                         // Scale the watermark image
-    //                         `[1:v]scale=iw*${scale}:-1[watermark]`,
-    //                         // Set opacity and position for the watermark
-    //                         `[watermark]format=rgba,colorchannelmixer=a=${opacity}[watermark1]`,
-    //                         // Overlay the watermark on the video
-    //                         `[0:v][watermark1]overlay=${positionMap[position]}[outv]`
-    //                     ], 'outv');
-    //             } else {
-    //                 // Fallback to text watermark if image is not provided
-    //                 ffmpegCommand = ffmpegCommand.videoFilters({
-    //                     filter: 'drawtext',
-    //                     options: {
-    //                         text: options.text || 'FreedomBook',
-    //                         fontsize: options.fontSize || 24,
-    //                         fontcolor: options.fontColor || 'white',
-    //                         x: 'main_w-tw-10',
-    //                         y: 'main_h-th-10',
-    //                         shadowcolor: 'black',
-    //                         shadowx: 2,
-    //                         shadowy: 2,
-    //                         alpha: opacity.toString()
-    //                     }
-    //                 });
-    //             }
+                        // Cleanup temporary files
+                        await fs.promises.unlink(tempInputPath).catch(() => { });
+                        await fs.promises.unlink(tempOutputPath).catch(() => { });
 
-    //             ffmpegCommand
-    //                 .output(tempOutputPath)
-    //                 .outputOptions([
-    //                     '-codec:a copy',  // Copy audio codec
-    //                     '-q:v 1'          // High quality
-    //                 ])
-    //                 .on('start', (commandLine) => {
-    //                     console.log(`FFmpeg watermarking started: ${commandLine}`);
-    //                 })
-    //                 .on('progress', (progress) => {
-    //                     console.log(`Watermarking progress: ${progress.percent}% done`);
-    //                 })
-    //                 .on('end', () => {
-    //                     console.log('Watermarking completed');
-    //                     resolve();
-    //                 })
-    //                 .on('error', (err) => {
-    //                     console.error('Error during watermarking:', err);
-    //                     reject(err);
-    //                 })
-    //                 .run();
-    //         });
+                        // Log compression results
+                        const newSizeInMB = outputBuffer.length / (1024 * 1024);
+                        console.log(`Video compressed from ${fileSizeInMB.toFixed(2)}MB to ${newSizeInMB.toFixed(2)}MB (${(newSizeInMB / fileSizeInMB * 100).toFixed(1)}%)`);
 
-    //         // 6. Read the processed file
-    //         console.log(`Reading watermarked video...`);
-    //         const processedBuffer = await fs.promises.readFile(tempOutputPath);
+                        resolve(outputBuffer);
+                    } catch (err) {
+                        reject(err);
+                    }
+                })
+                .on('error', async (err) => {
+                    console.error('FFmpeg error:', err);
+                    // Cleanup on error
+                    await fs.promises.unlink(tempInputPath).catch(() => { });
+                    await fs.promises.unlink(tempOutputPath).catch(() => { });
+                    reject(err);
+                })
+                .run();
+        });
+    }
 
-    //         // 7. Generate a unique filename for the watermarked video
-    //         const originalFilename = decodeURIComponent(new URL(signedUrl).pathname.split('/').pop() || 'video');
-    //         const fileNameWithoutExt = originalFilename.split('.')[0];
-    //         const watermarkedFileName = `${fileNameWithoutExt}-watermarked-${Date.now()}.mp4`;
-
-    //         // 8. Upload to S3
-    //         console.log(`Uploading watermarked video to S3...`);
-    //         const uploadResult = await this.uploadToS3(processedBuffer, watermarkedFileName, 'video/mp4');
-    //         console.log(`Watermarked video uploaded to: ${uploadResult}`);
-
-    //         // 9. Clean up temporary files
-    //         console.log(`Cleaning up temporary files...`);
-    //         await fs.promises.unlink(tempInputPath).catch(() => { });
-    //         await fs.promises.unlink(tempOutputPath).catch(() => { });
-
-    //         console.log(`Watermark process completed successfully`);
-    //         return uploadResult;
-    //     } catch (error) {
-    //         console.error('Error watermarking video:', error);
-    //         throw error;
-    //     }
-    // }
     async watermarkVideoFromSignedUrl(
         signedUrl: string,
         options: {
@@ -306,8 +290,8 @@ export class UploadService {
             const watermarkImagePath = options.watermarkImagePath || defaultImagePath;
 
             const position = options.position || 'bottomRight';
-            const opacity = options.opacity || 0.8;
-            const scale = options.scale || 0.45;
+            const opacity = options.opacity || 0.9;
+            const scale = options.scale || 0.5;
 
             // Check if watermark image exists
             const imageExists = fs.existsSync(watermarkImagePath);
