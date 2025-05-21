@@ -22,6 +22,7 @@ import ForgetPassword from "./components/ForgetPassword";
 import TermsAndConditions from "./pages/user/TermsAndConditions";
 import PrivacyPolicy from "./pages/user/PrivacyPolicy";
 import ChildSafetyPolicy from "./pages/user/ChildrenPrivacy";
+import ReelsContainer from "./components/Reel/ReelsSection";
 // import ReelsFeed from "./sections/ReelsFeed";
 
 export const router = createBrowserRouter([
@@ -96,6 +97,10 @@ export const router = createBrowserRouter([
                 path: "/search",
                 element: <MainHome children={<SearchSection />} />,
             },
+            {
+                path: "/reels",
+                element: <ReelsContainer />,
+            }
         ]
     },
     {
