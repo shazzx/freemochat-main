@@ -1,7 +1,7 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Query, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { PostsService } from './posts.service';
-import { Response } from 'express';
+import { response, Response } from 'express';
 import { Types } from 'mongoose'
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
@@ -16,8 +16,9 @@ import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
 import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateReel, CreateReelDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPosts, GetBookmarkedPostsDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
-import { Cursor, CursorDTO } from 'src/schema/validation/global';
+import { Cursor, CursorDTO, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
+import { z } from 'zod';
 
 // @Processor('media-upload')
 // export class MediaUploadConsumer extends WorkerHost {
@@ -201,7 +202,99 @@ export class PostsController {
     }
 
 
-    @UseInterceptors(FileInterceptor('file'))
+    @Post("reel")
+    async editReel(
+        @Body(new ZodValidationPipe(z.object({ postId: ValidMongoId, content: z.string() }))) reelData: { content: string, postId: string },
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+
+        const { sub } = req.user
+        const post = await this.postService._getPost(reelData.postId)
+        if (!post) {
+            throw new BadRequestException("No post found")
+        }
+
+        if (post.postType !== 'reel') {
+            throw new BadRequestException("Provided post is not a reel")
+        }
+
+        if (post.isUploaded == false) {
+            throw new BadRequestException("please wait previous post update is in process...")
+        }
+
+        console.log(post.user.toString(), sub, 'user id')
+
+        if (post.user.toString() !== sub) {
+            throw new BadRequestException("You are not allowed to edit this post")
+        }
+
+        let updatedPost = await this.postService.updatePost(
+            reelData.postId,
+            {
+                content: reelData.content,
+            })
+        res.json({ updatedPost, success: true })
+    }
+
+    @Post("reel/remove")
+    async deleteReel(
+        @Body(new ZodValidationPipe(z.object({ postId: ValidMongoId }))) deleteReelData: { postId: string },
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+
+        const { sub } = req.user
+        const post = await this.postService._getPost(deleteReelData.postId)
+        if (!post) {
+            throw new BadRequestException("No post found")
+        }
+
+        if (post.postType !== 'reel') {
+            throw new BadRequestException("Provided post is not a reel")
+        }
+
+        if (post.isUploaded == false) {
+            throw new BadRequestException("please wait previous post update is in process...")
+        }
+
+        console.log(post.user.toString(), sub, 'user id')
+
+        if (post.user.toString() !== sub) {
+            throw new BadRequestException("You are not allowed to delete this post")
+        }
+
+        post.media.forEach(async (media) => {
+            if (media.url) {
+                let videoUrlSplit = media.url.split("/")
+                let thumbnailUrlSplit = media.thumbnail.split("/")
+                let watermarkUrlSplit = media.watermarkUrl.split("/")
+
+                console.log(`deleting ${videoUrlSplit}, ${thumbnailUrlSplit}, ${watermarkUrlSplit} from s3...`)
+
+                let videoFilename = videoUrlSplit[videoUrlSplit.length - 1]
+                let thumbnailFilename = thumbnailUrlSplit[thumbnailUrlSplit.length - 1]
+                let watermarkedVideoFilename = watermarkUrlSplit[watermarkUrlSplit.length - 1]
+
+                console.log(videoFilename, thumbnailFilename, watermarkedVideoFilename, 'filenames')
+
+                console.log(`deleting ${videoFilename} from s3...`)
+                const video = await this.uploadService.deleteFromS3(videoFilename)
+
+                console.log(`deleting ${thumbnailFilename} from s3...`)
+                const thumbnail = await this.uploadService.deleteFromS3(thumbnailFilename)
+
+                const watermarkVideo = await this.uploadService.deleteFromS3(watermarkedVideoFilename)
+                console.log(`deleting ${watermarkedVideoFilename} from s3...`)
+                console.log(video.$metadata.httpStatusCode, thumbnail.$metadata.httpStatusCode, watermarkVideo.$metadata.httpStatusCode, 'deleted')
+            }
+        })
+
+        const deleted = await this.postService.deletePost(deleteReelData.postId)
+        res.json({ deleted: true, success: true })
+    }
+
+
     @Post("create/reel")
     async createReel(
         @Body(new ZodValidationPipe(CreateReel, true, "reelData")) reelData: CreateReelDTO,

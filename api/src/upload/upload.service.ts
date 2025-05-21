@@ -124,22 +124,28 @@ export class UploadService {
                             throw new UnprocessableEntityException('Reel videos must be 90 seconds or less.');
                         }
                     }
-                    // Process video based on size and type
+
+                    // normally upload video if less than 11mb
+                    if (fileSizeInMB < 11) {
+                        console.log('Uploading video without optimization because its less than 11mb');
+
+                        const url = await this.moderateVideo(file, fileName);
+                        return { url, fileName, fileType: contentType, originalname };
+                    }
+
                     console.log(`Optimizing video - ${isReel ? 'Reel' : 'Large video'}`);
-                    // Use FFmpeg optimization instead of MediaConvert
                     const optimizedVideo = await this.optimizeVideoWithFFmpeg(file, fileName, isReel);
-                    // const uploadResult = await this.uploadToS3(optimizedVideo, fileName, 'video/mp4');
-                    // return await this.processReelVideo(file, fileName, originalname);
-                    moderationResult = await this.moderateVideo(optimizedVideo, fileName);
-                    return { url: moderationResult, fileName, fileType: contentType, originalname };
+
+                    const url = await this.moderateVideo(optimizedVideo, fileName);
+                    return { url, fileName, fileType: contentType, originalname };
                 } else {
                     console.log('processing normal video')
-                    moderationResult = await this.moderateVideo(file, fileName);
-                    return { url: moderationResult, fileName, fileType: contentType, originalname };
+                    const url = await this.moderateVideo(file, fileName);
+                    return { url, fileName, fileType: contentType, originalname };
                 }
 
             } else if (contentType == 'pdf') {
-                processedContent = file; // No optimization for PDF
+                processedContent = file;
                 moderationResult = await this.moderatePdf(file);
             } else if (contentType == 'audio') {
                 const uploadResult = await this.uploadToS3(file, fileName, contentType);
