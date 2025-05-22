@@ -5,7 +5,6 @@ import { ZodSchema } from "zod";
 export class ZodValidationPipe implements PipeTransform {
     constructor(private schema: ZodSchema, private parse?: boolean, private field?: string) { }
     transform(value: any, metadata: ArgumentMetadata) {
-
         if (this.parse) {
             value = JSON.parse(value[this.field])
         }

@@ -13,13 +13,14 @@ export class CommentController {
   async comment(@Req() req: Request, @Res() res: Response, @UploadedFile() file: Express.Multer.File,
     @Body("commentDetails") _commentDetails: string,
     @Res() response: Response) {
-    const { commentDetails, postId, type, targetType, targetId, authorId } = JSON.parse(_commentDetails)
+    const { commentDetails, postId, type, targetType, authorId } = JSON.parse(_commentDetails)
     const { sub } = req.user as { sub: string, username: string }
+    console.log(JSON.parse(_commentDetails), 'commentDetails')
     response.json(await this.commentService.commentOnPost({
       commentDetails,
       postId,
       userId: sub,
-      targetId,
+      targetId: postId,
       targetType,
       type,
       authorId,
@@ -38,11 +39,11 @@ export class CommentController {
       commentId,
       type,
       targetType,
-      targetId,
       authorId,
       commentAuthorId
     } = JSON.parse(replyData)
     const { sub } = req.user as { sub: string, username: string }
+    console.log(JSON.parse(replyData), 'replyData')
     response.json(await this.commentService.replyOnComment(
       {
         replyDetails,
@@ -51,7 +52,7 @@ export class CommentController {
         userId: sub,
         type,
         targetType,
-        targetId,
+        targetId: postId,
         authorId,
         commentAuthorId,
         file

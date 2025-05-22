@@ -175,7 +175,6 @@ export class PostsController {
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
     async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
-        console.log('posts is there ', files)
         const uploadPromise = files.map((file) => {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
@@ -294,7 +293,7 @@ export class PostsController {
         res.json({ deleted: true, success: true })
     }
 
-
+    @UseInterceptors(FileInterceptor('file'))
     @Post("create/reel")
     async createReel(
         @Body(new ZodValidationPipe(CreateReel, true, "reelData")) reelData: CreateReelDTO,

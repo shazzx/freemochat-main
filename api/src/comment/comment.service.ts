@@ -279,7 +279,8 @@ export class CommentService {
                 type,
                 targetType,
                 value: `has commented on your ${type}`
-            }
+            },
+            true
         )
         return comment
     }
@@ -346,40 +347,54 @@ export class CommentService {
         await this.metricsAggregatorService.incrementCount(new Types.ObjectId(commentId), "comment", "replies")
 
 
-        await this.notificationService.createNotification(
-            {
-                from: new Types.ObjectId(userId),
-                user: new Types.ObjectId(authorId),
-                targetId: new Types.ObjectId(targetId),
-                type,
-                targetType,
-                value: `has replied on your ${type}`
-            }
-        )
+        if (userId != authorId) {
+            console.log('creating notificatoin for post owner')
 
+            await this.notificationService.createNotification(
+                {
+                    from: new Types.ObjectId(userId),
+                    user: new Types.ObjectId(authorId),
+                    targetId: new Types.ObjectId(targetId),
+                    type,
+                    targetType,
+                    value: `has replied on your ${type}`
+                }, true
+            )
+        } else {
+            console.log('not creating notificatoin for post owner')
+        }
 
+        if (userId != commentAuthorId) {
+            console.log('creating notificatoin for comment owner')
 
-        await this.notificationService.createNotification(
-            {
-                from: new Types.ObjectId(userId),
-                user: new Types.ObjectId(commentAuthorId),
-                targetId: new Types.ObjectId(targetId),
-                type,
-                targetType,
-                value: `has replied on your comment`
-            }
-        )
+            await this.notificationService.createNotification(
+                {
+                    from: new Types.ObjectId(userId),
+                    user: new Types.ObjectId(commentAuthorId),
+                    targetId: new Types.ObjectId(targetId),
+                    type,
+                    targetType,
+                    value: `has replied on your comment`
+                }
+            )
+        } else {
+            console.log('not creating notificatoin for comment owner')
+        }
+        console.log('creating notificatoin for other replies')
         this.sendNotificationsToTargetRecepients({ commentId, commentAuthorId, postAuthorId: authorId, targetId, targetType, type, userId })
         return reply
     }
 
     async sendNotificationsToTargetRecepients({ commentId, userId, postAuthorId, commentAuthorId, targetId, targetType, type }: { commentId: string, userId: string, commentAuthorId: string, targetId: string, targetType: string, type: string, postAuthorId: string }) {
-        const replies = await this.commentModel.find({ type: 'reply', commentId }).populate("user")
+        const replies = await this.commentModel.find({ type: 'reply', parentId: new Types.ObjectId(commentId) }).populate("user")
 
+        console.log(replies, 'replies')
         replies.forEach(async (reply: any) => {
             if ((postAuthorId == reply.user._id.toString()) || (commentAuthorId == reply.user._id.toString())) {
                 return
             }
+            console.log(reply.user._id.toString(), 'reply user id')
+            console.log(userId, 'user id')
             await this.notificationService.createNotification(
                 {
                     from: new Types.ObjectId(userId),

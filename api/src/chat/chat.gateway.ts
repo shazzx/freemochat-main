@@ -300,6 +300,44 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleNotifications(event) {
     let user = JSON.parse(await this.cacheService.getOnlineUser(event.user))
+
+    const userPushToken = await this.cacheService.getUserPushToken(event?.user?.toString())
+
+    console.log(userPushToken, "user push token")
+
+    if (!userPushToken) {
+      this.server.to(user?.socketId).emit('notification', event)
+      return
+    }
+
+    const recepient = await this.userService.getRawUser(event?.user?.toString())
+    console.log(recepient._id, "recepient id")
+
+    if (event?.from?.toString() == recepient._id.toString()) {
+      console.log("not sending push notification")
+      this.server.to(user?.socketId).emit('notification', event)
+      return
+    }
+
+    const sender = await this.userService.getRawUser(event?.from?.toString())
+
+    if (!sender) {
+      console.log("not sending push notification sender not found")
+      this.server.to(user?.socketId).emit('notification', event)
+      return
+    }
+
+    const pushMessage = {
+      to: userPushToken,
+      sound: 'default',
+      title: sender.firstname + " " + sender.lastname,
+      body: event.value,
+      data: { someData: 'goes here' },
+    };
+
+    console.log(pushMessage, "push message")
+    this.sendPushNotification(pushMessage)
+
     this.server.to(user?.socketId).emit('notification', event)
   }
 

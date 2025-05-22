@@ -23,10 +23,13 @@ export class NotificationService {
     });
   }
 
-  async createNotification(data: { from: Types.ObjectId, user: Types.ObjectId, targetId: Types.ObjectId, type: string, targetType?: string, value: string, handle?: string }) {
-    const notifications = await this.notificationModel.findOne({ user: data.user, type: data.type, from: data.from, targetId: data.targetId, targetType: data.targetType, handle: data?.handle })
-    if (notifications) {
-      return null
+  async createNotification(data: { from: Types.ObjectId, user: Types.ObjectId, targetId: Types.ObjectId, type: string, targetType?: string, value: string, handle?: string }, isComment: boolean = false) {
+    if (!isComment) {
+      console.log("finding notification exist")
+      const notifications = await this.notificationModel.findOne(data)
+      if (notifications) {
+        return null
+      }
     }
     const notification = await this.notificationModel.create(data);
     this.metricsAggregatorService.incrementCount(data.user, "notification", "user")
@@ -105,7 +108,7 @@ export class NotificationService {
   }
 
   async getNotifications(cursor, userId) {
-    const limit = 5
+    const limit = 18
     const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
     const query = { ..._cursor, user: new Types.ObjectId(userId) };
 
