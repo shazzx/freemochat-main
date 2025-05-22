@@ -4,15 +4,26 @@ import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { produce } from "immer";
 import { toast } from "react-toastify";
 
-export function useBookamrks(): any {
-
-    const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error, refetch } = useInfiniteQuery({
-        queryKey: ['userBookmarks'],
-        queryFn: ({ pageParam, }) => fetchBookmarks(pageParam),
+export function useBookamrks(postType?: string): any {
+    const { 
+        data, 
+        isLoading, 
+        refetch, 
+        isFetching, 
+        fetchNextPage, 
+        fetchPreviousPage, 
+        fetchStatus, 
+        isSuccess, 
+        isFetchingNextPage, 
+        hasNextPage,  // Add this line - it's automatically provided by useInfiniteQuery
+        error 
+    } = useInfiniteQuery({
+        queryKey: ['userBookmarks', postType],
+        queryFn: ({ pageParam }) => fetchBookmarks(pageParam, postType),
         refetchInterval: false,
-        refetchOnWindowFocus: false,
+        refetchOnWindowFocus: true,
         refetchOnMount: true,
-        refetchOnReconnect: false,
+        refetchOnReconnect: true,
         initialPageParam: null,
         getNextPageParam: (lastPage) => lastPage.nextCursor
     });
@@ -27,6 +38,7 @@ export function useBookamrks(): any {
         isFetchingNextPage,
         fetchStatus,
         fetchNextPage,
+        hasNextPage,  // Add this line
         error,
     };
 }

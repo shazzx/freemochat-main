@@ -67,9 +67,17 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
             toast.info("Comment can't be empty")
             return
         }
+        const isReel = false
 
         let formData = new FormData()
-        let commentDetails = { postId, commentDetails: { content: recordingUrl ? null : commentRef.current?.value, username: user?.username }, uuid: uuidv4() }
+        let commentDetails = {
+            targetType: 'user',
+            type: isReel ? 'reel' : 'post',
+            authorId: postData?.user,
+            postId,
+            commentDetails: { content: recordingUrl ? null : commentRef.current?.value, username: user?.username },
+            uuid: uuidv4()
+        }
 
         if (recordingUrl) {
             let url = URL.createObjectURL(recordingUrl)
@@ -85,9 +93,19 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
         commentRef.current.value = null
     }
 
+    const isReel = false
+
     const replyOnPost = async (recordingUrl?, recordingTime?) => {
         let formData = new FormData()
-        let replyData = { postId, replyDetails: { content: replyRef.current.value }, commentId: replyState._id }
+        let replyData = {
+            postId,
+            targetType: 'user',
+            type: isReel ? "reel" : 'post',
+            commentAuthorId: replyState.user,
+            authorId: postData?.user,
+            replyDetails: { content: replyRef.current.value },
+            commentId: replyState._id
+        }
 
         if (recordingUrl && recordingTime) {
             let url = URL.createObjectURL(recordingUrl)

@@ -3,8 +3,8 @@ import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { format } from 'date-fns';
 import VideoPlaybackManager from './VideoPlaybackManager';
 import videoViewTracker from './VideoViewTracker';
-import { useLikeReelsFeedPost, useBookmarkReelsFeedPost } from '@/hooks/Reels/useReels';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { UseMutationResult } from '@tanstack/react-query';
 
 
 interface ReelItemProps {
@@ -21,6 +21,8 @@ interface ReelItemProps {
   autoScrollEnabled: boolean;
   onUserInteraction: () => void;
   onLongPressStateChange: (isActive: boolean, videoId: string) => void;
+  useLikeReel: UseMutationResult;
+  useBookmarkReel: UseMutationResult;
   className?: string;
 }
 
@@ -38,9 +40,12 @@ const ReelItem: React.FC<ReelItemProps> = ({
   autoScrollEnabled,
   onUserInteraction,
   onLongPressStateChange,
+  useLikeReel,
+  useBookmarkReel,
   className,
   ...props
 }) => {
+
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const isComponentMounted = useRef(true);
@@ -54,6 +59,9 @@ const ReelItem: React.FC<ReelItemProps> = ({
 
   // Generate a unique ID for this reel
   const reelInstanceId = useMemo(() => `reel-${reel._id}`, [reel._id]);
+
+  const likeMutation = useLikeReel;
+  const bookmarkMutation = useBookmarkReel;
 
   // State
   const [videoState, setVideoState] = useState({
@@ -77,8 +85,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
   const [contentExpanded, setContentExpanded] = useState(false);
 
   // Mutations for interactions
-  const likeMutation = useLikeReelsFeedPost();
-  const bookmarkMutation = useBookmarkReelsFeedPost();
 
   // Normalize reel data
   const memoizedReel = useMemo(() => ({

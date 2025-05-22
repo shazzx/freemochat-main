@@ -1,11 +1,10 @@
-// ReelsContainer.tsx
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import ReelItem from './ReelItem';
 import VideoPlaybackManager from './VideoPlaybackManager';
 import videoViewTracker from './VideoViewTracker';
-import { useReelsDataSource } from '@/hooks/Reels/useReels';
+import { useBookmarkBookmarkedReelPost, useBookmarkProfileReelPost, useBookmarkReelsFeedPost, useBookmarkVideosFeedPost, useLikeBookmarkedReelPost, useLikeProfileReelPost, useLikeReelsFeedPost, useLikeVideosFeedPost, useReelsDataSource } from '@/hooks/Reels/useReels';
 import { useAppSelector } from '@/app/hooks';
 import AutoScrollControls from './AutoScrollControls';
 import ShareSheet from './ShareSheet';
@@ -30,6 +29,7 @@ const ReelsContainer: React.FC = () => {
   const videoPlayStartTimeRef = useRef<number | null>(null);
   const hasVideoPlayedOnceRef = useRef(false);
   const observer = useRef<IntersectionObserver | null>(null);
+  const initialScrollPerformedRef = useRef(false);
 
   // State
   const [currentReelId, setCurrentReelId] = useState<string | null>(null);
@@ -56,12 +56,16 @@ const ReelsContainer: React.FC = () => {
 
   // Get source mode from URL params
   const sourceMode = useMemo(() => {
+    // Check if source mode is explicitly passed in location state (from feed suggestions)
+    if (location.state?.sourceMode) {
+      return location.state.sourceMode;
+    }
+
     if (location.pathname.includes('profile')) return 'profile';
     if (location.pathname.includes('bookmarks')) return 'bookmarks';
     if (location.pathname.includes('videos')) return 'videosFeed';
     return 'feed';
-  }, [location.pathname]);
-
+  }, [location.pathname, location.state]);
   // Get user data from your auth store
   const { user } = useAppSelector((state) => state.user);
 
@@ -70,11 +74,25 @@ const ReelsContainer: React.FC = () => {
     return {
       userId: params.userId,
       reelData: location.state?.reelData,
-      initialReelId: params.reelId
+      initialReelId: location.state?.initialReelId || params.reelId, // Try state first, then params
+      isSuggested: location.state?.reelData?.isSuggested || false
     };
   }, [params, location.state]);
-
   // Auto-scroll settings
+
+  // Initialize mutation hooks
+  const profileLikeMutation = useLikeProfileReelPost(sourceParams.userId);
+  const profileBookmarkMutation = useBookmarkProfileReelPost(sourceParams.userId);
+
+  const bookmarkLikeMutation = useLikeBookmarkedReelPost();
+  const bookmarkBookmarkMutation = useBookmarkBookmarkedReelPost();
+
+  const feedLikeMutation = useLikeReelsFeedPost(sourceParams.initialReelId);
+  const feedBookmarkMutation = useBookmarkReelsFeedPost(sourceParams.initialReelId);
+
+  const videosFeedLikeMutation = useLikeVideosFeedPost(sourceParams.initialReelId);
+  const videosFeedBookmarkMutation = useBookmarkVideosFeedPost(sourceParams.initialReelId);
+
   const [autoScrollReels, setAutoScrollReels] = useState({
     autoScroll: user?.autoScrollSettings?.autoScroll || false,
     autoScrollDelay: user?.autoScrollSettings?.autoScrollDelay || null,
@@ -118,6 +136,30 @@ const ReelsContainer: React.FC = () => {
     return 0;
   }, [flattenedData, sourceParams.initialReelId]);
 
+  // Scroll to initial reel without smooth scrolling for profile or bookmark modes
+  useEffect(() => {
+    if (!flattenedData || flattenedData.length === 0 || isLoading || initialScrollPerformedRef.current) {
+      return;
+    }
+
+    // Check if we need to scroll to a specific reel
+    if (initialReelIndex > 0 && sourceParams.initialReelId && (sourceMode === 'profile' || sourceMode === 'bookmark' || sourceMode === 'bookmarks')) {
+      console.log(`Scrolling directly to reel at index ${initialReelIndex} without smooth scrolling`);
+
+      // Find the target element
+      const targetElement = document.querySelector(`[data-index="${initialReelIndex}"]`);
+      if (targetElement && containerRef.current) {
+        // Use instant scroll with auto behavior (no smooth scrolling)
+        targetElement.scrollIntoView({
+          behavior: 'auto',
+          block: 'start'
+        });
+
+        // Mark that we've performed the initial scroll
+        initialScrollPerformedRef.current = true;
+      }
+    }
+  }, [flattenedData, initialReelIndex, sourceParams.initialReelId, sourceMode, isLoading]);
 
   // Auto-scroll functionality
   const handleAutoScroll = useCallback((isFromLongPress = false) => {
@@ -225,6 +267,8 @@ const ReelsContainer: React.FC = () => {
       }
     };
   }, [autoScrollReels, handleAutoScroll, bottomSheetOpen, longPressActive, userInteracted]);
+
+
 
   // Setup intersection observer for detecting visible reels
   useEffect(() => {
@@ -468,6 +512,14 @@ const ReelsContainer: React.FC = () => {
     }
   }, []);
 
+  const handleReelAction = useCallback((actionType, reel) => {
+    console.log(`[DEBUG] ${actionType} action on reel:`, {
+      reelId: reel._id,
+      sourceMode,
+      currentIndex: activeReelIndex
+    });
+  }, [activeReelIndex, sourceMode]);
+
   // Bottom sheet handlers
   const handleCommentsOpen = useCallback((reelId) => {
     setCurrentReelId(reelId);
@@ -494,6 +546,7 @@ const ReelsContainer: React.FC = () => {
   }, []);
 
   // Render each reel item
+  // Render each reel item
   const renderReels = useMemo(() => {
     if (!flattenedData || flattenedData.length === 0) {
       return (
@@ -514,32 +567,107 @@ const ReelsContainer: React.FC = () => {
       );
     }
 
-    return flattenedData.map((reel, index) => (
-      <ReelItem
-        key={`${reel.key || reel._id}-${sourceMode}`}
-        reel={reel}
-        isActive={index === activeReelIndex && isScreenFocused}
-        pageIndex={reel.pageIndex}
-        reelIndex={reel.reelIndex}
-        index={index}
-        handleCommentsOpen={handleCommentsOpen}
-        handleShareOpen={handleShareOpen}
-        handleOptionsOpen={handleOptionsOpen}
-        onPlaybackStateChange={updateVideoPlaybackState}
-        onVideoComplete={handleAutoScroll}
-        autoScrollEnabled={sourceMode !== "videosFeed" && autoScrollReels.autoScroll}
-        onUserInteraction={handleUserVideoInteraction}
-        onLongPressStateChange={setLongPressActive}
-        className="reel-item h-screen w-full snap-start snap-always"
-        data-reel-id={`reel-${reel.id}`}
-        data-index={index}
-      />
-    ));
+    return flattenedData.map((reel, index) => {
+      const isActive = index === activeReelIndex && isScreenFocused;
+
+      // Check if this is a suggested reel
+      const isSuggested = !!reel.isSuggested;
+
+      // Determine appropriate like and bookmark functions based on source
+      let likeMutationHook;
+      let bookmarkMutationHook;
+
+      if (sourceMode === 'profile') {
+        likeMutationHook = profileLikeMutation;
+        bookmarkMutationHook = profileBookmarkMutation;
+      }
+      else if (sourceMode === 'bookmarks') {
+        likeMutationHook = bookmarkLikeMutation;
+        bookmarkMutationHook = bookmarkBookmarkMutation;
+      }
+      else if (sourceMode === 'videosFeed') {
+        likeMutationHook = videosFeedLikeMutation;
+        bookmarkMutationHook = videosFeedBookmarkMutation;
+      }
+      else if (isSuggested) {
+        // For suggested reels, use the feed hooks
+        likeMutationHook = feedLikeMutation;
+        bookmarkMutationHook = feedBookmarkMutation;
+      }
+      else {
+        // Default feed mode
+        likeMutationHook = feedLikeMutation;
+        bookmarkMutationHook = feedBookmarkMutation;
+      }
+
+      // Normalize the reel data with better defaults
+      const normalizedReel = {
+        ...reel,
+        // Ensure targetId is present
+        targetId: reel.targetId || (reel.target && reel.target._id) || '',
+        // Normalize type with a default
+        type: reel.type || 'user',
+        postType: reel.postType || 'reel',
+        // Handle counts with defaults to prevent NaN
+        likesCount: typeof reel.likesCount === 'number' ? reel.likesCount : 0,
+        commentsCount: typeof reel.commentsCount === 'number' ? reel.commentsCount : 0,
+        sharesCount: typeof reel.sharesCount === 'number' ? reel.sharesCount : 0,
+        videoViewsCount: typeof reel.videoViewsCount === 'number' ? reel.videoViewsCount : 0,
+        // Set boolean flags safely
+        isLikedByUser: !!reel.isLikedByUser,
+        isBookmarkedByUser: !!reel.isBookmarkedByUser,
+        // Ensure media exists
+        media: reel.media || [],
+        // Ensure target exists
+        target: reel.target || {},
+        // Add debugging info
+        _isSuggested: isSuggested,
+        _sourceMode: sourceMode
+      };
+
+      return (
+        <ReelItem
+          key={`${reel.key || reel._id}-${sourceMode}`}
+          reel={normalizedReel}
+          isActive={isActive}
+          pageIndex={reel.pageIndex}
+          reelIndex={reel.reelIndex}
+          index={index}
+          handleCommentsOpen={handleCommentsOpen}
+          handleShareOpen={handleShareOpen}
+          handleOptionsOpen={handleOptionsOpen}
+          // Pass the mutation hooks
+          useLikeReel={likeMutationHook}
+          useBookmarkReel={bookmarkMutationHook}
+          onPlaybackStateChange={updateVideoPlaybackState}
+          onVideoComplete={handleAutoScroll}
+          autoScrollEnabled={sourceMode !== "videosFeed" && autoScrollReels.autoScroll}
+          onUserInteraction={handleUserVideoInteraction}
+          onLongPressStateChange={setLongPressActive}
+          onLikePress={() => handleReelAction('like', normalizedReel)}
+          onBookmarkPress={() => handleReelAction('bookmark', normalizedReel)}
+          sourceMode={sourceMode}
+          isSuggested={isSuggested}
+          className="reel-item h-screen w-full snap-start snap-always"
+          data-reel-id={`reel-${reel.id}`}
+          data-index={index}
+        />
+      );
+    });
   }, [
     flattenedData,
     activeReelIndex,
     isScreenFocused,
     sourceMode,
+    sourceParams,
+    profileLikeMutation,
+    profileBookmarkMutation,
+    bookmarkLikeMutation,
+    bookmarkBookmarkMutation,
+    feedLikeMutation,
+    feedBookmarkMutation,
+    videosFeedLikeMutation,
+    videosFeedBookmarkMutation,
     handleCommentsOpen,
     handleShareOpen,
     handleOptionsOpen,
@@ -547,6 +675,8 @@ const ReelsContainer: React.FC = () => {
     handleAutoScroll,
     autoScrollReels,
     handleUserVideoInteraction,
+    handleReelAction,
+    setLongPressActive,
     refetch
   ]);
 

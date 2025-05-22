@@ -37,6 +37,7 @@ import { toast } from 'react-toastify'
 import { Label } from '@/components/ui/label'
 import { format } from 'date-fns'
 import { FiExternalLink } from "react-icons/fi";
+import UserReelsSection from '@/components/Reel/UserReelsSection'
 
 const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const localUserData = useAppSelector(data => data.user)
@@ -65,7 +66,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
     const [posts, setPosts] = useState([])
     const [newPost, setNewPost] = useState(undefined)
-    const tabList = [{ value: "posts", name: "Posts" }, { value: "friends", name: "Friends" }, { value: "followers", name: "Followers" }, { value: "media", name: "Media" }, { value: "about", name: "About" }]
+    const tabList = [{ value: "posts", name: "Posts" }, { value: "friends", name: "Friends" }, { value: "followers", name: "Followers" }, { value: "reels", name: "Reels" }, { value: "media", name: "Media" }, { value: "about", name: "About" }]
     const navigate = useNavigate()
 
     const [searchParams, setSearchParams] = useSearchParams()
@@ -372,6 +373,9 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                 <TabsContent value="followers" className="">
                                     <Followers isSelf={isSelf} userFollowers={!userFollowers.isLoading && userFollowers} followUserToggle={followUserToggle} recepientId={_id} media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                                 </TabsContent>
+                                <TabsContent value="reels" className='flex flex-col gap-2'>
+                                    <UserReelsSection userId={user?._id} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                </TabsContent>
                                 <TabsContent value="media" className='flex flex-col gap-2'>
                                     <MediaSection media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                                 </TabsContent>
@@ -484,22 +488,22 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                 </div>
                                             }
 
-                                            {website && 
-                                            <div className="relative max-w-96 mb-2">
-                                                <Label>Website</Label>
-                                                <a target="_blank" href={website}>
-                                                    <Input
-                                                        name="website"
-                                                        placeholder="Website Url"
-                                                        defaultValue={website}
-                                                        className="max-w-96 w-full text-primary"
-                                                    />
-                                                    <div className='absolute top-7 right-0 p-2'>
-                                                        <FiExternalLink className='text-primary' />
-                                                    </div>
-                                                </a>
+                                            {website &&
+                                                <div className="relative max-w-96 mb-2">
+                                                    <Label>Website</Label>
+                                                    <a target="_blank" href={website}>
+                                                        <Input
+                                                            name="website"
+                                                            placeholder="Website Url"
+                                                            defaultValue={website}
+                                                            className="max-w-96 w-full text-primary"
+                                                        />
+                                                        <div className='absolute top-7 right-0 p-2'>
+                                                            <FiExternalLink className='text-primary' />
+                                                        </div>
+                                                    </a>
 
-                                            </div>}
+                                                </div>}
 
                                             {(socialMedia?.facebook || socialMedia?.instagram || socialMedia?.linkedin || socialMedia?.whatsapp) &&
                                                 <div className="w-full mt-4">

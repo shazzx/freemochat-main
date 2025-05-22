@@ -284,6 +284,7 @@ export const useReelsDataSource = (mode = 'feed', params = {}) => {
 
 export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
     const queryClient = useQueryClient();
+    console.log(initialReelId, sourceMode);
 
     return useMutation({
         mutationFn: (postDetails) => {

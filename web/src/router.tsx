@@ -100,6 +100,10 @@ export const router = createBrowserRouter([
             {
                 path: "/reels",
                 element: <ReelsContainer />,
+            },
+            {
+                path: "/reels/:reelId",
+                element: < ReelsContainer />
             }
         ]
     },
