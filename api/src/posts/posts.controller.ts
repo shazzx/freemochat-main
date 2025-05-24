@@ -345,7 +345,8 @@ export class PostsController {
                 sharedPost: new Types.ObjectId(sharedPostData.sharedPostId),
                 postType: 'post',
                 targetId,
-                user: new Types.ObjectId(sub)
+                user: new Types.ObjectId(sub),
+                sharedPostType: sharedPostData.postType || 'post',
             })
 
         res.json(uploadedPost)
@@ -493,10 +494,19 @@ export class PostsController {
 
     @Post("like")
     async like(@Body(new ZodValidationPipe(LikePost)) body: LikePostDTO, @Req() req: Request, @Res() res: Response) {
-        const { postId, authorId, type, targetId, reaction } = body
+        const { postId, authorId, type, postType, targetId, reaction } = body
         const { sub } = req.user as { sub: string, username: string }
 
-        res.json(await this.postService.toggleLike({ userId: sub, targetId: postId, type: "post", authorId, targetType: type, _targetId: targetId, reaction }))
+        if (postType && postType !== 'post' && postType !== 'reel') {
+            throw new BadRequestException("Invalid post type. Only 'post' and 'reel' are allowed.");
+        }
+
+
+        if (!postId || !Types.ObjectId.isValid(postId)) {
+            throw new BadRequestException("Invalid post ID");
+        }
+
+        res.json(await this.postService.toggleLike({ userId: sub, targetId: postId, type: postType || "post", authorId, targetType: type, _targetId: targetId, reaction, postType: postType || 'post' }))
     }
 
 
@@ -516,14 +526,20 @@ export class PostsController {
 
     @Post("likeComment")
     async likeComment(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
-        const { targetId, reaction, authorId } = body
-        res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "comment", reaction, targetType: 'user', authorId }))
+        const { targetId, reaction, authorId, postType } = body
+        if (postType && postType !== 'post' && postType !== 'reel') {
+            throw new BadRequestException("Invalid post type. Only 'post' and 'reel' are allowed.");
+        }
+        res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "comment", postType: postType || 'post', reaction, targetType: 'user', authorId }))
     }
 
     @Post("likeReply")
     async likeReply(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
-        const { targetId, reaction, authorId } = body
-        res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "reply", reaction, targetType: 'user', authorId }))
+        const { targetId, reaction, authorId, postType } = body
+        if (postType && postType !== 'post' && postType !== 'reel') {
+            throw new BadRequestException("Invalid post type. Only 'post' and 'reel' are allowed.");
+        }
+        res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "reply", reaction, targetType: 'user', authorId, postType: postType || 'post' }))
     }
 
     @Post("bookmark")

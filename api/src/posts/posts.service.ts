@@ -948,7 +948,7 @@ export class PostsService {
                                                 $and: [
                                                     { $eq: ['$targetId', '$$postId'] },
                                                     { $eq: ['$userId', new Types.ObjectId(userId)] },
-                                                    { $eq: ['$type', "post"] },
+                                                    { $eq: ['$type', "reel"] },
                                                 ],
                                             },
                                         },
@@ -1045,6 +1045,7 @@ export class PostsService {
                                 isUploaded: 1,
                                 target: 1,
                                 reaction: 1,
+                                videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
                                 likesCount: { $ifNull: ['$likesCount.count', 0] },
                                 commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                                 bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
@@ -1071,7 +1072,7 @@ export class PostsService {
                                     $and: [
                                         { $eq: ['$targetId', '$$postId'] },
                                         { $eq: ['$userId', new Types.ObjectId(userId)] },
-                                        { $eq: ['$type', "post"] },
+                                        { $eq: ['$type', "reel"] },
                                     ],
                                 },
                             },
@@ -1109,8 +1110,8 @@ export class PostsService {
                                 $expr: {
                                     $and: [
                                         { $eq: ['$targetId', '$$postId'] },
-                                        { $eq: ['$name', 'post'] },
-                                        { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+                                        { $eq: ['$name', 'reel'] },
+                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'videoViews']] }
                                     ]
                                 }
                             }
@@ -1136,6 +1137,12 @@ export class PostsService {
                             { count: 0 }
                         ]
                     },
+                    videoViewsCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'videoViews'] } } }, 0] },
+                            0
+                        ]
+                    },
                     bookmarksCount: {
                         $ifNull: [
                             { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
@@ -1152,6 +1159,7 @@ export class PostsService {
                     user: 1,
                     target: 1,
                     reaction: 1,
+                    videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
@@ -2394,7 +2402,7 @@ export class PostsService {
     // }
 
     async feed(userId: string, cursor: string, reelsCursor: string) {
-        const postLimit = 18
+        const postLimit = 8
         const reelsLimit = 3
 
         let visibility = {
@@ -3241,7 +3249,7 @@ export class PostsService {
     // }
 
     async videosFeed(userId: string, cursor: string, postId?: string) {
-        const videoLimit = 18;
+        const videoLimit = 8;
 
         console.log('videosFeed params:', { userId, cursor, postId });
 
@@ -3591,7 +3599,7 @@ export class PostsService {
     }
 
     async reelsFeed(userId, cursor, postId) {
-        const limit = 18;
+        const limit = 8;
 
         console.log('reelsFeed params:', { userId, cursor, postId });
 
@@ -3767,7 +3775,7 @@ export class PostsService {
                                     $and: [
                                         { $eq: ['$targetId', '$$postId'] },
                                         { $eq: ['$userId', new Types.ObjectId(userId)] },
-                                        { $eq: ['$type', "post"] },
+                                        { $eq: ['$type', "reel"] },
                                     ],
                                 },
                             },
@@ -3787,7 +3795,7 @@ export class PostsService {
                                 $expr: {
                                     $and: [
                                         { $eq: ['$targetId', '$$postId'] },
-                                        { $eq: ['$name', 'post'] },
+                                        { $eq: ['$name', 'reel'] },
                                         { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares', 'videoViews']] }
                                     ]
                                 }
@@ -4070,7 +4078,7 @@ export class PostsService {
                             newlyViewedPostIds.map(postId =>
                                 this.metricsAggregatorService.incrementCount(
                                     postId,
-                                    'post',
+                                    'reel',
                                     "videoViews",
                                     // session
                                 )
@@ -4658,10 +4666,10 @@ export class PostsService {
 
         if (deleteResult.deletedCount === 0) {
             await this.bookmarkModel.create(filter);
-            await this.metricsAggregatorService.incrementCount(filter.postId, "post", "bookmarks")
+            await this.metricsAggregatorService.incrementCount(filter.postId, postType, "bookmarks")
             return true;
         }
-        await this.metricsAggregatorService.decrementCount(filter.postId, "post", "bookmarks")
+        await this.metricsAggregatorService.decrementCount(filter.postId, postType, "bookmarks")
         return false;
     }
 
@@ -4857,7 +4865,7 @@ export class PostsService {
 
     }
 
-    async toggleLike({ userId, targetId, type, authorId, _targetId, targetType, reaction }: { userId: string, targetId: string, type: 'post' | 'reel' | 'comment' | 'reply', authorId?: string, targetType?: string, _targetId?: string, reaction?: string }): Promise<boolean> {
+    async toggleLike({ userId, targetId, type, authorId, _targetId, targetType, reaction, postType }: { userId: string, targetId: string, type: string, authorId?: string, targetType?: string, _targetId?: string, reaction?: string, postType }): Promise<boolean> {
 
         let filter: {
             userId: Types.ObjectId,
@@ -4908,13 +4916,14 @@ export class PostsService {
                         user: new Types.ObjectId(authorId),
                         targetId: new Types.ObjectId(targetId),
                         type,
+                        postType,
                         targetType,
                         value: reaction ? `has reacted on your ${type} (${reactions[reaction] || reaction})` : `has liked your ${type}`
                     }
                 )
             }
 
-            await this.metricsAggregatorService.incrementCount(filter.targetId, type, "likes")
+            await this.metricsAggregatorService.incrementCount(filter.targetId, postType, "likes")
 
             if (targetType == 'user' || targetType == "page") {
                 let updatedInteraction = await this.followerModel.updateOne({ follower: interactionFilter.userId, targetId: interactionFilter.targetId },
@@ -4939,13 +4948,14 @@ export class PostsService {
                         user: new Types.ObjectId(authorId),
                         targetId: new Types.ObjectId(targetId),
                         type,
+                        postType,
                         targetType,
                         value: reaction ? `has reacted on your ${type} (${reactions[reaction] || reaction})` : `has liked your ${type}`
                     }
                 )
             }
 
-            await this.metricsAggregatorService.incrementCount(filter.targetId, type, "likes")
+            await this.metricsAggregatorService.incrementCount(filter.targetId, (type == 'reply' || type == 'comment') ? type : postType, "likes")
 
             if (targetType == 'user' || targetType == "page") {
                 console.log(filter)
@@ -5008,7 +5018,11 @@ export class PostsService {
     async createSharedPost(postData: any) {
         const post = await this.postModel.create({ ...postData })
 
-        await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postData?.sharedPost), "post", "shares")
+        await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postData?.sharedPost), postData?.sharedPostType, "shares")
+
+        if (postData?.sharedPostType == "reel") {
+            await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postData?.sharedPost), 'post', "shares")
+        }
 
         return await post.populate([
             {

@@ -15,6 +15,7 @@ export const CreateSharedPost = z.object({
     sharedPostId: ValidMongoId,
     content: z.string().optional(),
     type: z.string(),
+    postType: z.string().optional(),
     visibility: z.string()
 })
 
@@ -38,15 +39,16 @@ export const DeletePost = z.object({
 })
 
 export const GetPost = z.object({
-    postId: z.string(),
+    postId: ValidMongoId,
     type: z.string(),
 })
 
 export const LikePost = z.object({
     postId: ValidMongoId,
-    authorId: z.string().optional(),
-    targetId: z.string().optional(),
+    authorId: ValidMongoId.optional(),
+    targetId: ValidMongoId.optional(),
     type: z.string().optional(),
+    postType: z.string().optional(),
     reaction: z.string().optional(),
 })
 
@@ -58,6 +60,7 @@ export const GetPostLikes = z.object({
 
 export const LikeCommentOrReply = z.object({
     targetId: ValidMongoId,
+    postType: z.string().optional(),
     authorId: ValidMongoId.optional(),
     reaction: z.string().optional()
 })

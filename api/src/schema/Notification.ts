@@ -15,6 +15,9 @@ export class Notification {
     targetType: String;
 
     @Prop()
+    postType: String;
+
+    @Prop()
     handle: String;
 
     @Prop({ type: Types.ObjectId, ref: "User" })

@@ -500,7 +500,7 @@ const MainHome = ({ children }: any) => {
                     {metrics?.data?.unreadChatlists?.count}
                   </Badge>}
                 </Link>
-                <Link
+                {/* <Link
                   to={domain + "/reels"}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary ${active == "/messages" && 'bg-primary-active text-primary-foreground hover:text-primary-foreground'}`}              >
                   <FilmIcon size={34} />
@@ -508,7 +508,7 @@ const MainHome = ({ children }: any) => {
                   {metrics?.data?.unreadChatlists?.count > 0 && <Badge className="ml-auto flex h-6 w-6 shrink-0 bg-red-500 dark:bg-backgruond items-center justify-center rounded-full">
                     {metrics?.data?.unreadChatlists?.count}
                   </Badge>}
-                </Link>
+                </Link> */}
                 <Link
                   onClick={() => {
                     setActive('/groups')
