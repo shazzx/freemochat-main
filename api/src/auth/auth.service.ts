@@ -98,16 +98,16 @@ export class AuthService {
 
     async login(user: any) {
         const payload = { username: user.username, sub: user._id }
-        const refresh_token = this.jwtService.sign(payload, { secret: jwtConstants.secret, expiresIn: '4h' })
+        const refresh_token = this.jwtService.sign(payload, { secret: jwtConstants.secret, expiresIn: '120h' })
         await this.redisService.setUserRefreshToken(user._id, refresh_token)
         return {
             user,
-            access_token: this.jwtService.sign(payload, { secret: jwtConstants.secret, expiresIn: '2h' }),
+            access_token: this.jwtService.sign(payload, { secret: jwtConstants.secret, expiresIn: '120h' }),
         }
     }
 
     async accessToken({ username, userId }: { username: string, userId: string }) {
-        return this.jwtService.sign({ username, sub: userId }, { secret: jwtConstants.secret, expiresIn: '2h' })
+        return this.jwtService.sign({ username, sub: userId }, { secret: jwtConstants.secret, expiresIn: '120h' })
     }
 
     async refreshToken(token) {

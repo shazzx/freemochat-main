@@ -35,7 +35,7 @@ export class AuthService {
     async refreshToken(token) {
         try {
             const payload = await this.jwtService.verifyAsync(token, { secret: jwtConstants.secret })
-            const access_token = this.jwtService.sign({ username: payload.username, sub: payload.sub }, { secret: jwtConstants.secret, expiresIn: '1h' })
+            const access_token = this.jwtService.sign({ username: payload.username, sub: payload.sub }, { secret: jwtConstants.secret, expiresIn: '120h' })
             return access_token
         } catch (error) {
             return false
