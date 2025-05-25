@@ -10,6 +10,7 @@ import AutoScrollControls from './AutoScrollControls';
 import ShareSheet from './ShareSheet';
 import ThreeDotsSheet from './ThreeDotsSheet';
 import BottomComments from '@/models/BottomComments';
+import Comments from './Comments';
 // import ReportModal from './ReportModal';
 const ReelsContainer: React.FC = () => {
   // Routing
@@ -98,6 +99,24 @@ const ReelsContainer: React.FC = () => {
     autoScroll: user?.autoScrollSettings?.autoScroll || false,
     autoScrollDelay: user?.autoScrollSettings?.autoScrollDelay || null,
   });
+
+  const useScreenSize = () => {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+      const checkScreenSize = () => {
+        setIsMobile(window.innerWidth < 960);
+      };
+
+      checkScreenSize();
+      window.addEventListener('resize', checkScreenSize);
+      return () => window.removeEventListener('resize', checkScreenSize);
+    }, []);
+
+    return isMobile;
+  };
+
+  const isMobile = useScreenSize();
 
   // Fetch reels data
   const {
@@ -469,6 +488,8 @@ const ReelsContainer: React.FC = () => {
     }
   }, [startAutoScrollTimer, autoScrollReels, longPressActive]);
 
+
+
   // Component cleanup
   useEffect(() => {
     return () => {
@@ -681,6 +702,8 @@ const ReelsContainer: React.FC = () => {
     refetch
   ]);
 
+
+
   if (isLoading && !flattenedData?.length) {
     return (
       <div className="flex justify-center items-center h-screen bg-black">
@@ -693,71 +716,88 @@ const ReelsContainer: React.FC = () => {
   }
 
   return (
-    <div className="relative h-screen w-full bg-black overflow-hidden">
-      {/* Main Reels Container with Snap Scroll */}
-      <div
-        ref={containerRef}
-        className="h-full w-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {renderReels}
-      </div>
+    <div className='flex'>
+      <div className="relative h-screen w-full bg-black overflow-hidden">
+        {/* Main Reels Container with Snap Scroll */}
 
-      {/* Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="absolute top-4 left-4 z-30 bg-black/30 p-2 rounded-full"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
+        <div
+          ref={containerRef}
+          className="h-full w-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {renderReels}
+        </div>
 
-      {/* Auto-scroll Controls */}
-      {showAutoScrollControls && (
-        <AutoScrollControls
-          autoScrollSettings={autoScrollReels}
-          onSettingsChange={setAutoScrollReels}
-          isVisible={showAutoScrollControls}
-          setIsVisible={setShowAutoScrollControls}
-        />
-      )}
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute flex items-center justify-center gap-2 top-4 left-4 z-30  "
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 text-white rounded-full p-2 bg-black/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          {(activeReelIndex == 0) &&
+            <span>
+              {(sourceMode !== 'videosFeed') ? "Reels" : "Videos"}
+            </span>
+          }
+        </button>
 
-      {/* Bottom Sheets */}
-      {activeSheet === 'comments' && (
-        <BottomComments isReel={sourceMode !== 'videosFeed'} pageIndex={flattenedData && flattenedData[activeReelIndex]?.pageIndex} params={{
-          type: (sourceMode !== 'videosFeed') ? sourceMode : 'userPosts',
-          targetId: flattenedData && flattenedData[activeReelIndex]?.targetId,
-          postId: flattenedData && flattenedData[activeReelIndex]?._id,
-          reelsKey: [sourceMode, sourceParams?.initialReelId]
-        }} postData={flattenedData && flattenedData[activeReelIndex]} postId={flattenedData && flattenedData[activeReelIndex]?._id} isOpen={activeSheet && true} setOpen={setActiveSheet} />
-      )}
+        {/* Auto-scroll Controls */}
+        {
+          showAutoScrollControls && (
+            <AutoScrollControls
+              autoScrollSettings={autoScrollReels}
+              onSettingsChange={setAutoScrollReels}
+              isVisible={showAutoScrollControls}
+              setIsVisible={setShowAutoScrollControls}
+            />
+          )
+        }
+
+        {/* Bottom Sheets */}
+        {
+          activeSheet === 'comments' && isMobile && (
+            <BottomComments isReel={sourceMode !== 'videosFeed'} pageIndex={flattenedData && flattenedData[activeReelIndex]?.pageIndex} params={{
+              type: (sourceMode !== 'videosFeed') ? sourceMode : 'userPosts',
+              targetId: flattenedData && flattenedData[activeReelIndex]?.targetId,
+              postId: flattenedData && flattenedData[activeReelIndex]?._id,
+              reelsKey: [sourceMode, sourceParams?.initialReelId]
+            }} postData={flattenedData && flattenedData[activeReelIndex]} postId={flattenedData && flattenedData[activeReelIndex]?._id} isOpen={activeSheet && true} setOpen={setActiveSheet} />
+          )
+        }
 
 
 
-      {activeSheet === 'share' && (
-        <ShareSheet
-          isOpen={bottomSheetOpen && activeSheet === 'share'}
-          onClose={closeSheet}
-          sharedPost={{ ...sharedReel, user: sharedReel?.target }}
-          isReel={sourceMode !== 'videosFeed'}
-        />
-      )}
 
-      {activeSheet === 'options' && (
-        <ThreeDotsSheet
-          isOpen={bottomSheetOpen && activeSheet === 'options'}
-          onClose={closeSheet}
-          postId={currentReelId}
-          isReel={sourceMode !== 'videosFeed'}
-          onShowAutoScrollSettings={() => setShowAutoScrollControls(true)}
-          onReportPost={() => setReportModalVisible(true)}
-        />
-      )}
-      {/* {bottomCommentsState && width < 540 &&
+
+        {
+          activeSheet === 'share' && (
+            <ShareSheet
+              isOpen={bottomSheetOpen && activeSheet === 'share'}
+              onClose={closeSheet}
+              sharedPost={{ ...sharedReel, user: sharedReel?.target }}
+              isReel={sourceMode !== 'videosFeed'}
+            />
+          )
+        }
+
+        {
+          activeSheet === 'options' && (
+            <ThreeDotsSheet
+              isOpen={bottomSheetOpen && activeSheet === 'options'}
+              onClose={closeSheet}
+              postId={currentReelId}
+              isReel={sourceMode !== 'videosFeed'}
+              onShowAutoScrollSettings={() => setShowAutoScrollControls(true)}
+              onReportPost={() => setReportModalVisible(true)}
+            />
+          )
+        }
+        {/* {bottomCommentsState && width < 540 &&
         <BottomComments pageIndex={0} params={params} postData={postData} postId={postData?._id} isOpen={bottomCommentsState} setOpen={setBottomCommentsState} />
       } */}
-      {/* {reportModalVisible && (
+        {/* {reportModalVisible && (
         <ReportModal
           isOpen={reportModalVisible}
           onClose={() => setReportModalVisible(false)}
@@ -766,7 +806,20 @@ const ReelsContainer: React.FC = () => {
           isReel={true}
         />
       )} */}
-    </div>
+      </div >
+      {activeSheet === 'comments' && !isMobile && (
+        <Comments isReel={sourceMode !== 'videosFeed'} pageIndex={flattenedData && flattenedData[activeReelIndex]?.pageIndex}
+          params={{
+            type: (sourceMode !== 'videosFeed') ? sourceMode : 'userPosts',
+            targetId: flattenedData && flattenedData[activeReelIndex]?.targetId,
+            postId: flattenedData && flattenedData[activeReelIndex]?._id,
+            reelsKey: [sourceMode, sourceParams?.initialReelId]
+          }} postData={flattenedData && flattenedData[activeReelIndex]}
+          postId={flattenedData && flattenedData[activeReelIndex]?._id}
+        />
+      )}
+    </div >
+
   );
 };
 
