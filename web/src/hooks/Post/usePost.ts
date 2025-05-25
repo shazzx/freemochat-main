@@ -1,11 +1,12 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAppSelector } from '@/app/hooks';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { toast } from 'react-toastify';
 import { produce } from 'immer'
 import { bookmarkPost, createPost, createSharedPost, fetchFeed, fetchPost, fetchPostLikes, fetchPosts, likePost, promotePost, removePost, updatePost } from '@/api/Post/posts';
 import { UrlObject } from 'url';
 import { axiosClient } from '@/api/axiosClient';
 import { redirectToCheckout } from '@/utils/redirectToCheckout';
+import { createReel } from '@/api/Reel/reel.api';
 
 export function useFeed(): any {
 
@@ -86,12 +87,12 @@ export const useCreatePost = (key: string, targetId?: string) => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (postDetails: { content: string, selectedMedia: { file: File, type: string, url: UrlObject }[], formData: FormData, type: string, target: any, isUploaded?: boolean }) => {
+    mutationFn: (postDetails: { postType, content: string, selectedMedia: { file: File, type: string, url: UrlObject }[], formData: FormData, type: string, target: any, isUploaded?: boolean }) => {
       return createPost(postDetails.formData)
     },
 
 
-    onMutate: async ({ content, selectedMedia, type, target }) => {
+    onMutate: async ({ content, selectedMedia, postType, type, target }) => {
       await queryClient.cancelQueries({ queryKey: [key, targetId] })
       const previousPosts = queryClient.getQueryData([key, targetId])
       await queryClient.cancelQueries({ queryKey: ['feed'] })
@@ -100,7 +101,7 @@ export const useCreatePost = (key: string, targetId?: string) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft?.pages && draft?.pages[0].posts) {
             console.log(pages, 'feed')
-            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, postType, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
             return draft
           }
 
@@ -121,9 +122,8 @@ export const useCreatePost = (key: string, targetId?: string) => {
       queryClient.setQueryData([key, targetId], (pages: any) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft?.pages && draft?.pages[0].posts) {
-            console.log(pages, 'user')
 
-            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, postType, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
             return draft
           }
 

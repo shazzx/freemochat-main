@@ -3,7 +3,11 @@ import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { useBookamrks } from '@/hooks/Bookmarks/useBookmark';
 import { useCallback, useEffect, useState } from 'react';
 import { produce } from "immer";
-import { fetchReelsFeed, fetchReels, fetchVideosFeed } from "@/api/Reel/reel.api";
+import { fetchReelsFeed, fetchReels, fetchVideosFeed, createReel } from "@/api/Reel/reel.api";
+import { useAppDispatch } from "@/app/hooks";
+import { createUploadStatus, removeUploadStatus } from "@/app/features/user/uploadStatusSlice";
+import { toast } from "react-toastify";
+import { UrlObject } from "url";
 
 export function useReelsFeed(initialReelId = null) {
     const {
@@ -87,6 +91,37 @@ export function useVideosFeed(initialReelId) {
         error,
         hasNextPage: !!pages[pages.length - 1]?.nextCursor,
     };
+}
+
+export const useCreateReel = () => {
+    const dispatch = useAppDispatch()
+    const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+        mutationFn: (formData: FormData) => {
+            return createReel(formData)
+        },
+
+        onMutate: () => {
+            dispatch(createUploadStatus("Reel is being uploaded"))
+        },
+
+        onError: (err) => {
+            dispatch(removeUploadStatus())
+            if (err instanceof Error) {
+                toast.error(err.message)
+            }
+            else {
+                toast.error("Something went wrong while uploading the reel")
+            }
+        },
+    })
+
+    return {
+        data,
+        isPending,
+        isSuccess,
+        mutateAsync,
+        mutate
+    }
 }
 
 // User profile reels query
@@ -738,3 +773,4 @@ export const useBookmarkProfileReelPost = (userId) => {
 export const useBookmarkBookmarkedReelPost = () => {
     return useBookmarkReelPost('bookmarks');
 };
+

@@ -9,7 +9,6 @@ import {
 import { MdCancel, MdRemove } from "react-icons/md"
 
 function PostCarousel({ postMedia, setPostMedia }) {
-    console.log(postMedia, 'carousel')
     return (
         <Carousel>
             <CarouselContent >

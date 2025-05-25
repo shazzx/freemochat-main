@@ -1,5 +1,6 @@
 import { acceptCall, callRinging, endCall, incomingCall } from "@/app/features/user/callSlice";
 import { setSocket } from "@/app/features/user/socketSlice";
+import { removeUploadStatus } from "@/app/features/user/uploadStatusSlice";
 import { useAppSelector } from "@/app/hooks";
 import { CallStates, CallTypes } from "@/utils/enums/global.c";
 import { socketConnect } from "@/websocket/socket.io";
@@ -200,11 +201,20 @@ export const useSocket = () => {
     // })
 
     socket.on("upload-status", (data) => {
-      console.log(data, 'upload status')
-      if (data.isSuccess) {
-        console.log('upload-success')
-      } else {
+
+      if (!data.isSuccess) {
+        if (data?.target?.invalidate == 'reels') {
+          dispatch(removeUploadStatus())
+        }
         toast.error(data.target?.error?.message || "something went wrong try agan later")
+      }
+
+      if (data.target?.invalidate == "reels") {
+        queryClient.invalidateQueries({ queryKey: ['reelsFeed'] })
+        queryClient.invalidateQueries({ queryKey: ['feed'] })
+        dispatch(removeUploadStatus())
+        toast.success("Your Reel has been uploaded")
+        return
       }
 
       if (data.target?.invalidate == "posts") {

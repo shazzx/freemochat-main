@@ -46,6 +46,7 @@ import BottomNav from "./BottomNav"
 import NetworkStatusNotifier from "./NetworkStatusNotifier"
 import { useRTCClient } from "agora-rtc-react"
 import ChangeEmailModel from "@/models/ChangeEmailModel"
+import Uploader from "./Reel/ReelUploadLoader"
 
 const MainHome = ({ children }: any) => {
   useSocket()
@@ -106,9 +107,14 @@ const MainHome = ({ children }: any) => {
 
   // },[viewedPosts])
 
+  const uploadStatus = useAppSelector((state) => state.uploadStatus)
+
   const [modalTrigger, setModalTrigger] = useState(true)
   return (
     <div className="relative h-screen w-full flex flex-col overflow-hidden">
+      {uploadStatus && uploadStatus?.isUploading && uploadStatus?.type == 'reels' &&
+        <Uploader message={uploadStatus?.message} />
+      }
       {(!user?.email && modalTrigger) &&
         <ChangeEmailModel notice={true} setModalTrigger={setModalTrigger} />
       }
@@ -500,15 +506,15 @@ const MainHome = ({ children }: any) => {
                     {metrics?.data?.unreadChatlists?.count}
                   </Badge>}
                 </Link>
-                {/* <Link
+                <Link
                   to={domain + "/reels"}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary ${active == "/messages" && 'bg-primary-active text-primary-foreground hover:text-primary-foreground'}`}              >
-                  <FilmIcon size={34} />
+                  className={`flex items-center gap-3 rounded-lg px-4 py-2 text-muted-foreground transition-all hover:text-primary`}              >
+                  <FilmIcon size={34} strokeWidth={1.3} />
                   Reels
                   {metrics?.data?.unreadChatlists?.count > 0 && <Badge className="ml-auto flex h-6 w-6 shrink-0 bg-red-500 dark:bg-backgruond items-center justify-center rounded-full">
                     {metrics?.data?.unreadChatlists?.count}
                   </Badge>}
-                </Link> */}
+                </Link>
                 <Link
                   onClick={() => {
                     setActive('/groups')

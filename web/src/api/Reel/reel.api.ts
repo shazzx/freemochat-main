@@ -23,3 +23,9 @@ export async function fetchReels(pageParam: string, targetId: string) {
   });
   return response.data;
 }
+
+
+export async function createReel(formData: FormData) {
+  const response = await axiosClient.post("/posts/create/reel", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 2000000 })
+  return response.data;
+}

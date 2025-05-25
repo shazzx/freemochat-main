@@ -11,7 +11,7 @@ import CustomComboBox from "@/components/ComboboxTwo"
 import { Textarea } from "@/components/ui/textarea"
 import { TUser } from "@/utils/types/TUser"
 
-const CPostModal: FC<{ setModelTrigger?: Function, createPost?: Function, editPost?: boolean, postDetails?: { _id: string, content: string, isShared: string, user: TUser, targetId: string, target: any, media: any }, updatePost?: Function, isShared?: boolean }> = ({ setModelTrigger, createPost, editPost, postDetails, updatePost, isShared }) => {
+const CPostModal: FC<{ setModelTrigger?: Function, createPost?: Function, editPost?: boolean, postDetails?: { _id: string, content: string, isShared: string, user: TUser, targetId: string, target: any, media: any }, updatePost?: Function, isReel?: boolean, isShared?: boolean }> = ({ setModelTrigger, createPost, editPost, postDetails, updatePost, isReel, isShared }) => {
     const [selectedMedia, setSelectedMedia] = useState([])
     const [emojiPickerState, setEmojiPickerState] = useState(false)
     const [selected, setSelected] = useState("public")
@@ -23,7 +23,7 @@ const CPostModal: FC<{ setModelTrigger?: Function, createPost?: Function, editPo
     const content = useRef<HTMLTextAreaElement>()
 
     useEffect(() => {
-        if (postMedia?.length > 0) {
+        if (postMedia?.length > 0 && !isReel) {
             console.log(postMedia)
             setPostMedia([...selectedMedia, ...postMedia])
             // setRemoveMedia(postMedia.map((media) => {
@@ -45,7 +45,6 @@ const CPostModal: FC<{ setModelTrigger?: Function, createPost?: Function, editPo
 
     const getSelected = (selectionState) => {
         setSelected(selectionState)
-        console.log(selectionState, 'selection state')
     }
     const navigate = useNavigate()
 
@@ -80,10 +79,12 @@ const CPostModal: FC<{ setModelTrigger?: Function, createPost?: Function, editPo
 
                         const formData = new FormData()
 
-                        if (selectedMedia?.length > 0) {
+                        if (selectedMedia?.length > 0 && !isReel) {
                             for (let i = 0; i <= selectedMedia.length - 1; i++) {
                                 formData.append('files', selectedMedia[i].file)
                             }
+                        }else{
+                                formData.append('file', selectedMedia[0].file)
                         }
                         if ((isShared && !editPost) || ((content.current.value.length > 1 || selectedMedia.length > 0) && !editPost)) {
                             createPost({ visibility: selected, content: content.current.value, formData, selectedMedia })
@@ -102,10 +103,10 @@ const CPostModal: FC<{ setModelTrigger?: Function, createPost?: Function, editPo
                         toast.info("Please write something")
                     }}>
                         {(!isShared || editPost) && <div>
-                            <h3 className="text-center text-lg sm:text-xl" >{editPost ? "Update Post" : "Create Post"}</h3>
+                            <h3 className="text-center text-lg sm:text-xl" >{editPost ? `Update ${isReel ? 'Reel' : 'Post'}` : `Create ${isReel ? 'Reel' : 'Post'}`}</h3>
                         </div>}
                         <div className={`w-full ${selectedMedia?.length > 0 || postDetails?.media?.length ? 'h-[240px]' : 'h-[360px]'} flex flex-col items-center`}>
-                            <Textarea name="create post" className="border-accent border w-full bg-card h-full p-2" defaultValue={editPost && postDetails?.content} placeholder="write something" id="" ref={content}>
+                            <Textarea name="create post" className="border-accent border w-full bg-card h-full p-2" defaultValue={editPost && postDetails?.content} placeholder={isReel ? "Write a caption for your reel..." : "write something"} id="" ref={content}>
                             </Textarea>
                         </div>
                         {!isShared &&
@@ -113,13 +114,16 @@ const CPostModal: FC<{ setModelTrigger?: Function, createPost?: Function, editPo
                                 <div>
                                     <div className="w-full flex flex-col items-end justify-center gap-1 ">
                                         <div className="flex items-center justify-center ">
-                                            <label htmlFor="post-image">
-                                                <svg width="40" height="40" className="stroke-foreground cursor-pointer" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M20.8137 7.08301H13.1864C11.5588 7.092 10.0014 7.74722 8.85682 8.90451C7.71228 10.0618 7.07437 11.6264 7.08341 13.254V20.7453C7.08342 20.9853 7.09714 21.2252 7.12449 21.4636C7.4676 24.5567 10.0744 26.9015 13.1864 26.9163H20.8137C22.4414 26.9073 23.9988 26.2521 25.1433 25.0948C26.2879 23.9376 26.9258 22.373 26.9167 20.7453V13.254C26.9258 11.6264 26.2879 10.0618 25.1433 8.90451C23.9988 7.74722 22.4414 7.092 20.8137 7.08301Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12.8252 12.1059C12.8252 12.5026 12.5036 12.8242 12.1069 12.8242C11.7102 12.8242 11.3887 12.5026 11.3887 12.1059C11.3887 11.7093 11.7102 11.3877 12.1069 11.3877C12.5036 11.3877 12.8252 11.7093 12.8252 12.1059Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                                                    <path d="M7.12451 21.4637C7.88469 20.7823 8.59089 20.0429 9.23676 19.2523C10.1925 17.9592 11.8863 17.451 13.3961 18.0042C16.9718 19.1375 20.1635 23.3011 23.2249 21.1364C24.3493 20.2785 25.2194 19.1312 25.7423 17.8172C26.05 17.0954 26.4444 16.4137 26.9168 15.7871" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                                                </svg>
-                                            </label>
+                                            {/* Hide media selection when editing reels */}
+                                            {!(editPost && isReel) && (
+                                                <label htmlFor="post-image">
+                                                    <svg width="40" height="40" className="stroke-foreground cursor-pointer" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M20.8137 7.08301H13.1864C11.5588 7.092 10.0014 7.74722 8.85682 8.90451C7.71228 10.0618 7.07437 11.6264 7.08341 13.254V20.7453C7.08342 20.9853 7.09714 21.2252 7.12449 21.4636C7.4676 24.5567 10.0744 26.9015 13.1864 26.9163H20.8137C22.4414 26.9073 23.9988 26.2521 25.1433 25.0948C26.2879 23.9376 26.9258 22.373 26.9167 20.7453V13.254C26.9258 11.6264 26.2879 10.0618 25.1433 8.90451C23.9988 7.74722 22.4414 7.092 20.8137 7.08301Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M12.8252 12.1059C12.8252 12.5026 12.5036 12.8242 12.1069 12.8242C11.7102 12.8242 11.3887 12.5026 11.3887 12.1059C11.3887 11.7093 11.7102 11.3877 12.1069 11.3877C12.5036 11.3877 12.8252 11.7093 12.8252 12.1059Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                                        <path d="M7.12451 21.4637C7.88469 20.7823 8.59089 20.0429 9.23676 19.2523C10.1925 17.9592 11.8863 17.451 13.3961 18.0042C16.9718 19.1375 20.1635 23.3011 23.2249 21.1364C24.3493 20.2785 25.2194 19.1312 25.7423 17.8172C26.05 17.0954 26.4444 16.4137 26.9168 15.7871" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                                    </svg>
+                                                </label>
+                                            )}
                                             <div >
                                                 <div className="text-2xl cursor-pointer" onClick={() => {
                                                     setEmojiPickerState(true)
@@ -148,22 +152,81 @@ const CPostModal: FC<{ setModelTrigger?: Function, createPost?: Function, editPo
                                             </div>
                                         </div>
                                     </div>
-                                    <input className="hidden" type="file" multiple id='post-image' onChange={async (e) => {
-                                        let _selectedMedia = []
-                                        for (let file of e.target.files) {
-                                            if (file.type.startsWith('video/')) {
-                                                _selectedMedia.push({ file, type: 'video', url: URL.createObjectURL(file) })
-                                            }
-                                            if (file.type.startsWith('image/')) {
-                                                _selectedMedia.push({ file, type: 'image', url: URL.createObjectURL(file) })
-                                            }
-                                        }
-                                        setSelectedMedia([..._selectedMedia, ...selectedMedia])
-                                    }} />
 
-                                    {(selectedMedia?.length > 0 || postDetails?.media?.length > 0) &&
+                                    {/* UPDATED FILE INPUT - Key changes here */}
+                                    <input
+                                        className="hidden"
+                                        type="file"
+                                        multiple={!isReel} // Remove multiple for reels
+                                        accept={isReel ? "video/*" : "image/*,video/*"} // Only videos for reels
+                                        id='post-image'
+                                        onChange={async (e) => {
+                                            let _selectedMedia = []
+
+                                            // Helper function to check video duration
+                                            const checkVideoDuration = (file): Promise<boolean> => {
+                                                return new Promise((resolve) => {
+                                                    const video = document.createElement('video');
+                                                    video.preload = 'metadata';
+
+                                                    video.onloadedmetadata = () => {
+                                                        window.URL.revokeObjectURL(video.src);
+                                                        const duration = video.duration;
+                                                        resolve(duration <= 90); // 90 seconds max
+                                                    };
+
+                                                    video.onerror = () => {
+                                                        window.URL.revokeObjectURL(video.src);
+                                                        resolve(false);
+                                                    };
+
+                                                    video.src = URL.createObjectURL(file);
+                                                });
+                                            };
+
+                                            for (let file of e.target.files) {
+                                                if (isReel) {
+                                                    // For reels: only allow videos and replace existing
+                                                    if (file.type.startsWith('video/')) {
+                                                        // Check video duration for reels
+                                                        const isValidDuration = await checkVideoDuration(file);
+
+                                                        if (!isValidDuration) {
+                                                            toast.error("Video duration must be 90 seconds or less for reels");
+                                                            e.target.value = ''; // Clear the input
+                                                            return;
+                                                        }
+
+                                                        _selectedMedia = [{ file, type: 'video', url: URL.createObjectURL(file) }]
+                                                        break; // Only take the first video
+                                                    }
+                                                } else {
+                                                    // For normal posts: allow both images and videos
+                                                    if (file.type.startsWith('video/')) {
+                                                        _selectedMedia.push({ file, type: 'video', url: URL.createObjectURL(file) })
+                                                    }
+                                                    if (file.type.startsWith('image/')) {
+                                                        _selectedMedia.push({ file, type: 'image', url: URL.createObjectURL(file) })
+                                                    }
+                                                }
+                                            }
+
+                                            if (isReel) {
+                                                // For reels: replace the entire selectedMedia array
+                                                setSelectedMedia(_selectedMedia)
+                                            } else {
+                                                // For normal posts: append to existing media
+                                                setSelectedMedia([..._selectedMedia, ...selectedMedia])
+                                            }
+                                        }}
+                                    />
+
+                                    {(selectedMedia?.length > 0 || postDetails?.media?.length > 0) && !(isReel && editPost) &&
                                         <div className="flex items-center justify-center px-2  gap-2">
-                                            <PostCarousel setPostMedia={setPostMedia} postMedia={postMedia} />
+                                            <PostCarousel
+                                                setPostMedia={setPostMedia}
+                                                postMedia={postMedia}
+                                            />
                                         </div>
                                     }
                                 </div>
@@ -179,7 +242,7 @@ const CPostModal: FC<{ setModelTrigger?: Function, createPost?: Function, editPo
                                         navigate('', { replace: true })
 
                                     }} >{editPost ? "Discard" : "Cancel"}</Button>
-                                    <Button type="submit" disabled={uploading} className="w-[120px]">{editPost ? "Save" : "Post"}</Button>
+                                    <Button type="submit" disabled={uploading} className="w-[120px]">{editPost ? "Save" : (isReel ? "Create Reel" : "Post")}</Button>
                                 </div>
                             </>
                         }

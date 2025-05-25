@@ -1,10 +1,12 @@
 import { axiosClient } from '@/api/axiosClient'
 import { useAppSelector } from '@/app/hooks'
 import Post from '@/components/Post'
+import CreatePostStack from '@/components/Post/CreatePostStack'
 import ReelsSuggestionSection from '@/components/Reel/ReelsSuggetion'
 import ScreenLoader from '@/components/ScreenLoader'
 import Stories from '@/components/Stories'
 import { useBookmarkFeedPost, useCreatePost, useFeed, useLikeFeedPost } from '@/hooks/Post/usePost'
+import { useCreateReel } from '@/hooks/Reels/useReels'
 import BottomCreatePost from '@/models/BottomCreatePost'
 import CPostModal from '@/models/CPostModal'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
@@ -19,8 +21,9 @@ function FeedSection() {
     const [feed, setFeed] = useState([])
     const { user } = useAppSelector((data) => data.user)
     const { inView, ref } = useInView()
+    const [openPostStackModal, setOpenPostStackModal] = useState(false)
     const { data, isLoading, fetchNextPage } = useFeed()
-    
+
     // Add reels cursor state
     const reelsCursorRef = useRef(null);
     const [reelsCursor, setReelsCursor] = useState(null);
@@ -30,11 +33,19 @@ function FeedSection() {
     }, [reelsCursor]);
 
     const createPost = useCreatePost("userPosts", user?._id)
+    const createReel = useCreateReel()
 
     const _createPost = async ({ visibility, content, selectedMedia, formData }) => {
-        let postDetails = { content, type: "user", targetId: user?._id, visibility }
+        let postDetails = { content, type: "user", postType: 'post', targetId: user?._id, visibility }
         formData.append("postData", JSON.stringify(postDetails))
-        createPost.mutate({ content, formData, selectedMedia, type: "user", target: user })
+        createPost.mutate({ content, formData, selectedMedia, postType: 'post', type: "user", target: user })
+        setPostModal(false)
+    }
+
+    const _createReel = async ({ visibility, content, formData }) => {
+        let reelDetails = { content, type: "user", postType: 'reel', targetId: user?._id, visibility }
+        formData.append("reelData", JSON.stringify(reelDetails))
+        createReel.mutate(formData)
         setPostModal(false)
     }
 
@@ -43,8 +54,8 @@ function FeedSection() {
     // Function to navigate to reels screen
     const navigateToReels = useCallback((reel) => {
         // Navigate to reels screen with the selected reel
-        navigate(`/reels/${reel._id}`, { 
-            state: { 
+        navigate(`/reels/${reel._id}`, {
+            state: {
                 sourceMode: 'feed',
                 initialReelId: reel._id,
                 reelData: reel
@@ -123,17 +134,17 @@ function FeedSection() {
         const shouldAddRef = isLastItem && flattenedData.length >= 2;
 
         return (
-            <Post 
-                useLikePost={useLikeFeedPost} 
-                useBookmarkPost={useBookmarkFeedPost} 
-                pageIndex={item.pageIndex} 
-                postIndex={item.postIndex} 
-                postData={item} 
-                userId={user?._id} 
-                username={user?.username} 
-                profile={user?.profile} 
-                key={item._id} 
-                type="user" 
+            <Post
+                useLikePost={useLikeFeedPost}
+                useBookmarkPost={useBookmarkFeedPost}
+                pageIndex={item.pageIndex}
+                postIndex={item.postIndex}
+                postData={item}
+                userId={user?._id}
+                username={user?.username}
+                profile={user?.profile}
+                key={item._id}
+                type="user"
                 scrollRef={shouldAddRef ? ref : null}
                 fetchNextPage={shouldAddRef ? fetchNextPage : null}
             />
@@ -142,7 +153,15 @@ function FeedSection() {
 
     return (
         <div className='w-full z-10 flex justify-center md:justify-normal overflow-y-auto border-muted md:px-6 lg:px-24'>
+            {openPostStackModal && <CreatePostStack handlePostClick={() => {
+                setOpenPostStackModal(false)
+                navigate("?createpost=true")
+            }} handleReelClick={() => {
+                setOpenPostStackModal(false)
+                navigate("?createreel=true")
+            }} isOpen={openPostStackModal} />}
             {searchParams.get("createpost") && (width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+            {searchParams.get("createreel") && (width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createReel} isReel={true} /> : searchParams.get("createreel") && <CPostModal setModelTrigger={setPostModal} createPost={_createReel} isReel={true} />}
 
             <div className='max-w-xl w-full flex flex-col gap-2'>
                 <div className='w-full flex items-center  border border-muted p-2 bg-card'>
@@ -169,10 +188,10 @@ function FeedSection() {
                                     <div
                                         className="max-w-2xl w-full rounded-md p-2 cursor-pointer flex items-center appearance-none bg-background border border-accent shadow-none"
                                         onClick={() => {
-                                            navigate("?createpost=true")
+                                            setOpenPostStackModal(true)
                                         }}
                                     >
-                                        <span className='text-sm'>Start writing a post</span>
+                                        <span className='text-sm'>What's in your mind</span>
                                     </div>
                                 </div>
                             </form>
@@ -183,7 +202,7 @@ function FeedSection() {
                         {isLoading &&
                             <ScreenLoader />
                         }
-                        {!isLoading && flattenedData.length > 0 ? 
+                        {!isLoading && flattenedData.length > 0 ?
                             flattenedData.map((item, index) => renderItem(item, index))
                             :
                             !isLoading && (

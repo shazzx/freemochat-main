@@ -11,6 +11,7 @@ import onlineReducer from './features/user/onlineSlice'
 import postModelReducer from './features/user/postModelSlice'
 import adminAuthReducer from './features/admin/authSlice'
 import adminReducer from './features/admin/adminSlice'
+import uploadStateReducer from './features/user/uploadStatusSlice'
 
 export const store = configureStore({
     reducer: {
@@ -26,6 +27,7 @@ export const store = configureStore({
         postModel: postModelReducer,
         online: onlineReducer,
         socket: socketReducer,
+        uploadStatus: uploadStateReducer
     }
 })
 
