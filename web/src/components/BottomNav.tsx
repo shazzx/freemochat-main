@@ -1,4 +1,5 @@
 import { domain } from '@/config/domain'
+import { FilmIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -7,7 +8,7 @@ function BottomNav() {
 
     useEffect(() => {
         // console.log(location.pathname)
-        if(location.pathname == '/'){
+        if (location.pathname == '/') {
             setActive('/')
         }
         if (location.pathname.startsWith('/user') || location.pathname.startsWith('/search') || location.pathname.startsWith('/profile') || location.pathname.startsWith('/messages')) {
@@ -51,7 +52,12 @@ function BottomNav() {
                 Messages
             </Link>
 
-
+            <Link
+                to={domain + "/reels"}
+                className={`flex flex-col items-center gap-1 text-xs rounded-lg py-3 text-muted-foreground transition-all hover:text-primary`}              >
+                <FilmIcon size={28} strokeWidth={1} />
+                Reels
+            </Link>
             <Link
                 onClick={() => {
                     setActive('/groups')
@@ -103,7 +109,7 @@ function BottomNav() {
                 Notifications
             </Link> */}
 
-            <Link
+            {/* <Link
                 onClick={() => {
                     setActive('/bookmarked')
                 }}
@@ -115,7 +121,7 @@ function BottomNav() {
                 </svg>
 
                 Bookmarked
-            </Link>
+            </Link> */}
             {/* <Link
                   to={domain + "/profile"}
                   onClick={() => {

@@ -431,6 +431,11 @@ const MainHome = ({ children }: any) => {
                     Profile
                   </DropdownMenuItem>
                 </Link>
+                <Link to="/bookmarked">
+                  <DropdownMenuItem>
+                    Bookmarks
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem onClick={async () => {
                   let logout = await axiosClient.post("/user/logout")
                   if (logout) {
@@ -511,9 +516,6 @@ const MainHome = ({ children }: any) => {
                   className={`flex items-center gap-3 rounded-lg px-4 py-2 text-muted-foreground transition-all hover:text-primary`}              >
                   <FilmIcon size={34} strokeWidth={1.3} />
                   Reels
-                  {metrics?.data?.unreadChatlists?.count > 0 && <Badge className="ml-auto flex h-6 w-6 shrink-0 bg-red-500 dark:bg-backgruond items-center justify-center rounded-full">
-                    {metrics?.data?.unreadChatlists?.count}
-                  </Badge>}
                 </Link>
                 <Link
                   onClick={() => {

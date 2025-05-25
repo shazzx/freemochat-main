@@ -19,7 +19,7 @@ import { setClose } from '@/app/features/user/postModelSlice'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 
-function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex }) {
+function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, isReel }) {
     const { user } = useAppSelector((data) => data.user)
     const [isRecording, setIsRecording] = useState(false)
     const [replyState, setReplyState] = useState<{ _id: string, content: string, user: any, commentIndex: number }>()
@@ -31,7 +31,7 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex }
     const [replyId, setReplyId] = useState(null)
     const [ref, inView] = useInView()
     const { data, isSuccess, isLoading, fetchNextPage } = useComments(postId)
-    const mutation = useCreateComment(params)
+    const mutation = useCreateComment({ ...params, isReel })
     const replyMutation = useReplyOnComment()
 
     const replies = useReplies(replyId)
@@ -127,7 +127,7 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex }
                 <Sheet.Container>
                     <Sheet.Header className='bg-background-secondary dark:bg-background' />
                     <Sheet.Content >
-                        <div ref={scrollRef} className='z-10 max-w-xl w-full h-full flex flex-col bg-background relative sm:h-fit max-h-full scroll-smooth overflow-auto'>
+                        <div ref={scrollRef} className='z-10 w-full h-full flex flex-col bg-background relative scroll-smooth overflow-auto'>
                             {editCommentModelState &&
                                 <div className='absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[1.5px] z-50 '>
                                     <div className='absolute w-full h-full top-0 left-0 z-10' onClick={() => {
@@ -258,12 +258,13 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex }
                                                     placeholder="Start writing your comment..."
                                                     className="w-full appearance-none bg-card pl-8 shadow-none border-none focus:outline-none"
                                                 />
+{/*                                                 
                                                 <svg width="29" className="stroke-foreground dark:stroke-foreground" cursor="pointer" height="28" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                     <path d="M11 16.3334C11.2115 16.8844 11.5581 17.3734 12.008 17.7556C13.4387 18.9564 15.5207 18.9716 16.9687 17.7917C17.4247 17.4164 17.7793 16.9326 18 16.3847" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                                                     <path fill-rule="evenodd" clip-rule="evenodd" d="M22.6666 14.0002C22.6666 18.5105 19.0102 22.1668 14.4999 22.1668C9.98959 22.1668 6.33325 18.5105 6.33325 14.0002C6.33325 9.48984 9.98959 5.8335 14.4999 5.8335C16.6659 5.8335 18.7431 6.69391 20.2746 8.22546C21.8062 9.757 22.6666 11.8342 22.6666 14.0002Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                                                     <path d="M10.9998 12.8337V11.667" stroke-width="1.5" stroke-linecap="round" />
                                                     <path d="M17.9998 12.8337V11.667" stroke-width="1.5" stroke-linecap="round" />
-                                                </svg>
+                                                </svg> */}
                                             </div>}
                                             <AudioRecorder stopRecordingRef={stopRecordingRef} setIsRecordingMain={setIsRecording} onRecordingComplete={(audioBlob, uploadState, recordingTime) => {
                                                 console.log(audioBlob, uploadState, 'audiorecorder')
@@ -296,12 +297,12 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex }
                                             placeholder="Write your comment..."
                                             className="w-full appearance-none bg-card pl-2 shadow-none border-none focus:outline-none"
                                         />
-                                        <svg width="29" className="stroke-foreground dark:stroke-foreground" cursor="pointer" height="28" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        {/* <svg width="29" className="stroke-foreground dark:stroke-foreground" cursor="pointer" height="28" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M11 16.3334C11.2115 16.8844 11.5581 17.3734 12.008 17.7556C13.4387 18.9564 15.5207 18.9716 16.9687 17.7917C17.4247 17.4164 17.7793 16.9326 18 16.3847" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                                             <path fill-rule="evenodd" clip-rule="evenodd" d="M22.6666 14.0002C22.6666 18.5105 19.0102 22.1668 14.4999 22.1668C9.98959 22.1668 6.33325 18.5105 6.33325 14.0002C6.33325 9.48984 9.98959 5.8335 14.4999 5.8335C16.6659 5.8335 18.7431 6.69391 20.2746 8.22546C21.8062 9.757 22.6666 11.8342 22.6666 14.0002Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                                             <path d="M10.9998 12.8337V11.667" stroke-width="1.5" stroke-linecap="round" />
                                             <path d="M17.9998 12.8337V11.667" stroke-width="1.5" stroke-linecap="round" />
-                                        </svg>
+                                        </svg> */}
                                     </div>}
                                     <AudioRecorder stopRecordingRef={stopRecordingRef} setIsRecordingMain={setIsRecording} onRecordingComplete={(audioBlob, uploadState, recordingTime) => {
                                         if (!replyState) {
@@ -324,7 +325,6 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex }
                                     }
                                 </div>}
                         </div>
-
                     </Sheet.Content>
                 </Sheet.Container>
                 <Sheet.Backdrop onTap={() => {

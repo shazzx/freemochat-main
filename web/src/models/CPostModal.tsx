@@ -37,11 +37,11 @@ const CPostModal: FC<{ setModelTrigger?: Function, createPost?: Function, editPo
             console.log(selectedMedia)
         }
 
-    }, [selectedMedia])
+        return () => {
+            setPostMedia([])
+        }
 
-    useEffect(() => {
-        console.log(postMedia)
-    }, [])
+    }, [selectedMedia])
 
     const getSelected = (selectionState) => {
         setSelected(selectionState)
@@ -83,9 +83,12 @@ const CPostModal: FC<{ setModelTrigger?: Function, createPost?: Function, editPo
                             for (let i = 0; i <= selectedMedia.length - 1; i++) {
                                 formData.append('files', selectedMedia[i].file)
                             }
-                        }else{
-                                formData.append('file', selectedMedia[0].file)
                         }
+
+                        if (selectedMedia?.length > 0 && isReel) {
+                            formData.append('file', selectedMedia[0].file)
+                        }
+
                         if ((isShared && !editPost) || ((content.current.value.length > 1 || selectedMedia.length > 0) && !editPost)) {
                             createPost({ visibility: selected, content: content.current.value, formData, selectedMedia })
                             setUploading(true)

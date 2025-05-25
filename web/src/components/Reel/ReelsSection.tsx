@@ -9,6 +9,7 @@ import { useAppSelector } from '@/app/hooks';
 import AutoScrollControls from './AutoScrollControls';
 import ShareSheet from './ShareSheet';
 import ThreeDotsSheet from './ThreeDotsSheet';
+import BottomComments from '@/models/BottomComments';
 // import ReportModal from './ReportModal';
 const ReelsContainer: React.FC = () => {
   // Routing
@@ -64,7 +65,7 @@ const ReelsContainer: React.FC = () => {
     if (location.pathname.includes('profile')) return 'profile';
     if (location.pathname.includes('bookmarks')) return 'bookmarks';
     if (location.pathname.includes('videos')) return 'videosFeed';
-    return 'feed';
+    return 'reelsFeed';
   }, [location.pathname, location.state]);
   // Get user data from your auth store
   const { user } = useAppSelector((state) => state.user);
@@ -724,14 +725,15 @@ const ReelsContainer: React.FC = () => {
 
       {/* Bottom Sheets */}
       {activeSheet === 'comments' && (
-        // <CommentsSheet
-        //   isOpen={bottomSheetOpen && activeSheet === 'comments'}
-        //   onClose={closeSheet}
-        //   postId={currentReelId}
-        // />
-        <></>
-
+        <BottomComments isReel={sourceMode !== 'videosFeed'} pageIndex={flattenedData && flattenedData[activeReelIndex]?.pageIndex} params={{
+          type: (sourceMode !== 'videosFeed') ? sourceMode : 'userPosts',
+          targetId: flattenedData && flattenedData[activeReelIndex]?.targetId,
+          postId: flattenedData && flattenedData[activeReelIndex]?._id,
+          reelsKey: [sourceMode, sourceParams?.initialReelId]
+        }} postData={flattenedData && flattenedData[activeReelIndex]} postId={flattenedData && flattenedData[activeReelIndex]?._id} isOpen={activeSheet && true} setOpen={setActiveSheet} />
       )}
+
+
 
       {activeSheet === 'share' && (
         <ShareSheet

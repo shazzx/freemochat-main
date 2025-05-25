@@ -91,7 +91,7 @@ export function useReplies(commentId): any {
   };
 }
 
-export const useCreateComment = ({ type, targetId, postId }: any) => {
+export const useCreateComment = ({ type, targetId, postId, isReel, reelsKey }: any) => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutateAsync } = useMutation({
@@ -100,18 +100,21 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
     },
     onMutate: async (newComment) => {
 
-      await queryClient.cancelQueries({ queryKey: [type, targetId] })
-      const previousPosts = queryClient.getQueryData([type, targetId])
+
+
+      await queryClient.cancelQueries({ queryKey: isReel ? reelsKey : [type, targetId] })
+      const previousPosts = queryClient.getQueryData(isReel ? reelsKey : [type, targetId])
       console.log(type, targetId, postId)
       if (!previousPosts) {
 
-        await queryClient.cancelQueries({ queryKey: ['feed'] })
-        const previousPosts = queryClient.getQueryData(['feed'])
+        await queryClient.cancelQueries({ queryKey: isReel ? reelsKey : ['feed'] })
+        const previousPosts = queryClient.getQueryData(isReel ? reelsKey : ['feed'])
 
-        queryClient.setQueryData(['feed'], (pages: any) => {
+        queryClient.setQueryData(isReel ? reelsKey : ['feed'], (pages: any) => {
           const updatedComments = produce(pages, (draft: any) => {
-            return draft.pages.forEach((page, p) => {
-              return (page.posts.forEach((post, x) => {
+            console.log(pages, 'there is data', reelsKey)
+            return draft?.pages.forEach((page, p) => {
+              return (page?.posts.forEach((post, x) => {
                 if (post._id == postId) {
                   return draft.pages[p].posts[x].commentsCount = post.commentsCount + 1
                 }
@@ -121,11 +124,11 @@ export const useCreateComment = ({ type, targetId, postId }: any) => {
           return updatedComments
         })
       } else {
-        queryClient.setQueryData([type, targetId], (pages: any) => {
+        queryClient.setQueryData(isReel ? reelsKey : [type, targetId], (pages: any) => {
           console.log(type, targetId)
           const updatedComments = produce(pages, (draft: any) => {
-            return draft.pages.forEach((page, p) => {
-              return (page.posts.forEach((post, x) => {
+            return draft?.pages.forEach((page, p) => {
+              return (page?.posts.forEach((post, x) => {
                 if (post._id == postId) {
                   return draft.pages[p].posts[x].commentsCount = post.commentsCount + 1
                 }

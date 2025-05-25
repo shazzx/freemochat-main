@@ -259,18 +259,19 @@ export const useReelsDataSource = (mode = 'feed', params = {}) => {
 
         if (sourceQuery.data && sourceQuery.data.length > 0) {
             if (mode === 'profile') {
-                fallbackData = sourceQuery.data.flatMap(page =>
+                fallbackData = sourceQuery.data.flatMap((page, index) =>
                     page?.posts?.map((reel, idx) => ({
                         ...reel,
                         id: reel._id || reel.id,
                         key: `fallback-${reel._id || reel.id}-${idx}`,
                         _sourceMode: mode,
+                        pageIndex: index,
                         mediaSrc: reel.media?.[0]?.url || null
                     })) || []
                 );
             }
             else if (mode === 'bookmarks') {
-                fallbackData = sourceQuery.data.flatMap(page =>
+                fallbackData = sourceQuery.data.flatMap((page, index) =>
                     page?.bookmarks?.filter(item => item && item.post).map((item, idx) => ({
                         ...item.post,
                         target: item.target || item.post?.target || {},
@@ -278,6 +279,7 @@ export const useReelsDataSource = (mode = 'feed', params = {}) => {
                         id: item.post._id || item.post.id,
                         key: `fallback-${item.post._id || item.post.id}-${idx}`,
                         _sourceMode: mode,
+                        pageIndex: index,
                         mediaSrc: item.post.media?.[0]?.url || null
                     })) || []
                 );
@@ -285,12 +287,13 @@ export const useReelsDataSource = (mode = 'feed', params = {}) => {
             else {
                 // For feed and videosFeed modes - no filtering needed
                 // The server now returns data in the correct order
-                fallbackData = sourceQuery.data.flatMap(page =>
+                fallbackData = sourceQuery.data.flatMap((page, index) =>
                     page?.posts?.map((reel, idx) => ({
                         ...reel,
                         id: reel._id || reel.id,
                         key: `fallback-${reel._id || reel.id}-${idx}`,
                         _sourceMode: mode,
+                        pageIndex: index,
                         mediaSrc: reel.media?.[0]?.url || null
                     })) || []
                 );
