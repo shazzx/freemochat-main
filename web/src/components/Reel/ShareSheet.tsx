@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { Copy, MessageCircle, Facebook, Twitter, Link, Download } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from 'react-toastify';
 
 interface ShareSheetProps {
   isOpen: boolean;
@@ -13,14 +13,13 @@ interface ShareSheetProps {
   isReel?: boolean;
 }
 
-const ShareSheet: React.FC<ShareSheetProps> = ({ 
-  isOpen, 
-  onClose, 
+const ShareSheet: React.FC<ShareSheetProps> = ({
+  isOpen,
+  onClose,
   sharedPost,
   isReel = true
 }) => {
-  const { toast } = useToast();
-  
+
   // Generate post URL
   const getPostUrl = () => {
     const baseUrl = window.location.origin;
@@ -32,18 +31,11 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
     const url = getPostUrl();
     navigator.clipboard.writeText(url)
       .then(() => {
-        toast({
-          title: "Link copied",
-          description: "Post link copied to clipboard",
-        });
+        toast.info("Post link copied to clipboard");
       })
       .catch(err => {
         console.error('Failed to copy: ', err);
-        toast({
-          title: "Copy failed",
-          description: "Could not copy link to clipboard",
-          variant: "destructive"
-        });
+        toast.info("Could not copy link to clipboard");
       });
   };
 
@@ -51,9 +43,9 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
   const shareViaPlatform = (platform: string) => {
     const url = encodeURIComponent(getPostUrl());
     const text = encodeURIComponent(`Check out this ${isReel ? 'reel' : 'post'} on Freedom Book!`);
-    
+
     let shareUrl = '';
-    
+
     switch (platform) {
       case 'facebook':
         shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
@@ -67,33 +59,43 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
       default:
         return;
     }
-    
+
     window.open(shareUrl, '_blank', 'width=600,height=400');
   };
-  
+
   // Download video
-  const downloadVideo = () => {
-    if (!sharedPost?.media || !sharedPost.media[0]?.url) {
-      toast({
-        title: "Download failed",
-        description: "Video URL not found",
-        variant: "destructive"
-      });
+  const downloadVideo = async () => {
+    console.log('Downloading video for post:', sharedPost?._id);
+    if (!sharedPost?.media || !sharedPost.media[0]?.watermarkUrl || !sharedPost.media[0]?.url) {
+      toast.error("Download failed");
       return;
     }
-    
-    // Create anchor element
-    const a = document.createElement('a');
-    a.href = sharedPost.media[0].url;
-    a.download = `freedombook-video-${sharedPost._id}.mp4`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
-    toast({
-      title: "Download started",
-      description: "Your download will begin shortly",
-    });
+
+    try {
+
+      const response = await fetch(sharedPost.media[0]?.watermarkUrl ?? sharedPost.media[0]?.url);
+      if (!response.ok) throw new Error('Failed to fetch video');
+
+      const blob = await response.blob();
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `freedombook-video-${sharedPost._id}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.info("Your download will begin shortly");
+
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error(error.message || "An error occurred while downloading the video");
+    }
   };
 
   return (
@@ -102,7 +104,7 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
         <SheetHeader className="px-4 py-3 border-b">
           <SheetTitle className="text-center">Share</SheetTitle>
         </SheetHeader>
-        
+
         {/* Post preview */}
         {sharedPost && (
           <div className="p-4 border-b flex items-center space-x-3">
@@ -123,43 +125,43 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
             </div>
           </div>
         )}
-        
+
         {/* Share options */}
         <div className="flex-1 p-4 overflow-y-auto">
           <div className="grid grid-cols-4 gap-4">
             {/* Share via messaging */}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex flex-col items-center h-auto p-3 gap-1"
               onClick={() => shareViaPlatform('whatsapp')}
             >
               <MessageCircle className="h-6 w-6" />
               <span className="text-xs">Message</span>
             </Button>
-            
+
             {/* Share to Facebook */}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex flex-col items-center h-auto p-3 gap-1"
               onClick={() => shareViaPlatform('facebook')}
             >
               <Facebook className="h-6 w-6" />
               <span className="text-xs">Facebook</span>
             </Button>
-            
+
             {/* Share to Twitter */}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex flex-col items-center h-auto p-3 gap-1"
               onClick={() => shareViaPlatform('twitter')}
             >
               <Twitter className="h-6 w-6" />
               <span className="text-xs">Twitter</span>
             </Button>
-            
+
             {/* Copy link */}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex flex-col items-center h-auto p-3 gap-1"
               onClick={copyLink}
             >
@@ -167,11 +169,11 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
               <span className="text-xs">Copy Link</span>
             </Button>
           </div>
-          
+
           {/* Download option (only for videos/reels) */}
           {isReel && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full mt-6 flex items-center gap-2"
               onClick={downloadVideo}
             >

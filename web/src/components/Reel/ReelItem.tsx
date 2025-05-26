@@ -328,6 +328,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
       targetId: memoizedReel.targetId,
       authorId: memoizedReel.authorId,
       type: memoizedReel.type,
+      postType: memoizedReel.postType
     });
   }, [likeMutation, pageIndex, reelIndex, memoizedReel]);
 

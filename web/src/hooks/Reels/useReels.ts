@@ -331,7 +331,8 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                 authorId: postDetails.authorId,
                 type: postDetails?.type,
                 targetId: postDetails.targetId,
-                reaction: postDetails?.reaction
+                reaction: postDetails?.reaction,
+                postType: postDetails?.postType
             });
         },
 

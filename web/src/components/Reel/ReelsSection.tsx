@@ -703,7 +703,6 @@ const ReelsContainer: React.FC = () => {
   ]);
 
 
-
   if (isLoading && !flattenedData?.length) {
     return (
       <div className="flex justify-center items-center h-screen bg-black">
@@ -714,6 +713,9 @@ const ReelsContainer: React.FC = () => {
       </div>
     );
   }
+
+  console.log(flattenedData[activeReelIndex], activeReelIndex)
+
 
   return (
     <div className='flex'>
@@ -776,7 +778,7 @@ const ReelsContainer: React.FC = () => {
             <ShareSheet
               isOpen={bottomSheetOpen && activeSheet === 'share'}
               onClose={closeSheet}
-              sharedPost={{ ...sharedReel, user: sharedReel?.target }}
+              sharedPost={flattenedData && flattenedData[activeReelIndex]}
               isReel={sourceMode !== 'videosFeed'}
             />
           )
@@ -807,7 +809,7 @@ const ReelsContainer: React.FC = () => {
         />
       )} */}
       </div >
-      {activeSheet === 'comments' && !isMobile && (
+      {!isMobile && (
         <Comments isReel={sourceMode !== 'videosFeed'} pageIndex={flattenedData && flattenedData[activeReelIndex]?.pageIndex}
           params={{
             type: (sourceMode !== 'videosFeed') ? sourceMode : 'userPosts',
