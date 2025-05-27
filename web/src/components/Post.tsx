@@ -537,7 +537,7 @@ const SharedPostContent = ({ sharedPost, useLikePost, useBookmarkPost, type, isS
 };
 
 const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useLikePost, useBookmarkPost, type, fetchNextPage, self, profile, isAdmin, isSearch, query, scrollRef }) => {
-    const [shareState, setShareState] = useState(false)
+    const [shareState, setShareState] = useState(null)
     const [ref, inView] = useInView()
     const [date, setDate] = useState("")
     const [modelTrigger, setModelTrigger] = useState(false)
@@ -801,6 +801,9 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                     {
                         postData && postData.media &&
                         <div className=' overflow-hidden aspect-auto max-w-xl flex items-center justify-center bg-background' onClick={() => {
+                            if (postData?.media?.[0]?.type == 'video') {
+                                return
+                            }
                             if (!model && width > 540) {
                                 dispatch(setOpen({ click: 'comment', id: postData._id }))
                                 setModelTrigger(true)
@@ -817,8 +820,20 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                         <PostMediaCarousel media={postData?.media} />
                                         :
                                         postData.media[0]?.type == 'video' ?
-
-                                            <AutoPlayVideo src={postData?.media && postData?.media[0]?.url} />
+                                            <div className="video-container" onClick={() => {
+                                                navigate(`/reels/${postData._id}`, {
+                                                    state: {
+                                                        sourceMode: 'videosFeed',
+                                                        initialReelId: postData._id,
+                                                        reelData: {
+                                                            ...postData,
+                                                            _navigationTimestamp: Date.now()
+                                                        }
+                                                    }
+                                                });
+                                            }}>
+                                                <AutoPlayVideo src={postData?.media && postData?.media[0]?.url} />
+                                            </div>
 
                                             :
                                             <img className='object-contain max-h-[500px]' src={postData?.media[0]?.url} alt="" />
@@ -828,7 +843,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                             {width < 540 &&
                                 <>
-                                    <PostMediaCarousel mobile={true} media={postData?.media} />
+                                    <PostMediaCarousel postData={postData} mobile={true} media={postData?.media} />
                                 </>
                             }
 

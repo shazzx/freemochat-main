@@ -1,13 +1,32 @@
 import { domain } from '@/config/domain';
-import { Copy } from 'lucide-react';
+import { Copy, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { WhatsappIcon, WhatsappShareButton } from 'react-share';
 import { toast } from 'react-toastify';
 import CPostModal from './CPostModal';
 import { useCreateSharedPost } from '@/hooks/Post/usePost';
 import { MdCancel } from 'react-icons/md';
+import { PostType } from '@/utils/types/Post';
+import { Button } from '@/components/ui/button';
+import { Dispatch, SetStateAction } from 'react';
 
-function ShareModel({ key, sharedPost, postId, postType, setModelTrigger }) {
+function ShareModel({
+    isReel,
+    key,
+    sharedPost,
+    postId,
+    postType,
+    setModelTrigger,
+    handleDownload
+}: {
+    isReel: boolean,
+    key: string,
+    sharedPost: PostType,
+    postId: string,
+    postType: string,
+    setModelTrigger: Dispatch<SetStateAction<"comments" | "share" | "options" | boolean>>
+    handleDownload: () => void
+}) {
 
     const navigate = useNavigate()
     const createSharedPost = useCreateSharedPost(key, sharedPost?.targetId)
@@ -16,7 +35,7 @@ function ShareModel({ key, sharedPost, postId, postType, setModelTrigger }) {
         let sharedPostDetails: { sharedPostId: string, content: string, type: string, visibility: string, sharedPost: any, target: any } = { sharedPostId: sharedPost?._id, content, type: "user", visibility: "public", sharedPost, target: sharedPost.target }
         createSharedPost.mutate(sharedPostDetails)
         toast.success('shared successfully')
-        setModelTrigger(false)
+        setModelTrigger(null)
     }
 
     return (
@@ -34,7 +53,7 @@ function ShareModel({ key, sharedPost, postId, postType, setModelTrigger }) {
                 <div className='absolute top-4 right-4 z-50  text-2xl'>
                     <MdCancel onClick={() => {
                         console.log('yesyes')
-                        setModelTrigger(false)
+                        setModelTrigger(null)
                     }} />
                 </div>
                 <div className='p-4'>
@@ -58,6 +77,16 @@ function ShareModel({ key, sharedPost, postId, postType, setModelTrigger }) {
                         <Copy size={24} /> <span>Copy URL</span>
                     </div>
                 </div>
+                {isReel && (
+                    <Button
+                        variant="outline"
+                        className="w-full mt-6 flex items-center p-2 gap-2"
+                        onClick={handleDownload}
+                    >
+                        <Download className="h-5 w-5" />
+                        <span>Download Video</span>
+                    </Button>
+                )}
             </div>
         </div>
     )

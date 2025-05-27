@@ -11,6 +11,8 @@ import ShareSheet from './ShareSheet';
 import ThreeDotsSheet from './ThreeDotsSheet';
 import BottomComments from '@/models/BottomComments';
 import Comments from './Comments';
+import ShareModel from '@/models/ShareModel';
+import { toast } from 'react-toastify';
 // import ReportModal from './ReportModal';
 const ReelsContainer: React.FC = () => {
   // Routing
@@ -105,7 +107,7 @@ const ReelsContainer: React.FC = () => {
 
     useEffect(() => {
       const checkScreenSize = () => {
-        setIsMobile(window.innerWidth < 960);
+        setIsMobile(window.innerWidth < 964);
       };
 
       checkScreenSize();
@@ -567,6 +569,41 @@ const ReelsContainer: React.FC = () => {
     setActiveSheet(null);
   }, []);
 
+  const downloadVideo = async () => {
+    console.log('Downloading video for post:', flattenedData[activeReelIndex]?._id);
+    if (!flattenedData[activeReelIndex]?.media || !flattenedData[activeReelIndex].media[0]?.watermarkUrl || !flattenedData[activeReelIndex].media[0]?.url) {
+      toast.error("Download failed");
+      return;
+    }
+
+    try {
+
+      const response = await fetch(flattenedData[activeReelIndex].media[0]?.watermarkUrl ?? flattenedData[activeReelIndex].media[0]?.url);
+      if (!response.ok) throw new Error('Failed to fetch video');
+
+      const blob = await response.blob();
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `freedombook-video-${flattenedData[activeReelIndex]._id}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.info("Your download will begin shortly");
+
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error(error.message || "An error occurred while downloading the video");
+    }
+  };
+
+
   // Render each reel item
   // Render each reel item
   const renderReels = useMemo(() => {
@@ -774,14 +811,16 @@ const ReelsContainer: React.FC = () => {
 
 
         {
-          activeSheet === 'share' && (
-            <ShareSheet
-              isOpen={bottomSheetOpen && activeSheet === 'share'}
-              onClose={closeSheet}
-              sharedPost={flattenedData && flattenedData[activeReelIndex]}
-              isReel={sourceMode !== 'videosFeed'}
-            />
-          )
+          activeSheet === 'share' &&
+          // (
+          //   <ShareSheet
+          //     isOpen={bottomSheetOpen && activeSheet === 'share'}
+          //     onClose={closeSheet}
+          //     sharedPost={flattenedData && flattenedData[activeReelIndex]}
+          //     isReel={sourceMode !== 'videosFeed'}
+          //   />
+          // )
+          <ShareModel isReel={sourceMode !== 'videosFeed'} key={'user' + "Posts"} sharedPost={flattenedData && (flattenedData[activeReelIndex])} postId={flattenedData[activeReelIndex]?._id} postType={flattenedData[activeReelIndex]?.type} handleDownload={downloadVideo} setModelTrigger={setActiveSheet} />
         }
 
         {

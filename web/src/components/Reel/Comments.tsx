@@ -133,7 +133,7 @@ function CommetsSection({ params, pageIndex, setModelTrigger, postId, postData }
     const navigate = useNavigate()
 
     return (
-        <div ref={scrollRef} className='z-10 sm:max-w-[30%] md:max-w-[35%] lg:max-w-[40%] w-full flex flex-col bg-background relative rounded-lg  scroll-smooth overflow-auto border-2 border-accent shadow-md'>
+        <div ref={scrollRef} className='z-10 sm:max-w-[30%] md:max-w-[35%] lg:max-w-[42%] w-full flex flex-col bg-background relative rounded-lg  scroll-smooth overflow-auto border-2 border-accent shadow-md'>
             {editCommentModelState &&
                 <div className='absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[1.5px] z-50 '>
                     <div className='absolute w-full h-full top-0 left-0 z-10' onClick={() => {

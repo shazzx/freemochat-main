@@ -171,7 +171,7 @@ const AudioRecorder = ({ stopRecordingRef, onRecordingComplete, setIsRecordingMa
         <div>
             {isRecording ?
                 <div className="flex px-4 py-1 flex-grow items-center justify-between bottom-0 bg-card max-w-4xl w-full">
-                    <div className="w-40 sm:w-80 flex-grow h-3 bg-red-500 animate-pulse rounded-full"></div>
+                    <div className="w-32 lg:w-56 flex-grow h-3 bg-red-500 animate-pulse rounded-full"></div>
                     <div className="text-lg font-semibold mx-4">
                         {formatTime(_recordingTime)}
                     </div>
@@ -186,7 +186,7 @@ const AudioRecorder = ({ stopRecordingRef, onRecordingComplete, setIsRecordingMa
                             }}
                             className="bg-red-500 p-[4px] px-2 text-white rounded-md hover:bg-red-600 transition duration-300 ease-in-out"
                         >
-                            <Mic fill='red' />
+                            <Mic />
                         </button>
 
                         <svg width="42" className="stroke-white dark:stroke-white" onClick={() => {

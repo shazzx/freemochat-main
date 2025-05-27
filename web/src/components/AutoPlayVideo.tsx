@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 const AutoPlayVideo = ({ src, type = 'video/mp4' }) => {
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -34,7 +35,7 @@ const AutoPlayVideo = ({ src, type = 'video/mp4' }) => {
   }, []);
 
   return (
-    <div className="video-container">
+
       <video
         ref={videoRef}
         src={src}
@@ -45,7 +46,7 @@ const AutoPlayVideo = ({ src, type = 'video/mp4' }) => {
         playsInline
         className={`w-full ${isVisible ? 'opacity-100' : 'opacity-50'} w-full max-h-[500px] h-full transition-opacity duration-300`}
       />
-    </div>
+    
   );
 };
 

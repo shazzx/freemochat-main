@@ -222,6 +222,41 @@ const ReelItem: React.FC<ReelItemProps> = ({
     }));
   }, [videoState.isMuted]);
 
+  const skipBackward = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!videoRef.current) return;
+
+    const currentTime = videoRef.current.currentTime;
+    const newTime = Math.max(0, currentTime - 5); // Don't go below 0
+    videoRef.current.currentTime = newTime;
+
+    // Update state immediately for smooth UI feedback
+    setVideoState(prev => ({
+      ...prev,
+      position: newTime * 1000,
+      progress: videoState.duration ? newTime / videoState.duration : 0
+    }));
+  }, [videoState.duration]);
+
+  // NEW: Skip forward 5 seconds
+  const skipForward = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!videoRef.current) return;
+
+    const currentTime = videoRef.current.currentTime;
+    const duration = videoRef.current.duration;
+    const newTime = Math.min(duration, currentTime + 5); // Don't exceed video duration
+    videoRef.current.currentTime = newTime;
+
+    // Update state immediately for smooth UI feedback
+    setVideoState(prev => ({
+      ...prev,
+      position: newTime * 1000,
+      progress: duration ? newTime / duration : 0
+    }));
+  }, []);
+
+
   // Handle click/tap on video
   const handleVideoClick = useCallback((e: React.MouseEvent) => {
     const now = Date.now();
@@ -504,11 +539,14 @@ const ReelItem: React.FC<ReelItemProps> = ({
           <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-10">
             <div className="flex items-center space-x-8">
               {/* Rewind button */}
-              <button className="p-3 bg-black/60 rounded-full">
+              <button
+                className="p-3 bg-black/60 rounded-full flex flex-col items-center"
+                onClick={skipBackward}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8L12.066 11.2zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8L4.066 11.2z" />
                 </svg>
-                <span className="text-xs text-white">5s</span>
+                <span className="text-xs text-white mt-1">5s</span>
               </button>
 
               {/* Play/Pause button */}
@@ -527,12 +565,16 @@ const ReelItem: React.FC<ReelItemProps> = ({
               </button>
 
               {/* Forward button */}
-              <button className="p-3 bg-black/60 rounded-full">
+              <button
+                className="p-3 bg-black/60 rounded-full flex flex-col items-center"
+                onClick={skipForward}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z" />
                 </svg>
-                <span className="text-xs text-white">5s</span>
+                <span className="text-xs text-white mt-1">5s</span>
               </button>
+
             </div>
           </div>
         )}
