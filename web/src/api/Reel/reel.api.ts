@@ -24,8 +24,17 @@ export async function fetchReels(pageParam: string, targetId: string) {
   return response.data;
 }
 
-
 export async function createReel(formData: FormData) {
   const response = await axiosClient.post("/posts/create/reel", formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 2000000 })
+  return response.data;
+}
+
+export async function updateReelPost({ postId, content }: { postId: string, content: string }) {
+  const response = await axiosClient.post('/posts/reel', { content, postId });
+  return response.data;
+}
+
+export async function deleteReelPost({ postId }: { postId: string }) {
+  const response = await axiosClient.post('/posts/reel/remove', { postId });
   return response.data;
 }

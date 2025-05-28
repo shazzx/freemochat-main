@@ -468,7 +468,7 @@ const SharedPostContent = ({ sharedPost, useLikePost, useBookmarkPost, type, isS
                         {/* Reel Badge */}
                         {sharedPost?.postType === 'reel' && (
                             <div className="flex gap-1 items-center bg-blue-600/80 px-3 rounded-full ml-3 shadow-sm">
-                                <FilmIcon size={16} />
+                                <FilmIcon size={16} color='white' />
                                 <span className="text-white text-xs font-semibold tracking-wide">Reel</span>
                             </div>
                         )}

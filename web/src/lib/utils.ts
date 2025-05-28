@@ -27,8 +27,8 @@ export function detectCountryFromNumber(phoneNumber) {
 }
 
 export const reactions = [
-  { emoji: '👍', name: 'Like' },
-  { emoji: '❤️', name: 'Love' },
+  { emoji: '👍', name: 'Thumbs up' },
+  // { emoji: '❤️', name: 'Love' },
   { emoji: '😆', name: 'Haha' },
   { emoji: '🤩', name: 'Wow' },
   { emoji: '😢', name: 'Sad' },

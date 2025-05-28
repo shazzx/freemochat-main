@@ -26,7 +26,8 @@ function PostSection() {
     const _createPost = async ({ content, selectedMedia, formData }) => {
         let postDetails = { content, type: "user", targetId: user?._id }
         formData.append("postData", JSON.stringify(postDetails))
-        createPost.mutate({ content, formData, selectedMedia, type: "user", target: user })
+        // createPost.mutate({ content, formData, selectedMedia, type: "user", target: user })
+        
         setPostModal(false)
     }
 

@@ -159,7 +159,7 @@ function FeedSection() {
             }} handleReelClick={() => {
                 setOpenPostStackModal(false)
                 navigate("?createreel=true")
-            }} isOpen={openPostStackModal} />}
+            }} isOpen={openPostStackModal} onClose={() => setOpenPostStackModal(false)} />}
             {searchParams.get("createpost") && (width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
             {searchParams.get("createreel") && (width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createReel} isReel={true} /> : searchParams.get("createreel") && <CPostModal setModelTrigger={setPostModal} createPost={_createReel} isReel={true} />}
 

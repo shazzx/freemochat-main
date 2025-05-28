@@ -19,13 +19,13 @@ function ShareModel({
     setModelTrigger,
     handleDownload
 }: {
-    isReel: boolean,
-    key: string,
+    isReel?: boolean,
+    key?: string,
     sharedPost: PostType,
     postId: string,
     postType: string,
     setModelTrigger: Dispatch<SetStateAction<"comments" | "share" | "options" | boolean>>
-    handleDownload: () => void
+    handleDownload?: () => void
 }) {
 
     const navigate = useNavigate()

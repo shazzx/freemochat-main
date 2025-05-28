@@ -114,12 +114,9 @@ const ReelsContainer: React.FC = () => {
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
   const isComponentMounted = useRef(true);
-  const isLoadingMoreRef = useRef(false);
-  const onEndReachedCalledDuringMomentumRef = useRef(false);
   const prefetchingInProgressRef = useRef(false);
-  const scrollStartTimeRef = useRef(0);
   const activeVideoRef = useRef<string | null>(null);
-  const autoScrollTimeoutRef = useRef<number | null>(null);
+  const autoScrollTimeoutRef = useRef<number | NodeJS.Timeout | null>(null);
   const videoPlayStartTimeRef = useRef<number | null>(null);
   const hasVideoPlayedOnceRef = useRef(false);
   const observer = useRef<IntersectionObserver | null>(null);
@@ -129,11 +126,11 @@ const ReelsContainer: React.FC = () => {
   const [currentReelId, setCurrentReelId] = useState<string | null>(null);
   const [sharedReel, setSharedReel] = useState(null);
   const [isScreenFocused, setIsScreenFocused] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  // const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeReelIndex, setActiveReelIndex] = useState(0);
   const [prefetchedVideos, setPrefetchedVideos] = useState(new Set());
-  const [showPerformanceDebug, setShowPerformanceDebug] = useState(false);
-  const [shareReelIndex, setShareReelIndex] = useState(null);
+  // const [showPerformanceDebug, setShowPerformanceDebug] = useState(false);
+  // const [shareReelIndex, setShareReelIndex] = useState(null);
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
   const [activeSheet, setActiveSheet] = useState<null | 'comments' | 'share' | 'options'>(null);
@@ -877,10 +874,6 @@ const ReelsContainer: React.FC = () => {
           autoScrollEnabled={sourceMode !== "videosFeed" && autoScrollReels.autoScroll}
           onUserInteraction={handleUserVideoInteraction}
           onLongPressStateChange={setLongPressActive}
-          onLikePress={() => handleReelAction('like', normalizedReel)}
-          onBookmarkPress={() => handleReelAction('bookmark', normalizedReel)}
-          sourceMode={sourceMode}
-          isSuggested={isSuggested}
           className="reel-item h-screen w-full snap-start snap-always"
           data-reel-id={`reel-${reel.id}`}
           data-index={index}

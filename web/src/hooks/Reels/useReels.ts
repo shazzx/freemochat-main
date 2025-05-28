@@ -3,11 +3,11 @@ import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { useBookamrks } from '@/hooks/Bookmarks/useBookmark';
 import { useCallback, useEffect, useState } from 'react';
 import { produce } from "immer";
-import { fetchReelsFeed, fetchReels, fetchVideosFeed, createReel } from "@/api/Reel/reel.api";
-import { useAppDispatch } from "@/app/hooks";
+import { fetchReelsFeed, fetchReels, fetchVideosFeed, createReel, updateReelPost, deleteReelPost } from "@/api/Reel/reel.api";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { createUploadStatus, removeUploadStatus } from "@/app/features/user/uploadStatusSlice";
 import { toast } from "react-toastify";
-import { UrlObject } from "url";
+import { PostType } from "@/utils/types/Post";
 
 export function useReelsFeed(initialReelId = null) {
     const {
@@ -93,6 +93,69 @@ export function useVideosFeed(initialReelId) {
     };
 }
 
+// User profile reels query
+export function useUserReels(targetId) {
+    const {
+        data,
+        isLoading,
+        isFetching,
+        fetchNextPage,
+        fetchPreviousPage,
+        fetchStatus,
+        isSuccess,
+        isFetchingNextPage,
+        refetch,
+        error,
+        hasNextPage
+    } = useInfiniteQuery({
+        queryKey: ['userReels', targetId],
+        queryFn: ({ pageParam }) => fetchReels(pageParam, targetId),
+        enabled: !!targetId,
+        refetchInterval: false,
+        refetchOnWindowFocus: true,
+        refetchOnMount: true,
+        refetchOnReconnect: true,
+        initialPageParam: null,
+        getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined
+    });
+
+    const pages: any = data?.pages ?? [];
+
+    return {
+        data: pages, // Ensure data is typed as an array of PostType arrays
+        isLoading,
+        isSuccess,
+        isFetching,
+        fetchPreviousPage,
+        isFetchingNextPage,
+        fetchStatus,
+        fetchNextPage,
+        refetch,
+        error,
+        hasNextPage: !!pages[pages.length - 1]?.nextCursor,
+    };
+}
+
+interface QueryParams { userId?: string, initialReelId?: string }
+
+export const getQueryKeyForMode = (mode, params: QueryParams = {}) => {
+    switch (mode) {
+        case 'profile':
+            return ['userReels', params.userId];
+        case 'bookmarks':
+            return ['userBookmarks', 'reel'];
+        case 'videosFeed':
+            return ['videosFeed', params.initialReelId];
+        case 'single':
+        case 'feed':
+        default:
+            return ['reelsFeed', params.initialReelId];
+    }
+};
+
+// FIXED: useReelsDataSource function that adds suggested reel to first page
+// instead of creating a separate page
+
 export const useCreateReel = () => {
     const dispatch = useAppDispatch()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
@@ -124,68 +187,7 @@ export const useCreateReel = () => {
     }
 }
 
-// User profile reels query
-export function useUserReels(targetId) {
-    const {
-        data,
-        isLoading,
-        isFetching,
-        fetchNextPage,
-        fetchPreviousPage,
-        fetchStatus,
-        isSuccess,
-        isFetchingNextPage,
-        refetch,
-        error,
-        hasNextPage
-    } = useInfiniteQuery({
-        queryKey: ['userReels', targetId],
-        queryFn: ({ pageParam }) => fetchReels(pageParam, targetId),
-        enabled: !!targetId,
-        refetchInterval: false,
-        refetchOnWindowFocus: true,
-        refetchOnMount: true,
-        refetchOnReconnect: true,
-        initialPageParam: null,
-        getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined
-    });
-
-    const pages = data?.pages ?? [];
-
-    return {
-        data: pages,
-        isLoading,
-        isSuccess,
-        isFetching,
-        fetchPreviousPage,
-        isFetchingNextPage,
-        fetchStatus,
-        fetchNextPage,
-        refetch,
-        error,
-        hasNextPage: !!pages[pages.length - 1]?.nextCursor,
-    };
-}
-export const getQueryKeyForMode = (mode, params = {}) => {
-    switch (mode) {
-        case 'profile':
-            return ['userReels', params.userId];
-        case 'bookmarks':
-            return ['userBookmarks', 'reel'];
-        case 'videosFeed':
-            return ['videosFeed', params.initialReelId];
-        case 'single':
-        case 'feed':
-        default:
-            return ['reelsFeed', params.initialReelId];
-    }
-};
-
-// FIXED: useReelsDataSource function that adds suggested reel to first page
-// instead of creating a separate page
-
-
-export const useReelsDataSource = (mode = 'feed', params = {}) => {
+export const useReelsDataSource = (mode = 'feed', params: QueryParams = {}) => {
     const queryClient = useQueryClient();
 
     // Track if initial data is already prepared
@@ -259,19 +261,18 @@ export const useReelsDataSource = (mode = 'feed', params = {}) => {
 
         if (sourceQuery.data && sourceQuery.data.length > 0) {
             if (mode === 'profile') {
-                fallbackData = sourceQuery.data.flatMap((page, index) =>
+                fallbackData = sourceQuery.data.flatMap(page =>
                     page?.posts?.map((reel, idx) => ({
                         ...reel,
                         id: reel._id || reel.id,
                         key: `fallback-${reel._id || reel.id}-${idx}`,
                         _sourceMode: mode,
-                        pageIndex: index,
                         mediaSrc: reel.media?.[0]?.url || null
                     })) || []
                 );
             }
             else if (mode === 'bookmarks') {
-                fallbackData = sourceQuery.data.flatMap((page, index) =>
+                fallbackData = sourceQuery.data.flatMap(page =>
                     page?.bookmarks?.filter(item => item && item.post).map((item, idx) => ({
                         ...item.post,
                         target: item.target || item.post?.target || {},
@@ -279,7 +280,6 @@ export const useReelsDataSource = (mode = 'feed', params = {}) => {
                         id: item.post._id || item.post.id,
                         key: `fallback-${item.post._id || item.post.id}-${idx}`,
                         _sourceMode: mode,
-                        pageIndex: index,
                         mediaSrc: item.post.media?.[0]?.url || null
                     })) || []
                 );
@@ -287,13 +287,12 @@ export const useReelsDataSource = (mode = 'feed', params = {}) => {
             else {
                 // For feed and videosFeed modes - no filtering needed
                 // The server now returns data in the correct order
-                fallbackData = sourceQuery.data.flatMap((page, index) =>
+                fallbackData = sourceQuery.data.flatMap(page =>
                     page?.posts?.map((reel, idx) => ({
                         ...reel,
                         id: reel._id || reel.id,
                         key: `fallback-${reel._id || reel.id}-${idx}`,
                         _sourceMode: mode,
-                        pageIndex: index,
                         mediaSrc: reel.media?.[0]?.url || null
                     })) || []
                 );
@@ -320,29 +319,27 @@ export const useReelsDataSource = (mode = 'feed', params = {}) => {
     };
 };
 
-export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
+
+export const useUpdateReel = () => {
     const queryClient = useQueryClient();
-    console.log(initialReelId, sourceMode);
+    const { user } = useAppSelector((state) => state.user);
+    const userId = user?._id || null;
 
     return useMutation({
-        mutationFn: (postDetails) => {
-            return likePost({
+        // We'll assume there's an editReelPost API function that needs to be imported
+        // You'll need to import this function from your API: import { editReelPost } from "@/api/Post/reels";
+        mutationFn: (postDetails: { postId: string, content: string }) => {
+            return updateReelPost({
                 postId: postDetails.postId,
-                authorId: postDetails.authorId,
-                type: postDetails?.type,
-                targetId: postDetails.targetId,
-                reaction: postDetails?.reaction,
-                postType: postDetails?.postType
+                content: postDetails.content
             });
         },
 
-        onMutate: async ({ postId, postIndex, pageIndex, reaction, type, targetId }) => {
-            console.log(`Liking reel: postId=${postId}, pageIndex=${pageIndex}, postIndex=${postIndex}, sourceMode=${sourceMode}`);
+        onMutate: async ({ postId, content }) => {
+            console.log(`Editing reel: postId=${postId}, userId=${userId}`);
 
-            // Determine the query key based on the source mode
-            const queryKey = getQueryKeyForMode(sourceMode, { userId: targetId, initialReelId });
-
-            console.log(queryKey, 'queryKey for like mutation');
+            // For profile mode only
+            const queryKey = ['userReels', userId];
 
             // Cancel any outgoing refetches for that query
             await queryClient.cancelQueries({ queryKey });
@@ -352,7 +349,161 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
 
             try {
                 // Update data in cache
-                queryClient.setQueryData(queryKey, (pages) => {
+                queryClient.setQueryData(queryKey, (oldData: any) => {
+                    if (!oldData) return oldData;
+
+                    return produce(oldData, (draft) => {
+                        // Find and update the post in all pages
+                        for (let i = 0; i < draft.pages.length; i++) {
+                            const page = draft.pages[i];
+                            if (!page.posts) continue;
+
+                            for (let j = 0; j < page.posts.length; j++) {
+                                const post = page.posts[j];
+                                if (post._id === postId) {
+                                    // Update the content
+                                    post.content = content;
+                                    post.isEdited = true; // Mark as edited
+                                    return; // Successfully updated
+                                }
+                            }
+                        }
+
+                        // If we reach here, we couldn't find the post
+                        console.warn(`Could not find reel with ID ${postId} in cache`);
+                    });
+                });
+
+                return { previousData };
+            } catch (error) {
+                console.error("Error updating cache for edit:", error);
+                return { previousData };
+            }
+        },
+
+        onError: (err, variables, context) => {
+            console.error("Error editing post:", err);
+            toast.error("Something went wrong when editing the post");
+
+            // Restore the previous data
+            const queryKey = ['userReels', variables['userId']];
+            if (context?.previousData) {
+                queryClient.setQueryData(queryKey, context.previousData);
+            }
+        },
+
+        onSuccess: () => {
+            toast.success("Reel updated successfully");
+        }
+    });
+};
+
+export const useDeleteReel = () => {
+    const queryClient = useQueryClient();
+    const { user } = useAppSelector((state) => state.user);
+    const userId = user?._id || null;
+
+    return useMutation({
+        // We'll assume there's a deleteReelPost API function that needs to be imported
+        // You'll need to import this function from your API: import { deleteReelPost } from "@/api/Post/reels";
+        mutationFn: ({ postId }: { postId: string }) => {
+            return deleteReelPost({
+                postId
+            });
+        },
+
+        onMutate: async ({ postId }) => {
+            console.log(`Deleting reel: postId=${postId}, userId=${userId}`);
+
+            // For profile mode only
+            const queryKey = ['userReels', userId];
+
+            // Cancel any outgoing refetches for that query
+            await queryClient.cancelQueries({ queryKey });
+
+            // Get the previous data
+            const previousData = queryClient.getQueryData(queryKey);
+
+            try {
+                // Update data in cache
+                queryClient.setQueryData(queryKey, (oldData: any) => {
+                    if (!oldData) return oldData;
+
+                    return produce(oldData, (draft) => {
+                        // Handle for each page
+                        for (let i = 0; i < draft.pages.length; i++) {
+                            const page = draft.pages[i];
+                            if (!page.posts) continue;
+
+                            // Find the post index
+                            const postIndex = page.posts.findIndex(post => post._id === postId);
+
+                            if (postIndex !== -1) {
+                                // Remove the post from the array
+                                page.posts.splice(postIndex, 1);
+                                return; // Successfully removed
+                            }
+                        }
+
+                        // If we reach here, we couldn't find the post
+                        console.warn(`Could not find reel with ID ${postId} in cache`);
+                    });
+                });
+
+                return { previousData };
+            } catch (error) {
+                console.error("Error updating cache for delete:", error);
+                return { previousData };
+            }
+        },
+
+        onError: (err, variables, context) => {
+            console.error("Error deleting post:", err);
+            toast.error("Something went wrong when deleting the post");
+
+            // Restore the previous data
+            const queryKey = ['userReels', variables['userId']];
+            if (context?.previousData) {
+                queryClient.setQueryData(queryKey, context.previousData);
+            }
+        },
+
+        onSuccess: () => {
+            toast.success("Reel deleted successfully");
+        }
+    });
+};
+
+export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (postDetails: { postId: string, authorId?: string, postIndex: number, pageIndex: number, type: string, postType?: string, targetId: string, reaction?: string }) => {
+            return likePost({
+                postId: postDetails.postId,
+                authorId: postDetails.authorId,
+                type: postDetails?.type,
+                postType: postDetails?.postType,
+                targetId: postDetails.targetId,
+                reaction: postDetails?.reaction
+            });
+        },
+
+        onMutate: async ({ postId, postIndex, pageIndex, reaction, type, targetId }) => {
+            console.log(`Liking reel: postId=${postId}, pageIndex=${pageIndex}, postIndex=${postIndex}, sourceMode=${sourceMode}`);
+
+            // Determine the query key based on the source mode
+            const queryKey = getQueryKeyForMode(sourceMode, { userId: targetId, initialReelId });
+
+            // Cancel any outgoing refetches for that query
+            await queryClient.cancelQueries({ queryKey });
+
+            // Get the previous data
+            const previousData = queryClient.getQueryData(queryKey);
+
+            try {
+                // Update data in cache
+                queryClient.setQueryData(queryKey, (pages: any) => {
                     if (!pages) return pages;
 
                     return produce(pages, (draft) => {
@@ -476,7 +627,7 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                 if (sourceMode === 'profile' || sourceMode === 'bookmarks') {
                     const feedData = queryClient.getQueryData(['reelsFeed']);
                     if (feedData) {
-                        queryClient.setQueryData(['reelsFeed'], produce(feedData, (draft) => {
+                        queryClient.setQueryData(['reelsFeed'], produce(feedData, (draft: any) => {
                             for (let i = 0; i < draft.pages.length; i++) {
                                 const page = draft.pages[i];
                                 if (!page.posts) continue;
@@ -507,7 +658,7 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                     const profileKey = ['userReels', targetId];
                     const profileData = queryClient.getQueryData(profileKey);
                     if (profileData) {
-                        queryClient.setQueryData(profileKey, produce(profileData, (draft) => {
+                        queryClient.setQueryData(profileKey, produce(profileData, (draft: any) => {
                             for (let i = 0; i < draft.pages.length; i++) {
                                 const page = draft.pages[i];
                                 if (!page.posts) continue;
@@ -537,7 +688,7 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                 if (sourceMode === 'feed' || sourceMode === 'profile') {
                     const bookmarksData = queryClient.getQueryData(['userBookmarks', 'reel']);
                     if (bookmarksData) {
-                        queryClient.setQueryData(['userBookmarks', 'reel'], produce(bookmarksData, (draft) => {
+                        queryClient.setQueryData(['userBookmarks', 'reel'], produce(bookmarksData, (draft: any) => {
                             for (let i = 0; i < draft.pages.length; i++) {
                                 const page = draft.pages[i];
                                 if (!page.bookmarks) continue;
@@ -572,7 +723,7 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
 
         onError: (err, variables, context) => {
             console.error("Error liking post:", err);
-            showToast("error", "Something went wrong when liking the post", "Error");
+            toast.error("Something went wrong when liking the post");
 
             // Restore the previous data
             const queryKey = getQueryKeyForMode(sourceMode, { userId: variables.targetId });
@@ -601,7 +752,7 @@ export const useBookmarkReelPost = (sourceMode = 'feed', initialReelId = null) =
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (postDetails) => {
+        mutationFn: (postDetails: { postId: string, targetId: string, type?: string, postType?: string, postIndex: number, pageIndex: number }) => {
             return bookmarkPost({
                 postId: postDetails.postId,
                 targetId: postDetails.targetId,
@@ -627,7 +778,7 @@ export const useBookmarkReelPost = (sourceMode = 'feed', initialReelId = null) =
                 queryClient.setQueryData(queryKey, (pages) => {
                     if (!pages) return pages;
 
-                    return produce(pages, (draft) => {
+                    return produce(pages, (draft: any) => {
                         // Special handling for bookmarks mode
                         if (sourceMode === 'bookmarks') {
                             // In bookmarks mode, we need to find the bookmark with this post
@@ -682,7 +833,7 @@ export const useBookmarkReelPost = (sourceMode = 'feed', initialReelId = null) =
                 if (sourceMode === 'profile' || sourceMode === 'bookmarks') {
                     const feedData = queryClient.getQueryData(['reelsFeed']);
                     if (feedData) {
-                        queryClient.setQueryData(['reelsFeed'], produce(feedData, (draft) => {
+                        queryClient.setQueryData(['reelsFeed'], produce(feedData, (draft: any) => {
                             for (let i = 0; i < draft.pages.length; i++) {
                                 const page = draft.pages[i];
                                 if (!page.posts) continue;
@@ -704,7 +855,7 @@ export const useBookmarkReelPost = (sourceMode = 'feed', initialReelId = null) =
                     const profileKey = ['userReels', targetId];
                     const profileData = queryClient.getQueryData(profileKey);
                     if (profileData) {
-                        queryClient.setQueryData(profileKey, produce(profileData, (draft) => {
+                        queryClient.setQueryData(profileKey, produce(profileData, (draft: any) => {
                             for (let i = 0; i < draft.pages.length; i++) {
                                 const page = draft.pages[i];
                                 if (!page.posts) continue;
@@ -730,10 +881,10 @@ export const useBookmarkReelPost = (sourceMode = 'feed', initialReelId = null) =
 
         onError: (err, variables, context) => {
             console.error("Error bookmarking post:", err);
-            showToast("error", "Something went wrong when bookmarking the post", "Error");
+            toast.error("Something went wrong when bookmarking the post");
 
             // Restore the previous data
-            const queryKey = getQueryKeyForMode(sourceMode, { userId: variables.targetId });
+            const queryKey = getQueryKeyForMode(sourceMode, { userId: variables['targetId'] });
             if (context?.previousData) {
                 queryClient.setQueryData(queryKey, context.previousData);
             }
@@ -779,4 +930,3 @@ export const useBookmarkProfileReelPost = (userId) => {
 export const useBookmarkBookmarkedReelPost = () => {
     return useBookmarkReelPost('bookmarks');
 };
-

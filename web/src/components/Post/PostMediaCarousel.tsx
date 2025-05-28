@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { postMedia, PostType } from "@/utils/types/Post";
 
 export function PostMediaCarousel({ postData, media, mobile }: {
-  postData: PostType, media: postMedia, mobile?: boolean
+  postData?: PostType, media: postMedia, mobile?: boolean
 }) {
 
   const navigate = useNavigate()

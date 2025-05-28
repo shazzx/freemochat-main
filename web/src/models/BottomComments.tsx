@@ -19,7 +19,15 @@ import { setClose } from '@/app/features/user/postModelSlice'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 
-function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, isReel }) {
+function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, isReel }: {
+    isOpen: boolean,
+    setOpen: Function,
+    params?: any,
+    postId: string,
+    postData?: any,
+    pageIndex?: number,
+    isReel?: boolean
+}) {
     const { user } = useAppSelector((data) => data.user)
     const [isRecording, setIsRecording] = useState(false)
     const [replyState, setReplyState] = useState<{ _id: string, content: string, user: any, commentIndex: number }>()

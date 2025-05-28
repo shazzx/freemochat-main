@@ -113,7 +113,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
         let data;
         let postDetails = { content, media: data, type: "user", visibility }
         formData.append("postData", JSON.stringify(postDetails))
-        createPost.mutate({ content, formData, selectedMedia, type: "user", target: user, isUploaded: false })
+        createPost.mutate({ content, formData, selectedMedia, type: "user", target: user, isUploaded: false, postType: 'post' })
         setPostModal(false)
     }
 
@@ -374,7 +374,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                     <Followers isSelf={isSelf} userFollowers={!userFollowers.isLoading && userFollowers} followUserToggle={followUserToggle} recepientId={_id} media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                                 </TabsContent>
                                 <TabsContent value="reels" className='flex flex-col gap-2'>
-                                    <UserReelsSection userId={user?._id} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                    <UserReelsSection userId={user?._id} />
                                 </TabsContent>
                                 <TabsContent value="media" className='flex flex-col gap-2'>
                                     <MediaSection media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />

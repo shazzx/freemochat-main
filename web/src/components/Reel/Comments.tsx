@@ -16,7 +16,7 @@ import { toast } from 'react-toastify'
 import { setClose } from '@/app/features/user/postModelSlice'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-function CommetsSection({ params, pageIndex, setModelTrigger, postId, postData }) {
+function CommetsSection({ params, pageIndex, postId, postData, isReel }) {
     const { user } = useAppSelector((data) => data.user)
     const [isRecording, setIsRecording] = useState(false)
     const [replyState, setReplyState] = useState<{ _id: string, content: string, user: any, commentIndex: number }>()
@@ -69,7 +69,6 @@ function CommetsSection({ params, pageIndex, setModelTrigger, postId, postData }
             toast.info("Comment can't be empty")
             return
         }
-        const isReel = false
 
         let formData = new FormData()
         let commentDetails = {
@@ -96,7 +95,6 @@ function CommetsSection({ params, pageIndex, setModelTrigger, postId, postData }
         commentRef.current.value = null
     }
 
-    const isReel = false
 
     const reply = async (recordingUrl?, recordingTime?) => {
         let formData = new FormData()

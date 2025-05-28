@@ -19,17 +19,14 @@ const CreatePostStack: React.FC<CreatePostStackProps> = ({
   handlePostClick,
   handleReelClick,
 }) => {
-  const handleClosePress = useCallback(() => {
-    onClose();
-  }, [onClose]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md mx-auto bg-white">
+      <DialogContent className="max-w-md mx-auto bg-background">
         <div className="flex flex-col max-h-[80vh]">
           {/* Header */}
-          <div className="py-2 border-b border-gray-100 text-center">
-            <h2 className="text-lg font-medium text-gray-800">Create New</h2>
+          <div className="py-2 text-center">
+            <h2 className="text-lg font-medium text-foreground">Create New</h2>
           </div>
 
           {/* Scrollable Content */}
@@ -38,13 +35,13 @@ const CreatePostStack: React.FC<CreatePostStackProps> = ({
               {/* Create Post Option */}
               <button
                 onClick={handlePostClick}
-                className="w-full flex items-center p-4 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors group"
+                className="w-full flex items-center p-4 rounded-xl hover:bg-accent active:bg-gray-100 transition-colors group"
               >
                 <div className="w-11 h-11 bg-blue-500 rounded-full flex items-center justify-center">
                   <Image size={24} color="white" strokeWidth={1.5} />
                 </div>
                 <div className="flex-1 ml-4 text-left">
-                  <h3 className="text-base font-medium text-gray-800">Create Post</h3>
+                  <h3 className="text-base font-medium text-foreground">Create Post</h3>
                   <p className="text-sm text-gray-600 mt-0.5">Create and share updates</p>
                 </div>
                 <ChevronRight size={20} className="text-gray-500 ml-2" strokeWidth={1.5} />
@@ -53,20 +50,19 @@ const CreatePostStack: React.FC<CreatePostStackProps> = ({
               {/* Create Reel Option */}
               <button
                 onClick={handleReelClick}
-                className="w-full flex items-center p-4 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors group"
+                className="w-full flex items-center p-4 rounded-xl hover:bg-accent active:bg-gray-100 transition-colors group"
               >
                 <div className="w-11 h-11 bg-red-500 rounded-full flex items-center justify-center">
                   <Film size={24} color="white" strokeWidth={1.5} />
                 </div>
                 <div className="flex-1 ml-4 text-left">
-                  <h3 className="text-base font-medium text-gray-800">Create Reel</h3>
+                  <h3 className="text-base font-medium text-foreground">Create Reel</h3>
                   <p className="text-sm text-gray-600 mt-0.5">Create and share short videos</p>
                 </div>
                 <ChevronRight size={20} className="text-gray-500 ml-2" strokeWidth={1.5} />
               </button>
 
-              {/* Create Plantation Option - Upcoming */}
-              <button
+              {/* <button
                 disabled
                 className="w-full flex items-center p-4 rounded-xl opacity-80 cursor-not-allowed"
               >
@@ -87,7 +83,6 @@ const CreatePostStack: React.FC<CreatePostStackProps> = ({
                 <ChevronRight size={20} className="text-gray-400 ml-2" strokeWidth={1.5} />
               </button>
 
-              {/* Create Dams Option - Upcoming */}
               <button
                 disabled
                 className="w-full flex items-center p-4 rounded-xl opacity-80 cursor-not-allowed"
@@ -109,7 +104,6 @@ const CreatePostStack: React.FC<CreatePostStackProps> = ({
                 <ChevronRight size={20} className="text-gray-400 ml-2" strokeWidth={1.5} />
               </button>
 
-              {/* Create Garbage Collection Option - Upcoming */}
               <button
                 disabled
                 className="w-full flex items-center p-4 rounded-xl opacity-80 cursor-not-allowed"
@@ -129,7 +123,7 @@ const CreatePostStack: React.FC<CreatePostStackProps> = ({
                   </p>
                 </div>
                 <ChevronRight size={20} className="text-gray-400 ml-2" strokeWidth={1.5} />
-              </button>
+              </button> */}
             </div>
           </div>
         </div>

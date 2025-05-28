@@ -87,7 +87,7 @@ export const useCreatePost = (key: string, targetId?: string) => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (postDetails: { postType, content: string, selectedMedia: { file: File, type: string, url: UrlObject }[], formData: FormData, type: string, target: any, isUploaded?: boolean }) => {
+    mutationFn: (postDetails: { postType?: string, content: string, selectedMedia: { file: File, type: string, url: UrlObject }[], formData: FormData, type: string, target: any, isUploaded?: boolean }) => {
       return createPost(postDetails.formData)
     },
 
