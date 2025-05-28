@@ -14,6 +14,96 @@ import Comments from './Comments';
 import ShareModel from '@/models/ShareModel';
 import { toast } from 'react-toastify';
 // import ReportModal from './ReportModal';
+
+
+// const VideoTrackingDebug: React.FC<{
+//   isVisible: boolean;
+//   currentVideoId: string | null;
+//   autoScrollSettings: any;
+// }> = ({ isVisible, currentVideoId, autoScrollSettings }) => {
+//   const [stats, setStats] = useState<any>(null);
+//   const [refreshKey, setRefreshKey] = useState(0);
+
+//   useEffect(() => {
+//     if (!isVisible) return;
+
+//     const interval = setInterval(() => {
+//       const newStats = videoViewTracker.getStats();
+//       setStats(newStats);
+//       setRefreshKey(prev => prev + 1);
+//     }, 1000);
+
+//     return () => clearInterval(interval);
+//   }, [isVisible, refreshKey]);
+
+//   if (!isVisible || !stats) return null;
+
+//   return (
+//     <div className="fixed top-4 right-4 z-[9999] bg-black/90 text-white p-4 rounded-lg text-xs max-w-xs border border-gray-600">
+//       <div className="flex justify-between items-center mb-2">
+//         <h4 className="font-bold text-green-400">Video Tracking Debug</h4>
+//         <div className="text-xs text-gray-400">#{refreshKey}</div>
+//       </div>
+
+//       <div className="space-y-1">
+//         <div className="flex justify-between">
+//           <span>User ID Set:</span>
+//           <span className={stats.userIdSet ? 'text-green-400' : 'text-red-400'}>
+//             {stats.userIdSet ? '✓' : '✗'}
+//           </span>
+//         </div>
+
+//         <div className="flex justify-between">
+//           <span>Periodic Check:</span>
+//           <span className={stats.isPeriodicChecking ? 'text-green-400' : 'text-red-400'}>
+//             {stats.isPeriodicChecking ? '✓' : '✗'}
+//           </span>
+//         </div>
+
+//         <div className="flex justify-between">
+//           <span>Active Tracking:</span>
+//           <span className="text-blue-400">{stats.activeTrackingCount}</span>
+//         </div>
+
+//         <div className="flex justify-between">
+//           <span>Pending Views:</span>
+//           <span className="text-yellow-400">{stats.pendingViews}/{stats.batchSize}</span>
+//         </div>
+
+//         <div className="flex justify-between">
+//           <span>Processing:</span>
+//           <span className="text-orange-400">{stats.processingViews}</span>
+//         </div>
+
+//         <div className="flex justify-between">
+//           <span>Total Sent:</span>
+//           <span className="text-green-400">{stats.totalSentViews}</span>
+//         </div>
+
+//         {stats.lastBatchTime && (
+//           <div className="text-xs text-gray-400">
+//             Last Batch: {new Date(stats.lastBatchTime).toLocaleTimeString()}
+//           </div>
+//         )}
+
+//         {stats.lastError && (
+//           <div className="text-xs text-red-400 mt-2 p-2 bg-red-900/20 rounded">
+//             Error: {stats.lastError.message}
+//           </div>
+//         )}
+
+//         <hr className="border-gray-600 my-2" />
+
+//         <div className="text-xs text-gray-400">
+//           <div>Current Video: {currentVideoId || 'None'}</div>
+//           <div>Auto-scroll: {autoScrollSettings.autoScroll ? '✓' : '✗'}</div>
+//           <div>Delay: {autoScrollSettings.autoScrollDelay || 'Video End'}</div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
 const ReelsContainer: React.FC = () => {
   // Routing
   const navigate = useNavigate();
@@ -57,6 +147,8 @@ const ReelsContainer: React.FC = () => {
     hits: 0,
     misses: 0
   });
+  const [showDebug, setShowDebug] = useState(false);
+
 
   // Get source mode from URL params
   const sourceMode = useMemo(() => {
@@ -291,6 +383,48 @@ const ReelsContainer: React.FC = () => {
   }, [autoScrollReels, handleAutoScroll, bottomSheetOpen, longPressActive, userInteracted]);
 
 
+  // REPLACE THIS ENTIRE useEffect in ReelsContainer.tsx (Component cleanup section):
+
+  useEffect(() => {
+    // Set user ID for video view tracking when component mounts
+    if (user?._id && sourceMode !== 'videosFeed') {
+      videoViewTracker.setUserId(user._id);
+      videoViewTracker.startPeriodicChecking();
+      videoViewTracker.setDebug(process.env.NODE_ENV === 'development'); // Enable debug in dev mode
+      console.log('Video view tracking initialized for user:', user._id);
+    }
+
+    return () => {
+      isComponentMounted.current = false;
+
+      // Make sure to stop tracking the active video first
+      if (activeVideoRef.current) {
+        // Stop tracking and ensure playback is set to false
+        if (sourceMode !== 'videosFeed') {
+          videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
+          videoViewTracker.stopTracking(activeVideoRef.current);
+        }
+        activeVideoRef.current = null;
+      }
+
+      // Force send all pending views
+      if (sourceMode !== 'videosFeed') {
+        videoViewTracker.sendBatchToServer(true);
+      }
+
+      // Full cleanup
+      if (sourceMode !== 'videosFeed') {
+        videoViewTracker.cleanup().catch(err => {
+          console.error('Error during videoViewTracker cleanup:', err);
+        });
+      }
+
+      // Clear timeouts
+      if (autoScrollTimeoutRef.current) {
+        clearTimeout(autoScrollTimeoutRef.current);
+      }
+    };
+  }, [user, sourceMode]);
 
   // Setup intersection observer for detecting visible reels
   useEffect(() => {
@@ -463,6 +597,37 @@ const ReelsContainer: React.FC = () => {
 
 
 
+  // const updateVideoPlaybackState = useCallback((videoId, isPlaying) => {
+  //   if (!videoId) return;
+
+  //   console.log(`Updating playback state for video ${videoId}: ${isPlaying ? 'playing' : 'paused'}`);
+
+  //   // Update video tracker as before
+  //   (sourceMode !== 'videosFeed') && videoViewTracker.updatePlaybackState(videoId, isPlaying);
+
+  //   // Only start auto-scroll timer if video is playing for the first time
+  //   // AND we're not in long press mode
+  //   if (isPlaying && !hasVideoPlayedOnceRef.current) {
+  //     console.log('Video played for the first time, autoScroll:', autoScrollReels.autoScroll,
+  //       'autoScrollDelay:', autoScrollReels.autoScrollDelay, 'longPressActive:', longPressActive);
+
+  //     hasVideoPlayedOnceRef.current = true;
+  //     videoPlayStartTimeRef.current = Date.now();
+
+  //     // Only start auto-scroll timer if we're not in long press mode
+  //     if (!longPressActive && autoScrollReels.autoScroll && autoScrollReels.autoScrollDelay !== null) {
+  //       console.log('Starting auto-scroll timer');
+  //       startAutoScrollTimer();
+  //     } else if (longPressActive) {
+  //       console.log('Not starting timer due to active long press');
+  //     }
+  //   }
+  // }, [startAutoScrollTimer, autoScrollReels, longPressActive]);
+
+
+
+  // Component cleanup
+
   const updateVideoPlaybackState = useCallback((videoId, isPlaying) => {
     if (!videoId) return;
 
@@ -475,24 +640,33 @@ const ReelsContainer: React.FC = () => {
     // AND we're not in long press mode
     if (isPlaying && !hasVideoPlayedOnceRef.current) {
       console.log('Video played for the first time, autoScroll:', autoScrollReels.autoScroll,
-        'autoScrollDelay:', autoScrollReels.autoScrollDelay, 'longPressActive:', longPressActive);
+        'autoScrollDelay:', autoScrollReels.autoScrollDelay, 'longPressActive:', longPressActive,
+        'userInteracted:', userInteracted);
 
       hasVideoPlayedOnceRef.current = true;
       videoPlayStartTimeRef.current = Date.now();
 
-      // Only start auto-scroll timer if we're not in long press mode
-      if (!longPressActive && autoScrollReels.autoScroll && autoScrollReels.autoScrollDelay !== null) {
-        console.log('Starting auto-scroll timer');
-        startAutoScrollTimer();
-      } else if (longPressActive) {
-        console.log('Not starting timer due to active long press');
+      // Determine auto-scroll behavior based on user interaction and settings
+      if (autoScrollReels.autoScroll) {
+        if (longPressActive) {
+          // Long press active: rely on video completion
+          console.log('Long press active: will auto-scroll on video completion');
+        } else if (userInteracted) {
+          // User tapped once: ignore delay, only scroll on video completion
+          console.log('User interacted: ignoring delay, will auto-scroll on video completion');
+        } else if (autoScrollReels.autoScrollDelay !== null && autoScrollReels.autoScrollDelay > 0) {
+          // Normal auto-scroll with delay
+          console.log('Starting auto-scroll timer with delay:', autoScrollReels.autoScrollDelay);
+          startAutoScrollTimer();
+        } else {
+          // Auto-scroll on video completion (delay is null)
+          console.log('Auto-scroll on video completion mode');
+        }
       }
     }
-  }, [startAutoScrollTimer, autoScrollReels, longPressActive]);
+  }, [startAutoScrollTimer, autoScrollReels, longPressActive, userInteracted]);
 
 
-
-  // Component cleanup
   useEffect(() => {
     return () => {
       isComponentMounted.current = false;
@@ -751,11 +925,52 @@ const ReelsContainer: React.FC = () => {
     );
   }
 
-  console.log(flattenedData[activeReelIndex], activeReelIndex)
-
-
   return (
     <div className='flex'>
+      {/* {showDebug && (
+        <>
+          <button
+            onClick={() => setShowDebug(!showDebug)}
+            className="fixed top-4 right-20 z-50 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+            title="Toggle Debug Panel"
+          >
+            {showDebug ? 'Hide' : 'Debug'}
+          </button>
+
+          <VideoTrackingDebug
+            isVisible={showDebug}
+            currentVideoId={activeVideoRef.current}
+            autoScrollSettings={autoScrollReels}
+          />
+        </>
+      )} */}
+
+      {showDebug && (
+        <div className="fixed bottom-4 right-4 z-[9998] flex flex-col gap-2">
+          <button
+            onClick={() => {
+              if (activeVideoRef.current) {
+                videoViewTracker.sendBatchToServer(true);
+                console.log('Manual batch send triggered');
+              }
+            }}
+            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-medium"
+          >
+            Force Send Views
+          </button>
+
+          <button
+            onClick={() => {
+              console.log('Current video tracking stats:', videoViewTracker.getStats());
+              console.log('Active video ref:', activeVideoRef.current);
+              console.log('Auto-scroll settings:', autoScrollReels);
+            }}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-medium"
+          >
+            Log Stats
+          </button>
+        </div>
+      )}
       <div className="relative h-screen w-full bg-black overflow-hidden">
         {/* Main Reels Container with Snap Scroll */}
 

@@ -141,6 +141,8 @@ const ReelItem: React.FC<ReelItemProps> = ({
     }
   }, [isActive]);
 
+// REPLACE THESE FUNCTIONS in ReelItem.tsx:
+
   // Video time update handler
   const handleTimeUpdate = useCallback(() => {
     if (!videoRef.current || !isActive) return;
@@ -158,6 +160,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
     // Check for video completion
     if (progress > 0.99 && !hasCompletedRef.current) {
       hasCompletedRef.current = true;
+      console.log('Video completed. AutoScrollEnabled:', autoScrollEnabled);
 
       // Handle auto-scroll if enabled and video completed
       if (autoScrollEnabled && onVideoComplete) {
@@ -165,11 +168,84 @@ const ReelItem: React.FC<ReelItemProps> = ({
           console.log('Video completed during long press, triggering auto-scroll');
           onVideoComplete(true);
         } else {
+          console.log('Video completed, triggering auto-scroll');
           onVideoComplete(false);
         }
+      } else {
+        // If auto-scroll is disabled, loop the video
+        console.log('Video completed, looping since auto-scroll is disabled');
+        setTimeout(() => {
+          if (videoRef.current && isActive && !manuallyPaused.current) {
+            console.log('Looping video: resetting to start');
+            videoRef.current.currentTime = 0;
+            hasCompletedRef.current = false;
+            
+            // Force play the video again
+            videoRef.current.play().catch(err => {
+              console.log('Error looping video:', err);
+              // Try with muted audio if needed
+              if (err.name === 'NotAllowedError') {
+                videoRef.current!.muted = true;
+                setVideoState(prev => ({ ...prev, isMuted: true }));
+                videoRef.current!.play().catch(e => console.log('Even muted loop failed:', e));
+              }
+            });
+          }
+        }, 100);
       }
     }
   }, [isActive, autoScrollEnabled, onVideoComplete]);
+
+  // Handle context menu (right-click) to support desktop long press
+
+  // Handle long press start
+  const handleLongPressStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+
+    longPressTimeout.current = window.setTimeout(() => {
+      isLongPressActiveRef.current = true;
+
+      // If video is paused, play it
+      if (!videoState.isPlaying && videoRef.current) {
+        manuallyPaused.current = false;
+        videoRef.current.play().catch(err => console.log('Error playing video on long press:', err));
+      }
+
+      // Notify parent component about long press
+      onLongPressStateChange(true, memoizedReel._id);
+
+      console.log('Long press started on video:', memoizedReel._id);
+    }, 500) as unknown as number;
+  }, [memoizedReel._id, videoState.isPlaying, onLongPressStateChange]);
+
+  // Handle long press end
+  const handleLongPressEnd = useCallback(() => {
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+      longPressTimeout.current = null;
+    }
+
+    if (isLongPressActiveRef.current) {
+      isLongPressActiveRef.current = false;
+
+      // Notify parent component about long press end
+      onLongPressStateChange(false, memoizedReel._id);
+
+      console.log('Long press ended on video:', memoizedReel._id);
+    }
+  }, [memoizedReel._id, onLongPressStateChange]);
+
+    const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent context menu
+    // For desktop, we can use right-click as an alternative to long press
+    if (!isLongPressActiveRef.current) {
+      handleLongPressStart(e);
+      // Auto-end after a short delay to simulate touch behavior
+      setTimeout(() => {
+        handleLongPressEnd();
+      }, 2000);
+    }
+  }, [handleLongPressStart, handleLongPressEnd]);
 
   // Video play/pause state changes
   const handlePlayPause = useCallback((isPlaying: boolean) => {
@@ -236,9 +312,15 @@ const ReelItem: React.FC<ReelItemProps> = ({
       position: newTime * 1000,
       progress: videoState.duration ? newTime / videoState.duration : 0
     }));
+
+    // Auto-play the video after seeking
+    if (videoRef.current.paused) {
+      manuallyPaused.current = false;
+      videoRef.current.play().catch(err => console.log('Error auto-playing after backward skip:', err));
+    }
   }, [videoState.duration]);
 
-  // NEW: Skip forward 5 seconds
+  // Skip forward 5 seconds
   const skipForward = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (!videoRef.current) return;
@@ -254,7 +336,14 @@ const ReelItem: React.FC<ReelItemProps> = ({
       position: newTime * 1000,
       progress: duration ? newTime / duration : 0
     }));
+
+    // Auto-play the video after seeking
+    if (videoRef.current.paused) {
+      manuallyPaused.current = false;
+      videoRef.current.play().catch(err => console.log('Error auto-playing after forward skip:', err));
+    }
   }, []);
+
 
 
   // Handle click/tap on video
@@ -317,45 +406,10 @@ const ReelItem: React.FC<ReelItemProps> = ({
     lastTapTime.current = now;
   }, [likeMutation, pageIndex, reelIndex, memoizedReel, togglePlayPause, uiState.showControls, onUserInteraction]);
 
-  // Handle long press start
-  const handleLongPressStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-
-    longPressTimeout.current = window.setTimeout(() => {
-      isLongPressActiveRef.current = true;
-
-      // If video is paused, play it
-      if (!videoState.isPlaying && videoRef.current) {
-        manuallyPaused.current = false;
-        videoRef.current.play().catch(err => console.log('Error playing video on long press:', err));
-      }
-
-      // Notify parent component about long press
-      onLongPressStateChange(true, memoizedReel._id);
-
-      console.log('Long press started on video:', memoizedReel._id);
-    }, 500) as unknown as number;
-  }, [memoizedReel._id, videoState.isPlaying, onLongPressStateChange]);
-
-  // Handle long press end
-  const handleLongPressEnd = useCallback(() => {
-    if (longPressTimeout.current) {
-      clearTimeout(longPressTimeout.current);
-      longPressTimeout.current = null;
-    }
-
-    if (isLongPressActiveRef.current) {
-      isLongPressActiveRef.current = false;
-
-      // Notify parent component about long press end
-      onLongPressStateChange(false, memoizedReel._id);
-
-      console.log('Long press ended on video:', memoizedReel._id);
-    }
-  }, [memoizedReel._id, onLongPressStateChange]);
 
   // Handle like action
   const handleLike = useCallback(() => {
+
     likeMutation.mutate({
       postId: memoizedReel._id,
       pageIndex,

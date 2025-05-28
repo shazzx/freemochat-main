@@ -342,6 +342,8 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
             // Determine the query key based on the source mode
             const queryKey = getQueryKeyForMode(sourceMode, { userId: targetId, initialReelId });
 
+            console.log(queryKey, 'queryKey for like mutation');
+
             // Cancel any outgoing refetches for that query
             await queryClient.cancelQueries({ queryKey });
 

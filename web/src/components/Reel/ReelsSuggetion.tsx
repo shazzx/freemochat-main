@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 // Single Reel Item Component
 export const ReelItem = ({ reel, onPress }) => {
     const getThumbnailUrl = () => {
-        console.log('Reel:', reel.media);
         if (reel.media && reel.media.length > 0) {
             if (reel.media[0].thumbnail) {
                 return reel.media[0].thumbnail;

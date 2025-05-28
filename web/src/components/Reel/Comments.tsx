@@ -75,8 +75,9 @@ function CommetsSection({ params, pageIndex, setModelTrigger, postId, postData }
         let commentDetails = {
             targetType: 'user',
             type: isReel ? 'reel' : 'post',
-            authorId: postData?.user,
+            authorId: postData?.user?._id || postData?.user,
             postId,
+            postType: postData?.postType || 'post',
             commentDetails: { content: recordingUrl ? null : commentRef.current?.value, username: user?.username },
             uuid: uuidv4()
         }
@@ -97,14 +98,15 @@ function CommetsSection({ params, pageIndex, setModelTrigger, postId, postData }
 
     const isReel = false
 
-    const replyOnPost = async (recordingUrl?, recordingTime?) => {
+    const reply = async (recordingUrl?, recordingTime?) => {
         let formData = new FormData()
         let replyData = {
             postId,
             targetType: 'user',
             type: isReel ? "reel" : 'post',
-            commentAuthorId: replyState.user,
-            authorId: postData?.user,
+            commentAuthorId: replyState.user?._id || replyState.user,
+            postType: postData?.postType || 'post',
+            authorId: postData?.user?._id || postData?.user,
             replyDetails: { content: replyRef.current.value },
             commentId: replyState._id
         }
@@ -122,6 +124,22 @@ function CommetsSection({ params, pageIndex, setModelTrigger, postId, postData }
 
     }
 
+    // Handle Enter key press for comments
+    const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            commentOnPost()
+        }
+    }
+
+    // Handle Enter key press for replies
+    const handleReplyKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            reply()
+        }
+    }
+
     const [editCommentModelState, setEditCommentModelState] = useState(false)
     const [commentDetails, setCommentDetails] = useState(null)
     const updateCommentRef = useRef<HTMLTextAreaElement>(null)
@@ -133,7 +151,7 @@ function CommetsSection({ params, pageIndex, setModelTrigger, postId, postData }
     const navigate = useNavigate()
 
     return (
-        <div ref={scrollRef} className='z-10 sm:max-w-[30%] md:max-w-[35%] lg:max-w-[42%] w-full flex flex-col bg-background relative rounded-lg  scroll-smooth overflow-auto border-2 border-accent shadow-md'>
+        <div ref={scrollRef} className='z-10 sm:max-w-[30%] md:max-w-[35%] lg:max-w-[42%] h-screen w-full flex flex-col bg-background relative rounded-lg  scroll-smooth overflow-auto border-2 border-accent shadow-md'>
             {editCommentModelState &&
                 <div className='absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[1.5px] z-50 '>
                     <div className='absolute w-full h-full top-0 left-0 z-10' onClick={() => {
@@ -179,7 +197,7 @@ function CommetsSection({ params, pageIndex, setModelTrigger, postId, postData }
 
             {/* <Post useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} model={true} postData={postData} username={user?.username} userId={user?._id} type={type} /> */}
             {!isLoading && <>
-                <div className='relative p-4 flex h-full flex-col gap-2'>
+                <div className='relative p-4 flex h-full overflow-y-scroll  flex-col gap-2'>
                     {/* comment section */}
                     {/* {isLoading &&
                         // <ScreenLoader limit={1} />
@@ -251,6 +269,7 @@ function CommetsSection({ params, pageIndex, setModelTrigger, postId, postData }
                                         type="search"
                                         placeholder="Start writing your reply..."
                                         className="w-full appearance-none bg-card pl-8 shadow-none border-none focus:outline-none"
+                                        onKeyDown={handleReplyKeyDown}
                                     />
                                     {/* <svg width="29" className="stroke-foreground dark:stroke-foreground" cursor="pointer" height="28" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M11 16.3334C11.2115 16.8844 11.5581 17.3734 12.008 17.7556C13.4387 18.9564 15.5207 18.9716 16.9687 17.7917C17.4247 17.4164 17.7793 16.9326 18 16.3847" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -264,11 +283,11 @@ function CommetsSection({ params, pageIndex, setModelTrigger, postId, postData }
                                     if (uploadState && replyState) {
                                         const url = URL.createObjectURL(audioBlob)
                                         setRecordingUrl(url)
-                                        replyOnPost(audioBlob, recordingTime)
+                                        reply(audioBlob, recordingTime)
                                     }
                                 }} />
                                 {!isRecording && <Button className="m-0 bg-transparent  py-5 px-2 border-[2px] border-primary" onClick={() => {
-                                    replyOnPost()
+                                    reply()
                                 }} >
                                     <MdSend size={24} className="text-foreground"></MdSend>
                                 </Button>}
@@ -290,6 +309,7 @@ function CommetsSection({ params, pageIndex, setModelTrigger, postId, postData }
                                 type="search"
                                 placeholder="Write your comment..."
                                 className="w-full appearance-none bg-card pl-2 shadow-none border-none focus:outline-none"
+                                onKeyDown={handleCommentKeyDown}
                             />
                             {/* <svg width="29" className="stroke-foreground dark:stroke-foreground" cursor="pointer" height="28" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M11 16.3334C11.2115 16.8844 11.5581 17.3734 12.008 17.7556C13.4387 18.9564 15.5207 18.9716 16.9687 17.7917C17.4247 17.4164 17.7793 16.9326 18 16.3847" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />

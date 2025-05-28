@@ -398,9 +398,7 @@ const SharedPostContent = ({ sharedPost, useLikePost, useBookmarkPost, type, isS
     if (!sharedPost) return null;
 
     let navigation = sharedPost?.type == 'user' ? sharedPost?.target?.username : sharedPost?.target?.handle;
-    if (sharedPost?.postType == 'reel') {
-        console.log(sharedPost?.postType == 'reel', sharedPost, 'sharedreel')
-    }
+
     return (
         <Card className="w-full border-muted bg-muted/30">
             <CardHeader className='p-3'>

@@ -15,7 +15,7 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
     const [selectedReaction, setSelectedReaction] = useState(null);
     const timeoutRef = useRef(null);
     const emojisRef = useRef(null);
-    
+
     const { mutate } = useLikeReply(reply?.parentId);
     const { user } = useAppSelector((state) => state.user);
     const deleteReply = useDeleteReply(reply?.parentId, postId);
@@ -56,12 +56,12 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
         e.preventDefault(); // Prevent mouse events from firing
         handleMouseDown(e.touches[0]);
     };
-    
+
     const handleTouchEnd = (e) => {
         e.preventDefault(); // Prevent mouse events from firing
         handleMouseUp(e.changedTouches[0]);
     };
-    
+
     const handleTouchCancel = (e) => {
         e.preventDefault(); // Prevent mouse events from firing
         handleMouseLeave(e.changedTouches[0]);
@@ -72,17 +72,17 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
             toast.info("please wait...");
             return;
         }
-        
+
         let reaction = _reaction !== undefined ? reactions[_reaction]?.name : undefined;
-        const replyData = { 
-            userId: userId, 
-            commentId: reply.parentId, 
-            replyId: reply?._id, 
-            pageIndex, 
+        const replyData = {
+            userId: userId,
+            commentId: reply.parentId,
+            replyId: reply?._id,
+            pageIndex,
             replyIndex,
-            reaction 
+            reaction
         };
-        
+
         mutate(replyData);
     };
 
@@ -143,7 +143,7 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                         ))}
                     </div>
                 )}
-                
+
                 {hasReaction ? (
                     <span className="flex items-center gap-1">
                         <span className="text-sm">{reactions[reactionIndex]?.emoji}</span>
@@ -159,7 +159,6 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
             </div>
         );
     };
-
     return (
         <div>
             {
@@ -168,7 +167,7 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                         <Link to={`${domain}/user/${reply.user.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
                                 <AvatarImage src={reply.user?.profile} alt="Avatar" />
-                                <AvatarFallback>{reply.user.firstname && reply.user.firstname[0]?.toUpperCase()}</AvatarFallback>
+                                {/* <AvatarFallback>{reply.user.firstname && reply.user.firstname[0]?.toUpperCase()}</AvatarFallback> */}
                             </Avatar>
                         </Link>
                         <div className='flex flex-col'>
@@ -177,7 +176,7 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                             </div>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-muted text-sm rounded-lg ">
                                 <AudioPlayer src={reply.audio.src} duration={reply.audio.duration} />
-                                {user._id == reply?.user?._id && 
+                                {user._id == reply?.user?._id &&
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild className='cursor-pointer'>
                                             <EllipsisVertical size="16px" />
@@ -199,7 +198,7 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                         <Link to={`${domain}/user/${reply.user.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
                                 <AvatarImage src={reply.user?.profile} alt="Avatar" />
-                                <AvatarFallback>{reply.user.firstname && reply.user.firstname[0]?.toUpperCase()}</AvatarFallback>
+                                {/* <AvatarFallback>{reply.user.firstname && reply.user.firstname[0]?.toUpperCase()}</AvatarFallback> */}
                             </Avatar>
                         </Link>
                         <div className='flex flex-col'>
@@ -208,7 +207,7 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                             </div>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-muted text-sm rounded-lg ">
                                 <p>{reply?.content}</p>
-                                {user._id == reply?.user?._id && 
+                                {user._id == reply?.user?._id &&
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild className='cursor-pointer'>
                                             <EllipsisVertical size="16px" />

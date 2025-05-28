@@ -30,6 +30,7 @@ const NotFoundSvg = ({ text = "No Content" }) => (
 );
 
 const UserReelsSection = ({ userId }) => {
+  console.log('UserReelsSection rendered for userId:', userId);	
   const navigate = useNavigate();
 
   // Fetch user reels

@@ -166,7 +166,7 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
         <div>
             {
                 comment?.audio?.src ?
-                    <div className="flex gap-2 select-none" key={comment._id} ref={ref}>
+                    <div className="flex gap-2 select-none" key={comment?._id} ref={ref}>
                         <Link to={`${domain}/user/${comment.user.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
                                 <AvatarImage src={comment.user?.profile} alt="Avatar" />
@@ -179,14 +179,14 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                             </Link>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-muted text-sm rounded-lg ">
                                 <AudioPlayer src={comment.audio.src} duration={comment.audio.duration} />
-                                {comment.user._id == userId &&
+                                {comment.user?._id == userId &&
                                     < DropdownMenu >
                                         <DropdownMenuTrigger asChild className='cursor-pointer'>
                                             <EllipsisVertical size="16px" />
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className='bg-card p-2 rounded-md'>
                                             <DropdownMenuItem className='cursor-pointer' onClick={async () => {
-                                                deleteComment.mutate({ commentId: comment._id, pageIndex, commentIndex, audio: { src: comment.audio.src, }, postId: comment.post })
+                                                deleteComment.mutate({ commentId: comment?._id, pageIndex, commentIndex, audio: { src: comment.audio.src, }, postId: comment.post })
                                             }}>Remove</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>}
@@ -199,7 +199,7 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                             </div>
                         </div>
                     </div> :
-                    <div className="flex gap-2 select-none" key={comment._id} ref={ref}>
+                    <div className="flex gap-2 select-none" key={comment?._id} ref={ref}>
                         <Link to={`${domain}/user/${comment?.user?.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-card dark:bg-accent  w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
                                 <AvatarImage src={comment?.user?.profile} alt="Avatar" />
@@ -212,7 +212,7 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                             </Link>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-accent bg-card dark:bg-transparent text-sm rounded-lg ">
                                 <p>{comment?.content}</p>
-                                {comment.user._id == userId &&
+                                {comment.user?._id == userId &&
                                     < DropdownMenu >
                                         <DropdownMenuTrigger asChild className='cursor-pointer'>
                                             <EllipsisVertical size="16px" />
@@ -220,10 +220,10 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                                         <DropdownMenuContent align="end" className='bg-card p-2 rounded-md'>
                                             <DropdownMenuItem className='cursor-pointer' onClick={async () => {
                                                 setEditCommentModelState(!editCommentModelState)
-                                                setCommentDetails({ content: comment.content, commentId: comment._id, pageIndex, commentIndex })
+                                                setCommentDetails({ content: comment.content, commentId: comment?._id, pageIndex, commentIndex })
                                             }}>Edit</DropdownMenuItem>
                                             <DropdownMenuItem className='cursor-pointer' onClick={async () => {
-                                                deleteComment.mutate({ postId: comment.post, commentId: comment._id, pageIndex, commentIndex })
+                                                deleteComment.mutate({ postId: comment.post, commentId: comment?._id, pageIndex, commentIndex })
                                             }}>Remove</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>}
