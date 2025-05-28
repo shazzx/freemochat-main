@@ -115,7 +115,6 @@ function FeedSection() {
             setWidth(window.innerWidth)
         })
     }, [])
-
     // Render individual item (post or reels section)
     const renderItem = useCallback((item, index) => {
         // Render reels section
@@ -130,8 +129,14 @@ function FeedSection() {
         }
 
         // Render regular post
-        const isLastItem = index === flattenedData.length - 1;
-        const shouldAddRef = isLastItem && flattenedData.length >= 2;
+        const isSecondLastItem = index === flattenedData.length - 2;
+        const isThirdLastItem = index === flattenedData.length - 3;
+
+        // Trigger fetch on 3rd last item, or 2nd last if there are only 2 items, or last if there's only 1 item
+        const shouldAddRef = (
+            (flattenedData.length >= 3 && isThirdLastItem) ||
+            (flattenedData.length === 2 && isSecondLastItem)
+        );
 
         return (
             <Post
@@ -150,7 +155,6 @@ function FeedSection() {
             />
         );
     }, [flattenedData, navigateToReels, user, ref, fetchNextPage]);
-
     return (
         <div className='w-full z-10 flex justify-center md:justify-normal overflow-y-auto border-muted md:px-6 lg:px-24'>
             {openPostStackModal && <CreatePostStack handlePostClick={() => {
@@ -160,7 +164,9 @@ function FeedSection() {
                 setOpenPostStackModal(false)
                 navigate("?createreel=true")
             }} isOpen={openPostStackModal} onClose={() => setOpenPostStackModal(false)} />}
+
             {searchParams.get("createpost") && (width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+
             {searchParams.get("createreel") && (width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createReel} isReel={true} /> : searchParams.get("createreel") && <CPostModal setModelTrigger={setPostModal} createPost={_createReel} isReel={true} />}
 
             <div className='max-w-xl w-full flex flex-col gap-2'>

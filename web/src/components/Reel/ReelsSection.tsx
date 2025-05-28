@@ -4,7 +4,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import ReelItem from './ReelItem';
 import VideoPlaybackManager from './VideoPlaybackManager';
 import videoViewTracker from './VideoViewTracker';
-import { useBookmarkBookmarkedReelPost, useBookmarkProfileReelPost, useBookmarkReelsFeedPost, useBookmarkVideosFeedPost, useLikeBookmarkedReelPost, useLikeProfileReelPost, useLikeReelsFeedPost, useLikeVideosFeedPost, useReelsDataSource } from '@/hooks/Reels/useReels';
+import { useBookmarkBookmarkedReelPost, useBookmarkProfileReelPost, useBookmarkReelsFeedPost, useBookmarkVideosFeedPost, useLikeBookmarkedReelPost, useLikeProfileReelPost, useLikeReelsFeedPost, useLikeVideosFeedPost, useReelsDataSource, useUpdateReel } from '@/hooks/Reels/useReels';
 import { useAppSelector } from '@/app/hooks';
 import AutoScrollControls from './AutoScrollControls';
 import ShareSheet from './ShareSheet';
@@ -13,6 +13,9 @@ import BottomComments from '@/models/BottomComments';
 import Comments from './Comments';
 import ShareModel from '@/models/ShareModel';
 import { toast } from 'react-toastify';
+import BottomCreatePost from '@/models/BottomCreatePost';
+import ThreeDotsModal from './ThreeDotsModal';
+import ShareBottomSheet from '@/models/ShareBottomSheet';
 // import ReportModal from './ReportModal';
 
 
@@ -159,13 +162,11 @@ const ReelsContainer: React.FC = () => {
     if (location.pathname.includes('videos')) return 'videosFeed';
     return 'reelsFeed';
   }, [location.pathname, location.state]);
-  // Get user data from your auth store
   const { user } = useAppSelector((state) => state.user);
 
-  // Extract source params from URL
   const sourceParams = useMemo(() => {
     return {
-      userId: params.userId,
+      userId: user?._id,
       reelData: location.state?.reelData,
       initialReelId: location.state?.initialReelId || params.reelId, // Try state first, then params
       isSuggested: location.state?.reelData?.isSuggested || false
@@ -208,6 +209,7 @@ const ReelsContainer: React.FC = () => {
   };
 
   const isMobile = useScreenSize();
+  const [updateReelActive, setUpdateReelActive] = useState(false)
 
   // Fetch reels data
   const {
@@ -218,6 +220,9 @@ const ReelsContainer: React.FC = () => {
     isFetchingNextPage,
     hasNextPage
   } = useReelsDataSource(sourceMode, sourceParams);
+
+
+  const updateReel = useUpdateReel()
 
   // Flatten the data
   const flattenedData = useMemo(() => {
@@ -286,15 +291,15 @@ const ReelsContainer: React.FC = () => {
       return;
     }
 
-    // If it's not from a long press, follow normal rules
+    // FIXED: Enhanced logic for different interaction modes
     if (!isFromLongPress) {
-      // Don't auto-scroll if the feature is disabled
+      // Not from long press - follow normal rules
       if (!autoScrollReels.autoScroll) {
         console.log('Auto-scroll disabled by settings');
         return;
       }
     } else {
-      // It's from a long press - log this case specifically
+      // From long press - always allow if long press was active
       console.log('Auto-scrolling triggered by long press + video completion');
     }
 
@@ -306,6 +311,12 @@ const ReelsContainer: React.FC = () => {
 
     console.log('Auto-scrolling to next reel');
 
+    // Clear any existing timer since we're now scrolling
+    if (autoScrollTimeoutRef.current) {
+      clearTimeout(autoScrollTimeoutRef.current);
+      autoScrollTimeoutRef.current = null;
+    }
+
     // Scroll to the next reel
     const nextReelElement = document.querySelector(`[data-index="${activeReelIndex + 1}"]`);
     if (nextReelElement) {
@@ -314,7 +325,10 @@ const ReelsContainer: React.FC = () => {
         block: 'start'
       });
     }
-  }, [autoScrollReels.autoScroll, activeReelIndex, flattenedData, bottomSheetOpen]);
+  }, [autoScrollReels.autoScroll, activeReelIndex, flattenedData, bottomSheetOpen, sourceMode]);
+
+  // REPLACE the startAutoScrollTimer function in ReelsContainer.tsx (around line 200)
+  // WITH this improved version:
 
   const startAutoScrollTimer = useCallback(() => {
     // Clear any existing timeout
@@ -323,10 +337,9 @@ const ReelsContainer: React.FC = () => {
       autoScrollTimeoutRef.current = null;
     }
 
-
     if (sourceMode == 'videosFeed') {
       console.log('Auto-scroll prevented: videosFeed mode');
-      return
+      return;
     }
 
     // If auto-scroll is disabled, exit
@@ -338,14 +351,13 @@ const ReelsContainer: React.FC = () => {
       return;
     }
 
-    // If long press is active, completely bypass starting timer
-    // This is crucial - we want to rely on video completion during long press
+    // FIXED: If long press is active, completely bypass timer - rely ONLY on video completion
     if (longPressActive) {
-      console.log('Auto-scroll using long press mode, timer will not start');
+      console.log('Long press active: bypassing timer, will auto-scroll ONLY on video completion');
       return;
     }
 
-    // NEW: If user has interacted with video via single tap, rely on video completion
+    // FIXED: If user has interacted with video via single tap, rely on video completion
     if (userInteracted) {
       console.log('User interacted with video, relying on video completion for auto-scroll');
       return;
@@ -368,6 +380,12 @@ const ReelsContainer: React.FC = () => {
     console.log(`Starting auto-scroll timer for ${delayMs}ms`);
 
     autoScrollTimeoutRef.current = setTimeout(() => {
+      // FIXED: Double-check long press state before executing
+      if (longPressActive) {
+        console.log('Auto-scroll timer fired but long press is active - canceling');
+        return;
+      }
+
       handleAutoScroll(false); // Pass false to indicate it's not from long press
     }, delayMs);
 
@@ -378,6 +396,59 @@ const ReelsContainer: React.FC = () => {
       }
     };
   }, [autoScrollReels, handleAutoScroll, bottomSheetOpen, longPressActive, userInteracted]);
+
+  // REPLACE the updateVideoPlaybackState function in ReelsContainer.tsx (around line 350)
+  // WITH this improved version:
+
+  const updateVideoPlaybackState = useCallback((videoId, isPlaying) => {
+    if (!videoId) return;
+
+    console.log(`Updating playback state for video ${videoId}: ${isPlaying ? 'playing' : 'paused'}`);
+
+    // Update video tracker as before
+    (sourceMode !== 'videosFeed') && videoViewTracker.updatePlaybackState(videoId, isPlaying);
+
+    // Only start auto-scroll timer if video is playing for the first time
+    if (isPlaying && !hasVideoPlayedOnceRef.current) {
+      console.log('Video played for the first time, autoScroll:', autoScrollReels.autoScroll,
+        'autoScrollDelay:', autoScrollReels.autoScrollDelay, 'longPressActive:', longPressActive,
+        'userInteracted:', userInteracted);
+
+      hasVideoPlayedOnceRef.current = true;
+      videoPlayStartTimeRef.current = Date.now();
+
+      // FIXED: Determine auto-scroll behavior based on user interaction and settings
+      if (autoScrollReels.autoScroll) {
+        if (longPressActive) {
+          // Long press active: ONLY rely on video completion, NO timer
+          console.log('Long press active: will auto-scroll ONLY on video completion (no timer)');
+          // Explicitly clear any existing timer to be safe
+          if (autoScrollTimeoutRef.current) {
+            clearTimeout(autoScrollTimeoutRef.current);
+            autoScrollTimeoutRef.current = null;
+          }
+        } else if (userInteracted) {
+          // User tapped once: ignore delay, only scroll on video completion
+          console.log('User interacted: ignoring delay, will auto-scroll ONLY on video completion');
+          // Explicitly clear any existing timer
+          if (autoScrollTimeoutRef.current) {
+            clearTimeout(autoScrollTimeoutRef.current);
+            autoScrollTimeoutRef.current = null;
+          }
+        } else if (autoScrollReels.autoScrollDelay !== null && autoScrollReels.autoScrollDelay > 0) {
+          // Normal auto-scroll with delay
+          console.log('Starting auto-scroll timer with delay:', autoScrollReels.autoScrollDelay);
+          startAutoScrollTimer();
+        } else {
+          // Auto-scroll on video completion (delay is null)
+          console.log('Auto-scroll on video completion mode');
+        }
+      }
+    }
+  }, [startAutoScrollTimer, autoScrollReels, longPressActive, userInteracted, sourceMode]);
+
+  // REPLACE the handleAutoScroll function in ReelsContainer.tsx (around line 150)
+  // WITH this improved version:
 
 
   // REPLACE THIS ENTIRE useEffect in ReelsContainer.tsx (Component cleanup section):
@@ -423,10 +494,14 @@ const ReelsContainer: React.FC = () => {
     };
   }, [user, sourceMode]);
 
+  // REPLACE the intersection observer useEffect in ReelsContainer.tsx (around line 280)
+  // FROM the existing intersection observer setup
+  // TO this optimized version:
+
   useEffect(() => {
     if (!containerRef.current || !flattenedData?.length) return;
 
-    // Create intersection observer with better performance options
+    // Create intersection observer with mobile-optimized settings
     observer.current = new IntersectionObserver((entries) => {
       // Use requestAnimationFrame to batch DOM updates
       requestAnimationFrame(() => {
@@ -434,62 +509,81 @@ const ReelsContainer: React.FC = () => {
           const reelId = entry.target.getAttribute('data-reel-id');
           const reelIndex = parseInt(entry.target.getAttribute('data-index') || '0');
 
-          if (entry.isIntersecting && reelId && reelIndex !== activeReelIndex) {
-            console.log(`Video ${reelIndex} became active`);
-            setActiveReelIndex(reelIndex);
+          // FIXED: Allow re-activation of same reel and use lower threshold for mobile
+          if (entry.isIntersecting && reelId) {
+            // Only skip if it's already the active reel AND it's currently playing
+            const isAlreadyActiveAndPlaying = reelIndex === activeReelIndex &&
+              flattenedData[reelIndex] &&
+              !VideoPlaybackManager.isVideoManuallyPaused(`reel-${flattenedData[reelIndex].id}`);
 
-            // Stop tracking previous video
-            if (activeVideoRef.current && sourceMode !== 'videosFeed') {
-              videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
-              videoViewTracker.stopTracking(activeVideoRef.current);
-              activeVideoRef.current = null;
-            }
+            if (!isAlreadyActiveAndPlaying) {
+              console.log(`Video ${reelIndex} became active (was ${activeReelIndex})`);
+              setActiveReelIndex(reelIndex);
 
-            // Start tracking new video
-            const currentVideo = flattenedData[reelIndex];
-            if (currentVideo?.id && sourceMode !== 'videosFeed') {
-              videoViewTracker.startTracking({
-                videoId: currentVideo.id,
-                type: 'video'
-              });
-              activeVideoRef.current = currentVideo.id;
-            }
-
-            // Start playing the active video
-            if (currentVideo) {
-              const videoId = `reel-${currentVideo.id}`;
-              VideoPlaybackManager.setCurrentlyPlaying(videoId, {
-                reset: false,
-                prefetchAdjacent: true,
-                videos: flattenedData,
-                currentIndex: reelIndex,
-                checkForNextPage: true,
-                loadNextPage: hasNextPage ? () => fetchNextPage() : null
-              });
-
-              // Reset auto-scroll state
-              hasVideoPlayedOnceRef.current = false;
-              videoPlayStartTimeRef.current = null;
-              setUserInteracted(false);
-              setLongPressActive(false);
-
-              // Clear any existing timeout
-              if (autoScrollTimeoutRef.current) {
-                clearTimeout(autoScrollTimeoutRef.current);
-                autoScrollTimeoutRef.current = null;
+              // Stop tracking previous video
+              if (activeVideoRef.current && sourceMode !== 'videosFeed') {
+                videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
+                videoViewTracker.stopTracking(activeVideoRef.current);
+                activeVideoRef.current = null;
               }
 
-              // Defer prefetching to avoid blocking main thread
-              setTimeout(() => prefetchVideosAround(reelIndex), 200);
+              // Start tracking new video
+              const currentVideo = flattenedData[reelIndex];
+              if (currentVideo?.id && sourceMode !== 'videosFeed') {
+                videoViewTracker.startTracking({
+                  videoId: currentVideo.id,
+                  type: 'video'
+                });
+                activeVideoRef.current = currentVideo.id;
+              }
+
+              // Start playing the active video
+              if (currentVideo) {
+                const videoId = `reel-${currentVideo.id}`;
+                VideoPlaybackManager.setCurrentlyPlaying(videoId, {
+                  reset: false,
+                  prefetchAdjacent: true,
+                  videos: flattenedData,
+                  currentIndex: reelIndex,
+                  checkForNextPage: true,
+                  loadNextPage: hasNextPage ? () => fetchNextPage() : null
+                });
+
+                // Reset auto-scroll state
+                hasVideoPlayedOnceRef.current = false;
+                videoPlayStartTimeRef.current = null;
+                setUserInteracted(false);
+                setLongPressActive(false);
+
+                // Clear any existing timeout
+                if (autoScrollTimeoutRef.current) {
+                  clearTimeout(autoScrollTimeoutRef.current);
+                  autoScrollTimeoutRef.current = null;
+                }
+
+                // Defer prefetching to avoid blocking main thread
+                setTimeout(() => prefetchVideosAround(reelIndex), 200);
+              }
+            }
+          } else if (!entry.isIntersecting && reelIndex === activeReelIndex) {
+            // FIXED: Properly handle video going out of view
+            console.log(`Video ${reelIndex} went out of view`);
+
+            // Stop the video that went out of view
+            const currentVideo = flattenedData[reelIndex];
+            if (currentVideo) {
+              const videoId = `reel-${currentVideo.id}`;
+              VideoPlaybackManager.pauseCurrentlyPlaying();
             }
           }
         });
       });
     }, {
       root: containerRef.current,
-      threshold: 0.7,
-      // PERFORMANCE: Add rootMargin to reduce calculations
-      rootMargin: '10% 0px'
+      // FIXED: Lower threshold for mobile compatibility and better detection
+      threshold: [0.5, 0.7], // Multiple thresholds for better detection
+      // FIXED: Adjusted rootMargin for mobile browser UI
+      rootMargin: '-10% 0px -10% 0px' // Negative margins to account for browser UI
     });
 
     // Observe all reel items
@@ -501,8 +595,7 @@ const ReelsContainer: React.FC = () => {
     return () => {
       observer.current?.disconnect();
     };
-  }, [flattenedData?.length, hasNextPage, fetchNextPage, sourceMode]); // Reduced dependencies
-
+  }, [flattenedData?.length, hasNextPage, fetchNextPage, sourceMode, activeReelIndex]); // Added activeReelIndex dependency
   // Prefetch videos around the active index
   const prefetchVideosAround = useCallback((index, extraRange = 0) => {
     // Prefetching logic similar to original but adapted for web cache
@@ -616,43 +709,6 @@ const ReelsContainer: React.FC = () => {
 
   // Component cleanup
 
-  const updateVideoPlaybackState = useCallback((videoId, isPlaying) => {
-    if (!videoId) return;
-
-    console.log(`Updating playback state for video ${videoId}: ${isPlaying ? 'playing' : 'paused'}`);
-
-    // Update video tracker as before
-    (sourceMode !== 'videosFeed') && videoViewTracker.updatePlaybackState(videoId, isPlaying);
-
-    // Only start auto-scroll timer if video is playing for the first time
-    // AND we're not in long press mode
-    if (isPlaying && !hasVideoPlayedOnceRef.current) {
-      console.log('Video played for the first time, autoScroll:', autoScrollReels.autoScroll,
-        'autoScrollDelay:', autoScrollReels.autoScrollDelay, 'longPressActive:', longPressActive,
-        'userInteracted:', userInteracted);
-
-      hasVideoPlayedOnceRef.current = true;
-      videoPlayStartTimeRef.current = Date.now();
-
-      // Determine auto-scroll behavior based on user interaction and settings
-      if (autoScrollReels.autoScroll) {
-        if (longPressActive) {
-          // Long press active: rely on video completion
-          console.log('Long press active: will auto-scroll on video completion');
-        } else if (userInteracted) {
-          // User tapped once: ignore delay, only scroll on video completion
-          console.log('User interacted: ignoring delay, will auto-scroll on video completion');
-        } else if (autoScrollReels.autoScrollDelay !== null && autoScrollReels.autoScrollDelay > 0) {
-          // Normal auto-scroll with delay
-          console.log('Starting auto-scroll timer with delay:', autoScrollReels.autoScrollDelay);
-          startAutoScrollTimer();
-        } else {
-          // Auto-scroll on video completion (delay is null)
-          console.log('Auto-scroll on video completion mode');
-        }
-      }
-    }
-  }, [startAutoScrollTimer, autoScrollReels, longPressActive, userInteracted]);
 
 
   useEffect(() => {
@@ -909,26 +965,15 @@ const ReelsContainer: React.FC = () => {
     );
   }
 
+  // REPLACE the main container div in ReelsContainer.tsx (around line 650)
+  // FROM:
+  //   <div className="relative h-screen w-full bg-black overflow-hidden">
+  //     <div ref={containerRef} className="h-full w-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+  // TO this mobile-optimized version:
+
   return (
     <div className='flex'>
-      {/* {showDebug && (
-        <>
-          <button
-            onClick={() => setShowDebug(!showDebug)}
-            className="fixed top-4 right-20 z-50 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-            title="Toggle Debug Panel"
-          >
-            {showDebug ? 'Hide' : 'Debug'}
-          </button>
-
-          <VideoTrackingDebug
-            isVisible={showDebug}
-            currentVideoId={activeVideoRef.current}
-            autoScrollSettings={autoScrollReels}
-          />
-        </>
-      )} */}
-
+      {/* Debug controls remain the same */}
       {showDebug && (
         <div className="fixed bottom-4 right-4 z-[9998] flex flex-col gap-2">
           <button
@@ -955,111 +1000,171 @@ const ReelsContainer: React.FC = () => {
           </button>
         </div>
       )}
-      <div className="relative h-screen w-full bg-black overflow-hidden">
-        {/* Main Reels Container with Snap Scroll */}
 
+      {/* FIXED: Mobile-optimized container with dynamic viewport height */}
+      <div
+        className="relative w-full bg-black overflow-hidden"
+        style={{
+          // Use dynamic viewport height for mobile compatibility
+          height: 'calc(100dvh)', // Dynamic viewport height
+          minHeight: 'calc(100vh)', // Fallback for older browsers
+          maxHeight: 'calc(100dvh)', // Ensure it doesn't exceed
+        }}
+      >
+        {/* Main Reels Container with Snap Scroll - FIXED */}
         <div
           ref={containerRef}
-          className="h-full w-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="w-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory"
+          style={{
+            height: '100%',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            // Ensure smooth scrolling on mobile
+            WebkitOverflowScrolling: 'touch',
+            // Hide scrollbars completely
+          }}
         >
+          {/* Add CSS to hide webkit scrollbars */}
+          <style >{`
+          div::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
+
           {renderReels}
         </div>
 
-        {/* Back Button */}
+        {/* Back Button - FIXED positioning for mobile */}
         <button
           onClick={() => navigate(-1)}
-          className="absolute flex items-center justify-center gap-2 top-4 left-4 z-30  "
+          className="absolute flex items-center justify-center gap-2 top-4 left-4 z-30"
+          style={{
+            // Ensure it's visible above mobile browser UI
+            top: 'max(1rem, env(safe-area-inset-top, 1rem))'
+          }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 text-white rounded-full p-2 bg-black/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           {(activeReelIndex == 0) &&
-            <span>
+            <span className="text-white">
               {(sourceMode !== 'videosFeed') ? "Reels" : "Videos"}
             </span>
           }
         </button>
 
+        {/* Rest of the component remains the same... */}
         {/* Auto-scroll Controls */}
-        {
-          showAutoScrollControls && (
-            <AutoScrollControls
-              autoScrollSettings={autoScrollReels}
-              onSettingsChange={setAutoScrollReels}
-              isVisible={showAutoScrollControls}
-              setIsVisible={setShowAutoScrollControls}
-            />
-          )
+        {showAutoScrollControls && (
+          <AutoScrollControls
+            autoScrollSettings={autoScrollReels}
+            onSettingsChange={setAutoScrollReels}
+            isVisible={showAutoScrollControls}
+            setIsVisible={setShowAutoScrollControls}
+          />
+        )}
+
+
+        {isMobile && updateReelActive &&
+          <BottomCreatePost
+            setModelTrigger={setUpdateReelActive}
+            updatePost={({ postId, content }: { postId: string, content: string }) => {
+              updateReel.mutate({ postId: postId, content: content })
+              setUpdateReelActive(false)
+            }}
+            editPost={true}
+            postDetails={flattenedData && flattenedData[activeReelIndex]}
+            postId={flattenedData && flattenedData[activeReelIndex]?._id}
+            isReel={true} />
         }
 
-        {/* Bottom Sheets */}
-        {
-          activeSheet === 'comments' && isMobile && (
-            <BottomComments isReel={sourceMode !== 'videosFeed'} pageIndex={flattenedData && flattenedData[activeReelIndex]?.pageIndex} params={{
+
+        {/* Bottom Sheets and other components remain unchanged */}
+        {activeSheet === 'comments' && isMobile && (
+          <BottomComments
+            isReel={sourceMode !== 'videosFeed'}
+            pageIndex={flattenedData && flattenedData[activeReelIndex]?.pageIndex}
+            params={{
               type: (sourceMode !== 'videosFeed') ? sourceMode : 'userPosts',
               targetId: flattenedData && flattenedData[activeReelIndex]?.targetId,
               postId: flattenedData && flattenedData[activeReelIndex]?._id,
               reelsKey: [sourceMode, sourceParams?.initialReelId]
-            }} postData={flattenedData && flattenedData[activeReelIndex]} postId={flattenedData && flattenedData[activeReelIndex]?._id} isOpen={activeSheet && true} setOpen={setActiveSheet} />
-          )
-        }
+            }}
+            postData={flattenedData && flattenedData[activeReelIndex]}
+            postId={flattenedData && flattenedData[activeReelIndex]?._id}
+            isOpen={activeSheet && true}
+            setOpen={setActiveSheet}
+          />
+        )}
+
+        {activeSheet === 'share' && !isMobile && (
+          <ShareModel
+            isReel={sourceMode !== 'videosFeed'}
+            key={'user' + "Posts"}
+            sharedPost={flattenedData && (flattenedData[activeReelIndex])}
+            postId={flattenedData[activeReelIndex]?._id}
+            postType={flattenedData[activeReelIndex]?.type}
+            handleDownload={downloadVideo}
+            setModelTrigger={setActiveSheet}
+          />
+        )}
 
 
+        {activeSheet === 'share' && isMobile && (
+          <ShareBottomSheet
+            isReel={sourceMode !== 'videosFeed'}
+            key={'user' + "Posts"}
+            sharedPost={flattenedData && (flattenedData[activeReelIndex])}
+            postId={flattenedData[activeReelIndex]?._id}
+            postType={flattenedData[activeReelIndex]?.type}
+            handleDownload={downloadVideo}
+            setModelTrigger={setActiveSheet}
+          />
+        )}
 
+        {activeSheet === 'options' && isMobile && (
+          <ThreeDotsSheet
+            isOpen={bottomSheetOpen && activeSheet === 'options'}
+            isProfileAndOwner={(sourceMode == 'profile') && (user?._id == flattenedData[activeReelIndex]?.user)}
+            onClose={closeSheet}
+            setUpdateReelActive={setUpdateReelActive}
+            postId={currentReelId}
+            isReel={sourceMode !== 'videosFeed'}
+            onShowAutoScrollSettings={() => setShowAutoScrollControls(true)}
+            onReportPost={() => setReportModalVisible(true)}
+          />
+        )}
 
+        {activeSheet === 'options' && !isMobile && (
+          <ThreeDotsModal
+            isOpen={bottomSheetOpen && activeSheet === 'options'}
+            isProfileAndOwner={(sourceMode == 'profile') && (user?._id == flattenedData[activeReelIndex]?.user)}
+            onClose={closeSheet}
+            setUpdateReelActive={setUpdateReelActive}
+            postId={currentReelId}
+            isReel={sourceMode !== 'videosFeed'}
+            onShowAutoScrollSettings={() => setShowAutoScrollControls(true)}
+            onReportPost={() => setReportModalVisible(true)}
+          />
+        )}
+      </div>
 
-        {
-          activeSheet === 'share' &&
-          // (
-          //   <ShareSheet
-          //     isOpen={bottomSheetOpen && activeSheet === 'share'}
-          //     onClose={closeSheet}
-          //     sharedPost={flattenedData && flattenedData[activeReelIndex]}
-          //     isReel={sourceMode !== 'videosFeed'}
-          //   />
-          // )
-          <ShareModel isReel={sourceMode !== 'videosFeed'} key={'user' + "Posts"} sharedPost={flattenedData && (flattenedData[activeReelIndex])} postId={flattenedData[activeReelIndex]?._id} postType={flattenedData[activeReelIndex]?.type} handleDownload={downloadVideo} setModelTrigger={setActiveSheet} />
-        }
-
-        {
-          activeSheet === 'options' && (
-            <ThreeDotsSheet
-              isOpen={bottomSheetOpen && activeSheet === 'options'}
-              onClose={closeSheet}
-              postId={currentReelId}
-              isReel={sourceMode !== 'videosFeed'}
-              onShowAutoScrollSettings={() => setShowAutoScrollControls(true)}
-              onReportPost={() => setReportModalVisible(true)}
-            />
-          )
-        }
-        {/* {bottomCommentsState && width < 540 &&
-        <BottomComments pageIndex={0} params={params} postData={postData} postId={postData?._id} isOpen={bottomCommentsState} setOpen={setBottomCommentsState} />
-      } */}
-        {/* {reportModalVisible && (
-        <ReportModal
-          isOpen={reportModalVisible}
-          onClose={() => setReportModalVisible(false)}
-          userId={user?._id}
-          postId={currentReelId}
-          isReel={true}
-        />
-      )} */}
-      </div >
+      {/* Desktop comments section remains the same */}
       {!isMobile && (
-        <Comments isReel={sourceMode !== 'videosFeed'} pageIndex={flattenedData && flattenedData[activeReelIndex]?.pageIndex}
+        <Comments
+          isReel={sourceMode !== 'videosFeed'}
+          pageIndex={flattenedData && flattenedData[activeReelIndex]?.pageIndex}
           params={{
             type: (sourceMode !== 'videosFeed') ? sourceMode : 'userPosts',
             targetId: flattenedData && flattenedData[activeReelIndex]?.targetId,
             postId: flattenedData && flattenedData[activeReelIndex]?._id,
             reelsKey: [sourceMode, sourceParams?.initialReelId]
-          }} postData={flattenedData && flattenedData[activeReelIndex]}
+          }}
+          postData={flattenedData && flattenedData[activeReelIndex]}
           postId={flattenedData && flattenedData[activeReelIndex]?._id}
         />
       )}
-    </div >
-
+    </div>
   );
 };
 

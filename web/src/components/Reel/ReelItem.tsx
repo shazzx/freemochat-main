@@ -198,54 +198,184 @@ const ReelItem: React.FC<ReelItemProps> = ({
   }, [isActive, autoScrollEnabled, onVideoComplete]);
   // Handle context menu (right-click) to support desktop long press
 
-  // Handle long press start
+
+
+  // REPLACE the long press handling functions in ReelItem.tsx (around line 160)
+  // WITH these improved versions:
+
+  // Handle long press start - FIXED for both mobile and desktop
   const handleLongPressStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
 
-    longPressTimeout.current = window.setTimeout(() => {
-      isLongPressActiveRef.current = true;
-
-      // If video is paused, play it
-      if (!videoState.isPlaying && videoRef.current) {
-        manuallyPaused.current = false;
-        videoRef.current.play().catch(err => console.log('Error playing video on long press:', err));
-      }
-
-      // Notify parent component about long press
-      onLongPressStateChange(true, memoizedReel._id);
-
-      console.log('Long press started on video:', memoizedReel._id);
-    }, 500) as unknown as number;
-  }, [memoizedReel._id, videoState.isPlaying, onLongPressStateChange]);
-
-  // Handle long press end
-  const handleLongPressEnd = useCallback(() => {
+    // Clear any existing timeout
     if (longPressTimeout.current) {
       clearTimeout(longPressTimeout.current);
       longPressTimeout.current = null;
     }
 
+    console.log('Long press start detected');
+
+    longPressTimeout.current = window.setTimeout(() => {
+      if (!isLongPressActiveRef.current) {
+        isLongPressActiveRef.current = true;
+
+        // If video is paused, play it
+        if (!videoState.isPlaying && videoRef.current) {
+          manuallyPaused.current = false;
+          VideoPlaybackManager.clearManualPauseState(reelInstanceId);
+          videoRef.current.play().catch(err => console.log('Error playing video on long press:', err));
+        }
+
+        // Notify parent component about long press
+        onLongPressStateChange(true, memoizedReel._id);
+
+        console.log('Long press activated on video:', memoizedReel._id);
+      }
+    }, 500) as unknown as number;
+  }, [memoizedReel._id, videoState.isPlaying, onLongPressStateChange, reelInstanceId]);
+
+  // Handle long press end - FIXED
+  const handleLongPressEnd = useCallback(() => {
+    // Clear timeout if still pending
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+      longPressTimeout.current = null;
+    }
+
+    // If long press was active, deactivate it
     if (isLongPressActiveRef.current) {
       isLongPressActiveRef.current = false;
 
       // Notify parent component about long press end
       onLongPressStateChange(false, memoizedReel._id);
 
-      console.log('Long press ended on video:', memoizedReel._id);
+      console.log('Long press deactivated on video:', memoizedReel._id);
     }
   }, [memoizedReel._id, onLongPressStateChange]);
 
+  // FIXED: Enhanced context menu handling for desktop right-click long press simulation
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault(); // Prevent context menu
-    // For desktop, we can use right-click as an alternative to long press
+
+    // For desktop, simulate long press with right-click
     if (!isLongPressActiveRef.current) {
-      handleLongPressStart(e);
-      // Auto-end after a short delay to simulate touch behavior
+      console.log('Desktop right-click long press simulation');
+
+      // Immediately activate long press (no delay for right-click)
+      isLongPressActiveRef.current = true;
+
+      // If video is paused, play it
+      if (!videoState.isPlaying && videoRef.current) {
+        manuallyPaused.current = false;
+        VideoPlaybackManager.clearManualPauseState(reelInstanceId);
+        videoRef.current.play().catch(err => console.log('Error playing video on right-click:', err));
+      }
+
+      // Notify parent component
+      onLongPressStateChange(true, memoizedReel._id);
+
+      // Auto-deactivate after 3 seconds (or until video ends)
       setTimeout(() => {
-        handleLongPressEnd();
-      }, 2000);
+        if (isLongPressActiveRef.current) {
+          isLongPressActiveRef.current = false;
+          onLongPressStateChange(false, memoizedReel._id);
+          console.log('Desktop long press auto-deactivated');
+        }
+      }, 3000);
     }
-  }, [handleLongPressStart, handleLongPressEnd]);
+  }, [videoState.isPlaying, onLongPressStateChange, memoizedReel._id, reelInstanceId]);
+
+  // REPLACE the handleVideoClick function in ReelItem.tsx (around line 250)
+  // WITH this improved version that handles single tap for "play till end":
+
+  const togglePlayPause = useCallback(() => {
+    if (!videoRef.current) return;
+
+    const videoId = `reel-${memoizedReel._id}`;
+
+    if (videoState.isPlaying) {
+      // Pausing
+      videoRef.current.pause();
+      manuallyPaused.current = true;
+      VideoPlaybackManager.notifyVideoPaused(videoId);
+      console.log(`User manually paused video: ${videoId}`);
+    } else {
+      // Playing
+      manuallyPaused.current = false;
+      VideoPlaybackManager.clearManualPauseState(videoId);
+      videoRef.current.play().catch(err => {
+        console.log('Error playing video:', err);
+
+        // Handle autoplay restrictions
+        if (err.name === 'NotAllowedError') {
+          videoRef.current!.muted = true;
+          setVideoState(prev => ({ ...prev, isMuted: true }));
+          videoRef.current!.play().catch(e => console.log('Muted playback failed:', e));
+        }
+      });
+      console.log(`User manually started video: ${videoId}`);
+    }
+  }, [videoState.isPlaying, memoizedReel._id]);
+
+  const handleVideoClick = useCallback((e: React.MouseEvent) => {
+    const now = Date.now();
+    const { clientX, clientY } = e;
+
+    // Check for double tap (like)
+    if (now - lastTapTime.current < 300) {
+      // Prevent duplicate double taps
+      if (now - lastDoubleTapTime.current > 1000) {
+        lastDoubleTapTime.current = now;
+
+        // Like the reel if not already liked
+        if (!memoizedReel.isLiked) {
+          likeMutation.mutate({
+            postId: memoizedReel._id,
+            pageIndex,
+            postIndex: reelIndex,
+            targetId: memoizedReel.targetId,
+            authorId: memoizedReel.authorId,
+            type: memoizedReel.type,
+          });
+        }
+
+        // Show heart animation
+        setUiState(prev => ({
+          ...prev,
+          showLikeAnimation: true,
+          doubleTapCoordinates: { x: clientX, y: clientY }
+        }));
+
+        // Hide animation after 1 second
+        setTimeout(() => {
+          if (isComponentMounted.current) {
+            setUiState(prev => ({ ...prev, showLikeAnimation: false }));
+          }
+        }, 1000);
+      }
+    } else {
+      // Single tap - toggle controls and play/pause
+      setUiState(prev => ({ ...prev, showControls: !prev.showControls }));
+
+      // Toggle play/pause
+      togglePlayPause();
+
+      // FIXED: Notify parent that user has interacted (this enables "play till end" mode)
+      onUserInteraction();
+      console.log('Single tap detected - enabled play till end mode');
+
+      // Auto-hide controls after 3 seconds if they're now showing
+      if (!uiState.showControls) {
+        setTimeout(() => {
+          if (isComponentMounted.current) {
+            setUiState(prev => ({ ...prev, showControls: false }));
+          }
+        }, 3000);
+      }
+    }
+
+    lastTapTime.current = now;
+  }, [likeMutation, pageIndex, reelIndex, memoizedReel, togglePlayPause, uiState.showControls, onUserInteraction]);
 
   // Video play/pause state changes
   const handlePlayPause = useCallback((isPlaying: boolean) => {
@@ -271,19 +401,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
     handlePlayPause(false);
   }, [handlePlayPause]);
 
-  // Toggle play/pause
-  const togglePlayPause = useCallback(() => {
-    if (!videoRef.current) return;
-
-    if (videoState.isPlaying) {
-      videoRef.current.pause();
-      manuallyPaused.current = true;
-      VideoPlaybackManager.notifyVideoPaused(reelInstanceId);
-    } else {
-      manuallyPaused.current = false;
-      videoRef.current.play().catch(err => console.log('Error playing video:', err));
-    }
-  }, [videoState.isPlaying, reelInstanceId]);
 
   // Toggle mute
   const toggleMute = useCallback(() => {
@@ -345,68 +462,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
   }, []);
 
 
-
-  // Handle click/tap on video
-  const handleVideoClick = useCallback((e: React.MouseEvent) => {
-    const now = Date.now();
-    const { clientX, clientY } = e;
-
-    // Check for double tap (like)
-    if (now - lastTapTime.current < 300) {
-      // Prevent duplicate double taps
-      if (now - lastDoubleTapTime.current > 1000) {
-        lastDoubleTapTime.current = now;
-
-        // Like the reel if not already liked
-        if (!memoizedReel.isLiked) {
-          likeMutation.mutate({
-            postId: memoizedReel._id,
-            pageIndex,
-            postIndex: reelIndex,
-            targetId: memoizedReel.targetId,
-            authorId: memoizedReel.authorId,
-            type: memoizedReel.type,
-          });
-        }
-
-        // Show heart animation
-        setUiState(prev => ({
-          ...prev,
-          showLikeAnimation: true,
-          doubleTapCoordinates: { x: clientX, y: clientY }
-        }));
-
-        // Hide animation after 1 second
-        setTimeout(() => {
-          if (isComponentMounted.current) {
-            setUiState(prev => ({ ...prev, showLikeAnimation: false }));
-          }
-        }, 1000);
-      }
-    } else {
-      // Single tap - toggle controls and play/pause
-      setUiState(prev => ({ ...prev, showControls: !prev.showControls }));
-
-      // Toggle play/pause
-      togglePlayPause();
-
-      // Notify parent that user has interacted with the video
-      onUserInteraction();
-
-      // Auto-hide controls after 3 seconds if they're now showing
-      if (!uiState.showControls) {
-        setTimeout(() => {
-          if (isComponentMounted.current) {
-            setUiState(prev => ({ ...prev, showControls: false }));
-          }
-        }, 3000);
-      }
-    }
-
-    lastTapTime.current = now;
-  }, [likeMutation, pageIndex, reelIndex, memoizedReel, togglePlayPause, uiState.showControls, onUserInteraction]);
-
-
   // Handle like action
   const handleLike = useCallback(() => {
 
@@ -433,7 +488,11 @@ const ReelItem: React.FC<ReelItemProps> = ({
     });
   }, [bookmarkMutation, pageIndex, reelIndex, memoizedReel]);
 
-  // Video playback control based on active state
+
+  // REPLACE the video playback control useEffect in ReelItem.tsx (around line 380)
+  // FROM the existing useEffect that handles isActive
+  // TO this improved version:
+
   useEffect(() => {
     if (!videoRef.current) return;
 
@@ -443,8 +502,12 @@ const ReelItem: React.FC<ReelItemProps> = ({
       // Reset completion flag when becoming active
       hasCompletedRef.current = false;
 
-      // Only play if not manually paused
-      if (!manuallyPaused.current) {
+      // FIXED: Only play if not manually paused AND the video manager allows it
+      const videoId = `reel-${memoizedReel._id}`;
+      const isManuallyPaused = VideoPlaybackManager.isVideoManuallyPaused(videoId);
+
+      if (!isManuallyPaused && !manuallyPaused.current) {
+        console.log(`Starting playback for active video: ${videoId}`);
         videoRef.current.play().catch(err => {
           console.log('Error playing active video:', err);
 
@@ -456,13 +519,28 @@ const ReelItem: React.FC<ReelItemProps> = ({
             videoRef.current!.play().catch(e => console.log('Even muted playback failed:', e));
           }
         });
+      } else {
+        console.log(`Video ${videoId} is manually paused, not auto-playing`);
       }
     } else {
-      // Pause when not active
-      videoRef.current.pause();
-      manuallyPaused.current = false; // Reset when scrolling away
+      // FIXED: When not active, always pause and mark as manually paused if it was playing
+      if (videoRef.current && !videoRef.current.paused) {
+        console.log(`Pausing video ${memoizedReel._id} - no longer active`);
+        videoRef.current.pause();
+
+        // If it was playing, this counts as a manual pause to prevent auto-resume
+        const videoId = `reel-${memoizedReel._id}`;
+        VideoPlaybackManager.notifyVideoPaused(videoId);
+      }
+
+      // Reset manual pause state when scrolling away (for next time it becomes active)
+      manuallyPaused.current = false;
     }
-  }, [isActive]);
+  }, [isActive, memoizedReel._id]);
+
+  // REPLACE the togglePlayPause function in ReelItem.tsx
+  // TO this improved version:
+
 
   // Cleanup on unmount
   useEffect(() => {
@@ -508,15 +586,17 @@ const ReelItem: React.FC<ReelItemProps> = ({
       {...props}
     >
       {/* Video container */}
+
       <div
         className="relative w-full h-full flex items-center justify-center"
-        onMouseDown={handleLongPressStart}
-        onMouseUp={handleLongPressEnd}
-        onMouseLeave={handleLongPressEnd}
-        onTouchStart={handleLongPressStart}
-        onTouchEnd={handleLongPressEnd}
-        onContextMenu={handleContextMenu} // MISSING - ADD THIS
-        onClick={handleVideoClick}
+        onMouseDown={handleLongPressStart}  // Desktop long press start
+        onMouseUp={handleLongPressEnd}      // Desktop long press end
+        onMouseLeave={handleLongPressEnd}   // Desktop - end if mouse leaves
+        onTouchStart={handleLongPressStart} // Mobile long press start
+        onTouchEnd={handleLongPressEnd}     // Mobile long press end
+        onTouchCancel={handleLongPressEnd}  // Mobile - end if touch is canceled
+        onContextMenu={handleContextMenu}   // Desktop right-click simulation
+        onClick={handleVideoClick}          // Single/double tap handling
       >
         {/* Video element */}
         <video
@@ -532,13 +612,15 @@ const ReelItem: React.FC<ReelItemProps> = ({
           onPause={handlePause}
           onEnded={() => {
             console.log('Video ended event fired');
-            // Ensure completion is marked
             hasCompletedRef.current = true;
 
-            // Handle auto-scroll or looping
+            // FIXED: Handle auto-scroll with proper long press detection
             if (autoScrollEnabled && onVideoComplete) {
               if (isLongPressActiveRef.current) {
                 console.log('Video ended during long press, triggering auto-scroll');
+                // End the long press state since video completed
+                isLongPressActiveRef.current = false;
+                onLongPressStateChange(false, memoizedReel._id);
                 onVideoComplete(true);
               } else {
                 console.log('Video ended, triggering auto-scroll');
@@ -548,7 +630,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
               // Loop the video if auto-scroll is disabled
               console.log('Video ended, looping since auto-scroll is disabled');
               if (isActive && !manuallyPaused.current) {
-                // Use requestAnimationFrame for smoother looping
                 requestAnimationFrame(() => {
                   if (videoRef.current) {
                     videoRef.current.currentTime = 0;
@@ -568,7 +649,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
           }}
           onError={() => setVideoState(prev => ({ ...prev, error: true, isLoading: false }))}
         />
-
 
         {/* Loading overlay */}
         {videoState.isLoading && (
@@ -816,7 +896,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
 

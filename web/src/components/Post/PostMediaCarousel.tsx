@@ -14,24 +14,27 @@ export function PostMediaCarousel({ postData, media, mobile }: {
 }) {
 
   const navigate = useNavigate()
+  const handleNavigation = () => {
+    navigate(`/reels/${postData._id}`, {
+      state: {
+        sourceMode: 'videosFeed',
+        initialReelId: postData._id,
+        reelData: {
+          ...postData,
+          _navigationTimestamp: Date.now()
+        }
+      }
+    });
+  }
   return (
     <Carousel className="relative">
       <CarouselContent>
         {media?.length > 0 && media.map(({ type, url }, index) => (
           <CarouselItem key={index} className="flex justify-center items-center">
             <div className="aspect-auto max-w-xl"
-              onClick={() => {
-                navigate(`/reels/${postData._id}`, {
-                  state: {
-                    sourceMode: 'videosFeed',
-                    initialReelId: postData._id,
-                    reelData: {
-                      ...postData,
-                      _navigationTimestamp: Date.now()
-                    }
-                  }
-                });
-              }}>
+              onMouseDown={handleNavigation}
+              onTouchStart={handleNavigation}
+            >
               {type == 'video' ?
                 <AutoPlayVideo src={url} />
                 // <video className='w-full max-h-[500px] h-full' autoPlay={true} src={url} controls></video>
