@@ -103,7 +103,19 @@ const ReelItem: React.FC<ReelItemProps> = ({
     createdAt: reel.createdAt,
     content: reel.content || '',
     target: reel.target || {}
-  }), [reel]);
+  }), [
+    // PERFORMANCE: Only depend on specific properties that actually matter
+    reel._id,
+    reel.media?.[0]?.url,
+    reel.isLikedByUser,
+    reel.isBookmarkedByUser,
+    reel.likesCount,
+    reel.commentsCount,
+    reel.sharesCount,
+    reel.videoViewsCount,
+    reel.targetId,
+    reel.content
+  ]);
 
   // Register video with VideoPlaybackManager
   useEffect(() => {
@@ -141,9 +153,8 @@ const ReelItem: React.FC<ReelItemProps> = ({
     }
   }, [isActive]);
 
-// REPLACE THESE FUNCTIONS in ReelItem.tsx:
+  // REPLACE THESE FUNCTIONS in ReelItem.tsx:
 
-  // Video time update handler
   const handleTimeUpdate = useCallback(() => {
     if (!videoRef.current || !isActive) return;
 
@@ -151,16 +162,26 @@ const ReelItem: React.FC<ReelItemProps> = ({
     const duration = videoRef.current.duration;
     const progress = duration ? currentTime / duration : 0;
 
-    setVideoState(prev => ({
-      ...prev,
-      position: currentTime * 1000, // Convert to ms for consistency
-      progress: progress
-    }));
+    // PERFORMANCE: Only update state if there's a meaningful change
+    setVideoState(prev => {
+      const newPosition = currentTime * 1000;
+      const positionDiff = Math.abs(newPosition - prev.position);
 
-    // Check for video completion
+      // Only update if position changed by more than 100ms or progress changed significantly
+      if (positionDiff > 100 || Math.abs(progress - prev.progress) > 0.01) {
+        return {
+          ...prev,
+          position: newPosition,
+          progress: progress
+        };
+      }
+      return prev;
+    });
+
+    // Check for video completion (using onEnded is more reliable, but keep this as backup)
     if (progress > 0.99 && !hasCompletedRef.current) {
       hasCompletedRef.current = true;
-      console.log('Video completed. AutoScrollEnabled:', autoScrollEnabled);
+      console.log('Video completed via timeUpdate. AutoScrollEnabled:', autoScrollEnabled);
 
       // Handle auto-scroll if enabled and video completed
       if (autoScrollEnabled && onVideoComplete) {
@@ -171,31 +192,10 @@ const ReelItem: React.FC<ReelItemProps> = ({
           console.log('Video completed, triggering auto-scroll');
           onVideoComplete(false);
         }
-      } else {
-        // If auto-scroll is disabled, loop the video
-        console.log('Video completed, looping since auto-scroll is disabled');
-        setTimeout(() => {
-          if (videoRef.current && isActive && !manuallyPaused.current) {
-            console.log('Looping video: resetting to start');
-            videoRef.current.currentTime = 0;
-            hasCompletedRef.current = false;
-            
-            // Force play the video again
-            videoRef.current.play().catch(err => {
-              console.log('Error looping video:', err);
-              // Try with muted audio if needed
-              if (err.name === 'NotAllowedError') {
-                videoRef.current!.muted = true;
-                setVideoState(prev => ({ ...prev, isMuted: true }));
-                videoRef.current!.play().catch(e => console.log('Even muted loop failed:', e));
-              }
-            });
-          }
-        }, 100);
       }
+      // Note: Looping is now handled in onEnded for better reliability
     }
   }, [isActive, autoScrollEnabled, onVideoComplete]);
-
   // Handle context menu (right-click) to support desktop long press
 
   // Handle long press start
@@ -235,7 +235,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
     }
   }, [memoizedReel._id, onLongPressStateChange]);
 
-    const handleContextMenu = useCallback((e: React.MouseEvent) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault(); // Prevent context menu
     // For desktop, we can use right-click as an alternative to long press
     if (!isLongPressActiveRef.current) {
@@ -515,6 +515,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
         onMouseLeave={handleLongPressEnd}
         onTouchStart={handleLongPressStart}
         onTouchEnd={handleLongPressEnd}
+        onContextMenu={handleContextMenu} // MISSING - ADD THIS
         onClick={handleVideoClick}
       >
         {/* Video element */}
@@ -529,8 +530,45 @@ const ReelItem: React.FC<ReelItemProps> = ({
           onTimeUpdate={handleTimeUpdate}
           onPlay={handlePlay}
           onPause={handlePause}
+          onEnded={() => {
+            console.log('Video ended event fired');
+            // Ensure completion is marked
+            hasCompletedRef.current = true;
+
+            // Handle auto-scroll or looping
+            if (autoScrollEnabled && onVideoComplete) {
+              if (isLongPressActiveRef.current) {
+                console.log('Video ended during long press, triggering auto-scroll');
+                onVideoComplete(true);
+              } else {
+                console.log('Video ended, triggering auto-scroll');
+                onVideoComplete(false);
+              }
+            } else {
+              // Loop the video if auto-scroll is disabled
+              console.log('Video ended, looping since auto-scroll is disabled');
+              if (isActive && !manuallyPaused.current) {
+                // Use requestAnimationFrame for smoother looping
+                requestAnimationFrame(() => {
+                  if (videoRef.current) {
+                    videoRef.current.currentTime = 0;
+                    hasCompletedRef.current = false;
+                    videoRef.current.play().catch(err => {
+                      console.log('Error looping video on ended:', err);
+                      if (err.name === 'NotAllowedError') {
+                        videoRef.current!.muted = true;
+                        setVideoState(prev => ({ ...prev, isMuted: true }));
+                        videoRef.current!.play().catch(e => console.log('Muted loop failed:', e));
+                      }
+                    });
+                  }
+                });
+              }
+            }
+          }}
           onError={() => setVideoState(prev => ({ ...prev, error: true, isLoading: false }))}
         />
+
 
         {/* Loading overlay */}
         {videoState.isLoading && (

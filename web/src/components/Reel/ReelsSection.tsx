@@ -423,49 +423,40 @@ const ReelsContainer: React.FC = () => {
     };
   }, [user, sourceMode]);
 
-  // Setup intersection observer for detecting visible reels
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !flattenedData?.length) return;
 
-    // Create intersection observer
+    // Create intersection observer with better performance options
     observer.current = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        const reelId = entry.target.getAttribute('data-reel-id');
-        const reelIndex = parseInt(entry.target.getAttribute('data-index') || '0');
+      // Use requestAnimationFrame to batch DOM updates
+      requestAnimationFrame(() => {
+        entries.forEach(entry => {
+          const reelId = entry.target.getAttribute('data-reel-id');
+          const reelIndex = parseInt(entry.target.getAttribute('data-index') || '0');
 
-        if (entry.isIntersecting && reelId) {
-          // Update active reel when it becomes visible
-          if (reelIndex !== activeReelIndex) {
+          if (entry.isIntersecting && reelId && reelIndex !== activeReelIndex) {
+            console.log(`Video ${reelIndex} became active`);
             setActiveReelIndex(reelIndex);
 
             // Stop tracking previous video
-            if (activeVideoRef.current) {
-              console.log(`Stopping tracking for previous video ${activeVideoRef.current} on scroll`);
-              if (sourceMode !== 'videosFeed') {
-                videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
-                videoViewTracker.stopTracking(activeVideoRef.current);
-              }
+            if (activeVideoRef.current && sourceMode !== 'videosFeed') {
+              videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
+              videoViewTracker.stopTracking(activeVideoRef.current);
               activeVideoRef.current = null;
             }
 
             // Start tracking new video
-            if (flattenedData[reelIndex]) {
-              const currentVideo = flattenedData[reelIndex];
-              if (currentVideo.id) {
-                console.log(`Starting tracking for video ${currentVideo.id}`);
+            const currentVideo = flattenedData[reelIndex];
+            if (currentVideo?.id && sourceMode !== 'videosFeed') {
+              videoViewTracker.startTracking({
+                videoId: currentVideo.id,
+                type: 'video'
+              });
+              activeVideoRef.current = currentVideo.id;
+            }
 
-                if (sourceMode !== 'videosFeed') {
-                  videoViewTracker.startTracking({
-                    videoId: currentVideo.id,
-                    type: 'video'
-                  });
-                }
-
-                // Update reference to active video
-                activeVideoRef.current = currentVideo.id;
-              }
-
-              // Start playing the active video
+            // Start playing the active video
+            if (currentVideo) {
               const videoId = `reel-${currentVideo.id}`;
               VideoPlaybackManager.setCurrentlyPlaying(videoId, {
                 reset: false,
@@ -480,6 +471,7 @@ const ReelsContainer: React.FC = () => {
               hasVideoPlayedOnceRef.current = false;
               videoPlayStartTimeRef.current = null;
               setUserInteracted(false);
+              setLongPressActive(false);
 
               // Clear any existing timeout
               if (autoScrollTimeoutRef.current) {
@@ -487,18 +479,17 @@ const ReelsContainer: React.FC = () => {
                 autoScrollTimeoutRef.current = null;
               }
 
-              // Prefetch videos
-              setTimeout(() => {
-                prefetchVideosAround(reelIndex);
-              }, 100);
+              // Defer prefetching to avoid blocking main thread
+              setTimeout(() => prefetchVideosAround(reelIndex), 200);
             }
           }
-        }
+        });
       });
     }, {
       root: containerRef.current,
-      rootMargin: '0px',
-      threshold: 0.7 // 70% visibility to consider it active
+      threshold: 0.7,
+      // PERFORMANCE: Add rootMargin to reduce calculations
+      rootMargin: '10% 0px'
     });
 
     // Observe all reel items
@@ -510,7 +501,7 @@ const ReelsContainer: React.FC = () => {
     return () => {
       observer.current?.disconnect();
     };
-  }, [flattenedData, activeReelIndex, hasNextPage, fetchNextPage]);
+  }, [flattenedData?.length, hasNextPage, fetchNextPage, sourceMode]); // Reduced dependencies
 
   // Prefetch videos around the active index
   const prefetchVideosAround = useCallback((index, extraRange = 0) => {
