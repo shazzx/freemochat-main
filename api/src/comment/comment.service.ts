@@ -170,7 +170,7 @@ export class CommentService {
                     let: { userId: '$user' },
                     pipeline: [
                         { $match: { $expr: { $eq: ['$_id', '$$userId'] } } },
-                        { $project: { _id: 1, username: 1, images: 1, firstname: 1, lastname: 1 } }
+                        { $project: { _id: 1, username: 1, profile: 1, firstname: 1, lastname: 1 } }
                     ],
                     as: 'user'
                 }
@@ -271,18 +271,22 @@ export class CommentService {
 
         const comment = await this.commentModel.create({ ...commentDetails, post: postId, user: new Types.ObjectId(userId), type: 'comment' })
         await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postId), postType, "comments")
-        await this.notificationService.createNotification(
-            {
-                from: new Types.ObjectId(userId),
-                user: new Types.ObjectId(authorId),
-                targetId: new Types.ObjectId(targetId),
-                type: 'comment',
-                targetType,
-                postType,
-                value: `has commented on your ${postType}`
-            },
-            true
-        )
+
+        if (userId != authorId) {
+            console.log('creating notificatoin for post owner')
+            await this.notificationService.createNotification(
+                {
+                    from: new Types.ObjectId(userId),
+                    user: new Types.ObjectId(authorId),
+                    targetId: new Types.ObjectId(targetId),
+                    type: 'comment',
+                    targetType,
+                    postType,
+                    value: `has commented on your ${postType}`
+                },
+                true
+            )
+        }
         return comment
     }
 
