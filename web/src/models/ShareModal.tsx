@@ -216,7 +216,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                     <Button
                       onClick={handleDownload}
                       variant={downloadState?.downloadedUri ? "default" : "secondary"}
-                      className="flex-1 h-11 font-semibold"
+                      className="flex-1 h-11 font-semibold bg-card"
                       disabled={downloadState?.isDownloading}
                     >
                       {downloadState?.downloadedUri ? (

@@ -5,8 +5,9 @@ import {
   SheetContent
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Flag, Settings } from "lucide-react";
+import { Flag, Pencil, Settings } from "lucide-react";
 import { useDeleteReel } from "@/hooks/Reels/useReels";
+import { MdDelete } from "react-icons/md";
 
 interface ThreeDotsSheetProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ const ThreeDotsSheet: React.FC<ThreeDotsSheetProps> = ({
   onShowAutoScrollSettings,
   isReel = false,
   isProfileAndOwner = false,
-  setUpdateReelActive ,
+  setUpdateReelActive,
 }) => {
 
   const deleteReel = useDeleteReel()
@@ -89,16 +90,16 @@ const ThreeDotsSheet: React.FC<ThreeDotsSheetProps> = ({
                   onClick={() => handleAction('edit')}
                   className="w-full mb-2 bg-background text-foreground hover:accent rounded-lg justify-start h-12"
                 >
-                  <Settings className="mr-2 h-4 w-4" />
+                  <Pencil className="mr-2 h-4 w-4" />
                   Edit Reel
                 </Button>
 
                 <Button
                   variant="outline"
                   onClick={() => handleAction('delete')}
-                  className="w-full mb-2 bg-background text-foreground hover:accent rounded-lg justify-start h-12"
+                  className="w-full justify-start h-12 hover:bg-destructive hover:text-destructive-foreground rounded-lg text-destructive"
                 >
-                  <Settings className="mr-2 h-4 w-4" />
+                  <MdDelete className="mr-3 h-4 w-4" />
                   Delete Reel
                 </Button>
               </>

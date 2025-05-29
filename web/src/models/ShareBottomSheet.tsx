@@ -222,7 +222,7 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
                   <Button
                     onClick={handleDownload}
                     variant={downloadState?.downloadedUri ? "default" : "secondary"}
-                    className="flex-1 w-full h-11 font-semibold"
+                    className="flex-1 w-full h-11 font-semibold bg-card"
                     disabled={downloadState?.isDownloading}
                   >
                     {downloadState?.downloadedUri ? (

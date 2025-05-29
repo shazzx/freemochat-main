@@ -18,6 +18,7 @@ import ThreeDotsModal from './ThreeDotsModal';
 import ShareModal from '@/models/ShareModal';
 import ShareBottomSheet from '@/models/ShareBottomSheet';
 import ReportModel from '@/models/ReportModel';
+import EditReel from '@/models/EditReelModal';
 // import ReportModal from './ReportModal';
 
 
@@ -1061,6 +1062,20 @@ const ReelsContainer: React.FC = () => {
 
         {isMobile && updateReelActive &&
           <BottomCreatePost
+            setModelTrigger={setUpdateReelActive}
+            updatePost={({ postId, content }: { postId: string, content: string }) => {
+              updateReel.mutate({ postId: postId, content: content })
+              setUpdateReelActive(false)
+            }}
+            editPost={true}
+            postDetails={flattenedData && flattenedData[activeReelIndex]}
+            postId={flattenedData && flattenedData[activeReelIndex]?._id}
+            isReel={true} />
+        }
+
+        
+        {!isMobile && updateReelActive &&
+          <EditReel
             setModelTrigger={setUpdateReelActive}
             updatePost={({ postId, content }: { postId: string, content: string }) => {
               updateReel.mutate({ postId: postId, content: content })

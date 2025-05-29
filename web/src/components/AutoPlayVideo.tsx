@@ -1,8 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 const AutoPlayVideo = ({ src, type = 'video/mp4', handleNavigation }: { src: string, type?: string, handleNavigation?: any }) => {
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
+  const touchStartTime = useRef(0);
+  const touchStartPos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const options = {
@@ -34,11 +37,41 @@ const AutoPlayVideo = ({ src, type = 'video/mp4', handleNavigation }: { src: str
     };
   }, []);
 
-  return (
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    touchStartTime.current = Date.now();
+    touchStartPos.current = {
+      x: touch.clientX,
+      y: touch.clientY
+    };
+  };
 
+  const handleTouchEnd = (e) => {
+    if (!handleNavigation) return;
+
+    const touchEndTime = Date.now();
+    const touchDuration = touchEndTime - touchStartTime.current;
+    
+    // Get final touch position
+    const touch = e.changedTouches[0];
+    const deltaX = Math.abs(touch.clientX - touchStartPos.current.x);
+    const deltaY = Math.abs(touch.clientY - touchStartPos.current.y);
+
+    // Consider it a tap if:
+    // 1. Touch duration is less than 300ms (quick tap)
+    // 2. Movement is less than 10px in any direction (not a scroll)
+    if (touchDuration < 300 && deltaX < 10 && deltaY < 10) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleNavigation();
+    }
+  };
+
+  return (
     <video
-      onClick={handleNavigation}
-      onTouchEnd={handleNavigation}
+      onClick={handleNavigation} // For desktop/mouse
+      onTouchStart={handleTouchStart} // Track touch start
+      onTouchEnd={handleTouchEnd} // Smart touch end that avoids scroll conflicts
       ref={videoRef}
       src={src}
       loop
@@ -47,13 +80,15 @@ const AutoPlayVideo = ({ src, type = 'video/mp4', handleNavigation }: { src: str
       controlsList="nodownload noplaybackrate"
       playsInline
       className={`w-full ${isVisible ? 'opacity-100' : 'opacity-50'} w-full max-h-[500px] h-full transition-opacity duration-300`}
+      style={{ 
+        touchAction: 'manipulation', // Prevents double-tap zoom and improves touch response
+        WebkitTouchCallout: 'none'   // Prevents long-press callout on iOS
+      }}
     />
-
   );
 };
 
 export default AutoPlayVideo;
-
 // import React, { useRef, useEffect, useState } from 'react';
 
 // const TopmostVideoPlayer = ({ src, type = 'video/mp4' }) => {

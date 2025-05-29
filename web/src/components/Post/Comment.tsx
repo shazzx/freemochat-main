@@ -217,7 +217,7 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                                         <DropdownMenuTrigger asChild className='cursor-pointer'>
                                             <EllipsisVertical size="16px" />
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className='bg-card p-2 rounded-md'>
+                                        <DropdownMenuContent align="end" className='bg-card z-40 p-2 rounded-md'>
                                             <DropdownMenuItem className='cursor-pointer' onClick={async () => {
                                                 setEditCommentModelState(!editCommentModelState)
                                                 setCommentDetails({ content: comment.content, commentId: comment?._id, pageIndex, commentIndex })

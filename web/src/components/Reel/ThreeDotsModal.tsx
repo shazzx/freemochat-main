@@ -6,9 +6,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Flag, Settings, Edit, Trash2 } from "lucide-react";
+import { Flag, Settings, Pencil } from "lucide-react";
 import { useDeleteReel } from "@/hooks/Reels/useReels";
+import { MdDelete } from "react-icons/md";
 
 interface ThreeDotsModalProps {
   isOpen: boolean;
@@ -61,7 +61,7 @@ const ThreeDotsModal: React.FC<ThreeDotsModalProps> = ({
         <div className="flex flex-col space-y-2 py-4">
           {isReel && (
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={() => handleAction('autoscroll')}
               className="w-full justify-start h-12 hover:bg-accent hover:text-accent-foreground rounded-lg"
             >
@@ -71,7 +71,7 @@ const ThreeDotsModal: React.FC<ThreeDotsModalProps> = ({
           )}
 
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={() => handleAction('report')}
             className="w-full justify-start h-12 hover:bg-accent hover:text-accent-foreground rounded-lg"
           >
@@ -82,20 +82,20 @@ const ThreeDotsModal: React.FC<ThreeDotsModalProps> = ({
           {isReel && isProfileAndOwner && (
             <>
               <Button
-                variant="ghost"
+                variant="outline"
                 onClick={() => handleAction('edit')}
                 className="w-full justify-start h-12 hover:bg-accent hover:text-accent-foreground rounded-lg"
               >
-                <Edit className="mr-3 h-4 w-4" />
+                <Pencil className="mr-3 h-4 w-4" />
                 Edit Reel
               </Button>
 
               <Button
-                variant="ghost"
+                variant="outline"
                 onClick={() => handleAction('delete')}
                 className="w-full justify-start h-12 hover:bg-destructive hover:text-destructive-foreground rounded-lg text-destructive"
               >
-                <Trash2 className="mr-3 h-4 w-4" />
+                <MdDelete className="mr-3 h-4 w-4" />
                 Delete Reel
               </Button>
             </>
