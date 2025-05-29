@@ -195,7 +195,7 @@ function CommetsSection({ params, pageIndex, postId, postData, isReel }) {
 
             {/* <Post useLikePost={useLikePost} useBookmarkPost={useBookmarkPost} postIndex={postIndex} pageIndex={pageIndex} model={true} postData={postData} username={user?.username} userId={user?._id} type={type} /> */}
             {!isLoading && <>
-                <div className='relative p-4 flex h-full overflow-y-scroll  flex-col gap-2'>
+                <div className='relative p-4 flex h-full overflow-y-auto  flex-col gap-2'>
                     {/* comment section */}
                     {/* {isLoading &&
                         // <ScreenLoader limit={1} />

@@ -5,6 +5,8 @@ import VideoPlaybackManager from './VideoPlaybackManager';
 import videoViewTracker from './VideoViewTracker';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { UseMutationResult } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import { domain } from '@/config/domain';
 
 
 interface ReelItemProps {
@@ -204,7 +206,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
   // WITH these improved versions:
 
   // Handle long press start - FIXED for both mobile and desktop
-  const handleLongPressStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  const handleLongPressAndMouseEvent = useCallback((e: React.MouseEvent | React.TouchEvent | React.KeyboardEvent) => {
     e.preventDefault();
 
     // Clear any existing timeout
@@ -235,23 +237,23 @@ const ReelItem: React.FC<ReelItemProps> = ({
   }, [memoizedReel._id, videoState.isPlaying, onLongPressStateChange, reelInstanceId]);
 
   // Handle long press end - FIXED
-  const handleLongPressEnd = useCallback(() => {
-    // Clear timeout if still pending
-    if (longPressTimeout.current) {
-      clearTimeout(longPressTimeout.current);
-      longPressTimeout.current = null;
-    }
+  // const handleLongPressEnd = useCallback(() => {
+  //   // Clear timeout if still pending
+  //   if (longPressTimeout.current) {
+  //     clearTimeout(longPressTimeout.current);
+  //     longPressTimeout.current = null;
+  //   }
 
-    // If long press was active, deactivate it
-    if (isLongPressActiveRef.current) {
-      isLongPressActiveRef.current = false;
+  //   // If long press was active, deactivate it
+  //   if (isLongPressActiveRef.current) {
+  //     isLongPressActiveRef.current = false;
 
-      // Notify parent component about long press end
-      onLongPressStateChange(false, memoizedReel._id);
+  //     // Notify parent component about long press end
+  //     onLongPressStateChange(false, memoizedReel._id);
 
-      console.log('Long press deactivated on video:', memoizedReel._id);
-    }
-  }, [memoizedReel._id, onLongPressStateChange]);
+  //     console.log('Long press deactivated on video:', memoizedReel._id);
+  //   }
+  // }, [memoizedReel._id, onLongPressStateChange]);
 
   // FIXED: Enhanced context menu handling for desktop right-click long press simulation
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -589,12 +591,12 @@ const ReelItem: React.FC<ReelItemProps> = ({
 
       <div
         className="relative w-full h-full flex items-center justify-center"
-        onMouseDown={handleLongPressStart}  // Desktop long press start
-        onMouseUp={handleLongPressEnd}      // Desktop long press end
-        onMouseLeave={handleLongPressEnd}   // Desktop - end if mouse leaves
-        onTouchStart={handleLongPressStart} // Mobile long press start
-        onTouchEnd={handleLongPressEnd}     // Mobile long press end
-        onTouchCancel={handleLongPressEnd}  // Mobile - end if touch is canceled
+        onMouseDown={handleLongPressAndMouseEvent}  // Desktop long press start
+        // onMouseUp={handleLongPressEnd}      // Desktop long press end
+        // onMouseLeave={handleLongPressEnd}   // Desktop - end if mouse leaves
+        onTouchStart={handleLongPressAndMouseEvent} // Mobile long press start
+        // onTouchEnd={handleLongPressEnd}     // Mobile long press end
+        // onTouchCancel={handleLongPressEnd}  // Mobile - end if touch is canceled
         onContextMenu={handleContextMenu}   // Desktop right-click simulation
         onClick={handleVideoClick}          // Single/double tap handling
       >
@@ -864,7 +866,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
       {/* User info and caption */}
       <div className="absolute bottom-8 left-4 right-20 z-20">
         {/* User row */}
-        <div className="flex items-center mb-3">
+        <Link to={`${domain}/user/${memoizedReel.target?.username}`} className="flex items-center mb-3">
           <Avatar className="">
             <AvatarImage src={memoizedReel.target?.profile} alt="Avatar" />
             <AvatarFallback>{displayData.username.charAt(0)}</AvatarFallback>
@@ -873,7 +875,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
             <h3 className="text-white font-semibold">{displayData.username}</h3>
             <p className="text-gray-300 text-xs">{displayData.formattedDate}</p>
           </div>
-        </div>
+        </Link>
 
         {/* Caption */}
         {memoizedReel.content && (

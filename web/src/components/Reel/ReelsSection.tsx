@@ -920,7 +920,7 @@ const ReelsContainer: React.FC = () => {
           onVideoComplete={handleAutoScroll}
           autoScrollEnabled={sourceMode !== "videosFeed" && autoScrollReels.autoScroll}
           onUserInteraction={handleUserVideoInteraction}
-          onLongPressStateChange={setLongPressActive}
+          onLongPressStateChange={handleUserVideoInteraction}
           className="reel-item h-screen w-full snap-start snap-always"
           data-reel-id={`reel-${reel.id}`}
           data-index={index}

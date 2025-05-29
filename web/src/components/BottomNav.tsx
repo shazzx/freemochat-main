@@ -23,14 +23,13 @@ function BottomNav() {
 
     return (
         <>
-            {/* Add safe area CSS */}
             <style>{`
                 .safe-area-inset-bottom {
                     padding-bottom: env(safe-area-inset-bottom, 0.25rem);
                 }
             `}</style>
             
-            <div className='sm:hidden flex justify-around items-center bg-card w-full border-b-background border px-2 py-1 safe-area-inset-bottom'>
+            <div className='sm:hidden flex justify-between items-center bg-card w-full border-b-background border  py-1 safe-area-inset-bottom'>
                 <Link
                     onClick={() => {
                         if (active !== '/') {

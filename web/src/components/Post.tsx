@@ -956,8 +956,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 setShareState(true)
                             }
                         }}>
-                            <div className='flex flex-col gap-1 sm:flex-row items-center justify-center'>
-                                <PiShareFatLight className='size-[28px] sm:size-[34px]' />
+                            <div className='flex flex-col gap-[2px] sm:gap-1 sm:flex-row items-center justify-center'>
+                                <PiShareFatLight className='size-[24px] sm:size-[32px]' strokeWidth={1.2} />
                                 {/* <svg width="34" height="34" className="stroke-foreground  dark:stroke-foreground" viewBox="0 0 39 34" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path fill-rule="evenodd" clip-rule="evenodd" d="M25.4095 27.8205L33.26 21.2405C33.5699 20.9872 33.7496 20.6082 33.7496 20.208C33.7496 19.8078 33.5699 19.4288 33.26 19.1755L25.4095 12.5955C24.9908 12.2376 24.4046 12.1498 23.8994 12.3695C23.3942 12.5891 23.0586 13.0777 23.0347 13.628V16.2233C12.0132 14.314 9.25 24.177 9.25 29.7455C11.8067 25.5035 18.4322 17.814 23.0347 24.177V26.7793C23.0554 27.3312 23.3898 27.8227 23.8956 28.0445C24.4015 28.2663 24.9896 28.1793 25.4095 27.8205Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg> */}

@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-const AutoPlayVideo = ({ src, type = 'video/mp4', handleNavigation }) => {
+const AutoPlayVideo = ({ src, type = 'video/mp4', handleNavigation }: { src: string, type?: string, handleNavigation?: any }) => {
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
 
