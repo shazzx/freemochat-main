@@ -1,140 +1,243 @@
-import { domain } from '@/config/domain';
-import { Copy, Download, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { WhatsappIcon, WhatsappShareButton } from 'react-share';
-import { toast } from 'react-toastify';
-import CPostModal from './CPostModal';
-import { useCreateSharedPost } from '@/hooks/Post/usePost';
-import { PostType } from '@/utils/types/Post';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dispatch, SetStateAction } from 'react';
+import React, { useCallback, useState } from "react";
+import { Share, Download, X, Check, MoreHorizontal, Play } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useCreateSharedPost } from "@/hooks/Post/usePost";
+import { useAppSelector } from "@/app/hooks";
+import { toast } from "react-toastify";
+import { WhatsappIcon, WhatsappShareButton } from "react-share";
+import { domain } from "@/config/domain";
+import { Sheet } from 'react-modal-sheet';
 
-function ShareBottomSheet({
-    isReel,
-    key,
-    sharedPost,
-    postId,
-    postType,
-    setModelTrigger,
-    handleDownload
-}: {
-    isReel?: boolean,
-    key?: string,
-    sharedPost: PostType,
-    postId: string,
-    postType: string,
-    setModelTrigger: Dispatch<SetStateAction<"comments" | "share" | "options" | boolean>>
-    handleDownload?: () => void
-}) {
-
-    const navigate = useNavigate()
-    const createSharedPost = useCreateSharedPost(key, sharedPost?.targetId)
-
-    const _createSharedPost = async ({ content, selectedMedia, formData, visibility }) => {
-        let sharedPostDetails: { sharedPostId: string, content: string, type: string, visibility: string, sharedPost: any, target: any } = { 
-            sharedPostId: sharedPost?._id, 
-            content, 
-            type: "user", 
-            visibility: "public", 
-            sharedPost, 
-            target: sharedPost.target 
-        }
-        createSharedPost.mutate(sharedPostDetails)
-        toast.success('shared successfully')
-        setModelTrigger(null)
-    }
-
-    const isOpen = setModelTrigger !== null;
-
-    return (
-        <Sheet open={isOpen} onOpenChange={() => setModelTrigger(null)}>
-            <SheetContent
-                side="bottom"
-                className="rounded-t-2xl p-0 bg-background text-foreground shadow-lg max-h-[85vh] overflow-hidden"
-            >
-                <div className="flex flex-col w-full">
-                    {/* Handle/indicator */}
-                    <div className="w-full flex items-center justify-center pt-4 pb-2">
-                        <div className="w-10 h-1.5 rounded-full bg-gray-300"></div>
-                    </div>
-
-                    <SheetHeader className="px-4 pb-4">
-                        <div className="flex items-center justify-between">
-                            <SheetTitle className="text-xl font-semibold">Share</SheetTitle>
-                        </div>
-                    </SheetHeader>
-
-                    <ScrollArea className="flex-1 px-4">
-                        <div className="space-y-4 pb-6">
-                            {/* Share Post Section */}
-                            {sharedPost && (
-                                <div className="space-y-3">
-                                    <div className="bg-muted/30 rounded-lg p-3">
-                                        <CPostModal 
-                                            createPost={_createSharedPost} 
-                                            isShared={sharedPost?.sharedPost ? false : true} 
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Share Options */}
-                            <div className="space-y-3">
-                                <h3 className="text-lg font-medium">Share Options</h3>
-                                <div className="grid grid-cols-3 gap-4 py-4">
-                                    <WhatsappShareButton url={`${domain}/post/${postId}?type=${postType}`}>
-                                        <div className="flex flex-col gap-2 items-center justify-center p-4 rounded-lg hover:bg-accent transition-colors">
-                                            <WhatsappIcon borderRadius={60} size={32} />
-                                            <span className="text-sm font-medium">WhatsApp</span>
-                                        </div>
-                                    </WhatsappShareButton>
-
-                                    <div 
-                                        className="flex flex-col gap-2 items-center justify-center p-4 rounded-lg hover:bg-accent transition-colors cursor-pointer"
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(`${domain}/post/${postId}?type=${postType}`);
-                                            toast.info("URL Copied")
-                                        }}
-                                    >
-                                        <div className="p-2 bg-blue-500 rounded-full">
-                                            <Copy size={16} className="text-white" />
-                                        </div>
-                                        <span className="text-sm font-medium">Copy URL</span>
-                                    </div>
-
-                                    {isReel && (
-                                        <div 
-                                            className="flex flex-col gap-2 items-center justify-center p-4 rounded-lg hover:bg-accent transition-colors cursor-pointer"
-                                            onClick={handleDownload}
-                                        >
-                                            <div className="p-2 bg-green-500 rounded-full">
-                                                <Download size={16} className="text-white" />
-                                            </div>
-                                            <span className="text-sm font-medium">Download</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Alternative Download Button for Reels */}
-                            {isReel && (
-                                <Button
-                                    variant="outline"
-                                    className="w-full h-12 flex items-center gap-3 rounded-lg"
-                                    onClick={handleDownload}
-                                >
-                                    <Download className="h-5 w-5" />
-                                    <span className="font-medium">Download Video</span>
-                                </Button>
-                            )}
-                        </div>
-                    </ScrollArea>
-                </div>
-            </SheetContent>
-        </Sheet>
-    )
+interface ShareBottomSheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  sharedPost: any;
+  postId: string;
+  postType: string;
+  postIndexDetails?: any;
+  setPostIndex?: (index: any) => void;
+  isReel?: boolean;
+  handleDownload?: () => void;
+  downloadState?: {
+    isDownloading: boolean;
+    downloadedUri: string | null;
+  };
 }
 
-export default ShareBottomSheet
+const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
+  isOpen,
+  onClose,
+  sharedPost,
+  postId,
+  postType,
+  postIndexDetails,
+  setPostIndex,
+  isReel = false,
+  handleDownload,
+  downloadState
+}) => {
+  const [inputText, setInputText] = useState("");
+  const { user: userData } = useAppSelector((state) => state.user);
+
+  const createSharedPost = useCreateSharedPost("userPosts", userData?._id);
+
+  const sharePost = async () => {
+    try {
+      let postDetails = {
+        sharedPostId: sharedPost?._id,
+        content: inputText.trim(),
+        type: "user",
+        postType: sharedPost?.postType || "post",
+        visibility: 'public',
+        sharedPost,
+        target: sharedPost.target,
+        ...postIndexDetails
+      };
+
+      createSharedPost.mutate(postDetails);
+
+      toast.success(isReel ? "Reel shared successfully!" : "Post shared successfully!");
+      if (setPostIndex) {
+        setPostIndex(null);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to share post");
+    }
+
+    setInputText("");
+    onClose();
+  };
+
+  const handleSharePress = useCallback(() => {
+    if (navigator.share) {
+      navigator.share({
+        title: `Check out this ${isReel ? 'reel' : 'post'}`,
+        url: `https://www.freedombook.co/post/${sharedPost?._id}?type=${sharedPost?.type}`
+      });
+    } else {
+      navigator.clipboard.writeText(`https://www.freedombook.co/post/${sharedPost?._id}?type=${sharedPost?.type}`);
+      toast.info("Link copied to clipboard!");
+    }
+  }, [sharedPost?._id, sharedPost?.type, isReel]);
+
+  const quickCaptions = [
+    "Check this out! 🔥",
+    "Thoughts? 👀",
+    "Must watch! ✨",
+    "Can't believe this! 😱",
+    "This is a must read! 📚",
+    "Mind-blowing content! 🤯",
+    "So inspiring! ✨",
+    "Just wow! 🙌",
+    "Absolutely love this! ❤️",
+    "Big news! 📢",
+    "Trend alert! 📈",
+    "Worth sharing! 👍",
+    "Take a look at this 👇",
+  ];
+
+  return (
+    <Sheet
+      isOpen={isOpen}
+      onClose={onClose}
+      snapPoints={[600, 400, 100]}
+      initialSnap={0}
+    >
+      <Sheet.Container>
+        <Sheet.Header className='bg-background-secondary dark:bg-background' />
+        <Sheet.Content>
+          <div className="z-10 w-full h-full flex flex-col bg-background relative scroll-smooth overflow-auto px-6 pb-6">
+            <div className="space-y-6">
+              {/* Reel Preview (if it's a reel) */}
+              {isReel && sharedPost && (
+                <div className="flex items-center space-x-4 p-4 bg-card rounded-lg border border-accent">
+                  <div className="relative w-20 h-32 bg-black rounded-lg overflow-hidden flex-shrink-0">
+                    {sharedPost.media?.[0]?.url && (
+                      <>
+                        <img
+                          src={sharedPost.media[0].thumbnail}
+                          alt="Reel thumbnail"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                          <Play className="w-8 h-8 text-white" fill="white" />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={sharedPost.target?.profile} />
+                        <AvatarFallback>
+                          {sharedPost.target?.firstname?.[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-semibold text-sm">
+                        {sharedPost.target?.firstname} {sharedPost.target?.lastname}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-3">
+                      {sharedPost.content}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Captions */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-muted-foreground">Quick Captions</h3>
+                <div className="flex flex-wrap gap-2">
+                  {quickCaptions.map((caption, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setInputText(caption)}
+                      className="text-xs font-medium hover:bg-blue-600 hover:text-white transition-colors"
+                    >
+                      {caption}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Text Input */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Add your caption</label>
+                <Textarea
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="What's on your mind about this post?"
+                  className="min-h-[120px] resize-none border-2 focus:border-primary"
+                  maxLength={500}
+                />
+                <div className="text-xs text-muted-foreground text-right">
+                  {inputText.length}/500
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                {/* Main Buttons */}
+                <div className="flex space-x-3">
+                  <Button
+                    onClick={sharePost}
+                    className="flex-1 w-[50%] h-11 font-semibold"
+                  >
+                    <Share className="w-4 h-4 mr-2" />
+                  </Button>
+
+                  <Button
+                    className="w-[50%] h-11 font-semibold bg-green-600 hover:bg-green-700"
+                  >
+                    <WhatsappShareButton
+                      url={`${domain}/post/${postId}?type=${sharedPost?.postType}`}
+                      className="flex"
+                    >
+                      <WhatsappIcon size={18} borderRadius={64} className="mr-2" />
+                      <div>
+                        WhatsApp
+                      </div>
+                    </WhatsappShareButton>
+                  </Button>
+
+
+                </div>
+                {isReel && handleDownload && (
+                  <Button
+                    onClick={handleDownload}
+                    variant={downloadState?.downloadedUri ? "default" : "secondary"}
+                    className="flex-1 w-full h-11 font-semibold"
+                    disabled={downloadState?.isDownloading}
+                  >
+                    {downloadState?.downloadedUri ? (
+                      <Check className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    {downloadState?.downloadedUri
+                      ? "Downloaded"
+                      : downloadState?.isDownloading
+                        ? "Downloading..."
+                        : "Download"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </Sheet.Content>
+      </Sheet.Container>
+
+      <Sheet.Backdrop onTap={() => {
+        onClose()
+      }} />
+    </Sheet>
+  );
+};
+
+export default ShareBottomSheet;

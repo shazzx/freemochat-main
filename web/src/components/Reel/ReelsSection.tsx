@@ -15,6 +15,7 @@ import ShareModel from '@/models/ShareModel';
 import { toast } from 'react-toastify';
 import BottomCreatePost from '@/models/BottomCreatePost';
 import ThreeDotsModal from './ThreeDotsModal';
+import ShareModal from '@/models/ShareModal';
 import ShareBottomSheet from '@/models/ShareBottomSheet';
 // import ReportModal from './ReportModal';
 
@@ -1098,14 +1099,15 @@ const ReelsContainer: React.FC = () => {
         )}
 
         {activeSheet === 'share' && !isMobile && (
-          <ShareModel
+          <ShareModal
             isReel={sourceMode !== 'videosFeed'}
             key={'user' + "Posts"}
+            isOpen={true}
             sharedPost={flattenedData && (flattenedData[activeReelIndex])}
             postId={flattenedData[activeReelIndex]?._id}
             postType={flattenedData[activeReelIndex]?.type}
             handleDownload={downloadVideo}
-            setModelTrigger={setActiveSheet}
+            onClose={closeSheet}
           />
         )}
 
@@ -1114,11 +1116,12 @@ const ReelsContainer: React.FC = () => {
           <ShareBottomSheet
             isReel={sourceMode !== 'videosFeed'}
             key={'user' + "Posts"}
+            isOpen={true}
             sharedPost={flattenedData && (flattenedData[activeReelIndex])}
             postId={flattenedData[activeReelIndex]?._id}
             postType={flattenedData[activeReelIndex]?.type}
             handleDownload={downloadVideo}
-            setModelTrigger={setActiveSheet}
+            onClose={closeSheet}
           />
         )}
 
