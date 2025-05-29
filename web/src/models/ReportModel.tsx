@@ -2,9 +2,9 @@ import { axiosClient } from "@/api/axiosClient"
 import { useAppSelector } from "@/app/hooks"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { X } from "lucide-react"
 import { useRef, useState } from "react"
 import { toast } from "react-toastify"
-
 function ReportModel({ setModelTrigger, postId }) {
 
     const { user } = useAppSelector(data => data.user)
@@ -35,11 +35,15 @@ function ReportModel({ setModelTrigger, postId }) {
         <div className='fixed inset-0 z-50  w-screen sm:p-8 overflow-hidden h-screen flex items-center justify-center' key={postId}>
             <div className='absolute top-0 right-0 opacity-15  bg-black w-full h-full' onClick={() => {
                 setModelTrigger(false)
-            }}></div>
-            <div className='flex flex-col gap-4 z-10 p-4 w-96 bg-background rounded-lg h-fit overflow-auto border-accent border'>
-                <div className="text-3xl text-center">
+            }}>
+            </div>
+            <div className='relative flex flex-col gap-4 z-10 p-4 w-96 bg-background rounded-lg h-fit overflow-auto border-accent border'>
+                <div className="text-md sm:text-xl text-center">
                     Report
                 </div>
+                <X size={18} className="absolute text-white right-4 top-4 cursor-pointer" onClick={() => {
+                    setModelTrigger(false)
+                }} />
                 <div className="max-h-56 overflow-auto">
                     {reportTypes.map((type, i) => (
                         <div className={`p-2 cursor-pointer rounded-md ${i == selectedReportIndex && "bg-primary"}`} onClick={() => {

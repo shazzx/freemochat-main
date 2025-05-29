@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-const AutoPlayVideo = ({ src, type = 'video/mp4' }) => {
+const AutoPlayVideo = ({ src, type = 'video/mp4', handleNavigation }) => {
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -36,17 +36,19 @@ const AutoPlayVideo = ({ src, type = 'video/mp4' }) => {
 
   return (
 
-      <video
-        ref={videoRef}
-        src={src}
-        loop
-        controls
-        disablePictureInPicture
-        controlsList="nodownload noplaybackrate"
-        playsInline
-        className={`w-full ${isVisible ? 'opacity-100' : 'opacity-50'} w-full max-h-[500px] h-full transition-opacity duration-300`}
-      />
-    
+    <video
+      onClick={handleNavigation}
+      onTouchEnd={handleNavigation}
+      ref={videoRef}
+      src={src}
+      loop
+      controls
+      disablePictureInPicture
+      controlsList="nodownload noplaybackrate"
+      playsInline
+      className={`w-full ${isVisible ? 'opacity-100' : 'opacity-50'} w-full max-h-[500px] h-full transition-opacity duration-300`}
+    />
+
   );
 };
 

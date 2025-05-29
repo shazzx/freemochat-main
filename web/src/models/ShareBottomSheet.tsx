@@ -87,10 +87,10 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
   const quickCaptions = [
     "Check this out! 🔥",
     "Thoughts? 👀",
-    "Must watch! ✨",
-    "Can't believe this! 😱",
-    "This is a must read! 📚",
     "Mind-blowing content! 🤯",
+    "Can't believe this! 😱",
+    "Must watch! ✨",
+    "This is a must read! 📚",
     "So inspiring! ✨",
     "Just wow! 🙌",
     "Absolutely love this! ❤️",
@@ -151,19 +151,30 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
               {/* Quick Captions */}
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">Quick Captions</h3>
-                <div className="flex flex-wrap gap-2">
+                <div 
+                  className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" 
+                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                  }}
+                >
                   {quickCaptions.map((caption, index) => (
                     <Button
                       key={index}
                       variant="outline"
                       size="sm"
                       onClick={() => setInputText(caption)}
-                      className="text-xs font-medium hover:bg-blue-600 hover:text-white transition-colors"
+                      className="text-xs font-medium hover:bg-blue-600 hover:text-white transition-colors flex-shrink-0 whitespace-nowrap"
                     >
                       {caption}
                     </Button>
                   ))}
                 </div>
+                <style>{`
+                  .scrollbar-hide::-webkit-scrollbar {
+                    display: none;
+                  }
+                `}</style>
               </div>
 
               {/* Text Input */}
@@ -172,7 +183,7 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
                 <Textarea
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder="What's on your mind about this post?"
+                  placeholder={`What's on your mind about this ${isReel ? "reel" : "post"}?`}
                   className="min-h-[120px] resize-none border-2 focus:border-primary"
                   maxLength={500}
                 />
@@ -190,6 +201,7 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
                     className="flex-1 w-[50%] h-11 font-semibold"
                   >
                     <Share className="w-4 h-4 mr-2" />
+                    Share
                   </Button>
 
                   <Button
@@ -197,12 +209,10 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
                   >
                     <WhatsappShareButton
                       url={`${domain}/post/${postId}?type=${sharedPost?.postType}`}
-                      className="flex"
+                      className="flex flex-1 items-center justify-center"
                     >
                       <WhatsappIcon size={18} borderRadius={64} className="mr-2" />
-                      <div>
                         WhatsApp
-                      </div>
                     </WhatsappShareButton>
                   </Button>
 

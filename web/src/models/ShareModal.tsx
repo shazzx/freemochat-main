@@ -176,7 +176,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                   <Textarea
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    placeholder="What's on your mind about this post?"
+                    placeholder={`What's on your mind about this ${isReel ? "reel" : "post"}?`}
                     className="min-h-[120px] resize-none border-2 focus:border-primary"
                     maxLength={500}
                   />

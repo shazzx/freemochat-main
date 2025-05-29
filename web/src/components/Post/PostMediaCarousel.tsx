@@ -31,12 +31,9 @@ export function PostMediaCarousel({ postData, media, mobile }: {
       <CarouselContent>
         {media?.length > 0 && media.map(({ type, url }, index) => (
           <CarouselItem key={index} className="flex justify-center items-center">
-            <div className="aspect-auto max-w-xl"
-              onMouseDown={handleNavigation}
-              onTouchStart={handleNavigation}
-            >
+            <div className="aspect-auto max-w-xl">
               {type == 'video' ?
-                <AutoPlayVideo src={url} />
+                <AutoPlayVideo src={url} handleNavigation={handleNavigation} />
                 // <video className='w-full max-h-[500px] h-full' autoPlay={true} src={url} controls></video>
                 :
                 <img src={url} alt="" className="object-contain max-h-[500px]" />

@@ -17,6 +17,7 @@ import BottomCreatePost from '@/models/BottomCreatePost';
 import ThreeDotsModal from './ThreeDotsModal';
 import ShareModal from '@/models/ShareModal';
 import ShareBottomSheet from '@/models/ShareBottomSheet';
+import ReportModel from '@/models/ReportModel';
 // import ReportModal from './ReportModal';
 
 
@@ -581,10 +582,8 @@ const ReelsContainer: React.FC = () => {
       });
     }, {
       root: containerRef.current,
-      // FIXED: Lower threshold for mobile compatibility and better detection
-      threshold: [0.5, 0.7], // Multiple thresholds for better detection
-      // FIXED: Adjusted rootMargin for mobile browser UI
-      rootMargin: '-10% 0px -10% 0px' // Negative margins to account for browser UI
+      threshold: [0.4, 0.6, 0.8], // Multiple thresholds for better mobile detection
+      rootMargin: '-60px 0px -60px 0px' // Fixed pixels instead of % for mobile UI
     });
 
     // Observe all reel items
@@ -1015,22 +1014,20 @@ const ReelsContainer: React.FC = () => {
         {/* Main Reels Container with Snap Scroll - FIXED */}
         <div
           ref={containerRef}
-          className="w-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory"
+          className="w-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory reels-scrollbar-hide"
           style={{
             height: '100%',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            // Ensure smooth scrolling on mobile
             WebkitOverflowScrolling: 'touch',
-            // Hide scrollbars completely
+            touchAction: 'pan-y', // Better mobile scrolling
+            overscrollBehavior: 'contain', // Prevent bounce
           }}
         >
-          {/* Add CSS to hide webkit scrollbars */}
-          <style >{`
-          div::-webkit-scrollbar {
-            display: none;
-          }
-        `}</style>
+          <style>{`
+            .reels-scrollbar-hide::-webkit-scrollbar {
+              display: none;
+          }`}</style>
 
           {renderReels}
         </div>
@@ -1039,10 +1036,6 @@ const ReelsContainer: React.FC = () => {
         <button
           onClick={() => navigate(-1)}
           className="absolute flex items-center justify-center gap-2 top-4 left-4 z-30"
-          style={{
-            // Ensure it's visible above mobile browser UI
-            top: 'max(1rem, env(safe-area-inset-top, 1rem))'
-          }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 text-white rounded-full p-2 bg-black/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1124,6 +1117,13 @@ const ReelsContainer: React.FC = () => {
             onClose={closeSheet}
           />
         )}
+
+        {reportModalVisible &&
+          <ReportModel
+            postId={flattenedData && flattenedData[activeReelIndex]?._id}
+            setModelTrigger={setReportModalVisible}
+          />
+        }
 
         {activeSheet === 'options' && isMobile && (
           <ThreeDotsSheet
