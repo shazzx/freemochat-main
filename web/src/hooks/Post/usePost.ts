@@ -7,32 +7,54 @@ import { UrlObject } from 'url';
 import { axiosClient } from '@/api/axiosClient';
 import { redirectToCheckout } from '@/utils/redirectToCheckout';
 import { createReel } from '@/api/Reel/reel.api';
+import { useCallback } from 'react';
 
-export function useFeed(): any {
 
-  const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
+export function useFeed(reelsCursorRef = { current: null }) {
+  const fetchFeedWithRef = useCallback(({ pageParam }) => {
+    return fetchFeed(pageParam, reelsCursorRef.current);
+  }, [reelsCursorRef]);
+  const {
+    data,
+    isLoading,
+    isFetching,
+    fetchNextPage,
+    fetchPreviousPage,
+    fetchStatus,
+    isSuccess,
+    refetch,
+    isFetchingNextPage,
+    error,
+    hasNextPage
+  } = useInfiniteQuery({
     queryKey: ['feed'],
-    queryFn: ({ pageParam }) => fetchFeed(pageParam),
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    queryFn: fetchFeedWithRef,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchOnReconnect: true,
     initialPageParam: null,
-    getNextPageParam: (lastPage) => lastPage.nextCursor
+    getNextPageParam: (lastPage: { nextCursor: string }) => lastPage?.nextCursor || undefined,
   });
 
+  const pages = data?.pages ?? [];
+
   return {
-    data: data?.pages ?? [],
+    data: pages,
     isLoading,
     isSuccess,
     isFetching,
     fetchPreviousPage,
     isFetchingNextPage,
     fetchStatus,
+    refetch,
     fetchNextPage,
     error,
+    hasNextPage: !!pages[pages.length - 1]?.nextCursor,
   };
 }
+
 
 export function usePost(postId: string, type: string): any {
 

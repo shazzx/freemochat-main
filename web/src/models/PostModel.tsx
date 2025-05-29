@@ -73,7 +73,7 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
         let commentDetails = {
             targetType: 'user',
             type: isReel ? 'reel' : 'post',
-            authorId: postData?.user,
+            authorId: postData?.user?._id || postData?.user,
             postId,
             commentDetails: { content: recordingUrl ? null : commentRef.current?.value, username: user?.username },
             uuid: uuidv4()
@@ -101,8 +101,8 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
             postId,
             targetType: 'user',
             type: isReel ? "reel" : 'post',
-            commentAuthorId: replyState.user,
-            authorId: postData?.user,
+            commentAuthorId: replyState.user?._id || replyState.user,
+            authorId: postData?.user?._id || postData?.user,
             replyDetails: { content: replyRef.current.value },
             commentId: replyState._id
         }

@@ -206,8 +206,9 @@ const ReelItem: React.FC<ReelItemProps> = ({
   // WITH these improved versions:
 
   // Handle long press start - FIXED for both mobile and desktop
-  const handleLongPressAndMouseEvent = useCallback((e: React.MouseEvent | React.TouchEvent | React.KeyboardEvent) => {
+  const handleLongPressStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
+    console.log(e)
 
     // Clear any existing timeout
     if (longPressTimeout.current) {
@@ -591,10 +592,10 @@ const ReelItem: React.FC<ReelItemProps> = ({
 
       <div
         className="relative w-full h-full flex items-center justify-center"
-        onMouseDown={handleLongPressAndMouseEvent}  // Desktop long press start
+        // onMouseDown={handleLongPressStart}  // Desktop long press start
         // onMouseUp={handleLongPressEnd}      // Desktop long press end
         // onMouseLeave={handleLongPressEnd}   // Desktop - end if mouse leaves
-        onTouchStart={handleLongPressAndMouseEvent} // Mobile long press start
+        onTouchStart={handleLongPressStart} // Mobile long press start
         // onTouchEnd={handleLongPressEnd}     // Mobile long press end
         // onTouchCancel={handleLongPressEnd}  // Mobile - end if touch is canceled
         onContextMenu={handleContextMenu}   // Desktop right-click simulation

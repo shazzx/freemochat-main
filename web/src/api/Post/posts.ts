@@ -9,12 +9,14 @@ interface CreateCommentResponse {
   comment: string
 }
 
-export async function fetchFeed(pageParam) {
+
+export async function fetchFeed(cursor, reelsCursor) {
   const response = await axiosClient.get("posts/feed", {
-    params: { cursor: pageParam }
+    params: { cursor, reelsCursor }
   });
   return response.data;
 }
+
 
 
 export async function fetchPostLikes(pageParam, postId) {

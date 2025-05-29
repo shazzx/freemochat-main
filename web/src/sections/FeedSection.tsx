@@ -22,7 +22,6 @@ function FeedSection() {
     const { user } = useAppSelector((data) => data.user)
     const { inView, ref } = useInView()
     const [openPostStackModal, setOpenPostStackModal] = useState(false)
-    const { data, isLoading, fetchNextPage } = useFeed()
 
     // Add reels cursor state
     const reelsCursorRef = useRef(null);
@@ -31,6 +30,9 @@ function FeedSection() {
     useEffect(() => {
         reelsCursorRef.current = reelsCursor;
     }, [reelsCursor]);
+
+    const { data, isLoading, fetchNextPage } = useFeed(reelsCursorRef)
+
 
     const createPost = useCreatePost("userPosts", user?._id)
     const createReel = useCreateReel()
