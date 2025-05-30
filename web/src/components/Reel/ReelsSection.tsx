@@ -169,7 +169,7 @@ const ReelsContainer: React.FC = () => {
 
   const sourceParams = useMemo(() => {
     return {
-      userId: user?._id,
+      userId: location?.state?.userId,
       reelData: location.state?.reelData,
       initialReelId: location.state?.initialReelId || params.reelId, // Try state first, then params
       isSuggested: location.state?.reelData?.isSuggested || false
@@ -178,8 +178,8 @@ const ReelsContainer: React.FC = () => {
   // Auto-scroll settings
 
   // Initialize mutation hooks
-  const profileLikeMutation = useLikeProfileReelPost(sourceParams.userId);
-  const profileBookmarkMutation = useBookmarkProfileReelPost(sourceParams.userId);
+  const profileLikeMutation = useLikeProfileReelPost(user?._id);
+  const profileBookmarkMutation = useBookmarkProfileReelPost(user?._id);
 
   const bookmarkLikeMutation = useLikeBookmarkedReelPost();
   const bookmarkBookmarkMutation = useBookmarkBookmarkedReelPost();
