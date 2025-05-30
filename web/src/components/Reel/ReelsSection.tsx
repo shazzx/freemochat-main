@@ -19,6 +19,7 @@ import ShareModal from '@/models/ShareModal';
 import ShareBottomSheet from '@/models/ShareBottomSheet';
 import ReportModel from '@/models/ReportModel';
 import EditReel from '@/models/EditReelModal';
+import EditReelBottomSheet from '@/models/EditReelSheet';
 // import ReportModal from './ReportModal';
 
 
@@ -1036,7 +1037,7 @@ const ReelsContainer: React.FC = () => {
 
 
         {isMobile && updateReelActive &&
-          <BottomCreatePost
+          <EditReelBottomSheet
             setModelTrigger={setUpdateReelActive}
             updatePost={({ postId, content }: { postId: string, content: string }) => {
               updateReel.mutate({ postId: postId, content: content })
