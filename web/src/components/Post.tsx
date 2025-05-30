@@ -367,6 +367,52 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
     const [date, setDate] = useState("");
     const [_profile, setProfile] = useState(undefined);
     const [fullname, setFullname] = useState(undefined);
+    const touchStartTime = useRef(0);
+    const touchStartPos = useRef({ x: 0, y: 0 });
+
+    const navigateToPost = () => navigate(`/post/${sharedPost?._id}?type=post`)
+
+    const handleTouchStart = (e) => {
+        const touch = e.touches[0];
+        touchStartTime.current = Date.now();
+        touchStartPos.current = {
+            x: touch.clientX,
+            y: touch.clientY
+        };
+    };
+
+    const handleTouchEnd = (e) => {
+        if (!handleNavigation) return;
+
+        const touchEndTime = Date.now();
+        const touchDuration = touchEndTime - touchStartTime.current;
+
+        // Get final touch position
+        const touch = e.changedTouches[0];
+        const deltaX = Math.abs(touch.clientX - touchStartPos.current.x);
+        const deltaY = Math.abs(touch.clientY - touchStartPos.current.y);
+
+        // Consider it a tap if:
+        // 1. Touch duration is less than 300ms (quick tap)
+        // 2. Movement is less than 10px in any direction (not a scroll)
+        if (touchDuration < 300 && deltaX < 10 && deltaY < 10) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (sharedPost?.media?.[0]?.type == 'video') {
+                handleNavigation();
+            } else {
+                navigateToPost()
+            }
+        }
+    };
+
+    const handleClick = (e) => {
+        if (sharedPost?.media?.[0]?.type == 'video') {
+            handleNavigation();
+        } else {
+            navigateToPost()
+        }
+    };
 
     useEffect(() => {
         window.addEventListener("resize", () => {
@@ -477,7 +523,12 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2 text-sm p-0 sm:px-3 font-normal">
+            <CardContent className="flex flex-col gap-2 text-sm p-0 sm:px-3 font-normal"
+                onClick={handleClick}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+
+            >
                 <div className='text-sm font-normal px-2 sm:px-0'>
                     {expanded ?
                         <p style={{ whiteSpace: "pre-wrap" }} className='break-words'>

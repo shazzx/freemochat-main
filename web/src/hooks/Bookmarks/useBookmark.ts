@@ -4,7 +4,7 @@ import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { produce } from "immer";
 import { toast } from "react-toastify";
 
-export function useBookamrks(postType?: string): any {
+export function useBookamrks(): any {
     const { 
         data, 
         isLoading, 
@@ -18,8 +18,8 @@ export function useBookamrks(postType?: string): any {
         hasNextPage,  // Add this line - it's automatically provided by useInfiniteQuery
         error 
     } = useInfiniteQuery({
-        queryKey: ['userBookmarks', postType],
-        queryFn: ({ pageParam }) => fetchBookmarks(pageParam, postType),
+        queryKey: ['userBookmarks'],
+        queryFn: ({ pageParam }) => fetchBookmarks(pageParam),
         refetchInterval: false,
         refetchOnWindowFocus: true,
         refetchOnMount: true,

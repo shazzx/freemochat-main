@@ -14,7 +14,7 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateReel, CreateReelDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPosts, GetBookmarkedPostsDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateReel, CreateReelDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPostsDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
@@ -551,9 +551,9 @@ export class PostsController {
     }
 
     @Get("bookmarks")
-    async getBookmarkedPosts(@Query(new ZodValidationPipe(GetBookmarkedPosts)) { cursor, postType }: GetBookmarkedPostsDTO, @Req() req: Request, @Res() res: Response) {
+    async getBookmarkedPosts(@Query(new ZodValidationPipe(Cursor)) { cursor }: GetBookmarkedPostsDTO, @Req() req: Request, @Res() res: Response) {
         const { sub } = req.user
-        res.json(await this.postService.getBookmarks(cursor, sub, postType || 'post'))
+        res.json(await this.postService.getBookmarks(cursor, sub))
     }
 
 

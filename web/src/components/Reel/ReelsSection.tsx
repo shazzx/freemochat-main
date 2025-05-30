@@ -1082,9 +1082,10 @@ const ReelsContainer: React.FC = () => {
           />
         )}
 
+        {/* there is reel true because of link share  */}
         {activeSheet === 'share' && !isMobile && (
           <ShareModal
-            isReel={false}
+            isReel={true}
             key={'user' + "Posts"}
             isOpen={true}
             sharedPost={flattenedData && (flattenedData[activeReelIndex])}
@@ -1098,7 +1099,7 @@ const ReelsContainer: React.FC = () => {
 
         {activeSheet === 'share' && isMobile && (
           <ShareBottomSheet
-            isReel={false}
+            isReel={true}
             key={'user' + "Posts"}
             isOpen={true}
             sharedPost={flattenedData && (flattenedData[activeReelIndex])}

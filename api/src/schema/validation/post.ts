@@ -74,10 +74,6 @@ export const BookmarkPost = z.object({
 })
 
 
-export const GetBookmarkedPosts = Cursor.extend({
-    postType: z.string(),
-})
-
 export const ReportPost = z.object({
     postId: ValidMongoId,
     reportData: z.object({
@@ -136,7 +132,7 @@ export type LikePostDTO = z.infer<typeof LikePost>
 export type GetPostLikestDTO = z.infer<typeof GetPostLikes>
 export type LikeCommentOrReplyDTO = z.infer<typeof LikeCommentOrReply>
 export type BookmarkPostDTO = z.infer<typeof BookmarkPost>
-export type GetBookmarkedPostsDTO = z.infer<typeof GetBookmarkedPosts>
+export type GetBookmarkedPostsDTO = z.infer<typeof Cursor>
 export type GetPromotionsDTO = z.infer<typeof GetPromotions>
 export type ReportPostDTO = z.infer<typeof ReportPost>
 export type PromotePostDTO = z.infer<typeof PromotePost>

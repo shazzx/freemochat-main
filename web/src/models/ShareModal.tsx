@@ -204,7 +204,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                     className="flex-1 h-11 font-semibold"
                   >
                     <WhatsappShareButton
-                      url={`${domain}/post/${postId}?type=${sharedPost?.postType}`}>
+                      url={isReel ? `${domain}/reels/${postId}` : `${domain}/post/${postId}?type=${sharedPost?.postType}`}>
                       <div className="flex gap-2 items-center justify-center p-4 rounded-lg w-full">
                         <WhatsappIcon borderRadius={60} size={22} />
                         <span className="text-sm font-medium">WhatsApp</span>

@@ -208,7 +208,7 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
                     className="w-[50%] h-11 font-semibold bg-green-600 hover:bg-green-700"
                   >
                     <WhatsappShareButton
-                      url={`${domain}/post/${postId}?type=${sharedPost?.postType}`}
+                      url={isReel ? `${domain}/reels/${postId}` : `${domain}/post/${postId}?type=${sharedPost?.postType}`}
                       className="flex flex-1 items-center justify-center"
                     >
                       <WhatsappIcon size={18} borderRadius={64} className="mr-2" />

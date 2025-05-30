@@ -1,8 +1,8 @@
 import { axiosClient } from "../axiosClient"
 
-export const fetchBookmarks = async (cursor: string, postType: string) => {
+export const fetchBookmarks = async (cursor: string) => {
     const { data } = await axiosClient.get('posts/bookmarks', {
-        params: { cursor, postType }
+        params: { cursor }
     })
     return data
 }
