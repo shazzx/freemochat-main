@@ -359,7 +359,7 @@ interface PostProps {
 // };
 
 // Create a separate SharedPostContent component
-const SharedPostContent = ({ sharedPost, useLikePost, useBookmarkPost, type, isSearch, query, userId }) => {
+const SharedPostContent = ({ sharedPost, handleNavigation }) => {
     const navigate = useNavigate();
     const [expanded, setExpanded] = useState(false);
     const expandable = sharedPost?.content?.slice(0, 360);
@@ -516,7 +516,7 @@ const SharedPostContent = ({ sharedPost, useLikePost, useBookmarkPost, type, isS
                             (sharedPost.media.length > 1 ?
                                 <PostMediaCarousel media={sharedPost?.media} /> :
                                 sharedPost.media[0]?.type == 'video' ?
-                                    <AutoPlayVideo postId={sharedPost?._id} userId={userId} src={sharedPost?.media && sharedPost?.media[0]?.url} /> :
+                                    <AutoPlayVideo handleNavigation={handleNavigation} postId={sharedPost?._id} src={sharedPost?.media && sharedPost?.media[0]?.url} /> :
                                     <img className='object-contain max-h-[400px]' src={sharedPost?.media[0]?.url} alt="" />
                             ) :
                             <PostMediaCarousel mobile={true} media={sharedPost?.media} />
@@ -632,6 +632,19 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         }
     }, [postData]);
 
+
+    const handleNavigation = () => {
+        navigate(`/reels/${postData._id}`, {
+            state: {
+                sourceMode: 'videosFeed',
+                initialReelId: postData._id,
+                reelData: {
+                    ...postData,
+                    _navigationTimestamp: Date.now()
+                }
+            }
+        });
+    }
 
     // useEffect(() => {
     //     function handleClickOutside(event) {
@@ -849,7 +862,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                                     }
                                                 });
                                             }}>
-                                                <AutoPlayVideo userId={user?._id} postId={postData?._id} src={postData?.media && postData?.media[0]?.url} />
+                                                <AutoPlayVideo handleNavigation={handleNavigation} postId={postData?._id} src={postData?.media && postData?.media[0]?.url} />
                                             </div>
 
                                             :
@@ -872,13 +885,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                     {hasSharedPost && (
                         <div className="px-2 sm:px-0 my-2">
                             <SharedPostContent
-                                userId={user?._id}
                                 sharedPost={postData.sharedPost}
-                                useLikePost={useLikePost}
-                                useBookmarkPost={useBookmarkPost}
-                                type={type}
-                                isSearch={isSearch}
-                                query={query}
+                                handleNavigation={handleNavigation}
                             />
                         </div>
                     )}

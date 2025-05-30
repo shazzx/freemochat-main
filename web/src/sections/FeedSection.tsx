@@ -73,8 +73,8 @@ function FeedSection() {
 
         return data.flatMap((page, pageIndex) => {
             // Split posts and reels
-            const regularPosts = page.posts.filter(post => post.postType !== 'reel');
-            const reelsSuggestions = page.posts.filter(post => post.postType === 'reel');
+            const regularPosts = page.posts;
+            const reelsSuggestions = page.reels;
 
             // Store reels for this page
             if (reelsSuggestions.length > 0) {

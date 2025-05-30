@@ -197,6 +197,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                     className="flex-1 h-11 font-semibold"
                   >
                     <Share className="w-4 h-4 mr-2" />
+                    Share {isReel ? "Reel" : "Post"}
                   </Button>
 
                   <Button

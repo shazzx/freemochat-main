@@ -754,9 +754,7 @@ export class PostsService {
         }
 
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility } : { ...visibility };
-        let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type, postType: 'post', isUploaded: null } : { ..._cursor, type, postType: 'post', isUploaded: null }
-
-        console.log('reels query', query)
+        let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type, postType: 'post', isUploaded: null, 'media.type': 'video', } : { ..._cursor, type, postType: 'post', 'media.type': 'video', isUploaded: null }
 
         const reels = await this.postModel.aggregate([
             { $match: query },
@@ -2430,11 +2428,13 @@ export class PostsService {
             ? {
                 createdAt: { $lt: new Date(reelsCursor) },
                 ...visibility,
-                postType: { $in: ['post'] }
+                postType: { $in: ['post'] },
+                'media.type': 'video'
             }
             : {
                 ...visibility,
-                postType: { $in: ['post'] }
+                postType: { $in: ['post'] },
+                'media.type': 'video'
             };
 
         // Pipeline to process posts/reels with all required lookups
@@ -2948,7 +2948,8 @@ export class PostsService {
 
         // Combine posts and reels in the response
         return {
-            posts: [...posts, ...reels],
+            posts: [...posts],
+            reels: [...reels],
             nextCursor: nextPostsCursor,
             nextReelsCursor: nextReelsCursor,
             hasMorePosts: hasNextPostsPage,

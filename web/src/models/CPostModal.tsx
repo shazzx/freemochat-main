@@ -4,7 +4,7 @@ import EmojiPicker from 'emoji-picker-react'
 import { Theme } from 'emoji-picker-react'
 import { MdCancel } from "react-icons/md"
 import PostCarousel from "@/components/Carousel"
-import { Loader } from "lucide-react"
+import { Loader, VideoIcon } from "lucide-react"
 import { toast } from "react-toastify"
 import { useNavigate } from "react-router-dom"
 import CustomComboBox from "@/components/ComboboxTwo"
@@ -239,10 +239,7 @@ const CPostModal: FC<{
 
                                                     {/* Video Selection */}
                                                     <label htmlFor="post-video" className="flex flex-col items-center cursor-pointer">
-                                                        <svg width="40" height="40" className="stroke-foreground" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M11.3333 8.53333C10.2288 8.53333 9.33333 9.42885 9.33333 10.5333V21.4667C9.33333 22.5712 10.2288 23.4667 11.3333 23.4667H20.6667C21.7712 23.4667 22.6667 22.5712 22.6667 21.4667V10.5333C22.6667 9.42885 21.7712 8.53333 20.6667 8.53333H11.3333Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                                            <path d="M17.3333 14.6667L14.6667 16L17.3333 17.3333V14.6667Z" fill="currentColor"/>
-                                                        </svg>
+                                                        <VideoIcon className="w-10 h-10 stroke-foreground" strokeWidth={1.2} />
                                                         <span className="text-xs mt-1">Video</span>
                                                     </label>
                                                 </>

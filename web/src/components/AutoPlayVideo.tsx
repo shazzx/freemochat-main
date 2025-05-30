@@ -11,8 +11,8 @@ const AutoPlayVideo = ({
   src: string;
   postId: string; // Unique identifier for this video
   // userId?: string; // ❌ REMOVED - MainHome handles this
+  handleNavigation: any;
   type?: string;
-  handleNavigation?: any;
 }) => {
   const videoRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -21,6 +21,8 @@ const AutoPlayVideo = ({
   const touchStartPos = useRef({ x: 0, y: 0 });
   const hasStartedTracking = useRef(false);
   const isComponentMounted = useRef(true);
+
+  
 
   // ✅ SIMPLIFIED: Only cleanup on unmount, no user dependency
   useEffect(() => {
