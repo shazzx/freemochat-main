@@ -104,7 +104,7 @@ function GroupProfile() {
                         <MediaOpenModel mediaOpenDetails={mediaOpenDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                     }
                     {profileSettingsModel && <QuickSettings user={user} setModelTrigger={setProfileSettingsModel} />}
-                    {searchParams.get("createpost") && ( width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+                    {searchParams.get("createpost") && (width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
 
                     <div className='flex w-full flex-col items-center'>
                         <div className="flex max-w-5xl w-full flex-col justify-cente relative">
@@ -361,7 +361,7 @@ function GroupProfile() {
                                     </div>
                                 </TabsContent>
                                 <TabsContent value="media" className='flex flex-col gap-2'>
-                                    <MediaSection media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                    <MediaSection targetId={data?._id} media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                                 </TabsContent>
                                 <TabsContent value="about" className="">
                                     <div className='px-8 flex-responsive w-full items-center md:items-start  flex gap-2 border-muted'>

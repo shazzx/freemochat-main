@@ -377,7 +377,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                     <UserReelsSection userId={user?._id} />
                                 </TabsContent> */}
                                 <TabsContent value="media" className='flex flex-col gap-2'>
-                                    <MediaSection userId={_id && _id} media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                    <MediaSection targetId={_id && _id} media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                                 </TabsContent>
                                 <TabsContent value="about">
                                     <div className='p-4  flex-responsive w-full items-center flex gap-2 border-muted'>

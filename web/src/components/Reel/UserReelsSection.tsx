@@ -29,8 +29,8 @@ const NotFoundSvg = ({ text = "No Content" }) => (
   </div>
 );
 
-const UserReelsSection = ({ userId }) => {
-  console.log('UserReelsSection rendered for userId:', userId);
+const UserReelsSection = ({ targetId }) => {
+  console.log('UserReelsSection rendered for targetId:', targetId);
   const navigate = useNavigate();
 
   // Fetch user reels
@@ -41,7 +41,7 @@ const UserReelsSection = ({ userId }) => {
     hasNextPage,
     fetchNextPage,
     refetch
-  } = useUserReels(userId);
+  } = useUserReels(targetId);
   // Flatten the pages data for grid display
   const reelsList = useMemo(() => {
     if (!data) return [];
@@ -64,13 +64,13 @@ const UserReelsSection = ({ userId }) => {
         initialReelId: reel._id,
         reelData: enrichedReel,
         sourceMode: 'profile',
-        userId: userId,
+        userId: targetId,
         reelIndex: reelsList.findIndex(item => item._id === reel._id),
         totalReels: reelsList.length,
         initialPage: currentPage
       }
     });
-  }, [navigate, userId, data, reelsList]);
+  }, [navigate, targetId, data, reelsList]);
 
   // Empty state component
   const EmptyComponent = useCallback(() => (
