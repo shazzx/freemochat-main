@@ -214,9 +214,9 @@ export class PostsController {
             throw new BadRequestException("No post found")
         }
 
-        if (post.postType !== 'reel') {
-            throw new BadRequestException("Provided post is not a reel")
-        }
+        // if (post.postType !== 'reel') {
+        //     throw new BadRequestException("Provided post is not a reel")
+        // }
 
         if (post.isUploaded == false) {
             throw new BadRequestException("please wait previous post update is in process...")
@@ -249,9 +249,9 @@ export class PostsController {
             throw new BadRequestException("No post found")
         }
 
-        if (post.postType !== 'reel') {
-            throw new BadRequestException("Provided post is not a reel")
-        }
+        // if (post.postType !== 'reel') {
+        //     throw new BadRequestException("Provided post is not a reel")
+        // }
 
         if (post.isUploaded == false) {
             throw new BadRequestException("please wait previous post update is in process...")
@@ -315,7 +315,7 @@ export class PostsController {
         let uploadedPost = await this.postService.createPost({
             ...reelData,
             isUploaded: false,
-            postType: 'reel',
+            postType: 'post',
             targetId,
             user: new Types.ObjectId(sub)
         });
@@ -325,7 +325,7 @@ export class PostsController {
             postId: uploadedPost._id.toString(),
             targetId,
             type: reelData.type,
-            postType: 'reel',
+            postType: 'post',
             fileBuffer: file.buffer,
             filename
         });
@@ -497,8 +497,8 @@ export class PostsController {
         const { postId, authorId, type, postType, targetId, reaction } = body
         const { sub } = req.user as { sub: string, username: string }
 
-        if (postType && postType !== 'post' && postType !== 'reel') {
-            throw new BadRequestException("Invalid post type. Only 'post' and 'reel' are allowed.");
+        if (postType && postType !== 'post') {
+            throw new BadRequestException("Invalid post type. Only 'post' allowed.");
         }
 
 
@@ -527,7 +527,7 @@ export class PostsController {
     @Post("likeComment")
     async likeComment(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
         const { targetId, reaction, authorId, postType } = body
-        if (postType && postType !== 'post' && postType !== 'reel') {
+        if (postType && postType !== 'post') {
             throw new BadRequestException("Invalid post type. Only 'post' and 'reel' are allowed.");
         }
         res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "comment", postType: postType || 'post', reaction, targetType: 'user', authorId }))
@@ -536,7 +536,7 @@ export class PostsController {
     @Post("likeReply")
     async likeReply(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
         const { targetId, reaction, authorId, postType } = body
-        if (postType && postType !== 'post' && postType !== 'reel') {
+        if (postType && postType !== 'post') {
             throw new BadRequestException("Invalid post type. Only 'post' and 'reel' are allowed.");
         }
         res.json(await this.postService.toggleLike({ userId: req.user.sub, targetId, type: "reply", reaction, targetType: 'user', authorId, postType: postType || 'post' }))

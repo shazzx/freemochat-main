@@ -100,7 +100,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
     sharesCount: reel.sharesCount || 0,
     videoViewsCount: reel.videoViewsCount || 0,
     type: reel.type || 'user',
-    postType: reel.postType || 'reel',
+    postType: reel.postType || 'post',
     targetId: reel.targetId,
     createdAt: reel.createdAt,
     content: reel.content || '',

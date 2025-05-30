@@ -73,7 +73,7 @@ function CommetsSection({ params, pageIndex, postId, postData, isReel }) {
         let formData = new FormData()
         let commentDetails = {
             targetType: 'user',
-            type: isReel ? 'reel' : 'post',
+            type: 'post',
             authorId: postData?.user?._id || postData?.user,
             postId,
             postType: postData?.postType || 'post',
@@ -101,7 +101,7 @@ function CommetsSection({ params, pageIndex, postId, postData, isReel }) {
         let replyData = {
             postId,
             targetType: 'user',
-            type: isReel ? "reel" : 'post',
+            type: 'post',
             commentAuthorId: replyState.user?._id || replyState.user,
             postType: postData?.postType || 'post',
             authorId: postData?.user?._id || postData?.user,

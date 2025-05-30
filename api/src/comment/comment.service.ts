@@ -268,9 +268,9 @@ export class CommentService {
 
 
 
-
+        console.log(postType, 'this is post type')
         const comment = await this.commentModel.create({ ...commentDetails, post: postId, user: new Types.ObjectId(userId), type: 'comment' })
-        await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postId), postType, "comments")
+        await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postId), (postType || 'post'), "comments")
 
         if (userId != authorId) {
             console.log('creating notificatoin for post owner')

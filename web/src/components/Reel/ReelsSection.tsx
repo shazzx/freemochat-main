@@ -860,7 +860,7 @@ const ReelsContainer: React.FC = () => {
         targetId: reel.targetId || (reel.target && reel.target._id) || '',
         // Normalize type with a default
         type: reel.type || 'user',
-        postType: reel.postType || 'reel',
+        postType: reel.postType || 'post',
         // Handle counts with defaults to prevent NaN
         likesCount: typeof reel.likesCount === 'number' ? reel.likesCount : 0,
         commentsCount: typeof reel.commentsCount === 'number' ? reel.commentsCount : 0,

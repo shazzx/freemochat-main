@@ -531,7 +531,7 @@ export class UserController {
         @Req() req: Request,
         @Res({ passthrough: true }) response: Response) {
         const { username, password } = loginUserDTO
-        const user = await this.authService.validateUser(username, password)
+        const user = await this.authService.validateUser(username?.trim(), password?.trim())
 
         const payload = await this.authService.login(user)
 
