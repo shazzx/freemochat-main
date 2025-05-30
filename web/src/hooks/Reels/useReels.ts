@@ -209,7 +209,7 @@ export const useReelsDataSource = (mode = 'feed', params: QueryParams = {}) => {
         sourceQuery = useUserReels(params.userId || '');
     }
     else if (mode === 'bookmarks') {
-        sourceQuery = useBookamrks('reel');
+        sourceQuery = useBookamrks();
     }
     else if (mode === 'videosFeed') {
         // Pass initialReelId to videosFeed query
