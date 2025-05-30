@@ -531,7 +531,7 @@ export class PostsService {
                                                 $and: [
                                                     { $eq: ['$targetId', '$$postId'] },
                                                     { $eq: ['$name', 'post'] },
-                                                    { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares']] }
+                                                    { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares', 'videoViews']] }
                                                 ]
                                             }
                                         }
@@ -571,6 +571,12 @@ export class PostsService {
                                         0
                                     ]
                                 },
+                                videoViewsCount: {
+                                    $ifNull: [
+                                        { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'videoViews'] } } }, 0] },
+                                        0
+                                    ]
+                                },
                                 bookmarksCount: {
                                     $ifNull: [
                                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
@@ -593,6 +599,7 @@ export class PostsService {
                                 isUploaded: 1,
                                 target: 1,
                                 reaction: 1,
+                                videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
                                 likesCount: { $ifNull: ['$likesCount.count', 0] },
                                 commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                                 sharesCount: { $ifNull: ['$sharesCount.count', 0] },
@@ -660,7 +667,7 @@ export class PostsService {
                                     $and: [
                                         { $eq: ['$targetId', '$$postId'] },
                                         { $eq: ['$name', 'post'] },
-                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares']] }
+                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares', 'videoViews']] }
                                     ]
                                 }
                             }
@@ -692,6 +699,12 @@ export class PostsService {
                             { count: 0 }
                         ]
                     },
+                    videoViewsCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'videoViews'] } } }, 0] },
+                            0
+                        ]
+                    },
                     bookmarksCount: {
                         $ifNull: [
                             { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
@@ -710,6 +723,7 @@ export class PostsService {
                     reaction: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
+                    videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
                     sharesCount: { $ifNull: ['$sharesCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
                     isLikedByUser: 1,
@@ -754,7 +768,7 @@ export class PostsService {
         }
 
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility } : { ...visibility };
-        let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type,  isUploaded: null, 'media.type': 'video', } : { ..._cursor, type,  'media.type': 'video', isUploaded: null }
+        let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type, isUploaded: null, 'media.type': 'video', } : { ..._cursor, type, 'media.type': 'video', isUploaded: null }
 
         const reels = await this.postModel.aggregate([
             { $match: query },
@@ -987,7 +1001,7 @@ export class PostsService {
                                                 $and: [
                                                     { $eq: ['$targetId', '$$postId'] },
                                                     { $eq: ['$name', 'post'] },
-                                                    { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
+                                                    { $in: ['$type', ['likes', 'comments', 'bookmarks',]] }
                                                 ]
                                             }
                                         }
@@ -1109,7 +1123,7 @@ export class PostsService {
                                     $and: [
                                         { $eq: ['$targetId', '$$postId'] },
                                         { $eq: ['$name', 'post'] },
-                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'videoViews']] }
+                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'videoViews', 'shares']] }
                                     ]
                                 }
                             }
@@ -1141,6 +1155,12 @@ export class PostsService {
                             0
                         ]
                     },
+                    sharesCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'shares'] } } }, 0] },
+                            0
+                        ]
+                    },
                     bookmarksCount: {
                         $ifNull: [
                             { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
@@ -1157,10 +1177,11 @@ export class PostsService {
                     user: 1,
                     target: 1,
                     reaction: 1,
-                    videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
+                    videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
+                    sharesCount: { $ifNull: ['$sharesCount.count', 0] },
                     isLikedByUser: 1,
                     targetId: 1,
                     type: 1,

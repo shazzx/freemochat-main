@@ -102,6 +102,7 @@ export class PostsController {
     async getReels(@Req() req: Request, @Res() response: Response) {
         const { sub } = req.user
         const { cursor, targetId } = req.query as { type: string, cursor: string, targetId: string }
+        console.log(targetId, 'get reels targetId')
         response.json(await this.postService.getReels(cursor, sub, targetId, 'user'))
     }
 
