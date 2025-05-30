@@ -754,7 +754,7 @@ export class PostsService {
         }
 
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility } : { ...visibility };
-        let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type, postType: 'post', isUploaded: null, 'media.type': 'video', } : { ..._cursor, type, postType: 'post', 'media.type': 'video', isUploaded: null }
+        let query = targetId ? { ..._cursor, targetId: new Types.ObjectId(targetId), type,  isUploaded: null, 'media.type': 'video', } : { ..._cursor, type,  'media.type': 'video', isUploaded: null }
 
         const reels = await this.postModel.aggregate([
             { $match: query },

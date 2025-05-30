@@ -77,7 +77,7 @@ const ThreeDotsModal: React.FC<ThreeDotsModalProps> = ({
             Report Post
           </Button>
 
-          {isReel && isProfileAndOwner && (
+          {isProfileAndOwner && (
             <>
               <Button
                 variant="outline"

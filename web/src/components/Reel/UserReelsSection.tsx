@@ -91,8 +91,8 @@ const UserReelsSection = ({ userId }) => {
         isLoading={isLoading}
         isFetchingNextPage={isFetchingNextPage}
         onReelPress={handleReelPress}
-        onRefresh={refetch}
-        refreshing={isLoading && !isFetchingNextPage}
+        // onRefresh={refetch}
+        // refreshing={isLoading && !isFetchingNextPage}
         // headerTitle="My Reels"
         ListEmptyComponent={<EmptyComponent />}
       />

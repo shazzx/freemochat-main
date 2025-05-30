@@ -62,17 +62,14 @@ const ThreeDotsSheet: React.FC<ThreeDotsSheetProps> = ({
           </div>
 
           <ScrollArea className="mt-2 max-h-60">
-            {isReel && (
-              <Button
-                variant="outline"
-                onClick={() => handleAction('autoscroll')}
-                className="w-full mb-2 bg-background text-foreground hover:accent rounded-lg justify-start h-12"
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Autoscroll Settings
-              </Button>
-
-            )}
+            <Button
+              variant="outline"
+              onClick={() => handleAction('autoscroll')}
+              className="w-full mb-2 bg-background text-foreground hover:accent rounded-lg justify-start h-12"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Autoscroll Settings
+            </Button>
 
             <Button
               variant="outline"
@@ -83,7 +80,7 @@ const ThreeDotsSheet: React.FC<ThreeDotsSheetProps> = ({
               Report Post
             </Button>
 
-            {isReel && isProfileAndOwner &&
+            {isProfileAndOwner &&
               <>
                 <Button
                   variant="outline"

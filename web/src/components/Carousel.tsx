@@ -43,8 +43,8 @@ function PostCarousel({ postMedia, setPostMedia, selectedMedia, setSelectedMedia
         // Clear file inputs to allow re-selection of the same files
         const imageInput = document.getElementById('post-image');
         const videoInput = document.getElementById('post-video');
-        if (imageInput) imageInput.value = '';
-        if (videoInput) videoInput.value = '';
+        if (imageInput) imageInput['value'] = '';
+        if (videoInput) videoInput['value'] = '';
     };
 
     if (visibleMedia.length === 0) {

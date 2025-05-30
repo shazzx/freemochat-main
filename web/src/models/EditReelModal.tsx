@@ -246,14 +246,14 @@ function EditReel({ setModelTrigger, createPost, editPost, postDetails, updatePo
                                 />
 
                                 {/* Media Carousel */}
-                                {(selectedMedia?.length > 0 || postDetails?.media?.length > 0) && !(isReel && editPost) && (
+                                {/* {(selectedMedia?.length > 0 || postDetails?.media?.length > 0) && !(isReel && editPost) && (
                                     <div className="flex items-center justify-center">
                                         <PostCarousel
                                             setPostMedia={setPostMedia}
                                             postMedia={postMedia}
                                         />
                                     </div>
-                                )}
+                                )} */}
                             </div>
 
                             {/* Action Buttons */}

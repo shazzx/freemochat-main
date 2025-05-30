@@ -765,7 +765,7 @@ const ReelsContainer: React.FC = () => {
 
   const downloadVideo = async () => {
     console.log('Downloading video for post:', flattenedData[activeReelIndex]?._id);
-    if (!flattenedData[activeReelIndex]?.media || !flattenedData[activeReelIndex].media[0]?.watermarkUrl || !flattenedData[activeReelIndex].media[0]?.url) {
+    if (!flattenedData[activeReelIndex]?.media) {
       toast.error("Download failed");
       return;
     }
