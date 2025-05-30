@@ -48,7 +48,7 @@ const CreatePostStack: React.FC<CreatePostStackProps> = ({
               </button>
 
               {/* Create Reel Option */}
-              <button
+              {/* <button
                 onClick={handleReelClick}
                 className="w-full flex items-center p-4 rounded-xl hover:bg-accent active:bg-gray-100 transition-colors group"
               >
@@ -60,7 +60,7 @@ const CreatePostStack: React.FC<CreatePostStackProps> = ({
                   <p className="text-sm text-gray-600 mt-0.5">Create and share short videos</p>
                 </div>
                 <ChevronRight size={20} className="text-gray-500 ml-2" strokeWidth={1.5} />
-              </button>
+              </button> */}
 
               {/* <button
                 disabled

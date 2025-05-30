@@ -28,7 +28,7 @@ function BottomNav() {
                     padding-bottom: env(safe-area-inset-bottom, 0.25rem);
                 }
             `}</style>
-            
+
             <div className='sm:hidden flex justify-between items-center bg-card w-full border-b-background border  py-1 safe-area-inset-bottom'>
                 <Link
                     onClick={() => {
@@ -65,12 +65,14 @@ function BottomNav() {
 
                 <Link
                     to={domain + "/reels"}
-                    className="flex flex-col items-center justify-center gap-1 text-xs rounded-lg px-2 py-2 min-h-[60px] min-w-[60px] text-muted-foreground transition-all hover:text-primary active:scale-95 active:bg-muted/20"
+                    className="flex flex-col items-center justify-center gap-1 text-xs rounded-lg px-2 py-2 min-h-[60px] min-w-[60px] text-[#091538] dark:text-muted-foreground transition-all hover:text-primary active:scale-95 active:bg-muted/20"
                 >
                     <div className="w-8 h-8 flex items-center justify-center">
                         <FilmIcon size={32} strokeWidth={1} />
                     </div>
-                    Reels
+                    <span className='text-muted-foreground'>
+                        Videos
+                    </span>
                 </Link>
 
                 <Link

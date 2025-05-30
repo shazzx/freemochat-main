@@ -72,7 +72,8 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
         let formData = new FormData()
         let commentDetails = {
             targetType: 'user',
-            type: isReel ? 'reel' : 'post',
+            type: 'post',
+            postType: 'post',
             authorId: postData?.user?._id || postData?.user,
             postId,
             commentDetails: { content: recordingUrl ? null : commentRef.current?.value, username: user?.username },
@@ -100,7 +101,8 @@ function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, post
         let replyData = {
             postId,
             targetType: 'user',
-            type: isReel ? "reel" : 'post',
+            type: 'post',
+            postType: 'post',
             commentAuthorId: replyState.user?._id || replyState.user,
             authorId: postData?.user?._id || postData?.user,
             replyDetails: { content: replyRef.current.value },

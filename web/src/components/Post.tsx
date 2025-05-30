@@ -30,6 +30,8 @@ import { MdShare } from 'react-icons/md'
 import { RiShareForward2Line, RiShareForwardLine } from 'react-icons/ri'
 import LikesModel from '@/models/LikesModel'
 import { ReelItem } from './Reel/ReelsSuggetion'
+import ShareBottomSheet from '@/models/ShareBottomSheet'
+import ShareModal from '@/models/ShareModal'
 
 interface PostProps {
     postData: any,
@@ -357,7 +359,7 @@ interface PostProps {
 // };
 
 // Create a separate SharedPostContent component
-const SharedPostContent = ({ sharedPost, useLikePost, useBookmarkPost, type, isSearch, query }) => {
+const SharedPostContent = ({ sharedPost, useLikePost, useBookmarkPost, type, isSearch, query, userId }) => {
     const navigate = useNavigate();
     const [expanded, setExpanded] = useState(false);
     const expandable = sharedPost?.content?.slice(0, 360);
@@ -514,7 +516,7 @@ const SharedPostContent = ({ sharedPost, useLikePost, useBookmarkPost, type, isS
                             (sharedPost.media.length > 1 ?
                                 <PostMediaCarousel media={sharedPost?.media} /> :
                                 sharedPost.media[0]?.type == 'video' ?
-                                    <AutoPlayVideo src={sharedPost?.media && sharedPost?.media[0]?.url} /> :
+                                    <AutoPlayVideo postId={sharedPost?._id} userId={userId} src={sharedPost?.media && sharedPost?.media[0]?.url} /> :
                                     <img className='object-contain max-h-[400px]' src={sharedPost?.media[0]?.url} alt="" />
                             ) :
                             <PostMediaCarousel mobile={true} media={sharedPost?.media} />
@@ -522,13 +524,30 @@ const SharedPostContent = ({ sharedPost, useLikePost, useBookmarkPost, type, isS
                     </div>
                 )}
             </CardContent>
-            <CardFooter className='py-2 px-3 flex gap-4 text-sm'>
-                <span className='cursor-pointer font-normal'>
-                    {sharedPost?.likesCount > 0 && "Likes " + sharedPost?.likesCount}
-                </span>
-                <span className='cursor-pointer font-normal'>
-                    {sharedPost?.commentsCount > 0 && "Comments " + sharedPost?.commentsCount}
-                </span>
+            <CardFooter className='flex justify-between p-2 font-normal'>
+                <div className='flex gap-2 text-sm'>
+                    <span className='cursor-pointer'>
+                        {sharedPost?.likesCount > 0 && "Likes " + sharedPost?.likesCount}
+                    </span>
+                    <span className='cursor-pointer'>
+                        {sharedPost?.commentsCount > 0 && "Comments " + sharedPost?.commentsCount}
+                    </span>
+                </div>
+
+                <div className='flex gap-2 text-sm font-normal'>
+                    {
+                        sharedPost?.sharesCount > 0 &&
+                        <span className='relative text-sm whitespace-nowrap cursor-pointer'>
+                            {"Shares " + sharedPost?.sharesCount}
+                        </span >
+                    }
+                    {
+                        sharedPost?.videoViewsCount > 0 &&
+                        <span className='relative text-sm whitespace-nowrap cursor-pointer'>
+                            {"Views " + sharedPost?.videoViewsCount}
+                        </span >
+                    }
+                </div>
             </CardFooter>
         </Card>
     );
@@ -830,7 +849,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                                     }
                                                 });
                                             }}>
-                                                <AutoPlayVideo src={postData?.media && postData?.media[0]?.url} />
+                                                <AutoPlayVideo userId={user?._id} postId={postData?._id} src={postData?.media && postData?.media[0]?.url} />
                                             </div>
 
                                             :
@@ -853,6 +872,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                     {hasSharedPost && (
                         <div className="px-2 sm:px-0 my-2">
                             <SharedPostContent
+                                userId={user?._id}
                                 sharedPost={postData.sharedPost}
                                 useLikePost={useLikePost}
                                 useBookmarkPost={useBookmarkPost}
@@ -872,23 +892,39 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                             ))}
                         </div>
                     }
-                    <div className='flex gap-2 w-full flex-start'>
-                        <span className='text-sm cursor-pointer' onClick={() => {
-                            setLikesModelState(true)
-                        }}>
-                            {postData?.likesCount > 0 && "Likes " + postData?.likesCount}
-                        </span>
-                        <span onClick={() => {
-                            if (!model && width > 540) {
-                                dispatch(setOpen({ click: '', id: postData._id }))
-                                navigate("?model=post")
-                                setModelTrigger(true)
-                                return
+                    <div className='flex  w-full justify-between'>
+                        <div className='flex gap-2 items-center w-full'>
+                            {postData?.likesCount > 0 && <span className='text-sm cursor-pointer' onClick={() => {
+                                setLikesModelState(true)
+                            }}>
+                                {"Likes " + postData?.likesCount}
+                            </span>}
+                            {postData?.commentsCount > 0 && <span onClick={() => {
+                                if (!model && width > 540) {
+                                    dispatch(setOpen({ click: '', id: postData._id }))
+                                    navigate("?model=post")
+                                    setModelTrigger(true)
+                                    return
+                                }
+                                setBottomCommentsState(true)
+                            }} className='text-sm cursor-pointer'>
+                                {"Comments " + postData?.commentsCount}
+                            </span >}
+                        </div>
+                        <div className='flex gap-2'>
+                            {
+                                postData?.sharesCount > 0 &&
+                                <span className='relative text-sm whitespace-nowrap cursor-pointer'>
+                                    {"Shares " + postData?.sharesCount}
+                                </span >
                             }
-                            setBottomCommentsState(true)
-                        }} className='text-sm cursor-pointer'>
-                            {postData?.commentsCount > 0 && "Comments " + postData?.commentsCount}
-                        </span >
+                            {
+                                postData?.videoViewsCount > 0 &&
+                                <span className='relative text-sm whitespace-nowrap cursor-pointer'>
+                                    {"Views " + postData?.videoViewsCount}
+                                </span >
+                            }
+                        </div>
                     </div>
                     <div className='flex items-center justify-between w-full'>
                         <LikeButton mutate={mutate} pageIndex={pageIndex} postIndex={postIndex} postData={postData} />
@@ -951,23 +987,49 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                             } */}
                         </div>
 
-                        <div className='relative flex gap-0 items-center cursor-pointer z-10' onClick={() => {
-                            if (shareState == false) {
-                                setShareState(true)
-                            }
-                        }}>
-                            <div className='flex flex-col gap-[2px] sm:gap-1 sm:flex-row items-center justify-center'>
+                        <div className='relative flex gap-0 items-center cursor-pointer'>
+                            <div className='flex flex-col gap-[2px] sm:gap-1 sm:flex-row items-center justify-center' onClick={() => {
+                                console.log('share clicked')
+                                if (!shareState) {
+                                    setShareState(true)
+                                }
+                            }}>
                                 <PiShareFatLight className='size-[24px] sm:size-[32px]' strokeWidth={1.2} />
                                 {/* <svg width="34" height="34" className="stroke-foreground  dark:stroke-foreground" viewBox="0 0 39 34" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path fill-rule="evenodd" clip-rule="evenodd" d="M25.4095 27.8205L33.26 21.2405C33.5699 20.9872 33.7496 20.6082 33.7496 20.208C33.7496 19.8078 33.5699 19.4288 33.26 19.1755L25.4095 12.5955C24.9908 12.2376 24.4046 12.1498 23.8994 12.3695C23.3942 12.5891 23.0586 13.0777 23.0347 13.628V16.2233C12.0132 14.314 9.25 24.177 9.25 29.7455C11.8067 25.5035 18.4322 17.814 23.0347 24.177V26.7793C23.0554 27.3312 23.3898 27.8227 23.8956 28.0445C24.4015 28.2663 24.9896 28.1793 25.4095 27.8205Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg> */}
 
                                 <span className='text-xs sm:text-sm' >Share</span>
-
                             </div>
+                            {shareState && width < 640 &&
+                                <ShareBottomSheet
+                                    isReel={false}
+                                    key={'user' + "Posts"}
+                                    isOpen={true}
+                                    sharedPost={postData}
+                                    postId={postData._id}
+                                    postType={postData.type}
+                                    // handleDownload={downloadVideo}
+                                    onClose={() => setShareState(false)}
+                                />
+                            }
+
+                            {shareState && width >= 640 &&
+                                <ShareModal
+                                    isReel={false}
+                                    key={'user' + "Posts"}
+                                    isOpen={true}
+                                    sharedPost={postData}
+                                    postId={postData._id}
+                                    postType={postData.type}
+                                    // handleDownload={downloadVideo}
+                                    onClose={() => setShareState(false)}
+                                />
+                            }
+                            {/*                             
                             {shareState &&
                                 <ShareModel key={type + "Posts"} sharedPost={postData?.sharedPost ? null : postData} postId={postData?._id} postType={postData?.type} setModelTrigger={setShareState} />
-                            }
+                            } */}
                             {/* <span className='text-sm sm:hidden'>25</span> */}
                         </div>
                     </div>

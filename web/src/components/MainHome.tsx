@@ -47,6 +47,7 @@ import NetworkStatusNotifier from "./NetworkStatusNotifier"
 import { useRTCClient } from "agora-rtc-react"
 import ChangeEmailModel from "@/models/ChangeEmailModel"
 import Uploader from "./Reel/ReelUploadLoader"
+import videoViewTracker from "./Reel/VideoViewTracker"
 
 const MainHome = ({ children }: any) => {
   useSocket()
@@ -110,6 +111,105 @@ const MainHome = ({ children }: any) => {
   const uploadStatus = useAppSelector((state) => state.uploadStatus)
 
   const [modalTrigger, setModalTrigger] = useState(true)
+
+  useEffect(() => {
+    // Initialize video view tracking for the entire app
+    if (user?._id) {
+      console.log('MainHome: Initializing app-level video view tracking for user:', user._id);
+
+      // Set user ID for video tracking
+      videoViewTracker.setUserId(user._id);
+      videoViewTracker.startPeriodicChecking();
+
+      // Enable debug mode in development
+      if (process.env.NODE_ENV === 'development') {
+        videoViewTracker.setDebug(true);
+      }
+    }
+
+    // Test function to verify sendBeacon works on tab close
+    const testSendBeacon = () => {
+      const testData = new URLSearchParams();
+      testData.append('test', 'tab_close_test');
+      testData.append('timestamp', Date.now().toString());
+
+      if (navigator.sendBeacon) {
+        const success = navigator.sendBeacon('/api/test-beacon', testData.toString());
+        console.log('sendBeacon test result:', success);
+      } else {
+        console.log('sendBeacon not supported');
+      }
+    };
+
+    // Handle app close/refresh - force send remaining views
+    const handleBeforeUnload = async (event) => {
+      console.log('MainHome: App is closing/refreshing - force sending pending views');
+      console.log('Tab closing - testing sendBeacon');
+      testSendBeacon();
+
+
+      try {
+        // Force send any pending views before app closes
+        await videoViewTracker.sendBatchToServer(true);
+        console.log('MainHome: Successfully sent pending views before app close');
+      } catch (error) {
+        console.error('MainHome: Error sending views before app close:', error);
+      }
+    };
+
+    // Handle page visibility change (when user switches tabs/minimizes)
+    const handleVisibilityChange = async () => {
+      if (document.hidden) {
+        console.log('MainHome: App went to background - sending pending views');
+
+        try {
+          // Send pending views when app goes to background
+          await videoViewTracker.sendBatchToServer(true);
+        } catch (error) {
+          console.error('MainHome: Error sending views on visibility change:', error);
+        }
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup function
+    return () => {
+      console.log('MainHome: Component unmounting - cleaning up video tracking');
+
+      // Remove event listeners
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+      // Force send remaining views and cleanup
+      videoViewTracker.cleanup().then(() => {
+        console.log('MainHome: Video tracking cleanup completed');
+      }).catch(error => {
+        console.error('MainHome: Error during video tracking cleanup:', error);
+      });
+    };
+  }, [user?._id]); // Dependency on user ID
+
+  // Optional: Add this effect to handle user changes (login/logout)
+  useEffect(() => {
+    // If user changes (login/logout), reset tracking
+    if (user?._id) {
+      videoViewTracker.setUserId(user._id);
+      console.log('MainHome: User changed, updated video tracking user ID:', user._id);
+    } else {
+      // User logged out, cleanup tracking
+      console.log('MainHome: User logged out, cleaning up video tracking');
+      videoViewTracker.cleanup().catch(error => {
+        console.error('MainHome: Error cleaning up on logout:', error);
+      });
+    }
+  }, [user?._id]);
+
+
+  // Note: No periodic interval needed - VideoViewTracker automatically sends when batch reaches 12 views
+  // We only need to handle app exit scenarios for remaining views
   return (
     <div className="relative h-screen w-full flex flex-col overflow-hidden">
       {uploadStatus && uploadStatus?.isUploading && uploadStatus?.type == 'reels' &&
@@ -513,9 +613,11 @@ const MainHome = ({ children }: any) => {
                 </Link>
                 <Link
                   to={domain + "/reels"}
-                  className={`flex items-center gap-3 rounded-lg px-4 py-2 text-muted-foreground transition-all hover:text-primary`}              >
-                  <FilmIcon size={34} strokeWidth={1.3} />
-                  Reels
+                  className={`flex items-center gap-3 rounded-lg px-4 py-2 text-[#091538] dark:text-muted-foreground transition-all hover:text-primary`}              >
+                  <FilmIcon size={34} strokeWidth={1} />
+                  <span className='text-muted-foreground'>
+                    Videos
+                  </span>
                 </Link>
                 <Link
                   onClick={() => {

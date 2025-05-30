@@ -59,7 +59,7 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
 
       createSharedPost.mutate(postDetails);
 
-      toast.success(isReel ? "Reel shared successfully!" : "Post shared successfully!");
+      toast.success("Reel shared successfully!");
       if (setPostIndex) {
         setPostIndex(null);
       }
@@ -75,7 +75,7 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
   const handleSharePress = useCallback(() => {
     if (navigator.share) {
       navigator.share({
-        title: `Check out this ${isReel ? 'reel' : 'post'}`,
+        title: "Check out this reel",
         url: `https://www.freedombook.co/post/${sharedPost?._id}?type=${sharedPost?.type}`
       });
     } else {
@@ -113,7 +113,7 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
           <div className="z-10 w-full h-full flex flex-col bg-background relative scroll-smooth overflow-auto px-6 pb-6">
             <div className="space-y-6">
               {/* Reel Preview (if it's a reel) */}
-              {isReel && sharedPost && (
+              {sharedPost && (
                 <div className="flex items-center space-x-4 p-4 bg-card rounded-lg border border-accent">
                   <div className="relative w-20 h-32 bg-black rounded-lg overflow-hidden flex-shrink-0">
                     {sharedPost.media?.[0]?.url && (
@@ -151,8 +151,8 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
               {/* Quick Captions */}
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">Quick Captions</h3>
-                <div 
-                  className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" 
+                <div
+                  className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
                   style={{
                     scrollbarWidth: 'none',
                     msOverflowStyle: 'none',
@@ -183,7 +183,7 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
                 <Textarea
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder={`What's on your mind about this ${isReel ? "reel" : "post"}?`}
+                  placeholder={`What's on your mind about this ${"reel"}?`}
                   className="min-h-[120px] resize-none border-2 focus:border-primary"
                   maxLength={500}
                 />
@@ -201,7 +201,7 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
                     className="flex-1 w-[50%] h-11 font-semibold"
                   >
                     <Share className="w-4 h-4 mr-2" />
-                    Share
+                    Share {isReel ? "Reel" : "Post"}
                   </Button>
 
                   <Button
@@ -212,13 +212,13 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
                       className="flex flex-1 items-center justify-center"
                     >
                       <WhatsappIcon size={18} borderRadius={64} className="mr-2" />
-                        WhatsApp
+                      WhatsApp
                     </WhatsappShareButton>
                   </Button>
 
 
                 </div>
-                {isReel && handleDownload && (
+                {handleDownload && (
                   <Button
                     onClick={handleDownload}
                     variant={downloadState?.downloadedUri ? "default" : "secondary"}

@@ -124,10 +124,10 @@ const ReelsList = ({
   isLoading = false,
   isFetchingNextPage = false,
   onReelPress,
-  onRefresh,
-  refreshing = false,
-  showHeader = true,
-  headerTitle = "Reels",
+  // onRefresh,
+  // refreshing = false,
+  // showHeader = true,
+  // headerTitle = "Reels",
   ListEmptyComponent = null
 }) => {
   // Create a ref for the intersection observer target
@@ -194,13 +194,13 @@ const ReelsList = ({
   return (
     <div className="w-full">
       {/* Header */}
-      {showHeader && (
+      {/* {showHeader && (
         <div className="p-4 pb-3">
           <h3 className="text-lg font-semibold text-foreground m-0">
             {headerTitle}
           </h3>
         </div>
-      )}
+      )} */}
 
       {/* Grid Container */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 px-4">

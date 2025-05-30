@@ -8,11 +8,11 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 // Custom hook for intersection observer
-const useIntersectionObserver = ({ 
-  onIntersect, 
-  threshold = 0.1, 
+const useIntersectionObserver = ({
+  onIntersect,
+  threshold = 0.1,
   rootMargin = '100px',
-  enabled = true 
+  enabled = true
 }) => {
   const targetRef = useRef(null)
 
@@ -71,8 +71,8 @@ const Tabs = ({ currentTab, setCurrentTab, tabs }) => {
           key={tab.id}
           onClick={() => setCurrentTab(tab.id)}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${currentTab === tab.id
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            ? 'bg-white dark:bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
             }`}
         >
           {tab.id === 'posts' ? <List size={16} /> : <Video size={16} />}
@@ -187,11 +187,11 @@ const ReelCard = ({ reel, onPress }) => {
 }
 
 // Updated ReelsList Component with infinite scroll
-const ReelsList = ({ 
-  data, 
-  isLoading, 
-  onReelPress, 
-  onRefresh, 
+const ReelsList = ({
+  data,
+  isLoading,
+  onReelPress,
+  onRefresh,
   refreshing,
   onLoadMore,
   hasNextPage,
@@ -244,7 +244,7 @@ const ReelsList = ({
           />
         ))}
       </div>
-      
+
       {/* Infinite scroll trigger and loading states */}
       <div className="w-full">
         {isFetchingNextPage && <LoadingIndicator />}
@@ -258,9 +258,9 @@ const ReelsList = ({
 }
 
 // Updated PostsList Component with infinite scroll
-const PostsList = ({ 
-  data, 
-  isLoading, 
+const PostsList = ({
+  data,
+  isLoading,
   user,
   onLoadMore,
   hasNextPage,
@@ -318,7 +318,7 @@ const PostsList = ({
           )
         })
       })}
-      
+
       {/* Infinite scroll trigger and loading states */}
       <div className="w-full">
         {isFetchingNextPage && <LoadingIndicator />}
@@ -345,13 +345,13 @@ function Bookmarked() {
   ]
 
   // Fetch bookmarks based on current tab
-  const { 
-    data, 
-    isLoading, 
-    refetch, 
-    fetchNextPage, 
-    hasNextPage, 
-    isFetchingNextPage 
+  const {
+    data,
+    isLoading,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
   } = useBookamrks(currentTab === 'posts' ? 'post' : 'reel')
 
   console.log(data, 'bookmarked data for', currentTab)

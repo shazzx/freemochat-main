@@ -57,18 +57,16 @@ const ThreeDotsModal: React.FC<ThreeDotsModalProps> = ({
             Post Options
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="flex flex-col space-y-2 py-4">
-          {isReel && (
-            <Button
-              variant="outline"
-              onClick={() => handleAction('autoscroll')}
-              className="w-full justify-start h-12 hover:bg-accent hover:text-accent-foreground rounded-lg"
-            >
-              <Settings className="mr-3 h-4 w-4" />
-              Autoscroll Settings
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            onClick={() => handleAction('autoscroll')}
+            className="w-full justify-start h-12 hover:bg-accent hover:text-accent-foreground rounded-lg"
+          >
+            <Settings className="mr-3 h-4 w-4" />
+            Autoscroll Settings
+          </Button>
 
           <Button
             variant="outline"

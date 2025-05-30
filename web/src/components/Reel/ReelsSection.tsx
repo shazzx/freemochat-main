@@ -162,8 +162,8 @@ const ReelsContainer: React.FC = () => {
 
     if (location.pathname.includes('profile')) return 'profile';
     if (location.pathname.includes('bookmarks')) return 'bookmarks';
-    if (location.pathname.includes('videos')) return 'videosFeed';
-    return 'reelsFeed';
+    if (location.pathname.includes('videos')) return 'reelsFeed';
+    return 'videosFeed';
   }, [location.pathname, location.state]);
   const { user } = useAppSelector((state) => state.user);
 
@@ -282,13 +282,6 @@ const ReelsContainer: React.FC = () => {
 
   // Auto-scroll functionality
   const handleAutoScroll = useCallback((isFromLongPress = false) => {
-    // Don't auto-scroll if in videosFeed mode
-    if (sourceMode === 'videosFeed') {
-      console.log('Auto-scroll prevented: videosFeed mode');
-      return;
-    }
-
-    // Don't auto-scroll if a bottom sheet is open
     if (bottomSheetOpen) {
       console.log('Auto-scroll prevented: bottom sheet is open');
       return;
@@ -338,11 +331,6 @@ const ReelsContainer: React.FC = () => {
     if (autoScrollTimeoutRef.current) {
       clearTimeout(autoScrollTimeoutRef.current);
       autoScrollTimeoutRef.current = null;
-    }
-
-    if (sourceMode == 'videosFeed') {
-      console.log('Auto-scroll prevented: videosFeed mode');
-      return;
     }
 
     // If auto-scroll is disabled, exit
@@ -409,7 +397,7 @@ const ReelsContainer: React.FC = () => {
     console.log(`Updating playback state for video ${videoId}: ${isPlaying ? 'playing' : 'paused'}`);
 
     // Update video tracker as before
-    (sourceMode !== 'videosFeed') && videoViewTracker.updatePlaybackState(videoId, isPlaying);
+    videoViewTracker.updatePlaybackState(videoId, isPlaying);
 
     // Only start auto-scroll timer if video is playing for the first time
     if (isPlaying && !hasVideoPlayedOnceRef.current) {
@@ -456,46 +444,41 @@ const ReelsContainer: React.FC = () => {
 
   // REPLACE THIS ENTIRE useEffect in ReelsContainer.tsx (Component cleanup section):
 
-  useEffect(() => {
-    // Set user ID for video view tracking when component mounts
-    if (user?._id && sourceMode !== 'videosFeed') {
-      videoViewTracker.setUserId(user._id);
-      videoViewTracker.startPeriodicChecking();
-      videoViewTracker.setDebug(process.env.NODE_ENV === 'development'); // Enable debug in dev mode
-      console.log('Video view tracking initialized for user:', user._id);
-    }
+  // useEffect(() => {
+  //   // Set user ID for video view tracking when component mounts
+  //   if (user?._id) {
+  //     videoViewTracker.setUserId(user._id);
+  //     videoViewTracker.startPeriodicChecking();
+  //     videoViewTracker.setDebug(process.env.NODE_ENV === 'development'); // Enable debug in dev mode
+  //     console.log('Video view tracking initialized for user:', user._id);
+  //   }
 
-    return () => {
-      isComponentMounted.current = false;
+  //   return () => {
+  //     isComponentMounted.current = false;
 
-      // Make sure to stop tracking the active video first
-      if (activeVideoRef.current) {
-        // Stop tracking and ensure playback is set to false
-        if (sourceMode !== 'videosFeed') {
-          videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
-          videoViewTracker.stopTracking(activeVideoRef.current);
-        }
-        activeVideoRef.current = null;
-      }
+  //     // Make sure to stop tracking the active video first
+  //     if (activeVideoRef.current) {
+  //       // Stop tracking and ensure playback is set to false
 
-      // Force send all pending views
-      if (sourceMode !== 'videosFeed') {
-        videoViewTracker.sendBatchToServer(true);
-      }
+  //       videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
+  //       videoViewTracker.stopTracking(activeVideoRef.current);
+  //       activeVideoRef.current = null;
+  //     }
 
-      // Full cleanup
-      if (sourceMode !== 'videosFeed') {
-        videoViewTracker.cleanup().catch(err => {
-          console.error('Error during videoViewTracker cleanup:', err);
-        });
-      }
+  //     // Force send all pending views
+  //     videoViewTracker.sendBatchToServer(true);
 
-      // Clear timeouts
-      if (autoScrollTimeoutRef.current) {
-        clearTimeout(autoScrollTimeoutRef.current);
-      }
-    };
-  }, [user, sourceMode]);
+  //     // Full cleanup
+  //     videoViewTracker.cleanup().catch(err => {
+  //       console.error('Error during videoViewTracker cleanup:', err);
+  //     });
+
+  //     // Clear timeouts
+  //     if (autoScrollTimeoutRef.current) {
+  //       clearTimeout(autoScrollTimeoutRef.current);
+  //     }
+  //   };
+  // }, [user, sourceMode]);
 
   // REPLACE the intersection observer useEffect in ReelsContainer.tsx (around line 280)
   // FROM the existing intersection observer setup
@@ -524,7 +507,7 @@ const ReelsContainer: React.FC = () => {
               setActiveReelIndex(reelIndex);
 
               // Stop tracking previous video
-              if (activeVideoRef.current && sourceMode !== 'videosFeed') {
+              if (activeVideoRef.current) {
                 videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
                 videoViewTracker.stopTracking(activeVideoRef.current);
                 activeVideoRef.current = null;
@@ -532,7 +515,7 @@ const ReelsContainer: React.FC = () => {
 
               // Start tracking new video
               const currentVideo = flattenedData[reelIndex];
-              if (currentVideo?.id && sourceMode !== 'videosFeed') {
+              if (currentVideo?.id) {
                 videoViewTracker.startTracking({
                   videoId: currentVideo.id,
                   type: 'video'
@@ -623,14 +606,12 @@ const ReelsContainer: React.FC = () => {
         VideoPlaybackManager.pauseCurrentlyPlaying();
 
         // Stop tracking current video and force send any pending batches
-        if (activeVideoRef.current && (sourceMode !== 'videosFeed')) {
+        if (activeVideoRef.current) {
           videoViewTracker.stopTracking(activeVideoRef.current);
         }
 
         // Send pending view batches
-        if (sourceMode !== 'videosFeed') {
-          videoViewTracker.sendBatchToServer(true);
-        }
+        videoViewTracker.sendBatchToServer(true);
       } else {
         // Page is visible again (equivalent to app coming to foreground)
         if (autoScrollReels.autoScroll && autoScrollReels.autoScrollDelay && hasVideoPlayedOnceRef.current) {
@@ -652,7 +633,7 @@ const ReelsContainer: React.FC = () => {
             });
 
             // Resume tracking
-            if (currentVideo.id && sourceMode !== 'videosFeed') {
+            if (currentVideo.id) {
               videoViewTracker.startTracking({
                 videoId: currentVideo.id,
                 type: 'video'
@@ -685,7 +666,7 @@ const ReelsContainer: React.FC = () => {
   //   console.log(`Updating playback state for video ${videoId}: ${isPlaying ? 'playing' : 'paused'}`);
 
   //   // Update video tracker as before
-  //   (sourceMode !== 'videosFeed') && videoViewTracker.updatePlaybackState(videoId, isPlaying);
+  //    videoViewTracker.updatePlaybackState(videoId, isPlaying);
 
   //   // Only start auto-scroll timer if video is playing for the first time
   //   // AND we're not in long press mode
@@ -712,38 +693,32 @@ const ReelsContainer: React.FC = () => {
 
 
 
-  useEffect(() => {
-    return () => {
-      isComponentMounted.current = false;
+  // useEffect(() => {
+  //   return () => {
+  //     isComponentMounted.current = false;
 
-      // Make sure to stop tracking the active video first
-      if (activeVideoRef.current) {
-        // Stop tracking and ensure playback is set to false
-        if (sourceMode !== 'videosFeed') {
-          videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
-          videoViewTracker.stopTracking(activeVideoRef.current);
-        }
-        activeVideoRef.current = null;
-      }
+  //     // Make sure to stop tracking the active video first
+  //     if (activeVideoRef.current) {
+  //       // Stop tracking and ensure playback is set to false
+  //       videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
+  //       videoViewTracker.stopTracking(activeVideoRef.current);
+  //       activeVideoRef.current = null;
+  //     }
 
-      // Force send all pending views
-      if (sourceMode !== 'videosFeed') {
-        videoViewTracker.sendBatchToServer(true);
-      }
+  //     // Force send all pending views
+  //     videoViewTracker.sendBatchToServer(true);
 
-      // Full cleanup
-      if (sourceMode !== 'videosFeed') {
-        videoViewTracker.cleanup().catch(err => {
-          console.error('Error during videoViewTracker cleanup:', err);
-        });
-      }
+  //     // Full cleanup
+  //     videoViewTracker.cleanup().catch(err => {
+  //       console.error('Error during videoViewTracker cleanup:', err);
+  //     });
 
-      // Clear timeouts
-      if (autoScrollTimeoutRef.current) {
-        clearTimeout(autoScrollTimeoutRef.current);
-      }
-    };
-  }, [user, sourceMode]);
+  //     // Clear timeouts
+  //     if (autoScrollTimeoutRef.current) {
+  //       clearTimeout(autoScrollTimeoutRef.current);
+  //     }
+  //   };
+  // }, [user, sourceMode]);
 
   // Handle user video interaction
   const handleUserVideoInteraction = useCallback(() => {
@@ -1043,7 +1018,7 @@ const ReelsContainer: React.FC = () => {
           </svg>
           {(activeReelIndex == 0) &&
             <span className="text-white">
-              {(sourceMode !== 'videosFeed') ? "Reels" : "Videos"}
+              Videos
             </span>
           }
         </button>
@@ -1070,10 +1045,10 @@ const ReelsContainer: React.FC = () => {
             editPost={true}
             postDetails={flattenedData && flattenedData[activeReelIndex]}
             postId={flattenedData && flattenedData[activeReelIndex]?._id}
-            isReel={true} />
+            isReel={false} />
         }
 
-        
+
         {!isMobile && updateReelActive &&
           <EditReel
             setModelTrigger={setUpdateReelActive}
@@ -1084,17 +1059,17 @@ const ReelsContainer: React.FC = () => {
             editPost={true}
             postDetails={flattenedData && flattenedData[activeReelIndex]}
             postId={flattenedData && flattenedData[activeReelIndex]?._id}
-            isReel={true} />
+            isReel={false} />
         }
 
 
         {/* Bottom Sheets and other components remain unchanged */}
         {activeSheet === 'comments' && isMobile && (
           <BottomComments
-            isReel={sourceMode !== 'videosFeed'}
+            isReel={false}
             pageIndex={flattenedData && flattenedData[activeReelIndex]?.pageIndex}
             params={{
-              type: (sourceMode !== 'videosFeed') ? sourceMode : 'userPosts',
+              type: 'userPosts',
               targetId: flattenedData && flattenedData[activeReelIndex]?.targetId,
               postId: flattenedData && flattenedData[activeReelIndex]?._id,
               reelsKey: [sourceMode, sourceParams?.initialReelId]
@@ -1108,7 +1083,7 @@ const ReelsContainer: React.FC = () => {
 
         {activeSheet === 'share' && !isMobile && (
           <ShareModal
-            isReel={sourceMode !== 'videosFeed'}
+            isReel={false}
             key={'user' + "Posts"}
             isOpen={true}
             sharedPost={flattenedData && (flattenedData[activeReelIndex])}
@@ -1122,7 +1097,7 @@ const ReelsContainer: React.FC = () => {
 
         {activeSheet === 'share' && isMobile && (
           <ShareBottomSheet
-            isReel={sourceMode !== 'videosFeed'}
+            isReel={false}
             key={'user' + "Posts"}
             isOpen={true}
             sharedPost={flattenedData && (flattenedData[activeReelIndex])}
@@ -1147,7 +1122,7 @@ const ReelsContainer: React.FC = () => {
             onClose={closeSheet}
             setUpdateReelActive={setUpdateReelActive}
             postId={currentReelId}
-            isReel={sourceMode !== 'videosFeed'}
+            isReel={false}
             onShowAutoScrollSettings={() => setShowAutoScrollControls(true)}
             onReportPost={() => setReportModalVisible(true)}
           />
@@ -1160,7 +1135,7 @@ const ReelsContainer: React.FC = () => {
             onClose={closeSheet}
             setUpdateReelActive={setUpdateReelActive}
             postId={currentReelId}
-            isReel={sourceMode !== 'videosFeed'}
+            isReel={false}
             onShowAutoScrollSettings={() => setShowAutoScrollControls(true)}
             onReportPost={() => setReportModalVisible(true)}
           />
@@ -1170,10 +1145,10 @@ const ReelsContainer: React.FC = () => {
       {/* Desktop comments section remains the same */}
       {!isMobile && (
         <Comments
-          isReel={sourceMode !== 'videosFeed'}
+          isReel={false}
           pageIndex={flattenedData && flattenedData[activeReelIndex]?.pageIndex}
           params={{
-            type: (sourceMode !== 'videosFeed') ? sourceMode : 'userPosts',
+            type: 'userPosts',
             targetId: flattenedData && flattenedData[activeReelIndex]?.targetId,
             postId: flattenedData && flattenedData[activeReelIndex]?._id,
             reelsKey: [sourceMode, sourceParams?.initialReelId]
