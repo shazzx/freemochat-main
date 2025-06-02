@@ -69,24 +69,40 @@ export class CommentController {
     return await this.commentService.getReplies(req.query.commentId, req.query.cursor, req.user.sub)
   }
 
-  @UseInterceptors(FileInterceptor('file'))
-  @Put("comment/reply")
-  async updateReply(@Req() req: Request, @Res() res: Response, @UploadedFile() file: Express.Multer.File,
-    @Body("replyData") replyData: string,
-    @Res() response: Response) {
-    const { replyDetails, replyId } = JSON.parse(replyData)
-    const { sub } = req.user as { sub: string }
-    response.json(await this.commentService.updateReply(replyDetails, replyId, sub))
+  @Put("comment")
+  async updateComment(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() body: { commentId: string; content: string }
+  ) {
+    const { commentId, content } = body;
+    const { sub } = req.user as { sub: string };
+
+    const result = await this.commentService.updateComment(
+      { content },
+      commentId,
+      sub
+    );
+
+    return res.json(result);
   }
 
-  @UseInterceptors(FileInterceptor('file'))
-  @Put("comment")
-  async updateComment(@Req() req: Request, @Res() res: Response, @UploadedFile() file: Express.Multer.File,
-    @Body("commentData") commentData: string,
-    @Res() response: Response) {
-    const { commentDetails, commentId } = JSON.parse(commentData)
-    const { sub } = req.user as { sub: string }
-    response.json(await this.commentService.updateComment(commentDetails, commentId, sub))
+  @Put("comment/reply")
+  async updateReply(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() body: { replyId: string; content: string }
+  ) {
+    const { replyId, content } = body;
+    const { sub } = req.user as { sub: string };
+
+    const result = await this.commentService.updateReply(
+      { content },
+      replyId,
+      sub
+    );
+
+    return res.json(result);
   }
 
   @Delete("comment")

@@ -37,10 +37,8 @@ export const UpdateUser = z.object({
         city: z.string().optional(),
         area: z.string().optional(),
     }).optional(),
-    images: z.object({
-        profile: z.string().optional(),
-        cover: z.string().optional(),
-    }).optional(),
+    profile: z.null().optional(),
+    cover: z.null().optional(),
     education: z.array(z.object({
         institution: z.string(),
         degree: z.string(),

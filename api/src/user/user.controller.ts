@@ -727,6 +727,23 @@ export class UserController {
         response.json(await this.userService.getFriendRequests(cursor, sub))
     }
 
+    private async deleteProfile(profile: string) {
+        let userProfile = profile.split('/')
+        console.log(`deleting ${userProfile}, from s3...`)
+
+        let profileFilename = userProfile[userProfile.length - 1]
+
+        console.log(profileFilename, 'filenames')
+
+        console.log(`deleting ${profileFilename} from s3...`)
+        const deleted = await this.uploadService.deleteFromS3(profileFilename)
+        console.log(deleted, 'deleted')
+        if (!deleted) {
+            throw new InternalServerErrorException("Failed to delete profile image from S3")
+        }
+        return true
+    }
+
     @UseInterceptors(FileInterceptor('file'))
     @Post("update")
     async updateUser(
@@ -738,8 +755,27 @@ export class UserController {
         // const { images } = updateUserDTO
         const { sub } = req.user as { sub: string, username: string }
 
+        const _user = await this.userService.getRawUser(sub)
+        if (!_user) {
+            throw new BadRequestException("User not found")
+        }
+
         let images = {}
-        console.log(file)
+        if (!updateUserDTO) {
+            throw new BadRequestException("No data provided to update user")
+        }
+
+        if (updateUserDTO.profile === null && !file) {
+            if (_user.profile) {
+                await this.deleteProfile(_user.profile)
+            }
+        }
+        if (updateUserDTO.cover === null && !file) {
+            if (_user.cover) {
+                await this.deleteProfile(_user.cover)
+            }
+        }
+
         if (file) {
             const fileType = getFileType(file.mimetype)
             const filename = uuidv4()
@@ -753,8 +789,6 @@ export class UserController {
                 images = { cover: url }
             }
         }
-
-        console.log(updateUserDTO, images)
 
         let user = await this.userService.updateUser(sub, { ...updateUserDTO, ...images })
 

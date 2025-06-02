@@ -181,19 +181,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(recepient?.socketId).emit('chat', messageDetails);
   }
 
-  @SubscribeMessage("toggleJoin")
-  async handleJoinGroup(client: Socket, payload: { userId: string, groupId: string, memberUsername: string, adminUsername: string, type?: string }) {
+  // @SubscribeMessage("toggleJoin")
+  // async handleJoinGroup(client: Socket, payload: { userId: string, groupId: string, memberUsername: string, adminUsername: string, type?: string }) {
 
-    if (payload?.type && payload?.type == 'leave') {
-      const result = await this.memberService.toggleJoin(payload.userId, { groupId: payload.groupId, type: "chatgroup" }, payload.memberUsername, payload.adminUsername, payload.type)
-      return
-    }
+  //   if (payload?.type && payload?.type == 'leave') {
+  //     const result = await this.memberService.toggleJoin(payload.userId, { groupId: payload.groupId, type: "chatgroup" }, payload.memberUsername, payload.adminUsername, payload.type)
+  //     return
+  //   }
 
-    const result = await this.memberService.toggleJoin(payload.userId, { groupId: payload.groupId, type: "chatgroup" }, payload.memberUsername, payload.adminUsername)
-    const user = await this.cacheService.getOnlineUser(payload.userId)
-    this.server.to(payload.groupId).emit("toggleJoin", { groupId: payload.groupId })
-    this.server.to(user?.socketId).emit("toggleJoin", { groupId: payload.groupId })
-  }
+  //   const result = await this.memberService.toggleJoin(payload.userId, { groupId: payload.groupId, type: "chatgroup" }, payload.memberUsername, payload.adminUsername)
+  //   const user = await this.cacheService.getOnlineUser(payload.userId)
+  //   this.server.to(payload.groupId).emit("toggleJoin", { groupId: payload.groupId })
+  //   this.server.to(user?.socketId).emit("toggleJoin", { groupId: payload.groupId })
+  // }
 
   // @SubscribeMessage("leavegroup")
   // async handleLeaveGroup(client: Socket, payload: { userId: string, groupId: string }) {

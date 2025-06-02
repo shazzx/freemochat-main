@@ -122,6 +122,7 @@ export class CommentService {
                     likesCount: 1,
                     isLikedByUser: 1,
                     createdAt: 1,
+                    updatedAt: 1,
                 },
             },
         ]).sort({ createdAt: -1 });
@@ -219,6 +220,7 @@ export class CommentService {
                     likesCount: 1,
                     isLikedByUser: 1,
                     createdAt: 1,
+                    updatedAt: 1,
                 },
             },
         ]).sort({ createdAt: -1 });
@@ -290,14 +292,14 @@ export class CommentService {
         return comment
     }
 
-    async updateComment(commentDetails, commentId: string, userId: string) {
-        const comment = await this.commentModel.findOneAndUpdate({ _id: new Types.ObjectId(commentId), user: new Types.ObjectId(userId) }, { content: commentDetails.content })
+    // async updateComment(commentDetails, commentId: string, userId: string) {
+    //     const comment = await this.commentModel.findOneAndUpdate({ _id: new Types.ObjectId(commentId), user: new Types.ObjectId(userId) }, { content: commentDetails.content })
 
-        if (!comment) {
-            throw new BadRequestException('Comment not found or you do not have permission to update it.');
-        }
-        return comment
-    }
+    //     if (!comment) {
+    //         throw new BadRequestException('Comment not found or you do not have permission to update it.');
+    //     }
+    //     return comment
+    // }
 
     async removeComment(commentDetails, userId: string) {
         const deletedComment = await this.commentModel.findOneAndDelete({ _id: new Types.ObjectId(commentDetails.commentId), user: new Types.ObjectId(userId) })
@@ -417,15 +419,51 @@ export class CommentService {
 
     }
 
-    async updateReply(replyDetails, replyId: string, userId: string) {
-        const reply = await this.commentModel.findOneAndUpdate({ _id: new Types.ObjectId(replyId), user: new Types.ObjectId(userId) }, { content: replyDetails.content })
+    async updateComment(commentDetails: { content: string }, commentId: string, userId: string) {
+        const comment = await this.commentModel.findOneAndUpdate(
+            {
+                _id: new Types.ObjectId(commentId),
+                user: new Types.ObjectId(userId)
+            },
+            {
+                content: commentDetails.content,
+            },
+            { new: true } // Return the updated document
+        ).populate('user', 'firstname lastname username profile');
 
-        if (!reply) {
-            throw new BadRequestException('reply not found or you do not have permission to update it.');
+        if (!comment) {
+            throw new BadRequestException('Comment not found or you do not have permission to update it.');
         }
-        return reply
+
+        return {
+            success: true,
+            message: 'Comment updated successfully',
+            comment
+        };
     }
 
+    async updateReply(replyDetails: { content: string }, replyId: string, userId: string) {
+        const reply = await this.commentModel.findOneAndUpdate(
+            {
+                _id: new Types.ObjectId(replyId),
+                user: new Types.ObjectId(userId)
+            },
+            {
+                content: replyDetails.content,
+            },
+            { new: true } // Return the updated document
+        ).populate('user', 'firstname lastname username profile');
+
+        if (!reply) {
+            throw new BadRequestException('Reply not found or you do not have permission to update it.');
+        }
+
+        return {
+            success: true,
+            message: 'Reply updated successfully',
+            reply
+        };
+    }
 
 
     async removeReply(replyDetails, userId: string) {

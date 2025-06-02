@@ -3,7 +3,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Request, Response } from 'express';
 import { MemberService } from './member.service';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { GetMembers, GetMembersDTO, ToggleAdmin, ToggleAdminDTO } from 'src/schema/validation/member';
+import { GetMembers, GetMembersDTO, RemoveMember, RemoveMemberDTO, ToggleAdmin, ToggleAdminDTO } from 'src/schema/validation/member';
 import { JoinGroup, JoinGroupDTO } from 'src/schema/validation/chatgroup';
 
 @Controller('members')
@@ -13,7 +13,7 @@ export class MemberController {
   @Get()
   async getMembers(@Query(new ZodValidationPipe(GetMembers)) getMembersDTO: GetMembersDTO, @Req() req: Request, @Res() res: Response) {
     const { cursor, groupId } = getMembersDTO
-    
+
     res.json(
       await this.memberService.getMembers(cursor, groupId)
     )
@@ -23,14 +23,26 @@ export class MemberController {
   async toggleJoin(@Body(new ZodValidationPipe(JoinGroup)) joinGroupDTO: JoinGroupDTO, @Req() req) {
     const { groupDetails } = joinGroupDTO
     const { sub } = req.user
-    return await this.memberService.toggleJoin(sub, groupDetails)
+    return await this.memberService.toggleJoin(sub, groupDetails.groupId)
   }
 
 
   @Post("toggleAdmin")
   async toggleAdmin(@Body(new ZodValidationPipe(ToggleAdmin)) toggleAdminDTO: ToggleAdminDTO, @Req() req) {
-    const { groupId, userId, isChatGroup } = toggleAdminDTO
+    const { groupId, userId } = toggleAdminDTO
     const { sub } = req.user
-    return await this.memberService.toggleAdmin(sub, userId, groupId, isChatGroup)
+    return await this.memberService.toggleAdmin(sub, userId, groupId, false)
+  }
+
+  @Post("remove")
+  async removeMembers(
+    @Body(new ZodValidationPipe(RemoveMember)) { userId, groupId }: RemoveMemberDTO,
+    @Req() req,
+    @Res() res
+  ) {
+    const { sub } = req.user
+    res.json(
+      await this.memberService.removeMember(sub, userId, groupId)
+    )
   }
 }

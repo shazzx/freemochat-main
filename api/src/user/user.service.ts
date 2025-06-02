@@ -244,7 +244,9 @@ export class UserService {
     }
 
     async removeFriend(userId: string, recepientId: string) {
-        console.log(recepientId, userId)
+        if (userId === recepientId) {
+            throw new BadRequestException(Error.REMOVE_FRIENDS)
+        }
         const filter = {
             user: new Types.ObjectId(userId),
             friend: new Types.ObjectId(recepientId),

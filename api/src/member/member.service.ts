@@ -92,10 +92,10 @@ export class MemberService {
         return results
     }
 
-    async getGroupMemberIds(groupId){
-        const members = await this.memberModel.find({groupId: new Types.ObjectId(groupId)})
+    async getGroupMemberIds(groupId) {
+        const members = await this.memberModel.find({ groupId: new Types.ObjectId(groupId) })
         const group = await this.chatGroupModel.findById(groupId)
-        const _members = members.map((member)=> {
+        const _members = members.map((member) => {
             return member.member.toString()
         })
         const _admins = group.admins.map((admin) => {
@@ -112,61 +112,160 @@ export class MemberService {
         return [...groups.map((group) => group.groupId.toString()), ..._groups.map((group, i) => group._id.toString())]
     }
 
-    async toggleJoin(_userId, groupDetails, memberUsername?, adminUsername?, type?) {
-        let userId = groupDetails?.userId || _userId
+    // Fixed backend toggleJoinGroup method to handle admin users properly
+    async toggleJoin(_userId: string, _groupId: string) {
+        const userId = new Types.ObjectId(_userId)
+        const groupId = new Types.ObjectId(_groupId)
 
-        // console.log('yes yes', groupDetails)
-        // console.log('joiner', userId, 'user', _userId)
+        try {
+            // Check if user is currently a member
+            const existingMember = await this.memberModel.findOne({
+                groupId,
+                member: userId
+            });
 
-        const filter = {
-            member: new Types.ObjectId(userId),
-            groupId: new Types.ObjectId(groupDetails.groupId),
-        };
-
-        const member = await this.memberModel.findOne({ member: filter.member })
-
-        if (member && member.isAdmin == 1) {
-            // console.log('deleting')
-            let _member = await this.chatGroupModel.updateOne(
-                { _id: filter.groupId },
-                { $pull: { admins: filter.member } },
-            );
-            // console.log(_member)
-        }
-
-        const deleteResult = await this.memberModel.deleteOne(filter);
-
-        if (deleteResult.deletedCount === 0) {
-            await this.memberModel.create({ ...filter, type: groupDetails.type });
-            if (groupDetails.type == 'chatgroup') {
-                await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content:  `@${adminUsername} added @${memberUsername}`, messageType: "Info", isGroup: true })
+            // Get group data to check admin status
+            const group = await this.groupModel.findById(groupId);
+            if (!group) {
+                throw new NotFoundException('Group not found');
             }
-            // await this.notificationService.createNotification(
-            //     {
-            //         from: new Types.ObjectId(userId),
-            //         user: new Types.ObjectId(authorId),
-            //         targetId: new Types.ObjectId(targetId),
-            //         type,
-            //         targetType,
-            //         value: type == "post" ? "liked your post" : type == "comment" ? "liked your commnet" : "liked your reply"
-            //     }
-            // )
 
-            await this.metricsAggregatorService.incrementCount(filter.groupId, "members", "group")
+            // Check if user is admin (but not super admin/owner)
+            const userIsAdmin = group.admins.some(admin => admin.toString() === userId.toString());
+            const userIsSuperAdmin = group.user.toString() === userId.toString();
 
-            return true;
+            if (existingMember) {
+                // USER IS LEAVING THE GROUP
+
+                // Remove from members collection
+                await this.memberModel.findOneAndDelete({
+                    groupId,
+                    member: userId
+                });
+
+                // ✅ CRITICAL: If leaving user is admin (but not super admin), remove from admins array
+                if (userIsAdmin && !userIsSuperAdmin) {
+                    await this.groupModel.updateOne(
+                        { _id: groupId },
+                        { $pull: { admins: userId } }
+                    );
+                }
+
+                // Note: Super admin (group owner) cannot leave their own group
+                if (userIsSuperAdmin) {
+                    throw new ForbiddenException('Group owner cannot leave the group');
+                }
+
+                return {
+                    action: 'left',
+                    adminRemoved: userIsAdmin && !userIsSuperAdmin,
+                    message: `User left the group${userIsAdmin && !userIsSuperAdmin ? ' and admin privileges removed' : ''}`
+                };
+            } else {
+                // USER IS JOINING THE GROUP
+
+                // Add to members collection
+                const newMember = new this.memberModel({
+                    groupId,
+                    member: userId,
+                    isAdmin: 0, // New members start as regular members
+                    joinedAt: new Date()
+                });
+
+                await newMember.save();
+
+                // ✅ NOTE: When rejoining, user does NOT automatically get admin privileges back
+                // Admin privileges must be re-granted by a super admin
+
+                return {
+                    action: 'joined',
+                    adminRestored: false,
+                    message: 'User joined the group as regular member'
+                };
+            }
+        } catch (error) {
+            throw error;
         }
-        if (groupDetails.type == 'chatgroup') {
-            await this.messageService.createMessage({ type: 'ChatGroup', sender: filter.member, recepient: filter.groupId, content: type == 'leave' ? `@${memberUsername} left` : `@${adminUsername} removed @${memberUsername}`, messageType: "Info", isGroup: true, removeUser: true, removeChat: true })
-            await this.chatlistService.removeUser(filter.member, filter.groupId)
-            await this.metricsAggregatorService.decrementCount(filter.groupId, "members", "group")
-        }
-        
-        if(!type){
-            await this.metricsAggregatorService.decrementCount(filter.groupId, "members", "group")
-        }
-        return false;
     }
+
+    // Alternative method with transaction for better data consistency
+    // async toggleJoin(_userId: string, _groupId: string) {
+    //     const userId = new Types.ObjectId(_userId)
+    //     const groupId = new Types.ObjectId(_groupId)
+
+    //     const session = await this.connection.startSession();
+
+    //     try {
+    //         await session.withTransaction(async () => {
+    //             // Check if user is currently a member
+    //             const existingMember = await this.memberModel.findOne({
+    //                 groupId,
+    //                 member: userId
+    //             }).session(session);
+
+    //             // Get group data to check admin status
+    //             const group = await this.groupModel.findById(groupId).session(session);
+    //             if (!group) {
+    //                 throw new NotFoundException('Group not found');
+    //             }
+
+    //             const userIsAdmin = group.admins.some(admin => admin.toString() === userId.toString());
+    //             const userIsSuperAdmin = group.user.toString() === userId.toString();
+
+    //             if (existingMember) {
+    //                 // USER IS LEAVING THE GROUP
+
+    //                 // Prevent super admin from leaving
+    //                 if (userIsSuperAdmin) {
+    //                     throw new ForbiddenException('Group owner cannot leave the group');
+    //                 }
+
+    //                 // Remove from members collection
+    //                 await this.memberModel.findOneAndDelete({
+    //                     groupId,
+    //                     member: userId
+    //                 }).session(session);
+
+    //                 // Remove from admins array if they were admin
+    //                 if (userIsAdmin) {
+    //                     await this.groupModel.updateOne(
+    //                         { _id: groupId },
+    //                         { $pull: { admins: userId } }
+    //                     ).session(session);
+    //                 }
+
+    //                 return {
+    //                     action: 'left',
+    //                     adminRemoved: userIsAdmin,
+    //                     message: `User left the group${userIsAdmin ? ' and admin privileges removed' : ''}`
+    //                 };
+    //             } else {
+    //                 // USER IS JOINING THE GROUP
+
+    //                 // Add to members collection
+    //                 const newMember = new this.memberModel({
+    //                     groupId,
+    //                     member: userId,
+    //                     isAdmin: 0, // Always start as regular member
+    //                     joinedAt: new Date()
+    //                 });
+
+    //                 await newMember.save({ session });
+
+    //                 return {
+    //                     action: 'joined',
+    //                     message: 'User joined the group as regular member'
+    //                 };
+    //             }
+    //         });
+
+    //         return { success: true };
+    //     } catch (error) {
+    //         throw error;
+    //     } finally {
+    //         await session.endSession();
+    //     }
+    // }
 
     async isMember(userId, groupId) {
         const member = await this.memberModel.findOne({ member: new Types.ObjectId(userId), groupId: new Types.ObjectId(groupId) })
@@ -254,5 +353,70 @@ export class MemberService {
         // finally {
         // session.endSession();
         // }
+    }
+
+    async removeMember(_adminId: string, _userId: string, _groupId: string) {
+        const adminId = new Types.ObjectId(_adminId)
+        const userId = new Types.ObjectId(_userId)
+        const groupId = new Types.ObjectId(_groupId)
+
+        try {
+            // Verify admin permissions and get group data
+            const group = await this.groupModel.findOne({
+                _id: groupId,
+                $or: [
+                    { user: adminId },     // Super admin
+                    { admins: adminId }    // Regular admin
+                ]
+            });
+
+            if (!group) {
+                throw new ForbiddenException('You do not have permission to perform this action');
+            }
+
+            // Prevent removing group creator
+            if (group.user.toString() === userId.toString()) {
+                throw new ForbiddenException('Cannot remove the group creator');
+            }
+
+            // Check if requesting user is super admin
+            const isSuperAdmin = group.user.toString() === adminId.toString();
+
+            // Check if target user is an admin
+            const targetIsAdmin = group.admins.some(admin => admin.toString() === userId.toString());
+
+            // Only super admin can remove other admins
+            if (targetIsAdmin && !isSuperAdmin) {
+                throw new ForbiddenException('Only the group creator can remove admins');
+            }
+
+            // Remove from members collection
+            const removed = await this.memberModel.findOneAndDelete({
+                groupId,
+                member: userId
+            });
+
+            if (!removed) {
+                throw new NotFoundException('Group member not found');
+            }
+
+            if (targetIsAdmin) {
+                await this.groupModel.updateOne(
+                    { _id: groupId },
+                    { $pull: { admins: userId } }
+                );
+            }
+
+            await this.metricsAggregatorService.decrementCount(groupId, "members", "group")
+
+            return {
+                success: true,
+                removedFromAdmins: targetIsAdmin,
+                message: `Member ${targetIsAdmin ? 'and admin privileges' : ''} removed successfully`
+            };
+
+        } catch (error) {
+            throw error;
+        }
     }
 }
