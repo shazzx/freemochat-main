@@ -116,13 +116,6 @@ export const PromotionActivation = z.object({
     postId: ValidMongoId,
 })
 
-
-export const CreateReel = z.object({
-    content: z.string().optional(),
-    type: z.string(),
-    visibility: z.string()
-})
-
 export type CreatePostDTO = z.infer<typeof CreatePost>
 export type CreateSharedPostDTO = z.infer<typeof CreateSharedPost>
 export type UpdatePostDTO = z.infer<typeof UpdatePost>
@@ -139,6 +132,3 @@ export type PromotePostDTO = z.infer<typeof PromotePost>
 export type ViewPostDTO = z.infer<typeof ViewPost>
 export type BulkViewPostDTO = z.infer<typeof BulkViewPost>
 export type PromotionActivationDTO = z.infer<typeof PromotionActivation>
-
-// reels
-export type CreateReelDTO = z.infer<typeof CreateReel>
