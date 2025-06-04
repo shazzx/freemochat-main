@@ -14,11 +14,13 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPostsDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPostsDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, ServerPostData, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
 import { z } from 'zod';
+
+
 
 // @Processor('media-upload')
 // export class MediaUploadConsumer extends WorkerHost {
@@ -85,7 +87,7 @@ export class PostsController {
         private postService: PostsService,
         private uploadService: UploadService,
         private readonly mediaService: MediaService,
-        private readonly eventEmiiter: EventEmitter2,
+        private readonly eventEmitter: EventEmitter2,
         private readonly chatGateway: ChatGateway,
         @InjectQueue("media-upload") private readonly mediaUploadQueue: Queue,
 
@@ -173,34 +175,170 @@ export class PostsController {
         response.json(await this.postService.getPost(sub, postId, type))
     }
 
+    // @UseInterceptors(FilesInterceptor('files'))
+    // @Post("create")
+    // async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
+    //     const uploadPromise = files.map((file) => {
+    //         const fileType = getFileType(file.mimetype)
+    //         const filename = uuidv4()
+    //         return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
+    //     })
+
+    //     const { sub } = req.user
+    //     let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId)
+
+    //     let uploadedPost = await this.postService.createPost(
+    //         {
+    //             ...createPostDTO,
+    //             isUploaded: files.length > 0 ? false : null,
+    //             targetId,
+    //             postType: 'post',
+    //             user: new Types.ObjectId(sub)
+    //         })
+
+    //     if (files.length > 0) {
+    //         this.eventEmitter.emit("files.uploaded", { uploadPromise, postId: uploadedPost._id.toString(), targetId, type: createPostDTO.type })
+    //     }
+
+    //     res.json(uploadedPost)
+    // }
+
+
+    // In your existing PostController - just modify this method
+    // @UseInterceptors(FilesInterceptor('files'))
+    // @Post("create")
+    // async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
+    //     const { sub } = req.user;
+    //     let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId);
+
+    //     console.log(createPostDTO, 'create post data');
+
+    //     // 🔧 ADD THIS: Handle location posts
+    //     if (createPostDTO.postType && ['plantation', 'garbage_collection', 'dam'].includes(createPostDTO.postType)) {
+    //         // Add plantation update cycle
+    //         if (createPostDTO.postType === 'plantation' && createPostDTO.plantationData) {
+    //             const nextUpdateDue = new Date();
+    //             nextUpdateDue.setMonth(nextUpdateDue.getMonth() + 3);
+    //             createPostDTO.plantationData = {
+    //                 ...createPostDTO.plantationData,
+    //                 lastUpdateDate: new Date(),
+    //                 nextUpdateDue,
+    //                 isActive: true
+    //             };
+    //             createPostDTO.updateHistory = [{
+    //                 updateDate: new Date(),
+    //                 imageCount: files.length,
+    //                 notes: 'Initial plantation'
+    //             }];
+    //         }
+    //     }
+
+    //     // Your existing createPost logic continues unchanged
+    //     let uploadedPost = await this.postService.createPost({
+    //         ...createPostDTO,
+    //         isUploaded: files.length > 0 ? false : null,
+    //         targetId,
+    //         postType: createPostDTO.postType || 'post', // 🔧 ADD THIS LINE
+    //         user: new Types.ObjectId(sub)
+    //     });
+
+    //     if (files.length > 0) {
+    //         // 🔧 MODIFY THIS: Add location data to upload promise
+    //         const uploadPromise = files.map((file, index) => {
+    //             const fileType = getFileType(file.mimetype);
+    //             const filename = uuidv4();
+    //             return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
+    //                 .then(result => ({
+    //                     ...result,
+    //                     location: createPostDTO.mediaLocations?.[index] // 🔧 ADD THIS
+    //                 }));
+    //         });
+
+    //         this.eventEmitter.emit("files.uploaded", {
+    //             uploadPromise,
+    //             postId: uploadedPost._id.toString(),
+    //             targetId,
+    //             type: createPostDTO.type
+    //         });
+    //     }
+
+    //     res.json(uploadedPost);
+    // }
+
+    // In your PostController, modify the createPost method like this:
+
+    // In your PostController, modify the createPost method like this:
+
+    // In your PostController, modify the createPost method like this:
+
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
-    async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
-        const uploadPromise = files.map((file) => {
-            const fileType = getFileType(file.mimetype)
-            const filename = uuidv4()
-            return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
-        })
+    async createPost(
+        @Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO,
+        @Req() req: Request,
+        @Res() res: Response,
+        @UploadedFiles() files: Express.Multer.File[]
+    ) {
+        const { sub } = req.user;
+        let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId);
 
-        const { sub } = req.user
-        let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId)
+        // 🔧 FIX: Use ServerPostData interface for server-side data
+        let finalPostData: ServerPostData = {
+            ...createPostDTO,
+            isUploaded: files.length > 0 ? false : null,
+            targetId,
+            postType: createPostDTO.postType || 'post',
+            user: new Types.ObjectId(sub)
+        };
 
-        let uploadedPost = await this.postService.createPost(
-            {
-                ...createPostDTO,
-                isUploaded: files.length > 0 ? false : null,
-                targetId,
-                postType: 'post',
-                user: new Types.ObjectId(sub)
-            })
+        // 🔧 FIX: Handle location posts with proper typing
+        if (createPostDTO.postType && ['plantation', 'garbage_collection', 'dam'].includes(createPostDTO.postType)) {
 
-        if (files.length > 0) {
-            this.eventEmiiter.emit("files.uploaded", { uploadPromise, postId: uploadedPost._id.toString(), targetId, type: createPostDTO.type })
+            if (createPostDTO.postType === 'plantation' && createPostDTO.plantationData) {
+                const nextUpdateDue = new Date();
+                nextUpdateDue.setMonth(nextUpdateDue.getMonth() + 3);
+
+                // Create plantation data with server-computed fields
+                finalPostData.plantationData = {
+                    ...createPostDTO.plantationData,
+                    lastUpdateDate: new Date(),
+                    nextUpdateDue,
+                    isActive: true
+                };
+
+                // Add update history
+                finalPostData.updateHistory = [{
+                    updateDate: new Date(),
+                    imageCount: files.length,
+                    notes: 'Initial plantation'
+                }];
+            }
         }
 
-        res.json(uploadedPost)
-    }
+        // Use the finalPostData object
+        let uploadedPost = await this.postService.createPost(finalPostData);
 
+        if (files.length > 0) {
+            const uploadPromise = files.map((file, index) => {
+                const fileType = getFileType(file.mimetype);
+                const filename = uuidv4();
+                return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
+                    .then(result => ({
+                        ...result,
+                        location: createPostDTO.mediaLocations?.[index]
+                    }));
+            });
+
+            this.eventEmitter.emit("files.uploaded", {
+                uploadPromise,
+                postId: uploadedPost._id.toString(),
+                targetId,
+                type: createPostDTO.type
+            });
+        }
+
+        res.json(uploadedPost);
+    }
 
     @Post("reel")
     async editReel(
@@ -338,7 +476,7 @@ export class PostsController {
             user: new Types.ObjectId(sub)
         });
 
-        this.eventEmiiter.emit("reel.upload", {
+        this.eventEmitter.emit("reel.upload", {
             uploadPromise,
             postId: uploadedPost._id.toString(),
             targetId,
@@ -460,7 +598,7 @@ export class PostsController {
                 return this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
             })
 
-            this.eventEmiiter.emit("files.uploaded", { uploadPromise, postId: post._id.toString(), targetId: post.targetId, type: post.type, uploadType: 'update', _postData })
+            this.eventEmitter.emit("files.uploaded", { uploadPromise, postId: post._id.toString(), targetId: post.targetId, type: post.type, uploadType: 'update', _postData })
         }
 
         res.json(uploadedPost)

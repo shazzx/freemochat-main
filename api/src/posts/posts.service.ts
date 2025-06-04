@@ -2440,16 +2440,25 @@ export class PostsService {
         }
 
         // Posts query
-        const postsQuery = cursor
-            ? {
-                createdAt: { $lt: new Date(cursor) },
-                ...visibility,
-                postType: { $in: ['post'] }
-            }
-            : {
-                ...visibility,
-                postType: { $in: ['post'] }
-            };
+        // const postsQuery = cursor
+        //     ? {
+        //         createdAt: { $lt: new Date(cursor) },
+        //         ...visibility,
+        //         postType: { $in: ['post'] }
+        //     }
+        //     : {
+        //         ...visibility,
+        //         postType: { $in: ['post'] }
+        //     };
+
+        const postsQuery = cursor ? {
+            createdAt: { $lt: new Date(cursor) },
+            ...visibility,
+            postType: { $in: ['post', 'plantation', 'garbage_collection', 'dam'] } // 🔧 ADD NEW TYPES
+        } : {
+            ...visibility,
+            postType: { $in: ['post', 'plantation', 'garbage_collection', 'dam'] } // 🔧 ADD NEW TYPES
+        };
 
         // Reels query - using a separate cursor for reels pagination
         const reelsQuery = reelsCursor
@@ -2934,6 +2943,9 @@ export class PostsService {
                     promotion: 1,
                     isUploaded: 1,
                     target: 1,
+                    location: 1,
+                    plantationData: 1,
+                    updateHistory: 1,
                     reaction: 1,
                     postType: 1,
                     videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
