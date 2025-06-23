@@ -119,7 +119,7 @@ export function useUserReels(targetId, type) {
         getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined
     });
 
-    const pages = data?.pages ?? [];
+    const pages: any = data?.pages ?? [];
 
     return {
         data: pages,
@@ -136,7 +136,7 @@ export function useUserReels(targetId, type) {
     };
 }
 
-interface QueryParams { userId?: string, initialReelId?: string }
+interface QueryParams { userId?: string, initialReelId?: string, profileType?: string }
 
 export const getQueryKeyForMode = (mode, params: QueryParams = {}) => {
     switch (mode) {
@@ -206,7 +206,7 @@ export const useReelsDataSource = (mode = 'feed', params: QueryParams = {}) => {
     console.log(`[ReelsData] Using mode: ${mode}, initialReelId: ${params.initialReelId}`, params);
 
     if (mode === 'profile') {
-        sourceQuery = useUserReels(params.userId || '');
+        sourceQuery = useUserReels(params.userId || '', params?.profileType || 'user');
     }
     else if (mode === 'bookmarks') {
         sourceQuery = useBookamrks();

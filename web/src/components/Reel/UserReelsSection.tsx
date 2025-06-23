@@ -64,6 +64,7 @@ const UserReelsSection = ({ targetId, type }) => {
         initialReelId: reel._id,
         reelData: enrichedReel,
         sourceMode: 'profile',
+        profileType: type,
         userId: targetId,
         reelIndex: reelsList.findIndex(item => item._id === reel._id),
         totalReels: reelsList.length,

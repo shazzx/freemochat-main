@@ -172,6 +172,7 @@ const ReelsContainer: React.FC = () => {
     return {
       userId: location?.state?.userId,
       reelData: location.state?.reelData,
+      profileType: location.state?.profileType,
       initialReelId: location.state?.initialReelId || params.reelId, // Try state first, then params
       isSuggested: location.state?.reelData?.isSuggested || false
     };
