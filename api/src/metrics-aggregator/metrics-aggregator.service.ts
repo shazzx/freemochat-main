@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { NotificationService } from 'src/notification/notification.service';
 import { Counter } from 'src/schema/Counter';
 
 @Injectable()
 export class MetricsAggregatorService {
-    constructor(@InjectModel(Counter.name) private readonly counterModel: Model<Counter>) { }
+    constructor(
+        @InjectModel(Counter.name) private readonly counterModel: Model<Counter>,
+        // private readonly notificationService: NotificationService,
+
+    ) { }
 
     async incrementCount(targetId: Types.ObjectId, name: string, type: string, session?: any) {
         let counter = await this.counterModel.updateOne(
@@ -15,7 +20,7 @@ export class MetricsAggregatorService {
                 $inc: { count: 1 }
             },
             { upsert: true, session }
-            
+
         )
         return counter
     }
@@ -40,12 +45,17 @@ export class MetricsAggregatorService {
             { targetId, name, type, count: 0 },
             { upsert: true }
         )
+        // await this.notificationService.readAllNotifications()
         return counter
     }
 
     // async deleteAll() {
     //     return await this.counterModel.deleteMany()
     // }
+
+    async readNotification(targetId: Types.ObjectId, name: string, type: string) {
+        
+    }
 
     async decrementCount(targetId: Types.ObjectId, name: string, type: string) {
         let counter = await this.counterModel.updateOne(
@@ -57,5 +67,5 @@ export class MetricsAggregatorService {
         )
         return counter
     }
-
 }
+ 

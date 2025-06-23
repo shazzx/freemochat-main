@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { ObjectId, Types } from 'mongoose'
 
-@Schema({timestamps: true})
+@Schema({ timestamps: true })
 export class Notification {
     @Prop()
     value: String;
@@ -31,6 +31,9 @@ export class Notification {
 
     @Prop({ type: Date })
     time: Date
+
+    @Prop({ type: Boolean })
+    isRead: Boolean
 }
 
 export const notificationSchema = SchemaFactory.createForClass(Notification)

@@ -25,15 +25,12 @@ export class NotificationService {
 
   async createNotification(data: { from: Types.ObjectId, user: Types.ObjectId, targetId: Types.ObjectId, type: string, postType?: string, targetType?: string, value: string, handle?: string }, isComment: boolean = false) {
     if (!isComment) {
-      console.log("finding notification exist")
       const notifications = await this.notificationModel.findOne(data)
       if (notifications) {
         return null
       }
     }
-    console.log("creating notification")
     const notification = await this.notificationModel.create(data);
-    console.log("notification created", notification)
     this.metricsAggregatorService.incrementCount(data.user, "notification", "user")
     this.notificationGateway.handleNotifications(data);
     return notification
@@ -84,6 +81,21 @@ export class NotificationService {
     };
 
     return this.sendNotifications([message]);
+  }
+
+  public async readNotification(
+    userId: string,
+    notificationId: string
+  ) {
+    await this.notificationModel.findByIdAndUpdate(notificationId, { isRead: true })
+    await this.metricsAggregatorService.decrementCount(new Types.ObjectId(userId), 'notification', 'user')
+  }
+
+  public async readAllNotifications() {
+    return await this.notificationModel.updateMany(
+      { isRead: false },
+      { $set: { isRead: true } }
+    );
   }
 
   public async getPushNotificationReceipts(
