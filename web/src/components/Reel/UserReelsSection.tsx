@@ -29,7 +29,7 @@ const NotFoundSvg = ({ text = "No Content" }) => (
   </div>
 );
 
-const UserReelsSection = ({ targetId }) => {
+const UserReelsSection = ({ targetId, type }) => {
   console.log('UserReelsSection rendered for targetId:', targetId);
   const navigate = useNavigate();
 
@@ -41,7 +41,7 @@ const UserReelsSection = ({ targetId }) => {
     hasNextPage,
     fetchNextPage,
     refetch
-  } = useUserReels(targetId);
+  } = useUserReels(targetId, type);
   // Flatten the pages data for grid display
   const reelsList = useMemo(() => {
     if (!data) return [];

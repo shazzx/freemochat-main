@@ -93,8 +93,8 @@ export function useVideosFeed(initialReelId) {
     };
 }
 
-// User profile reels query
-export function useUserReels(targetId) {
+
+export function useUserReels(targetId, type) {
     const {
         data,
         isLoading,
@@ -109,7 +109,7 @@ export function useUserReels(targetId) {
         hasNextPage
     } = useInfiniteQuery({
         queryKey: ['userReels', targetId],
-        queryFn: ({ pageParam }) => fetchReels(pageParam, targetId),
+        queryFn: ({ pageParam }) => fetchReels(pageParam, targetId, type),
         enabled: !!targetId,
         refetchInterval: false,
         refetchOnWindowFocus: true,
@@ -119,10 +119,10 @@ export function useUserReels(targetId) {
         getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined
     });
 
-    const pages: any = data?.pages ?? [];
+    const pages = data?.pages ?? [];
 
     return {
-        data: pages, // Ensure data is typed as an array of PostType arrays
+        data: pages,
         isLoading,
         isSuccess,
         isFetching,

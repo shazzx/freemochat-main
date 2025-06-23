@@ -361,7 +361,7 @@ function GroupProfile() {
                                     </div>
                                 </TabsContent>
                                 <TabsContent value="media" className='flex flex-col gap-2'>
-                                    <MediaSection targetId={data?._id} media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                    <MediaSection type='group' targetId={data?._id} media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                                 </TabsContent>
                                 <TabsContent value="about" className="">
                                     <div className='px-8 flex-responsive w-full items-center md:items-start  flex gap-2 border-muted'>

@@ -110,27 +110,6 @@ const CPostModal: FC<{
         toast.info("Please write something or add media")
     }
 
-    // Helper function to check video duration
-    const checkVideoDuration = (file): Promise<boolean> => {
-        return new Promise((resolve) => {
-            const video = document.createElement('video');
-            video.preload = 'metadata';
-
-            video.onloadedmetadata = () => {
-                window.URL.revokeObjectURL(video.src);
-                const duration = video.duration;
-                resolve(duration <= 90); // 90 seconds max for reels
-            };
-
-            video.onerror = () => {
-                window.URL.revokeObjectURL(video.src);
-                resolve(false);
-            };
-
-            video.src = URL.createObjectURL(file);
-        });
-    };
-
     const handleImageSelection = async (e) => {
         let _selectedMedia = []
 
@@ -154,19 +133,8 @@ const CPostModal: FC<{
             return;
         }
 
-        // Check video duration for reel compliance
-        const isValidDuration = await checkVideoDuration(file);
-
-        if (!isValidDuration) {
-            toast.error("Video duration must be 90 seconds or less");
-            e.target.value = ''; // Clear the input
-            return;
-        }
-
-        // Replace all media with single video (clear images if any)
         setSelectedMedia([{ file, type: 'video', url: URL.createObjectURL(file) }]);
         
-        // Clear the input value to allow re-selection of the same file
         e.target.value = '';
     }
 
