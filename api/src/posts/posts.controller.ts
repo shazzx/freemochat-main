@@ -14,7 +14,7 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPostsDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, ServerPostData, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, CursorDTO, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
@@ -265,11 +265,38 @@ export class PostsController {
     //     res.json(uploadedPost);
     // }
 
-    // In your PostController, modify the createPost method like this:
 
-    // In your PostController, modify the createPost method like this:
-
-    // In your PostController, modify the createPost method like this:
+    @Get("global-map/data")
+    async getGlobalMapData(
+        @Query(new ZodValidationPipe(GetGlobalMapData)) query: GetGlobalMapDataDTO,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        const { sub } = req.user;
+        const result = await this.postService.getGlobalMapData(query, sub);
+        res.json(result);
+    }
+    
+    @Get("global-map/counts")
+    async getGlobalMapCounts(
+        @Query(new ZodValidationPipe(GetGlobalMapCounts)) query: GetGlobalMapCountsDTO,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        const result = await this.postService.getGlobalMapCounts(query);
+        res.json(result);
+    }
+    
+    @Get("global-map/search")
+    async searchGlobalMapLocations(
+        @Query(new ZodValidationPipe(SearchGlobalMapLocations)) query: SearchGlobalMapLocationsDTO,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        const result = await this.postService.searchGlobalMapLocations(query);
+        res.json(result);
+    }
+    
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
@@ -282,7 +309,6 @@ export class PostsController {
         const { sub } = req.user;
         let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId);
 
-        // 🔧 FIX: Use ServerPostData interface for server-side data
         let finalPostData: ServerPostData = {
             ...createPostDTO,
             isUploaded: files.length > 0 ? false : null,
@@ -291,7 +317,6 @@ export class PostsController {
             user: new Types.ObjectId(sub)
         };
 
-        // 🔧 FIX: Handle location posts with proper typing
         if (createPostDTO.postType && ['plantation', 'garbage_collection', 'dam'].includes(createPostDTO.postType)) {
 
             if (createPostDTO.postType === 'plantation' && createPostDTO.plantationData) {

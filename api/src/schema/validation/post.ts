@@ -1,3 +1,11 @@
+// Add these indexes to your Post schema for better performance:
+// PostSchema.index({ "location.country": 1, postType: 1 });
+// PostSchema.index({ "location.city": 1, postType: 1 });
+// PostSchema.index({ postType: 1, visibility: 1, createdAt: -1 });
+// PostSchema.index({ "location.latitude": 1, "location.longitude": 1, postType: 1 });
+
+
+
 import { z } from 'zod'
 import { Cursor, ValidMongoId } from './global'
 
@@ -271,3 +279,38 @@ export interface ServerPostData {
     isUploaded?: boolean | null;
     media?: MediaWithLocation[];
 }
+
+const BoundingBoxSchema = z.object({
+    northEast: z.object({
+        latitude: z.coerce.number().min(-90).max(90),
+        longitude: z.coerce.number().min(-180).max(180)
+    }),
+    southWest: z.object({
+        latitude: z.coerce.number().min(-90).max(90),
+        longitude: z.coerce.number().min(-180).max(180)
+    })
+});
+
+export const GetGlobalMapData = z.object({
+    bounds: BoundingBoxSchema,
+    category: z.enum(['plantation', 'garbage_collection', 'dam', 'all']).default('all'),
+    limit: z.coerce.number().min(1).max(1000).default(500),
+    clustering: z.coerce.boolean().default(true),
+    clusterRadius: z.coerce.number().min(10).max(100).default(50)
+});
+
+export const GetGlobalMapCounts = z.object({
+    bounds: BoundingBoxSchema.optional(), // If provided, get counts for specific area
+    country: z.string().optional(),
+    city: z.string().optional()
+});
+
+export const SearchGlobalMapLocations = z.object({
+    query: z.string().min(1).max(100),
+    category: z.enum(['plantation', 'garbage_collection', 'dam', 'all']).default('all'),
+    limit: z.coerce.number().min(1).max(50).default(20)
+});
+
+export type GetGlobalMapDataDTO = z.infer<typeof GetGlobalMapData>;
+export type GetGlobalMapCountsDTO = z.infer<typeof GetGlobalMapCounts>;
+export type SearchGlobalMapLocationsDTO = z.infer<typeof SearchGlobalMapLocations>;

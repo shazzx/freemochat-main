@@ -13,6 +13,7 @@ import { Member } from 'src/schema/members';
 import { Post } from 'src/schema/post';
 import { Promotion } from 'src/schema/promotion';
 import { Report } from 'src/schema/report';
+import { GetGlobalMapCountsDTO, GetGlobalMapDataDTO, SearchGlobalMapLocationsDTO } from 'src/schema/validation/post';
 import { ViewedPosts } from 'src/schema/viewedPosts';
 import { UserService } from 'src/user/user.service';
 import { CURRENCIES, PAYMENT_PROVIDERS, PAYMENT_STATES, POST_PROMOTION, ReachStatus } from 'src/utils/enums/global.c';
@@ -2752,6 +2753,9 @@ export class PostsService {
                                 promotion: 1,
                                 isUploaded: 1,
                                 target: 1,
+                                location: 1,
+                                plantationData: 1,
+                                updateHistory: 1,
                                 postType: 1,
                                 reaction: 1,
                                 videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
@@ -5142,4 +5146,331 @@ export class PostsService {
         const post = await this.postModel.findByIdAndDelete(postId)
         return post
     }
+
+
+    async getGlobalMapData(query: GetGlobalMapDataDTO, userId: string) {
+        const { bounds, category, limit, clustering } = query;
+
+        const totalPosts = await this.postModel.countDocuments({
+            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'dam'] : [category] },
+            visibility: 'public'
+        });
+
+        const postsWithLocation = await this.postModel.countDocuments({
+            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'dam'] : [category] },
+            visibility: 'public',
+            'location.latitude': { $exists: true },
+            'location.longitude': { $exists: true }
+        });
+
+        if (postsWithLocation === 0) {
+            return { type: 'clustered', data: [] };
+        }
+
+        const simpleQuery = {
+            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'dam'] : [category] },
+            visibility: 'public',
+            'location.latitude': { $exists: true },
+            'location.longitude': { $exists: true }
+        };
+
+        const simplePipeline = [
+            { $match: simpleQuery },
+            { $limit: 20 },
+            {
+                $project: {
+                    _id: 1,
+                    postType: 1,
+                    location: 1,
+                    createdAt: 1
+                }
+            }
+        ];
+
+        const simpleResults = await this.postModel.aggregate(simplePipeline);
+
+        if (simpleResults.length > 0) {
+            return {
+                type: 'individual',
+                data: simpleResults
+            };
+        }
+
+        return { type: 'clustered', data: [] };
+    }
+
+    private async getClusteredMapData(geoQuery: any, clusterRadius: number, limit: number) {
+        const radiusInRadians = clusterRadius / 6371;
+
+        const pipeline = [
+            { $match: geoQuery },
+            {
+                $addFields: {
+                    // Create grid coordinates for clustering
+                    gridLat: {
+                        $floor: {
+                            $divide: ["$location.latitude", radiusInRadians * 180 / Math.PI]
+                        }
+                    },
+                    gridLng: {
+                        $floor: {
+                            $divide: ["$location.longitude", radiusInRadians * 180 / Math.PI]
+                        }
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        postType: "$postType",
+                        gridLat: "$gridLat",
+                        gridLng: "$gridLng"
+                    },
+                    count: { $sum: 1 },
+                    locations: {
+                        $push: {
+                            postId: "$_id",
+                            location: "$location",
+                            media: { $arrayElemAt: ["$media", 0] }, // First image for preview
+                            plantationData: "$plantationData",
+                            garbageCollectionData: "$garbageCollectionData",
+                            damData: "$damData",
+                            createdAt: "$createdAt",
+                            user: "$user"
+                        }
+                    },
+                    // Calculate cluster center
+                    centerLat: { $avg: "$location.latitude" },
+                    centerLng: { $avg: "$location.longitude" }
+                }
+            },
+            {
+                $project: {
+                    postType: "$_id.postType",
+                    count: 1,
+                    center: {
+                        latitude: "$centerLat",
+                        longitude: "$centerLng"
+                    },
+                    locations: { $slice: ["$locations", 10] }, // Limit locations per cluster
+                    _id: 0
+                }
+            },
+            { $limit: limit },
+            // Lookup user details for locations
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'locations.user',
+                    foreignField: '_id',
+                    as: 'userDetails'
+                }
+            }
+        ];
+
+        const clusters = await this.postModel.aggregate(pipeline);
+
+        return {
+            type: 'clustered',
+            data: clusters
+        };
+    }
+
+    private async getIndividualMapData(geoQuery: any, limit: number) {
+        const pipeline = [
+            { $match: geoQuery },
+            { $limit: limit },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    as: 'userDetails'
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    postType: 1,
+                    location: 1,
+                    media: { $arrayElemAt: ["$media", 0] },
+                    plantationData: 1,
+                    garbageCollectionData: 1,
+                    damData: 1,
+                    createdAt: 1,
+                    user: { $arrayElemAt: ["$userDetails", 0] }
+                }
+            }
+        ];
+
+        const posts = await this.postModel.aggregate(pipeline);
+
+        return {
+            type: 'individual',
+            data: posts
+        };
+    }
+
+    async getGlobalMapCounts(query: GetGlobalMapCountsDTO) {
+        const { bounds, country, city } = query;
+
+        let baseQuery: any = {
+            postType: { $in: ['plantation', 'garbage_collection', 'dam'] },
+            visibility: 'public'
+        };
+
+        // Add geographic filtering
+        if (bounds) {
+            baseQuery.location = {
+                $geoWithin: {
+                    $box: [
+                        [bounds.southWest.longitude, bounds.southWest.latitude],
+                        [bounds.northEast.longitude, bounds.northEast.latitude]
+                    ]
+                }
+            };
+        }
+
+        if (country) {
+            baseQuery['location.country'] = { $regex: new RegExp(country, 'i') };
+        }
+
+        if (city) {
+            baseQuery['location.city'] = { $regex: new RegExp(city, 'i') };
+        }
+
+        const pipeline = [
+            { $match: baseQuery },
+            {
+                $group: {
+                    _id: "$postType",
+                    count: { $sum: 1 },
+                    // For plantation, count individual plants (media items)
+                    totalItems: {
+                        $sum: {
+                            $cond: {
+                                if: { $eq: ["$postType", "plantation"] },
+                                then: { $size: { $ifNull: ["$media", []] } },
+                                else: 1
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    categories: {
+                        $push: {
+                            category: "$_id",
+                            posts: "$count",
+                            totalItems: "$totalItems"
+                        }
+                    },
+                    totalPosts: { $sum: "$count" },
+                    totalItems: { $sum: "$totalItems" }
+                }
+            }
+        ];
+
+        const result = await this.postModel.aggregate(pipeline);
+
+        if (result.length === 0) {
+            return {
+                totalPosts: 0,
+                totalItems: 0,
+                categories: {
+                    plantation: { posts: 0, totalPlants: 0 },
+                    garbage_collection: { posts: 0, totalBins: 0 },
+                    dam: { posts: 0, totalDams: 0 }
+                }
+            };
+        }
+
+        const data = result[0];
+        const categoriesMap = {};
+
+        data.categories.forEach(cat => {
+            if (cat.category === 'plantation') {
+                categoriesMap['plantation'] = { posts: cat.posts, totalPlants: cat.totalItems };
+            } else if (cat.category === 'garbage_collection') {
+                categoriesMap['garbage_collection'] = { posts: cat.posts, totalBins: cat.totalItems };
+            } else if (cat.category === 'dam') {
+                categoriesMap['dam'] = { posts: cat.posts, totalDams: cat.totalItems };
+            }
+        });
+
+        return {
+            totalPosts: data.totalPosts,
+            totalItems: data.totalItems,
+            categories: categoriesMap
+        };
+    }
+
+    async searchGlobalMapLocations(query: SearchGlobalMapLocationsDTO) {
+        const { query: searchQuery, category, limit } = query;
+
+        const baseQuery: any = {
+            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'dam'] : [category] },
+            visibility: 'public',
+            $or: [
+                { 'location.address': { $regex: new RegExp(searchQuery, 'i') } },
+                { 'location.city': { $regex: new RegExp(searchQuery, 'i') } },
+                { 'location.country': { $regex: new RegExp(searchQuery, 'i') } }
+            ]
+        };
+
+        const pipeline: any = [
+            { $match: baseQuery },
+            {
+                $group: {
+                    _id: {
+                        city: "$location.city",
+                        country: "$location.country"
+                    },
+                    count: { $sum: 1 },
+                    center: {
+                        $first: {
+                            latitude: "$location.latitude",
+                            longitude: "$location.longitude"
+                        }
+                    },
+                    posts: {
+                        $push: {
+                            postId: "$_id",
+                            postType: "$postType",
+                            location: "$location"
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    city: "$_id.city",
+                    country: "$_id.country",
+                    displayName: {
+                        $concat: [
+                            { $ifNull: ["$_id.city", ""] },
+                            { $cond: { if: { $and: ["$_id.city", "$_id.country"] }, then: ", ", else: "" } },
+                            { $ifNull: ["$_id.country", ""] }
+                        ]
+                    },
+                    count: 1,
+                    center: 1,
+                    posts: { $slice: ["$posts", 5] }
+                }
+            },
+            { $sort: { count: -1 } },
+            { $limit: limit }
+        ];
+
+        const results = await this.postModel.aggregate(pipeline);
+
+        return {
+            results,
+            total: results.length
+        };
+    }
+
 }
