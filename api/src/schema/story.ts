@@ -9,10 +9,14 @@ export class Story {
     @Prop({ type: Types.ObjectId, ref: "User" })
     user: ObjectId;
 
-    @Prop({ 
-        type: Date, 
-        default: () => Date(), 
-        expires: '24h' })
+    @Prop({ type: [Types.ObjectId] })
+    likedBy: ObjectId[]
+
+    @Prop({
+        type: Date,
+        default: () => Date(),
+        expires: '24h'
+    })
 
     createdAt: Date
 }
