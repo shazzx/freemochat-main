@@ -50,7 +50,7 @@ import { HashtagModule } from 'src/hashtag/hashtag.module';
     NotificationModule,
     ChatModule,
     UploadModule,
-    HashtagModule,
+    HashtagModule
   ],
   providers: [PostsService],
   controllers: [PostsController],

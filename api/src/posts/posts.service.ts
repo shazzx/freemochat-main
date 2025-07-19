@@ -1029,192 +1029,13 @@ export class PostsService {
 
 
     async getPost(userId: string, postId: string, type: string) {
-        let model = type + 's'
         const limit = 5
         let query = { _id: new Types.ObjectId(postId) }
-        // const post = await this.postModel.aggregate([
-        //     { $match: query },
-        //     { $sort: { createdAt: -1 } },
-        //     { $limit: limit + 1 },
-        //     {
-        //         $lookup: {
-        //             from: model,
-        //             localField: "targetId",
-        //             foreignField: "_id",
-        //             as: "target"
-        //         }
-        //     },
-        //     {
-        //         $unwind: "$target"
-        //     },
-        //     {
-        //         $addFields: {
-        //             userObjectId: {
-        //                 $cond: {
-        //                     if: { $eq: ["$type", "group"] },
-        //                     then: {
-        //                         $cond: {
-        //                             if: { $eq: [{ $type: "$user" }, "string"] },
-        //                             then: { $toObjectId: "$user" },
-        //                             else: "$user"
-        //                         }
-        //                     },
-        //                     else: null
-        //                 }
-        //             }
-        //         }
-        //     },
-
-        //     {
-        //         $lookup: {
-        //             from: "users",
-        //             let: { userId: "$userObjectId", postType: "$type" },
-        //             pipeline: [
-        //                 {
-        //                     $match: {
-        //                         $expr: {
-        //                             $and: [
-        //                                 { $eq: ["$$postType", "group"] },
-        //                                 { $eq: ["$_id", "$$userId"] }
-        //                             ]
-        //                         }
-        //                     }
-        //                 },
-        //                 { $limit: 1 }
-        //             ],
-        //             as: "userDetails"
-        //         }
-        //     },
-        //     {
-        //         $addFields: {
-        //             user: {
-        //                 $cond: {
-        //                     if: { $eq: ["$type", "group"] },
-        //                     then: {
-        //                         $cond: {
-        //                             if: { $gt: [{ $size: "$userDetails" }, 0] },
-        //                             then: { $arrayElemAt: ["$userDetails", 0] },
-        //                             else: null
-        //                         }
-        //                     },
-        //                     else: "$user"
-        //                 }
-        //             }
-        //         }
-        //     },
-
-        //     {
-
-        //         $lookup: {
-        //             from: 'likes',
-        //             let: { postId: '$_id' },
-        //             pipeline: [
-        //                 {
-        //                     $match: {
-        //                         $expr: {
-        //                             $and: [
-        //                                 { $eq: ['$targetId', '$$postId'] },
-        //                                 { $eq: ['$userId', new Types.ObjectId(userId)] },
-        //                                 { $eq: ['$type', "post"] },
-        //                             ],
-        //                         },
-        //                     },
-        //                 },
-        //             ],
-        //             as: 'userLike',
-        //         },
-        //     },
-        //     {
-
-        //         $lookup: {
-        //             from: 'bookmarks',
-        //             let: { postId: '$_id' },
-        //             pipeline: [
-        //                 {
-        //                     $match: {
-        //                         $expr: {
-        //                             $and: [
-        //                                 { $eq: ['$postId', '$$postId'] },
-        //                                 { $eq: ['$userId', new Types.ObjectId(userId)] },
-        //                             ],
-        //                         },
-        //                     },
-        //                 },
-        //             ],
-        //             as: 'userBookmark',
-        //         },
-        //     },
-        //     {
-        //         $lookup: {
-        //             from: 'counters',
-        //             let: { postId: '$_id' },
-        //             pipeline: [
-        //                 {
-        //                     $match: {
-        //                         $expr: {
-        //                             $and: [
-        //                                 { $eq: ['$targetId', '$$postId'] },
-        //                                 { $eq: ['$name', 'post'] },
-        //                                 { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
-        //                             ]
-        //                         }
-        //                     }
-        //                 }
-        //             ],
-        //             as: 'counters'
-        //         }
-        //     },
-        //     {
-        //         $addFields: {
-        //             reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
-        //             isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
-        //             isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
-        //             likesCount: {
-        //                 $ifNull: [
-        //                     { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
-        //                     { count: 0 }
-        //                 ]
-        //             },
-        //             commentsCount: {
-        //                 $ifNull: [
-        //                     { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
-        //                     { count: 0 }
-        //                 ]
-        //             },
-        //             bookmarksCount: {
-        //                 $ifNull: [
-        //                     { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
-        //                     { count: 0 }
-        //                 ]
-        //             }
-        //         },
-        //     },
-        //     {
-        //         $project: {
-        //             _id: 1,
-        //             content: 1,
-        //             media: 1,
-        //             user: 1,
-        //             target: 1,
-        //             reaction: 1,
-        //             likesCount: { $ifNull: ['$likesCount.count', 0] },
-        //             commentsCount: { $ifNull: ['$commentsCount.count', 0] },
-        //             bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
-        //             isLikedByUser: 1,
-        //             targetId: 1,
-        //             type: 1,
-        //             isBookmarkedByUser: 1,
-        //             updatedAt: 1,
-        //             createdAt: 1,
-        //         },
-        //     },
-        // ]);
 
         const post = await this.postModel.aggregate([
             { $match: query },
             { $sort: { createdAt: -1 } },
             { $limit: limit + 1 },
-            // Look up possible targets from different collections
             {
                 $lookup: {
                     from: 'users',
@@ -1239,7 +1060,6 @@ export class PostsService {
                     as: 'pageTarget'
                 }
             },
-            // Handle user object ID conversion for group posts
             {
                 $addFields: {
                     userObjectId: {
@@ -1257,7 +1077,6 @@ export class PostsService {
                     }
                 }
             },
-            // Add shared post lookup
             {
                 $lookup: {
                     from: 'posts',
@@ -1273,7 +1092,6 @@ export class PostsService {
                                 }
                             }
                         },
-                        // Target lookup for shared post
                         {
                             $lookup: {
                                 from: 'users',
@@ -1298,7 +1116,6 @@ export class PostsService {
                                 as: 'pageTarget'
                             }
                         },
-                        // Handle user object ID for shared post
                         {
                             $addFields: {
                                 userObjectId: {
@@ -1316,7 +1133,6 @@ export class PostsService {
                                 }
                             }
                         },
-                        // User lookup for shared post (for group posts)
                         {
                             $lookup: {
                                 from: "users",
@@ -1337,7 +1153,6 @@ export class PostsService {
                                 as: "userDetails"
                             }
                         },
-                        // Regular user lookup for shared post
                         {
                             $lookup: {
                                 from: 'users',
@@ -1346,7 +1161,6 @@ export class PostsService {
                                 as: 'regularUserDetails'
                             }
                         },
-                        // Combine user lookups for shared post
                         {
                             $addFields: {
                                 user: {
@@ -1370,7 +1184,6 @@ export class PostsService {
                                 }
                             }
                         },
-                        // Handle likes for shared post
                         {
                             $lookup: {
                                 from: 'likes',
@@ -1391,7 +1204,6 @@ export class PostsService {
                                 as: 'userLike',
                             },
                         },
-                        // Handle bookmarks for shared post
                         {
                             $lookup: {
                                 from: 'bookmarks',
@@ -1411,7 +1223,6 @@ export class PostsService {
                                 as: 'userBookmark',
                             },
                         },
-                        // Handle counters for shared post
                         {
                             $lookup: {
                                 from: 'counters',
@@ -1432,7 +1243,25 @@ export class PostsService {
                                 as: 'counters'
                             }
                         },
-                        // Combine fields for shared post
+                        {
+                            $lookup: {
+                                from: 'users',
+                                localField: 'mentions',
+                                foreignField: '_id',
+                                pipeline: [
+                                    {
+                                        $project: {
+                                            _id: 1,
+                                            username: 1,
+                                            firstname: 1,
+                                            lastname: 1,
+                                            profile: 1
+                                        }
+                                    }
+                                ],
+                                as: 'mentions'
+                            }
+                        },
                         {
                             $addFields: {
                                 target: {
@@ -1480,7 +1309,6 @@ export class PostsService {
                                 isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                             }
                         },
-                        // Project shared post fields
                         {
                             $project: {
                                 _id: 1,
@@ -1491,6 +1319,7 @@ export class PostsService {
                                 isUploaded: 1,
                                 target: 1,
                                 reaction: 1,
+                                mentions: 1,
                                 likesCount: { $ifNull: ['$likesCount.count', 0] },
                                 commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                                 sharesCount: { $ifNull: ['$sharesCount.count', 0] },
@@ -1509,7 +1338,6 @@ export class PostsService {
                     as: 'sharedPostDetails'
                 }
             },
-            // User lookup for main post - for group posts
             {
                 $lookup: {
                     from: "users",
@@ -1530,7 +1358,6 @@ export class PostsService {
                     as: "userDetails"
                 }
             },
-            // Regular user lookup for main post
             {
                 $lookup: {
                     from: 'users',
@@ -1539,7 +1366,6 @@ export class PostsService {
                     as: 'regularUserDetails'
                 }
             },
-            // Combine user lookups for main post
             {
                 $addFields: {
                     user: {
@@ -1563,7 +1389,6 @@ export class PostsService {
                     }
                 }
             },
-            // Handle likes for main post
             {
                 $lookup: {
                     from: 'likes',
@@ -1584,7 +1409,6 @@ export class PostsService {
                     as: 'userLike',
                 },
             },
-            // Handle bookmarks for main post
             {
                 $lookup: {
                     from: 'bookmarks',
@@ -1604,7 +1428,6 @@ export class PostsService {
                     as: 'userBookmark',
                 },
             },
-            // Handle counters for main post
             {
                 $lookup: {
                     from: 'counters',
@@ -1625,7 +1448,25 @@ export class PostsService {
                     as: 'counters'
                 }
             },
-            // Combine fields for main post
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'mentions',
+                    foreignField: '_id',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                username: 1,
+                                firstname: 1,
+                                lastname: 1,
+                                profile: 1
+                            }
+                        }
+                    ],
+                    as: 'mentions'
+                }
+            },
             {
                 $addFields: {
                     target: {
@@ -1667,7 +1508,6 @@ export class PostsService {
                     }
                 },
             },
-            // Final projection
             {
                 $project: {
                     _id: 1,
@@ -1678,6 +1518,7 @@ export class PostsService {
                     isUploaded: 1,
                     target: 1,
                     reaction: 1,
+                    mentions: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     sharesCount: { $ifNull: ['$sharesCount.count', 0] },
@@ -3918,31 +3759,21 @@ export class PostsService {
                     }
                 }));
 
-                // Execute bulk operation with unordered option to continue on error
                 const result = await this.viewPostsModel.bulkWrite(bulkOps, {
-                    // session,
                     ordered: false
                 });
 
-                // Determine which posts were newly viewed
                 const newlyViewedCount = result.upsertedCount;
 
-                // Only increment video view counters for newly viewed posts
                 if (type === 'video' && newlyViewedCount > 0) {
-                    // Get the post IDs that were newly viewed
-                    // Convert the upsertedIds object keys back to the original post IDs
                     const newlyViewedPostIds = [];
 
-                    // For each upserted document, find its corresponding postId
                     for (const key in result.upsertedIds) {
-                        // The key will be the index in the original bulkOps array
                         const index = parseInt(key);
-                        // Get the original postId from our bulkOps array
                         const originalPostId = postObjectIds[index];
                         newlyViewedPostIds.push(originalPostId);
                     }
 
-                    // Batch increment counters for all newly viewed videos
                     const incrementOps = newlyViewedPostIds.map(postId => ({
                         updateOne: {
                             filter: { _id: postId },
@@ -3950,14 +3781,11 @@ export class PostsService {
                         }
                     }));
 
-                    // Execute the increment operations if there are any
                     if (incrementOps.length > 0) {
                         await this.postModel.bulkWrite(incrementOps, {
-                            // session
                         });
                     }
 
-                    // Alternative: If using separate metrics collection
                     if (newlyViewedPostIds.length > 0) {
                         await Promise.all(
                             newlyViewedPostIds.map(postId =>
@@ -3965,25 +3793,17 @@ export class PostsService {
                                     postId,
                                     'post',
                                     "videoViews",
-                                    // session
                                 )
                             )
                         );
                     }
                 }
 
-                // Commit the transaction
-                // await session.commitTransaction();
                 return true;
 
             } catch (error) {
-                // If any operation fails, abort the transaction
-                // await session.abortTransaction();
                 console.error('Error in bulkViewPosts transaction:', error);
                 return false;
-                // } finally {
-                // End session regardless of outcome
-                // session.endSession();
             }
         } catch (error) {
             console.error('Error in bulkViewPosts:', error);
@@ -4902,6 +4722,22 @@ export class PostsService {
     async createPost(postData: any) {
         const post = await this.postModel.create({ ...postData })
 
+        if (post.mentions.length > 0) {
+            post.mentions.forEach((userId) => {
+                this.notificationService.createNotification(
+                    {
+                        from: new Types.ObjectId(String(post.user)),
+                        user: userId,
+                        targetId: post?._id,
+                        type: 'post',
+                        postType: 'post',
+                        targetType: 'post',
+                        value: 'has mentioned you in their post'
+                    }
+                )
+            })
+        }
+
         return await post.populate({
             path: "user",
             model: "User"
@@ -4927,6 +4763,22 @@ export class PostsService {
 
     async updatePost(postId: string, postDetails: any) {
         const updatedPost = await this.postModel.findByIdAndUpdate(postId, { $set: { ...postDetails } }, { new: true })
+        
+        if (updatedPost.mentions.length > 0) {
+            updatedPost.mentions.forEach((userId) => {
+                this.notificationService.createNotification(
+                    {
+                        from: new Types.ObjectId(String(updatedPost.user)),
+                        user: userId,
+                        targetId: updatedPost?._id,
+                        type: 'post',
+                        postType: 'post',
+                        targetType: 'post',
+                        value: 'has mentioned you in their post'
+                    }
+                )
+            })
+        }
         return updatedPost
     }
 

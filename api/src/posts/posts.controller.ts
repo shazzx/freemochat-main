@@ -1,7 +1,6 @@
 import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Query, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
-import { UserService } from 'src/user/user.service';
 import { PostsService } from './posts.service';
-import { response, Response } from 'express';
+import { Response } from 'express';
 import { Types } from 'mongoose'
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
@@ -16,83 +15,20 @@ import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
 import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
-import { Cursor, CursorDTO, ValidMongoId } from 'src/schema/validation/global';
+import { Cursor, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
 import { z } from 'zod';
 import { HashtagService } from 'src/hashtag/hashtagservice';
-
-
-
-// @Processor('media-upload')
-// export class MediaUploadConsumer extends WorkerHost {
-//     constructor(
-//         private readonly postsService: PostsService,
-//         private readonly uploadService: UploadService,
-//         private readonly mediaService: MediaService
-//     ) {
-//         super()
-//     }
-
-//     @OnQueueEvent('active')
-//     onActive(job: Job) {
-//         console.log(
-//             `Processing job ${job.id} of type ${job.name} with data ${job.data}...`,
-//         );
-//     }
-
-//     @Process("media")
-//     async process(job: Job<{ postId: string; files: any, targetId: Types.ObjectId }>) {
-//         const { postId, files, targetId } = job.data;
-//         console.log(files)
-//         // console.log('ths is queue bro')
-//         try {
-
-//             let media = {
-//                 images: [],
-//                 videos: []
-//             }
-
-//             let postMedia = []
-//             for (let file of files) {
-//                 const fileType = file.fileType
-//                 const filename = file.filename
-//                 const buffer = Buffer.from(file.file, 'base64')
-//                 let uploaded = await this.uploadService.processAndUploadContent(buffer, filename, fileType)
-//                 console.log(uploaded)
-//                 if (fileType == 'video') {
-//                     media.videos.push(uploaded)
-//                     postMedia.push({ type: 'video', url: uploaded })
-//                 }
-//                 if (fileType == 'image') {
-//                     media.images.push(uploaded)
-//                     postMedia.push({ type: 'image', url: uploaded })
-//                 }
-//             }
-
-
-//             const postDetails = { media: postMedia, isUploaded: true }
-//             console.log(postDetails, postId, targetId, 'meda upload consumer')
-//             await this.postsService.updatePost(postId, postDetails);
-//             await this.mediaService.storeMedia(targetId, media)
-//         } catch (error) {
-//             console.error(`Error uploading media for post ${postId}:`, error);
-//             await this.postsService.deletePost(postId);
-//         }
-//     }
-// }
+import { NotificationService } from 'src/notification/notification.service';
 
 @Controller('posts')
 export class PostsController {
     constructor(
-        private userService: UserService,
         private postService: PostsService,
         private uploadService: UploadService,
         private readonly mediaService: MediaService,
         private readonly eventEmitter: EventEmitter2,
-        private readonly chatGateway: ChatGateway,
         private readonly hashtagService: HashtagService,
-        @InjectQueue("media-upload") private readonly mediaUploadQueue: Queue,
-
     ) { }
 
     @Get()
@@ -109,12 +45,6 @@ export class PostsController {
         console.log(targetId, 'get reels targetId')
         response.json(await this.postService.getReels(cursor, sub, targetId, type))
     }
-
-    // @Public()
-    // @Get('/bulkupdate')
-    // async bulkUpdatePost(){
-    //     await this.postService.bulkUpdate()
-    // }
 
     @Get('feed')
     async feed(@Req() req: Request, @Res() response: Response) {
@@ -311,11 +241,12 @@ export class PostsController {
         const { sub } = req.user;
         let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId);
         const hashtags = this.hashtagService.extractHashtags(createPostDTO.content);
+        const mentions = createPostDTO?.mentions?.map(id => new Types.ObjectId(id)) || []
 
         let finalPostData: ServerPostData = {
             ...createPostDTO,
             hashtags,
-            mentions: createPostDTO?.mentions?.map(id => new Types.ObjectId(id)) || [],
+            mentions,
             isUploaded: files.length > 0 ? false : null,
             targetId,
             postType: createPostDTO.postType || 'post',
@@ -373,7 +304,7 @@ export class PostsController {
 
     @Post("reel")
     async editReel(
-        @Body(new ZodValidationPipe(z.object({ postId: ValidMongoId, content: z.string() }))) reelData: { content: string, postId: string },
+        @Body(new ZodValidationPipe(z.object({ postId: ValidMongoId, content: z.string() }))) reelData: { content: string, postId: string, mentions: string[] },
         @Req() req: Request,
         @Res() res: Response,
     ) {
@@ -398,11 +329,13 @@ export class PostsController {
             hashtags = this.hashtagService.extractHashtags(reelData.content);
         }
 
+        const mentions = reelData?.mentions?.map(id => new Types.ObjectId(id)) || []
 
         let updatedPost = await this.postService.updatePost(
             reelData.postId,
             {
                 ...(hashtags && { hashtags }),
+                mentions: [...post?.mentions, mentions],
                 content: reelData.content,
             })
         res.json({ updatedPost, success: true })
@@ -495,11 +428,13 @@ export class PostsController {
         const { sub } = req.user
         let targetId = reelData.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(reelData.targetId)
         const hashtags = this.hashtagService.extractHashtags(reelData.content);
+        const mentions = reelData?.mentions?.map(id => new Types.ObjectId(id)) || []
 
         let uploadedPost = await this.postService.createPost({
             ...reelData,
             isUploaded: false,
             hashtags,
+            mentions,
             postType: 'post',
             targetId,
             user: new Types.ObjectId(sub)
@@ -555,11 +490,15 @@ export class PostsController {
             hashtags = this.hashtagService.extractHashtags(_postData.content);
         }
 
+
+        const mentions = _postData?.mentions?.map(id => new Types.ObjectId(id)) || []
+
         let uploadedPost = await this.postService.updatePost(
             _postData.postId,
             {
                 ...updatePostDto,
                 ...(hashtags && { hashtags }),
+                mentions: [...post?.mentions, mentions],
                 isUploaded: files.length > 0 ? false : null,
             })
 

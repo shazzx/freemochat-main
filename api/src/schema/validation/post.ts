@@ -93,6 +93,7 @@ export const UpdatePost = z.object({
     postId: ValidMongoId,
     content: z.string(),
     type: z.string(),
+    mentions: z.array(ValidMongoId).max(50).optional().default([]),
     visibility: z.string(),
     media: z.array(z.object({
         url: z.string(),
