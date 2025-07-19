@@ -48,7 +48,6 @@ export class HashtagService {
           // postsCount: 1,
           lastUsed: new Date(),
           posts: [postObjectId],
-          isActive: true
         });
       } else {
         // hashtag.usageCount += 1;
@@ -79,32 +78,25 @@ export class HashtagService {
         hashtag.posts = hashtag.posts.filter(id => !id.equals(postObjectId));
         hashtag.usageCount = Math.max(0, hashtag.usageCount - 1);
 
-        if (hashtag.posts.length === 0) {
-          hashtag.isActive = false;
-        }
-
         await hashtag.save();
       }
     }
   }
 
-  // Get trending hashtags
   async getTrendingHashtags(limit: number = 10): Promise<Hashtag[]> {
     return this.hashtagModel
-      .find({ isActive: true, usageCount: { $gt: 0 } })
+      .find({ usageCount: { $gt: 0 } })
       .sort({ usageCount: -1, lastUsed: -1 })
       .limit(limit)
       .exec();
   }
 
-  // Search hashtags
   async searchHashtags(query: string, limit: number = 10, skip: number = 0): Promise<Hashtag[]> {
     const searchRegex = new RegExp(query.replace('#', ''), 'i');
 
     return this.hashtagModel
       .find({
         $and: [
-          { isActive: true },
           { usageCount: { $gt: 0 } },
           {
             $or: [
@@ -127,10 +119,7 @@ export class HashtagService {
     limit: number = 10,
     cursor?: string
   ): Promise<any> {
-    const hashtag = await this.hashtagModel.findOne({
-      name: hashtagName.toLowerCase().replace('#', ''),
-      isActive: true
-    });
+    const hashtag = await this.hashtagModel.findOne({ name: hashtagName.toLowerCase().replace('#', '') });
 
     if (!hashtag) {
       return {
@@ -404,25 +393,18 @@ export class HashtagService {
     };
   }
 
-  // Get hashtag by name
   async getHashtagByName(name: string): Promise<Hashtag | null> {
-    return this.hashtagModel.findOne({
-      name: name.toLowerCase().replace('#', ''),
-      isActive: true
-    });
+    return this.hashtagModel.findOne({ name: name.toLowerCase().replace('#', '') });
   }
 
-  // Get hashtag statistics
   async getHashtagStats(): Promise<any> {
-    const [totalHashtags, activeHashtags, topHashtags] = await Promise.all([
+    const [totalHashtags, topHashtags] = await Promise.all([
       this.hashtagModel.countDocuments(),
-      this.hashtagModel.countDocuments({ isActive: true }),
-      this.hashtagModel.find({ isActive: true }).sort({ usageCount: -1 }).limit(5)
+      this.hashtagModel.find().sort({ usageCount: -1 }).limit(5)
     ]);
 
     return {
       totalHashtags,
-      activeHashtags,
       topHashtags
     };
   }
