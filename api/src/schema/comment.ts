@@ -15,7 +15,13 @@ export class Comment extends Document {
     @Prop({ type: Types.ObjectId, ref: "User", required: true })
     user: ObjectId
 
-    @Prop({ type: String})
+    @Prop([{ type: Types.ObjectId, ref: 'User' }])
+    mentions: Types.ObjectId[];
+
+    @Prop([{ type: String }])
+    hashtags: string[];
+
+    @Prop({ type: String })
     content: String;
 
     @Prop({ type: String, required: true })

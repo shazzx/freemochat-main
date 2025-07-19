@@ -270,10 +270,60 @@ export class StoriesService {
     }
 
     async getStoryViewes(storyId) {
-        console.log(storyId, 'viewed stories storyid')
         const storyViews = await this.viewedStoriesModel.find({ storyId: new Types.ObjectId(storyId) }).populate('userId')
         console.log('viewed stories list', storyViews)
         return storyViews
+    }
+
+    async getStoryLikes(storyId: string) {
+        try {
+            const storyObjectId = new Types.ObjectId(storyId);
+
+            const result = await this.storyModel.aggregate([
+                {
+                    $match: { _id: storyObjectId }
+                },
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'likedBy',
+                        foreignField: '_id',
+                        as: 'likedUsers',
+                        pipeline: [
+                            {
+                                $project: {
+                                    username: 1,
+                                    profile: 1,
+                                    _id: 1,
+                                    isVerified: 1
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    $project: {
+                        likes: '$likedUsers',
+                        count: { $size: '$likedUsers' },
+                        createdAt: 1
+                    }
+                }
+            ]);
+
+            if (!result || result.length === 0) {
+                throw new Error('Story not found');
+            }
+
+            const storyData = result[0];
+
+            return {
+                likes: storyData.likes,
+                count: storyData.count,
+            };
+
+        } catch (error) {
+            throw new Error(`Error fetching story likes: ${error.message}`);
+        }
     }
 
     async createStory(userId, storyDetails) {

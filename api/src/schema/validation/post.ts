@@ -8,6 +8,7 @@
 
 import { z } from 'zod'
 import { Cursor, ValidMongoId } from './global'
+import { Types } from 'mongoose';
 
 
 const LocationSchema = z.object({
@@ -46,8 +47,7 @@ export const CreatePost = z.object({
     type: z.string(),
     visibility: z.string(),
     postType: z.string().optional(),
-
-    // 🔧 NEW: Location fields (optional for backward compatibility)
+    mentions: z.array(ValidMongoId).max(50).optional().default([]),
     location: LocationSchema.optional(),
     mediaLocations: z.array(LocationSchema).optional(),
 
@@ -249,6 +249,7 @@ export interface ServerPostData {
     content?: string;
     type?: string;
     visibility?: string;
+    mentions: Types.ObjectId[];
 
     // Optional fields from CreatePostDTO
     targetId?: any; // Will be set as ObjectId in controller
@@ -278,6 +279,7 @@ export interface ServerPostData {
     user?: any; // ObjectId
     isUploaded?: boolean | null;
     media?: MediaWithLocation[];
+    hashtags?: string[]
 }
 
 const BoundingBoxSchema = z.object({

@@ -1,31 +1,51 @@
-import { Body, Controller, Delete, Get, Post, Put, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Post, Put, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { CommentService } from './comment.service';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
+import { HashtagService } from 'src/hashtag/hashtagservice';
+import { PostsService } from 'src/posts/posts.service';
 
 @Controller('comments')
 export class CommentController {
-  constructor(private readonly commentService: CommentService) { }
+  constructor(
+    private readonly commentService: CommentService,
+    private readonly hashtagService: HashtagService,
+    private readonly postService: PostsService
+  ) { }
 
   @UseInterceptors(FileInterceptor('file'))
   @Post("comment")
   async comment(@Req() req: Request, @Res() res: Response, @UploadedFile() file: Express.Multer.File,
     @Body("commentDetails") _commentDetails: string,
     @Res() response: Response) {
-    const { commentDetails, postId, postType, targetType, authorId } = JSON.parse(_commentDetails)
+    const { commentDetails, postId, postType, targetType, authorId, mentions } = JSON.parse(_commentDetails)
     const { sub } = req.user as { sub: string, username: string }
-    console.log(JSON.parse(_commentDetails), 'commentDetails')
-    response.json(await this.commentService.commentOnPost({
+
+    const post = await this.postService._getPost(postId)
+    if (!post) {
+      throw new BadRequestException('post not found')
+    }
+
+    const hashtags = this.hashtagService.extractHashtags(commentDetails.content);
+    this.hashtagService.processPostHashtags(postId, hashtags)
+
+    const comment = await this.commentService.commentOnPost({
       commentDetails,
       postId,
+      mentions,
+      hashtags,
       userId: sub,
       targetId: postId,
       targetType,
       postType,
       authorId,
       file
-    }))
+    })
+
+    const postHashtags = [...post.hashtags, ...hashtags]
+    this.postService.updatePost(postId, { hashtags: postHashtags })
+
+    response.json(comment)
   }
 
   @UseInterceptors(FileInterceptor('file'))
@@ -36,6 +56,7 @@ export class CommentController {
     const {
       replyDetails,
       postId,
+      mentions,
       commentId,
       postType,
       targetType,
@@ -43,11 +64,21 @@ export class CommentController {
       commentAuthorId
     } = JSON.parse(replyData)
     const { sub } = req.user as { sub: string, username: string }
-    console.log(JSON.parse(replyData), 'replyData')
-    response.json(await this.commentService.replyOnComment(
+
+    const post = await this.postService._getPost(postId)
+    if (!post) {
+      throw new BadRequestException('post not found')
+    }
+
+    const hashtags = this.hashtagService.extractHashtags(replyDetails.content);
+    this.hashtagService.processPostHashtags(postId, hashtags)
+
+    const reply = await this.commentService.replyOnComment(
       {
         replyDetails,
         postId,
+        mentions,
+        hashtags,
         commentId,
         userId: sub,
         postType,
@@ -56,7 +87,12 @@ export class CommentController {
         authorId,
         commentAuthorId,
         file
-      }))
+      })
+
+    const postHashtags = [...post.hashtags, ...hashtags]
+    this.postService.updatePost(postId, { hashtags: postHashtags })
+
+    response.json(reply)
   }
 
   @Get()
@@ -73,13 +109,14 @@ export class CommentController {
   async updateComment(
     @Req() req: Request,
     @Res() res: Response,
-    @Body() body: { commentId: string; content: string }
+    @Body() body: { commentId: string; content: string, mentions: string[] }
   ) {
-    const { commentId, content } = body;
+    const { commentId, content, mentions } = body;
     const { sub } = req.user as { sub: string };
 
     const result = await this.commentService.updateComment(
       { content },
+      mentions,
       commentId,
       sub
     );
@@ -91,13 +128,14 @@ export class CommentController {
   async updateReply(
     @Req() req: Request,
     @Res() res: Response,
-    @Body() body: { replyId: string; content: string }
+    @Body() body: { replyId: string; content: string, mentions: string[] }
   ) {
-    const { replyId, content } = body;
+    const { replyId, content, mentions } = body;
     const { sub } = req.user as { sub: string };
 
     const result = await this.commentService.updateReply(
       { content },
+      mentions,
       replyId,
       sub
     );

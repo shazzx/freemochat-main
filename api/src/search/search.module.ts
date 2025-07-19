@@ -10,9 +10,10 @@ import { PostModule } from 'src/admin/post/post.module';
 import { Post, PostSchema } from 'src/schema/post';
 import { Group, GroupSchema } from 'src/schema/group';
 import { Page, PageSchema } from 'src/schema/pages';
+import { HashtagModule } from 'src/hashtag/hashtag.module';
 
 @Module({
-  imports: [AuthModule, JwtModule, 
+  imports: [AuthModule, JwtModule, HashtagModule, 
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }]),
     MongooseModule.forFeature([{ name: Group.name, schema: GroupSchema }]),

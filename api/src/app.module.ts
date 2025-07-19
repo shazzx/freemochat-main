@@ -42,6 +42,7 @@ import { CryptoModule } from './crypto/crypto.module';
 import { TwilioModule } from './twilio/twilio.module';
 import { LocationModule } from './location/location.module';
 import { PaymentModule } from './payment/payment.module';
+import { HashtagModule } from './hashtag/hashtag.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -88,6 +89,7 @@ import { PaymentModule } from './payment/payment.module';
     TwilioModule,
     LocationModule,
     PaymentModule,
+    HashtagModule
   ],
   controllers: [AppController],
   providers: [AppService, { provide: "APP_GUARD", useClass: JwtAuthGuard }, UploadListener],

@@ -104,6 +104,9 @@ export class Post {
     @Prop({ type: Types.ObjectId })
     sharedPost: ObjectId
 
+    @Prop([{ type: Types.ObjectId, ref: 'User' }])
+    mentions: Types.ObjectId[];
+
     @Prop({ type: String, required: true })
     type: String;
 
@@ -145,12 +148,16 @@ export class Post {
         notes: String;
     }>;
 
+    @Prop([{ type: String }])
+    hashtags: string[];
+
     @Prop()
     createdAt: Date
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post)
 PostSchema.index({ content: 1 });
-PostSchema.index({ location: '2dsphere' }); // For geospatial queries
+PostSchema.index({ location: '2dsphere' });
 PostSchema.index({ postType: 1 });
-PostSchema.index({ 'plantationData.nextUpdateDue': 1 }); // For notification queries
+PostSchema.index({ 'plantationData.nextUpdateDue': 1 });
+PostSchema.index({ hashtags: 1 });

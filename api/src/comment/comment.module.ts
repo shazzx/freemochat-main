@@ -7,6 +7,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { UploadModule } from 'src/upload/upload.module';
 import { MetricsAggregatorModule } from 'src/metrics-aggregator/metrics-aggregator.module';
 import { NotificationModule } from 'src/notification/notification.module';
+import { HashtagModule } from 'src/hashtag/hashtag.module';
+import { PostsModule } from 'src/posts/posts.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { NotificationModule } from 'src/notification/notification.module';
     UploadModule,
     forwardRef(() => MetricsAggregatorModule),
     NotificationModule,
+    HashtagModule,
+    PostsModule,
     MongooseModule.forFeature([{ name: Comment.name, schema: CommentSchema }])
   ],
   controllers: [CommentController],

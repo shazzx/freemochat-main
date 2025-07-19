@@ -19,6 +19,7 @@ import { Request } from 'types/global';
 import { Cursor, CursorDTO, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
 import { z } from 'zod';
+import { HashtagService } from 'src/hashtag/hashtagservice';
 
 
 
@@ -89,6 +90,7 @@ export class PostsController {
         private readonly mediaService: MediaService,
         private readonly eventEmitter: EventEmitter2,
         private readonly chatGateway: ChatGateway,
+        private readonly hashtagService: HashtagService,
         @InjectQueue("media-upload") private readonly mediaUploadQueue: Queue,
 
     ) { }
@@ -276,7 +278,7 @@ export class PostsController {
         const result = await this.postService.getGlobalMapData(query, sub);
         res.json(result);
     }
-    
+
     @Get("global-map/counts")
     async getGlobalMapCounts(
         @Query(new ZodValidationPipe(GetGlobalMapCounts)) query: GetGlobalMapCountsDTO,
@@ -286,7 +288,7 @@ export class PostsController {
         const result = await this.postService.getGlobalMapCounts(query);
         res.json(result);
     }
-    
+
     @Get("global-map/search")
     async searchGlobalMapLocations(
         @Query(new ZodValidationPipe(SearchGlobalMapLocations)) query: SearchGlobalMapLocationsDTO,
@@ -296,7 +298,7 @@ export class PostsController {
         const result = await this.postService.searchGlobalMapLocations(query);
         res.json(result);
     }
-    
+
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("create")
@@ -308,9 +310,12 @@ export class PostsController {
     ) {
         const { sub } = req.user;
         let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId);
+        const hashtags = this.hashtagService.extractHashtags(createPostDTO.content);
 
         let finalPostData: ServerPostData = {
             ...createPostDTO,
+            hashtags,
+            mentions: createPostDTO?.mentions?.map(id => new Types.ObjectId(id)) || [],
             isUploaded: files.length > 0 ? false : null,
             targetId,
             postType: createPostDTO.postType || 'post',
@@ -342,6 +347,7 @@ export class PostsController {
 
         // Use the finalPostData object
         let uploadedPost = await this.postService.createPost(finalPostData);
+        this.hashtagService.processPostHashtags(uploadedPost._id, hashtags)
 
         if (files.length > 0) {
             const uploadPromise = files.map((file, index) => {
@@ -378,23 +384,25 @@ export class PostsController {
             throw new BadRequestException("No post found")
         }
 
-        // if (post.postType !== 'reel') {
-        //     throw new BadRequestException("Provided post is not a reel")
-        // }
-
         if (post.isUploaded == false) {
             throw new BadRequestException("please wait previous post update is in process...")
         }
-
-        console.log(post.user.toString(), sub, 'user id')
 
         if (post.user.toString() !== sub) {
             throw new BadRequestException("You are not allowed to edit this post")
         }
 
+        let hashtags;
+
+        if (reelData.content) {
+            hashtags = this.hashtagService.extractHashtags(reelData.content);
+        }
+
+
         let updatedPost = await this.postService.updatePost(
             reelData.postId,
             {
+                ...(hashtags && { hashtags }),
                 content: reelData.content,
             })
         res.json({ updatedPost, success: true })
@@ -410,26 +418,18 @@ export class PostsController {
         const { sub } = req.user
         const post = await this.postService._getPost(deleteReelData.postId)
         if (!post) {
-            throw new BadRequestException("No post found")
+            throw new BadRequestException("Post not found")
         }
-
-        // if (post.postType !== 'reel') {
-        //     throw new BadRequestException("Provided post is not a reel")
-        // }
 
         if (post.isUploaded == false) {
             throw new BadRequestException("please wait previous post update is in process...")
         }
-
-        console.log(post.user.toString(), sub, 'user id')
 
         if (post.user.toString() !== sub) {
             throw new BadRequestException("You are not allowed to delete this post")
         }
 
         try {
-
-
             post.media.forEach(async (media) => {
                 if (media.url) {
                     let videoUrlSplit = media?.url?.split("/")
@@ -467,8 +467,10 @@ export class PostsController {
                 }
             })
 
-            const deleted = await this.postService.deletePost(deleteReelData.postId)
-            res.json({ deleted: true, success: true })
+            await this.postService.deletePost(deleteReelData.postId)
+            this.hashtagService.removePostHashtags(post._id.toString(), post.hashtags)
+
+            res.json({ deleted: true })
         } catch (error) {
             throw new BadRequestException("Error deleting reel post, please try again later.");
         }
@@ -492,10 +494,12 @@ export class PostsController {
 
         const { sub } = req.user
         let targetId = reelData.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(reelData.targetId)
+        const hashtags = this.hashtagService.extractHashtags(reelData.content);
 
         let uploadedPost = await this.postService.createPost({
             ...reelData,
             isUploaded: false,
+            hashtags,
             postType: 'post',
             targetId,
             user: new Types.ObjectId(sub)
@@ -539,79 +543,23 @@ export class PostsController {
     async updatePost(@Body(new ZodValidationPipe(UpdatePost, true, "postData")) updatePostDto: UpdatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
         const _postData = updatePostDto
 
-        // const media = {
-        //     images: [],
-        //     videos: []
-        // }
-
-        // const removeMedia = {
-        //     images: [],
-        //     videos: []
-        // }
-
-        // const postMedia = []
-
-        // if (_postData.media.length > 0) {
-        //     const { media } = _postData
-        //     for (let file in media) {
-        //         if (media[file].remove) {
-        //             let imageUrlSplit = media[file].url.split("/")
-        //             console.log(`deleting ${imageUrlSplit} from s3...`)
-        //             let filename = imageUrlSplit[imageUrlSplit.length - 1]
-        //             await this.uploadService.deleteFromS3(filename)
-        //         }
-        //     }
-        // }
-
-        // _postData.media.forEach((_media) => {
-        //     if (!_media?.remove && _media.type == 'video') {
-        //         postMedia.push({ type: 'video', url: _media.url })
-        //     }
-        //     if (!_media?.remove && _media.type == 'image') {
-        //         postMedia.push({ type: 'image', url: _media.url })
-        //     }
-        //     if (_media?.remove && _media.type == 'video') {
-        //         removeMedia.videos.push(_media.url)
-        //     }
-        //     if (_media?.remove && _media.type == 'image') {
-        //         removeMedia.images.push(_media.url)
-        //     }
-        // })
-
-        // for (let file of files) {
-        //     const fileType = getFileType(file.mimetype)
-        //     const filename = uuidv4()
-        //     console.log(file)
-        //     let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-        //     console.log(uploaded)
-        //     if (fileType == 'video') {
-        //         media.videos.push(uploaded.url)
-        //         postMedia.push({ type: 'video', url: uploaded.url })
-        //     }
-        //     if (fileType == 'image') {
-        //         media.images.push(uploaded.url)
-        //         postMedia.push({ type: 'image', url: uploaded.url })
-        //     }
-        // }
-
-        // const { sub } = req.user as { username: string, sub: string }
-
-        // await this.mediaService.storeMedia(new Types.ObjectId(sub), media)
-        // await this.mediaService.removeMedia(new Types.ObjectId(sub), removeMedia)
-
-        // console.log(postMedia, media, removeMedia)
-        // this.chatGateway.uploadSuccess({isSuccess: true})
-
         const post = await this.postService._getPost(_postData.postId)
 
         if (!post || post.isUploaded == false) {
             throw new BadRequestException("please wait previous post update is in process...")
         }
 
+        let hashtags: string[];
+
+        if (_postData.content) {
+            hashtags = this.hashtagService.extractHashtags(_postData.content);
+        }
+
         let uploadedPost = await this.postService.updatePost(
             _postData.postId,
             {
                 ...updatePostDto,
+                ...(hashtags && { hashtags }),
                 isUploaded: files.length > 0 ? false : null,
             })
 
@@ -633,6 +581,12 @@ export class PostsController {
     async deletePost(@Body(new ZodValidationPipe(DeletePost)) deletePostDTO: DeletePostDTO, @Req() req, @Res() res: Response) {
         const { postDetails } = deletePostDTO
 
+        const post = await this.postService._getPost(postDetails.postId)
+
+        if (!post) {
+            throw new BadRequestException('post not found')
+        }
+
         const { sub } = req.user
 
         let media: { images: string[], videos: string[] } = {
@@ -640,8 +594,8 @@ export class PostsController {
             videos: []
         }
 
-        if (postDetails.media && postDetails.media.length > 0) {
-            const { media } = postDetails
+        if (post.media && post.media.length > 0) {
+            const { media } = post
             for (let image in media) {
                 if (typeof media[image].url == 'string') {
                     let imageUrlSplit = media[image].url.split("/")
@@ -651,20 +605,21 @@ export class PostsController {
             }
         }
 
-        if (postDetails.media && postDetails.media.length > 0) {
-            for (let file in postDetails.media) {
-                if (postDetails.media[file].type == 'video') {
-                    media.videos.push(postDetails.media[file].url)
+        if (post.media && post.media.length > 0) {
+            for (let file in post.media) {
+                if (post.media[file].type == 'video') {
+                    media.videos.push(post.media[file].url)
                 }
-                if (postDetails.media[file].type == 'image') {
-                    media.images.push(postDetails.media[file].url)
+                if (post.media[file].type == 'image') {
+                    media.images.push(post.media[file].url)
                 }
             }
 
             await this.mediaService.removeMedia(new Types.ObjectId(sub), media)
         }
-
-        res.json(await this.postService.deletePost(postDetails.postId))
+        await this.postService.deletePost(post._id)
+        this.hashtagService.removePostHashtags(post._id.toString(), post.hashtags)
+        res.json({ deleted: true })
     }
 
     // @Post("post")

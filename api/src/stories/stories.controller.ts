@@ -33,13 +33,6 @@ export class StoriesController {
         res.json(await this.storiesService.createStory(sub, { url }))
     }
 
-    @Post("like")
-    async LikeStory(@Req() req: Request, @Res() res: Response) {
-        const { sub } = req.user as { sub: string, username: string }
-        const { storyId } = req.body
-        res.json(this.storiesService.likeStory(storyId, sub))
-    }
-
     @Post("view")
     async viewStory(@Req() req: Request, @Res() res: Response) {
         const { sub } = req.user as { sub: string, username: string }
@@ -51,6 +44,19 @@ export class StoriesController {
     async getViews(@Req() req: Request, @Res() res: Response, @Query() query) {
         const { storyId } = query
         res.json(await this.storiesService.getStoryViewes(storyId))
+    }
+
+    @Post("like")
+    async LikeStory(@Req() req: Request, @Res() res: Response) {
+        const { sub } = req.user as { sub: string, username: string }
+        const { storyId } = req.body
+        res.json(this.storiesService.likeStory(storyId, sub))
+    }
+    
+    @Get("likes")
+    async getLikes(@Req() req: Request, @Res() res: Response, @Query() query) {
+        const { storyId } = query
+        res.json(await this.storiesService.getStoryLikes(storyId))
     }
 
     // @Post("update")
