@@ -34,7 +34,6 @@ class Media {
     @Prop()
     thumbnail: string;
 
-    // Location where this specific media was captured
     @Prop({ type: Location })
     location?: Location;
 
@@ -73,9 +72,9 @@ class GarbageCollectionData {
     material?: string;
 }
 
-class DamData {
+class WaterPondsData {
     @Prop({ type: String })
-    damType?: string;
+    pondType?: string;
 
     @Prop({ type: String })
     capacity?: string;
@@ -85,6 +84,20 @@ class DamData {
 
     @Prop({ type: Number })
     estimatedDepth?: number;
+}
+
+class RainWaterData {
+    @Prop({ type: String })
+    harvesterType?: string;
+
+    @Prop({ type: String })
+    capacity?: string;
+
+    @Prop({ type: String })
+    storageMethod?: string;
+
+    @Prop({ type: Number })
+    estimatedVolume?: number;
 }
 
 @Schema({ timestamps: true })
@@ -112,7 +125,7 @@ export class Post {
 
     @Prop({
         type: String,
-        enum: ['post', 'reel', 'plantation', 'garbage_collection', 'dam'],
+        enum: ['post', 'plantation', 'garbage_collection', 'water_ponds', 'rain_water'],
         default: 'post'
     })
     postType: String;
@@ -126,21 +139,21 @@ export class Post {
     @Prop({ type: Array<Media> })
     media: Media[]
 
-    // Main location for the post (can be average of media locations)
     @Prop({ type: Location })
     location?: Location;
 
-    // Specific data based on post type
     @Prop({ type: PlantationData })
     plantationData?: PlantationData;
 
     @Prop({ type: GarbageCollectionData })
     garbageCollectionData?: GarbageCollectionData;
 
-    @Prop({ type: DamData })
-    damData?: DamData;
+    @Prop({ type: WaterPondsData })
+    waterPondsData?: WaterPondsData;
 
-    // For plantation posts - tracks update history
+    @Prop({ type: RainWaterData })
+    rainWaterData?: RainWaterData;
+
     @Prop({ type: [{ updateDate: Date, imageCount: Number, notes: String }] })
     updateHistory?: Array<{
         updateDate: Date;

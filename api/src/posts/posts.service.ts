@@ -57,11 +57,11 @@ export class PostsService {
             ..._cursor,
             targetId: new Types.ObjectId(targetId),
             type,
-            postType: { $in: ['post', 'plantation', 'garbage_collection', 'dam'] }
+            postType: { $in: ['post', 'plantation', 'garbage_collection', 'water_ponds', 'rain_water'] }
         } : {
             ..._cursor,
             type,
-            postType: { $in: ['post', 'plantation', 'garbage_collection', 'dam'] }
+            postType: { $in: ['post', 'plantation', 'garbage_collection', 'water_ponds', 'rain_water'] }
         }
 
         const posts = await this.postModel.aggregate([
@@ -2065,10 +2065,10 @@ export class PostsService {
         const postsQuery = cursor ? {
             createdAt: { $lt: new Date(cursor) },
             ...visibility,
-            postType: { $in: ['post', 'plantation', 'garbage_collection', 'dam'] } // 🔧 ADD NEW TYPES
+            postType: { $in: ['post', 'plantation', 'garbage_collection', 'water_ponds', 'rain_water'] }
         } : {
             ...visibility,
-            postType: { $in: ['post', 'plantation', 'garbage_collection', 'dam'] } // 🔧 ADD NEW TYPES
+            postType: { $in: ['post', 'plantation', 'garbage_collection', 'water_ponds', 'rain_water'] }
         };
 
         // Reels query - using a separate cursor for reels pagination
@@ -4763,7 +4763,7 @@ export class PostsService {
 
     async updatePost(postId: string, postDetails: any) {
         const updatedPost = await this.postModel.findByIdAndUpdate(postId, { $set: { ...postDetails } }, { new: true })
-        
+
         if (updatedPost.mentions.length > 0) {
             updatedPost.mentions.forEach((userId) => {
                 this.notificationService.createNotification(
@@ -4808,12 +4808,12 @@ export class PostsService {
         const { bounds, category, limit, clustering } = query;
 
         const totalPosts = await this.postModel.countDocuments({
-            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'dam'] : [category] },
+            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
             visibility: 'public'
         });
 
         const postsWithLocation = await this.postModel.countDocuments({
-            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'dam'] : [category] },
+            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
             visibility: 'public',
             'location.latitude': { $exists: true },
             'location.longitude': { $exists: true }
@@ -4824,7 +4824,7 @@ export class PostsService {
         }
 
         const simpleQuery = {
-            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'dam'] : [category] },
+            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
             visibility: 'public',
             'location.latitude': { $exists: true },
             'location.longitude': { $exists: true }
@@ -4862,7 +4862,6 @@ export class PostsService {
             { $match: geoQuery },
             {
                 $addFields: {
-                    // Create grid coordinates for clustering
                     gridLat: {
                         $floor: {
                             $divide: ["$location.latitude", radiusInRadians * 180 / Math.PI]
@@ -4890,7 +4889,8 @@ export class PostsService {
                             media: { $arrayElemAt: ["$media", 0] }, // First image for preview
                             plantationData: "$plantationData",
                             garbageCollectionData: "$garbageCollectionData",
-                            damData: "$damData",
+                            waterPondsData: "$waterPondsData",
+                            rainWaterData: "$rainWaterData",
                             createdAt: "$createdAt",
                             user: "$user"
                         }
@@ -4908,12 +4908,11 @@ export class PostsService {
                         latitude: "$centerLat",
                         longitude: "$centerLng"
                     },
-                    locations: { $slice: ["$locations", 10] }, // Limit locations per cluster
+                    locations: { $slice: ["$locations", 10] }, 
                     _id: 0
                 }
             },
             { $limit: limit },
-            // Lookup user details for locations
             {
                 $lookup: {
                     from: 'users',
@@ -4952,7 +4951,8 @@ export class PostsService {
                     media: { $arrayElemAt: ["$media", 0] },
                     plantationData: 1,
                     garbageCollectionData: 1,
-                    damData: 1,
+                    waterPondsData: 1,
+                    rainWaterData: 1,
                     createdAt: 1,
                     user: { $arrayElemAt: ["$userDetails", 0] }
                 }
@@ -4971,7 +4971,7 @@ export class PostsService {
         const { bounds, country, city } = query;
 
         let baseQuery: any = {
-            postType: { $in: ['plantation', 'garbage_collection', 'dam'] },
+            postType: { $in: ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] },
             visibility: 'public'
         };
 
@@ -5002,6 +5002,7 @@ export class PostsService {
                     _id: "$postType",
                     count: { $sum: 1 },
                     // For plantation, count individual plants (media items)
+                    // For other types, count as 1 per post
                     totalItems: {
                         $sum: {
                             $cond: {
@@ -5038,21 +5039,29 @@ export class PostsService {
                 categories: {
                     plantation: { posts: 0, totalPlants: 0 },
                     garbage_collection: { posts: 0, totalBins: 0 },
-                    dam: { posts: 0, totalDams: 0 }
+                    water_ponds: { posts: 0, totalWaterPonds: 0 },
+                    rain_water: { posts: 0, totalRainWater: 0 }
                 }
             };
         }
 
         const data = result[0];
-        const categoriesMap = {};
+        const categoriesMap = {
+            plantation: { posts: 0, totalPlants: 0 },
+            garbage_collection: { posts: 0, totalBins: 0 },
+            water_ponds: { posts: 0, totalWaterPonds: 0 },
+            rain_water: { posts: 0, totalRainWater: 0 }
+        };
 
         data.categories.forEach(cat => {
             if (cat.category === 'plantation') {
                 categoriesMap['plantation'] = { posts: cat.posts, totalPlants: cat.totalItems };
             } else if (cat.category === 'garbage_collection') {
                 categoriesMap['garbage_collection'] = { posts: cat.posts, totalBins: cat.totalItems };
-            } else if (cat.category === 'dam') {
-                categoriesMap['dam'] = { posts: cat.posts, totalDams: cat.totalItems };
+            } else if (cat.category === 'water_ponds') {
+                categoriesMap['water_ponds'] = { posts: cat.posts, totalWaterPonds: cat.totalItems };
+            } else if (cat.category === 'rain_water') {
+                categoriesMap['rain_water'] = { posts: cat.posts, totalRainWater: cat.totalItems };
             }
         });
 
@@ -5067,7 +5076,7 @@ export class PostsService {
         const { query: searchQuery, category, limit } = query;
 
         const baseQuery: any = {
-            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'dam'] : [category] },
+            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
             visibility: 'public',
             $or: [
                 { 'location.address': { $regex: new RegExp(searchQuery, 'i') } },
@@ -5128,5 +5137,4 @@ export class PostsService {
             total: results.length
         };
     }
-
 }

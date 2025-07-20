@@ -279,7 +279,26 @@ export class CommentService {
             user: new Types.ObjectId(userId),
             type: 'comment'
         })
+
+
+
         await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postId), (postType || 'post'), "comments")
+
+        if (comment.mentions.length > 0) {
+            comment.mentions.forEach((userId) => {
+                this.notificationService.createNotification(
+                    {
+                        from: new Types.ObjectId(String(comment.user)),
+                        user: userId,
+                        targetId: new Types.ObjectId(String(comment.post)),
+                        type: 'comment',
+                        postType: 'post',
+                        targetType: 'post',
+                        value: 'has mentioned you in a comment'
+                    }
+                )
+            })
+        }
 
         if (userId != authorId) {
             console.log('creating notificatoin for post owner')
@@ -355,6 +374,21 @@ export class CommentService {
             })
         await this.metricsAggregatorService.incrementCount(new Types.ObjectId(commentId), "comment", "replies")
 
+        if (reply.mentions.length > 0) {
+            reply.mentions.forEach((userId) => {
+                this.notificationService.createNotification(
+                    {
+                        from: new Types.ObjectId(String(reply.user)),
+                        user: userId,
+                        targetId: new Types.ObjectId(String(reply.post)),
+                        type: 'reply',
+                        postType: 'post',
+                        targetType: 'post',
+                        value: 'has mentioned you in a reply'
+                    }
+                )
+            })
+        }
 
         if (userId != authorId) {
             console.log('creating notificatoin for post owner')
@@ -438,6 +472,23 @@ export class CommentService {
             throw new BadRequestException('Comment not found or you do not have permission to update it.');
         }
 
+
+        if (comment.mentions.length > 0) {
+            comment.mentions.forEach((userId) => {
+                this.notificationService.createNotification(
+                    {
+                        from: new Types.ObjectId(String(comment.user)),
+                        user: userId,
+                        targetId: new Types.ObjectId(String(comment.post)),
+                        type: 'comment',
+                        postType: 'post',
+                        targetType: 'post',
+                        value: 'has mentioned you in a comment'
+                    }
+                )
+            })
+        }
+
         return {
             success: true,
             message: 'Comment updated successfully',
@@ -460,6 +511,22 @@ export class CommentService {
 
         if (!reply) {
             throw new BadRequestException('Reply not found or you do not have permission to update it.');
+        }
+
+        if (reply.mentions.length > 0) {
+            reply.mentions.forEach((userId) => {
+                this.notificationService.createNotification(
+                    {
+                        from: new Types.ObjectId(String(reply.user)),
+                        user: userId,
+                        targetId: new Types.ObjectId(String(reply.post)),
+                        type: 'reply',
+                        postType: 'post',
+                        targetType: 'post',
+                        value: 'has mentioned you in a reply'
+                    }
+                )
+            })
         }
 
         return {

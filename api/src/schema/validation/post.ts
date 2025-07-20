@@ -33,11 +33,18 @@ const GarbageCollectionDataSchema = z.object({
     material: z.string().optional()
 });
 
-const DamDataSchema = z.object({
-    damType: z.string().optional(),
+const WaterPondsDataSchema = z.object({
+    pondType: z.string().optional(),
     capacity: z.string().optional(),
     purpose: z.string().optional(),
     estimatedDepth: z.number().positive().optional()
+});
+
+const RainWaterDataSchema = z.object({
+    harvesterType: z.string().optional(),
+    capacity: z.string().optional(),
+    storageMethod: z.string().optional(),
+    estimatedVolume: z.number().positive().optional()
 });
 
 // Your existing schema extended with location fields
@@ -51,13 +58,14 @@ export const CreatePost = z.object({
     location: LocationSchema.optional(),
     mediaLocations: z.array(LocationSchema).optional(),
 
-    // 🔧 NEW: Type-specific data (optional)
+    // 🔧 UPDATED: Type-specific data (optional)
     plantationData: PlantationDataSchema.optional(),
     garbageCollectionData: GarbageCollectionDataSchema.optional(),
-    damData: DamDataSchema.optional()
+    waterPondsData: WaterPondsDataSchema.optional(),
+    rainWaterData: RainWaterDataSchema.optional()
 }).refine((data) => {
     // Validation: If it's a location post, require location data
-    const isLocationPost = data.postType && ['plantation', 'garbage_collection', 'dam'].includes(data.postType);
+    const isLocationPost = data.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(data.postType);
 
     if (isLocationPost) {
         // For location posts, require mainLocation and mediaLocations
@@ -68,15 +76,15 @@ export const CreatePost = z.object({
             return false; // At least one media location required
         }
 
-        // Dam posts can only have 1 image/location
-        if (data.postType === 'dam' && data.mediaLocations.length > 1) {
+        // Water ponds posts can only have 1 image/location
+        if (data.postType === 'water_ponds' && data.mediaLocations.length > 1) {
             return false;
         }
     }
 
     return true;
 }, {
-    message: "Location data is required for plantation, garbage collection, and dam posts"
+    message: "Location data is required for plantation, garbage collection, water ponds, and rain water posts"
 });
 
 
@@ -220,7 +228,11 @@ export type ServerGarbageCollectionData = NonNullable<CreatePostDTO['garbageColl
     // Add any server-computed fields if needed in the future
 };
 
-export type ServerDamData = NonNullable<CreatePostDTO['damData']> & {
+export type ServerWaterPondsData = NonNullable<CreatePostDTO['waterPondsData']> & {
+    // Add any server-computed fields if needed in the future
+};
+
+export type ServerRainWaterData = NonNullable<CreatePostDTO['rainWaterData']> & {
     // Add any server-computed fields if needed in the future
 };
 
@@ -273,7 +285,8 @@ export interface ServerPostData {
     // Server-enhanced type-specific data
     plantationData?: ServerPlantationData;
     garbageCollectionData?: ServerGarbageCollectionData;
-    damData?: ServerDamData;
+    waterPondsData?: ServerWaterPondsData;
+    rainWaterData?: ServerRainWaterData;
 
     // Server-added fields
     updateHistory?: UpdateHistoryItem[];
@@ -296,7 +309,7 @@ const BoundingBoxSchema = z.object({
 
 export const GetGlobalMapData = z.object({
     bounds: BoundingBoxSchema,
-    category: z.enum(['plantation', 'garbage_collection', 'dam', 'all']).default('all'),
+    category: z.enum(['plantation', 'garbage_collection', 'water_ponds', 'rain_water', 'all']).default('all'),
     limit: z.coerce.number().min(1).max(1000).default(500),
     clustering: z.coerce.boolean().default(true),
     clusterRadius: z.coerce.number().min(10).max(100).default(50)
@@ -310,7 +323,7 @@ export const GetGlobalMapCounts = z.object({
 
 export const SearchGlobalMapLocations = z.object({
     query: z.string().min(1).max(100),
-    category: z.enum(['plantation', 'garbage_collection', 'dam', 'all']).default('all'),
+    category: z.enum(['plantation', 'garbage_collection', 'water_ponds', 'rain_water', 'all']).default('all'),
     limit: z.coerce.number().min(1).max(50).default(20)
 });
 

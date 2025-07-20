@@ -253,13 +253,12 @@ export class PostsController {
             user: new Types.ObjectId(sub)
         };
 
-        if (createPostDTO.postType && ['plantation', 'garbage_collection', 'dam'].includes(createPostDTO.postType)) {
+        if (createPostDTO.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(createPostDTO.postType)) {
 
             if (createPostDTO.postType === 'plantation' && createPostDTO.plantationData) {
                 const nextUpdateDue = new Date();
-                nextUpdateDue.setMonth(nextUpdateDue.getMonth() + 3);
+                nextUpdateDue.setMonth(nextUpdateDue.getMonth() + 6);
 
-                // Create plantation data with server-computed fields
                 finalPostData.plantationData = {
                     ...createPostDTO.plantationData,
                     lastUpdateDate: new Date(),
@@ -267,16 +266,50 @@ export class PostsController {
                     isActive: true
                 };
 
-                // Add update history
                 finalPostData.updateHistory = [{
                     updateDate: new Date(),
                     imageCount: files.length,
                     notes: 'Initial plantation'
                 }];
             }
+
+            if (createPostDTO.postType === 'water_ponds' && createPostDTO.waterPondsData) {
+                finalPostData.waterPondsData = {
+                    ...createPostDTO.waterPondsData
+                };
+
+                finalPostData.updateHistory = [{
+                    updateDate: new Date(),
+                    imageCount: files.length,
+                    notes: 'Water pond established'
+                }];
+            }
+
+            if (createPostDTO.postType === 'rain_water' && createPostDTO.rainWaterData) {
+                finalPostData.rainWaterData = {
+                    ...createPostDTO.rainWaterData
+                };
+
+                finalPostData.updateHistory = [{
+                    updateDate: new Date(),
+                    imageCount: files.length,
+                    notes: 'Rain water harvesting system installed'
+                }];
+            }
+
+            if (createPostDTO.postType === 'garbage_collection' && createPostDTO.garbageCollectionData) {
+                finalPostData.garbageCollectionData = {
+                    ...createPostDTO.garbageCollectionData
+                };
+
+                finalPostData.updateHistory = [{
+                    updateDate: new Date(),
+                    imageCount: files.length,
+                    notes: 'Garbage collection point established'
+                }];
+            }
         }
 
-        // Use the finalPostData object
         let uploadedPost = await this.postService.createPost(finalPostData);
         this.hashtagService.processPostHashtags(uploadedPost._id, hashtags)
 
