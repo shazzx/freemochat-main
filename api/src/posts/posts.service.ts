@@ -1,5 +1,6 @@
 import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Cron } from '@nestjs/schedule';
 import { Model, ObjectId, startSession, Types } from 'mongoose';
 import { LocationService } from 'src/location/location.service';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
@@ -22,7 +23,6 @@ import { SBulkViewPost, SPostPromotion, SViewPost } from 'src/utils/types/servic
 
 @Injectable()
 export class PostsService {
-
     constructor(
         @InjectModel(Post.name) private readonly postModel: Model<Post>,
         @InjectModel(Comment.name) private readonly commentModel: Model<Comment>,
@@ -39,6 +39,87 @@ export class PostsService {
         private readonly locationService: LocationService,
         private readonly paymentService: PaymentService,
     ) { }
+
+    @Cron('0 9 * * *')
+    async checkPlantationReminders() {
+        console.log('Checking plantation update reminders...');
+
+        const today = new Date();
+
+        const notificationStages = [
+            { stage: '3_months', daysBefore: 90, title: '3 Months Until Plant Update' },
+            { stage: '1_month', daysBefore: 30, title: '1 Month Until Plant Update' },
+            { stage: '15_days', daysBefore: 15, title: '15 Days Until Plant Update' },
+            { stage: '7_days', daysBefore: 7, title: '1 Week Until Plant Update' },
+            { stage: '3_days', daysBefore: 3, title: '3 Days Until Plant Update' },
+            { stage: '24_hours', daysBefore: 1, title: 'Update Your Plants Tomorrow!' }
+        ];
+
+        for (const stage of notificationStages) {
+            await this.processNotificationStage(today, stage);
+        }
+    }
+
+    private async processNotificationStage(today: Date, stage: any) {
+        const targetDate = new Date(today);
+        targetDate.setDate(targetDate.getDate() + stage.daysBefore);
+
+        const plantationsDue = await this.getPlantationsDue(targetDate, stage)
+        console.log(`Found ${plantationsDue.length} plantations for ${stage.stage} notification`);
+
+        for (const plantation of plantationsDue) {
+            await this.sendPlantationReminder(plantation, stage);
+        }
+    }
+
+    async sendPlantationReminder(plantation: any, stage: any) {
+        try {
+            const today = new Date();
+            const dueDate = new Date(plantation.plantationData.nextUpdateDue);
+            const daysRemaining = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+            const message = this.createNotificationMessage(plantation, stage, daysRemaining);
+            console.log('sending remind plantation', plantation)
+
+            await this.notificationService.createNotification({
+                from: null,
+                user: new Types.ObjectId(plantation.user),
+                targetId: null,
+                type: 'system',
+                postType: 'plantation_reminder',
+                targetType: 'system',
+                value: message,
+            });
+
+            console.log(`Sent ${stage.stage} notification for plantation ${plantation._id}`);
+
+        } catch (error) {
+            console.error(`Failed to send notification for plantation ${plantation._id}:`, error);
+        }
+    }
+
+    private createNotificationMessage(plantation: any, stage: any, daysRemaining: number): string {
+        const plantInfo = plantation.plantationData.plantType || 'plants';
+        const location = plantation.location?.city || plantation.location?.address || 'your plantation';
+
+        switch (stage.stage) {
+            case '3_months':
+                return `Your ${plantInfo} in ${location} will need an update in 3 months. Start planning your next visit!`;
+            case '1_month':
+                return `Just 1 month left! Your ${plantInfo} in ${location} will need an update soon.`;
+            case '15_days':
+                return `Only 15 days remaining! Don't forget to update your ${plantInfo} in ${location}.`;
+            case '7_days':
+                return `One week left! Your ${plantInfo} in ${location} needs an update very soon.`;
+            case '3_days':
+                return `Only 3 days left! Please plan to update your ${plantInfo} in ${location}.`;
+            case '24_hours':
+                return `Tomorrow is the day! Your ${plantInfo} in ${location} needs an update. Don't miss it!`;
+            default:
+                return `Your ${plantInfo} in ${location} needs an update in ${daysRemaining} days.`;
+        }
+    }
+
 
     async getPosts(cursor: string | null, userId: string, targetId: string, type: string, self: string) {
         let model = type + 's'
@@ -4908,7 +4989,7 @@ export class PostsService {
                         latitude: "$centerLat",
                         longitude: "$centerLng"
                     },
-                    locations: { $slice: ["$locations", 10] }, 
+                    locations: { $slice: ["$locations", 10] },
                     _id: 0
                 }
             },
@@ -5136,5 +5217,54 @@ export class PostsService {
             results,
             total: results.length
         };
+    }
+
+    async getPlantationsDue(targetDate: Date, stage: any) {
+        const plantationsDue = await this.postModel.aggregate([
+            {
+                $match: {
+                    postType: 'plantation',
+                    'plantationData.isActive': true,
+                    'plantationData.nextUpdateDue': {
+                        $gte: new Date(targetDate.setHours(0, 0, 0, 0)),
+                        $lt: new Date(targetDate.setHours(23, 59, 59, 999))
+                    }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'notificationlogs',
+                    let: { postId: '$_id', stage: stage.stage },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$postId', { $toString: '$$postId' }] },
+                                        { $eq: ['$stage', '$$stage'] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'sentNotifications'
+                }
+            },
+            {
+                $match: {
+                    'sentNotifications': { $size: 0 } // Only posts without this notification
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    user: 1,
+                    plantationData: 1,
+                    location: 1,
+                    createdAt: 1
+                }
+            }
+        ]);
+        return plantationsDue
     }
 }

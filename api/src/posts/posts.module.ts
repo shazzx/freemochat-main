@@ -39,9 +39,6 @@ import { HashtagModule } from 'src/hashtag/hashtag.module';
       { name: Member.name, schema: MemberSchema },
     ]),
 
-    BullModule.registerQueue({
-      name: "media-upload"
-    }),
     MediaModule,
     PaymentModule,
     LocationModule,
