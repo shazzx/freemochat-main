@@ -8,11 +8,16 @@ export class MetricsAggregatorController {
   constructor(private readonly metricsAggregatorService: MetricsAggregatorService) { }
 
 
-  // @Public()
   @Get("user/metrics")
   async getAll(@Req() req: Request, @Res() res: Response) {
     const { sub } = req.user as { sub: string }
     res.json(await this.metricsAggregatorService.userMetrics(sub))
+  }
+
+  @Get("user/contributions")
+  async userContributions(@Req() req: Request, @Res() res: Response) {
+    const { sub } = req.user as { sub: string }
+    res.json(await this.metricsAggregatorService.userContributions(sub))
   }
 
   @Post("user/metrics/default")
@@ -21,10 +26,4 @@ export class MetricsAggregatorController {
     const { name, targetId } = req.body
     res.json(await this.metricsAggregatorService.defaultCount(targetId || sub, name, 'user'))
   }
-
-  // @Public()
-  // @Get("delete")
-  // async deleteAll(@Req() req: Request, @Res() res: Response) {
-  //   res.json(await this.metricsAggregatorService.deleteAll())
-  // }
 }

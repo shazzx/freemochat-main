@@ -4860,6 +4860,10 @@ export class PostsService {
                 )
             })
         }
+
+        if (updatedPost.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(String(updatedPost.postType))) {
+            this.metricsAggregatorService.incrementCount(new Types.ObjectId(String(updatedPost.user)), String(updatedPost.postType), 'contributions', null, updatedPost.media.length)
+        }
         return updatedPost
     }
 
