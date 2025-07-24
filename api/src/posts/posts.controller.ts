@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Query, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Query, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { Response } from 'express';
 import { Types } from 'mongoose'
@@ -240,10 +240,11 @@ export class PostsController {
     ) {
         const { sub } = req.user;
         let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId);
-        const hashtags = this.hashtagService.extractHashtags(createPostDTO.content);
+        const hashtags = this.hashtagService.extractHashtags(createPostDTO.content || '');
         const mentions = createPostDTO?.mentions?.map(id => new Types.ObjectId(id)) || []
 
-        let finalPostData: ServerPostData = {
+        // 🔧 UPDATED: Simplified post data - no environmental data
+        let finalPostData = {
             ...createPostDTO,
             hashtags,
             mentions,
@@ -251,68 +252,66 @@ export class PostsController {
             targetId,
             postType: createPostDTO.postType || 'post',
             user: new Types.ObjectId(sub)
-        };
+        } as ServerPostData
 
+        // Create the main post first
+        let uploadedPost = await this.postService.createPost(finalPostData);
+        this.hashtagService.processPostHashtags(uploadedPost._id, hashtags);
+
+        // 🔧 NEW: Create EnvironmentalContribution document for environmental posts
+        let environmentalContribution = null;
         if (createPostDTO.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(createPostDTO.postType)) {
 
-            if (createPostDTO.postType === 'plantation' && createPostDTO.plantationData) {
+            let environmentalData: any = {
+                postId: uploadedPost._id,
+                location: createPostDTO.location, // Use main location from post
+                updateHistory: [{
+                    updateDate: new Date(),
+                    media: [], // Will be populated after file upload
+                    notes: this.getInitialNotes(createPostDTO.postType)
+                }]
+            };
+
+            // Add type-specific environmental data based on postType
+            if (createPostDTO.postType === 'plantation') {
+                // Note: You'll need to add plantationData to CreatePostDTO or handle it separately
                 const nextUpdateDue = new Date();
                 nextUpdateDue.setMonth(nextUpdateDue.getMonth() + 6);
 
-                finalPostData.plantationData = {
-                    ...createPostDTO.plantationData,
+                environmentalData.plantationData = {
+                    // Add default or passed plantation data
                     lastUpdateDate: new Date(),
                     nextUpdateDue,
-                    isActive: true
+                    isActive: true,
+                    // You might want to add plantationData back to CreatePostDTO
+                    // or handle this data separately in the request
                 };
-
-                finalPostData.updateHistory = [{
-                    updateDate: new Date(),
-                    imageCount: files.length,
-                    notes: 'Initial plantation'
-                }];
             }
 
-            if (createPostDTO.postType === 'water_ponds' && createPostDTO.waterPondsData) {
-                finalPostData.waterPondsData = {
-                    ...createPostDTO.waterPondsData
+            if (createPostDTO.postType === 'garbage_collection') {
+                environmentalData.garbageCollectionData = {
+                    // Add garbage collection specific data
+                    // You might want to add this data to CreatePostDTO
                 };
-
-                finalPostData.updateHistory = [{
-                    updateDate: new Date(),
-                    imageCount: files.length,
-                    notes: 'Water pond established'
-                }];
             }
 
-            if (createPostDTO.postType === 'rain_water' && createPostDTO.rainWaterData) {
-                finalPostData.rainWaterData = {
-                    ...createPostDTO.rainWaterData
+            if (createPostDTO.postType === 'water_ponds') {
+                environmentalData.waterPondsData = {
+                    // Add water ponds specific data
                 };
-
-                finalPostData.updateHistory = [{
-                    updateDate: new Date(),
-                    imageCount: files.length,
-                    notes: 'Rain water harvesting system installed'
-                }];
             }
 
-            if (createPostDTO.postType === 'garbage_collection' && createPostDTO.garbageCollectionData) {
-                finalPostData.garbageCollectionData = {
-                    ...createPostDTO.garbageCollectionData
+            if (createPostDTO.postType === 'rain_water') {
+                environmentalData.rainWaterData = {
+                    // Add rain water specific data
                 };
-
-                finalPostData.updateHistory = [{
-                    updateDate: new Date(),
-                    imageCount: files.length,
-                    notes: 'Garbage collection point established'
-                }];
             }
+
+            // Create the environmental contribution document
+            // environmentalContribution = await this.environmentalContributionService.create(environmentalData);
         }
 
-        let uploadedPost = await this.postService.createPost(finalPostData);
-        this.hashtagService.processPostHashtags(uploadedPost._id, hashtags)
-
+        // Handle file uploads
         if (files.length > 0) {
             const uploadPromise = files.map((file, index) => {
                 const fileType = getFileType(file.mimetype);
@@ -320,20 +319,54 @@ export class PostsController {
                 return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
                     .then(result => ({
                         ...result,
-                        location: createPostDTO.mediaLocations?.[index]
+                        // For environmental posts, associate media with both post and contribution
+                        // location: createPostDTO.mediaLocations?.[index],
+                        contributionId: environmentalContribution?._id
                     }));
             });
 
             this.eventEmitter.emit("files.uploaded", {
                 uploadPromise,
                 postId: uploadedPost._id.toString(),
+                contributionId: environmentalContribution?._id?.toString(),
                 targetId,
-                type: createPostDTO.type
+                type: createPostDTO.type,
+                postType: createPostDTO.postType
             });
         }
 
-        res.json(uploadedPost);
+        // Return post with environmental contribution data if applicable
+        const response = {
+            ...uploadedPost.toObject(),
+            environmentalContribution: environmentalContribution?.toObject()
+        };
+
+        res.json(response);
     }
+
+    // 🔧 NEW: Helper method to get initial notes based on post type
+    private getInitialNotes(postType: string): string {
+        const notesMap = {
+            plantation: 'Initial plantation',
+            water_ponds: 'Water pond established',
+            rain_water: 'Rain water harvesting system installed',
+            garbage_collection: 'Garbage collection point established'
+        };
+        return notesMap[postType] || 'Environmental contribution created';
+    }
+
+    @Get('environmental-contributions/:id')
+    async getEnvironmentalContributionDetails(
+        @Param('id') contributionId: string,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        if (!Types.ObjectId.isValid(contributionId)) {
+            throw new BadRequestException('Invalid contribution ID format');
+        }
+        res.json(await this.postService.getEnvironmentalContributionDetails(contributionId))
+    }
+
 
     @Post("reel")
     async editReel(

@@ -194,7 +194,7 @@ export class EnvironmentalContribution {
     rainWaterData?: RainWaterData;
 
 
-    @Prop({ type: [{ updateDate: Date, media: Array<Media>, notes: String }] })
+    @Prop({ type: [{ updateDate: Date, media: [Media], notes: String }] })
     updateHistory?: Array<{
         updateDate: Date;
         media: Media[];
@@ -207,4 +207,5 @@ export class EnvironmentalContribution {
 
 export const EnvironmentalContributionSchema = SchemaFactory.createForClass(EnvironmentalContribution);
 
+EnvironmentalContributionSchema.index({ postId: 1 });
 EnvironmentalContributionSchema.index({ location: '2dsphere' });

@@ -1,7 +1,7 @@
-import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
-import { Model, ObjectId, startSession, Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { LocationService } from 'src/location/location.service';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 import { NotificationService } from 'src/notification/notification.service';
@@ -11,7 +11,7 @@ import { Comment } from 'src/schema/comment';
 import { Follower } from 'src/schema/followers';
 import { Like } from 'src/schema/likes';
 import { Member } from 'src/schema/members';
-import { Post } from 'src/schema/post';
+import { EnvironmentalContribution, Post } from 'src/schema/post';
 import { Promotion } from 'src/schema/promotion';
 import { Report } from 'src/schema/report';
 import { GetGlobalMapCountsDTO, GetGlobalMapDataDTO, SearchGlobalMapLocationsDTO } from 'src/schema/validation/post';
@@ -33,6 +33,7 @@ export class PostsService {
         @InjectModel(ViewedPosts.name) private readonly viewPostsModel: Model<ViewedPosts>,
         @InjectModel(Follower.name) private readonly followerModel: Model<Follower>,
         @InjectModel(Member.name) private readonly memberModel: Model<Member>,
+        @InjectModel(EnvironmentalContribution.name) private readonly environmentalContributionModel: Model<EnvironmentalContribution>,
         private readonly notificationService: NotificationService,
         private readonly metricsAggregatorService: MetricsAggregatorService,
         private readonly userService: UserService,
@@ -4888,56 +4889,511 @@ export class PostsService {
         return post
     }
 
+    async getEnvironmentalContributionDetails(contributionId: string) {
+        return await this.environmentalContributionModel.findById(contributionId)
+            .populate('postId', 'projectDetails postType')
+            .exec();
+    }
 
     async getGlobalMapData(query: GetGlobalMapDataDTO, userId: string) {
         const { bounds, category, limit, clustering } = query;
 
-        const totalPosts = await this.postModel.countDocuments({
-            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
-            visibility: 'public'
-        });
+        const totalContributions = await this.environmentalContributionModel.aggregate([
+            {
+                $lookup: {
+                    from: 'posts',
+                    localField: 'postId',
+                    foreignField: '_id',
+                    as: 'post'
+                }
+            },
+            {
+                $unwind: '$post'
+            },
+            {
+                $match: {
+                    'post.postType': { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
+                    'post.visibility': 'public'
+                }
+            },
+            {
+                $count: 'total'
+            }
+        ]);
 
-        const postsWithLocation = await this.postModel.countDocuments({
-            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
-            visibility: 'public',
-            'location.latitude': { $exists: true },
-            'location.longitude': { $exists: true }
-        });
+        const totalCount = totalContributions[0]?.total || 0;
 
-        if (postsWithLocation === 0) {
+        if (totalCount === 0) {
             return { type: 'clustered', data: [] };
         }
 
-        const simpleQuery = {
-            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
-            visibility: 'public',
-            'location.latitude': { $exists: true },
-            'location.longitude': { $exists: true }
-        };
-
-        const simplePipeline = [
-            { $match: simpleQuery },
-            { $limit: 20 },
+        // 🔧 KEY CHANGE: Query individual EnvironmentalContribution documents (each = 1 element on map)
+        const pipeline = [
+            // Match contributions with location data
+            {
+                $match: {
+                    'location.latitude': { $exists: true },
+                    'location.longitude': { $exists: true }
+                }
+            },
+            // Join with Post to get post type and visibility
+            {
+                $lookup: {
+                    from: 'posts',
+                    localField: 'postId',
+                    foreignField: '_id',
+                    as: 'post'
+                }
+            },
+            {
+                $unwind: '$post'
+            },
+            // Filter by category and visibility
+            {
+                $match: {
+                    'post.postType': { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
+                    'post.visibility': 'public'
+                }
+            },
+            // Add bounds filtering if provided
+            ...(bounds ? [{
+                $match: {
+                    'location.latitude': {
+                        $gte: bounds.southWest.latitude,
+                        $lte: bounds.northEast.latitude
+                    },
+                    'location.longitude': {
+                        $gte: bounds.southWest.longitude,
+                        $lte: bounds.northEast.longitude
+                    }
+                }
+            }] : []),
+            {
+                $limit: limit || 500
+            },
+            // 🔧 IMPORTANT: Each document represents 1 individual element
             {
                 $project: {
                     _id: 1,
-                    postType: 1,
-                    location: 1,
-                    createdAt: 1
+                    postId: 1,
+                    postType: '$post.postType',
+                    location: 1, // Individual element location (not project location)
+                    createdAt: '$post.createdAt',
+                    projectDetails: '$post.projectDetails',
+                    // Include specific environmental data for this individual element
+                    elementData: {
+                        plantationData: 1,
+                        garbageCollectionData: 1,
+                        waterPondsData: 1,
+                        rainWaterData: 1
+                    },
+                    media: 1, // Media for this specific element
+                    updateHistory: 1
                 }
             }
         ];
 
-        const simpleResults = await this.postModel.aggregate(simplePipeline);
+        const results = await this.environmentalContributionModel.aggregate(pipeline);
 
-        if (simpleResults.length > 0) {
+        // 🔧 CLUSTERING: Group nearby elements of the same type
+        if (clustering && results.length > 50) {
+            const clustered = this.clusterEnvironmentalElements(results, query.clusterRadius || 50);
             return {
-                type: 'individual',
-                data: simpleResults
+                type: 'clustered',
+                data: clustered
             };
         }
 
-        return { type: 'clustered', data: [] };
+        return {
+            type: 'individual', // Each marker = 1 tree/bin/pond/harvester
+            data: results
+        };
+    }
+
+    private clusterEnvironmentalElements(elements: any[], radiusKm: number = 50) {
+        const clusters = [];
+        const used = new Set();
+
+        for (let i = 0; i < elements.length; i++) {
+            if (used.has(i)) continue;
+
+            const centerElement = elements[i];
+            const cluster = {
+                center: {
+                    latitude: centerElement.location.latitude,
+                    longitude: centerElement.location.longitude
+                },
+                postType: centerElement.postType,
+                count: 1, // Count of individual elements (trees/bins/ponds)
+                elements: [centerElement], // Individual environmental elements
+                projectDetails: centerElement.projectDetails
+            };
+
+            // Find nearby elements of the same type
+            for (let j = i + 1; j < elements.length; j++) {
+                if (used.has(j)) continue;
+
+                const distance = this.calculateDistance(
+                    centerElement.location.latitude,
+                    centerElement.location.longitude,
+                    elements[j].location.latitude,
+                    elements[j].location.longitude
+                );
+
+                // Cluster elements of same type that are close together
+                if (distance <= radiusKm && elements[j].postType === centerElement.postType) {
+                    cluster.count++;
+                    cluster.elements.push(elements[j]);
+                    used.add(j);
+                }
+            }
+
+            clusters.push(cluster);
+            used.add(i);
+        }
+
+        return clusters;
+    }
+
+    async getGlobalMapCounts(query: GetGlobalMapCountsDTO) {
+        const { bounds, country, city } = query;
+
+        // 🔧 UPDATED: Count individual EnvironmentalContribution documents
+        const pipeline = [
+            // Join with Post data for filtering
+            {
+                $lookup: {
+                    from: 'posts',
+                    localField: 'postId',
+                    foreignField: '_id',
+                    as: 'post'
+                }
+            },
+            {
+                $unwind: '$post'
+            },
+            // Filter by environmental post types and visibility
+            {
+                $match: {
+                    'post.postType': { $in: ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] },
+                    'post.visibility': 'public'
+                }
+            },
+            // Add geographic filtering on individual element locations
+            ...(bounds ? [{
+                $match: {
+                    'location.latitude': {
+                        $gte: bounds.southWest.latitude,
+                        $lte: bounds.northEast.latitude
+                    },
+                    'location.longitude': {
+                        $gte: bounds.southWest.longitude,
+                        $lte: bounds.northEast.longitude
+                    }
+                }
+            }] : []),
+            ...(country ? [{
+                $match: {
+                    'location.country': { $regex: new RegExp(country, 'i') }
+                }
+            }] : []),
+            ...(city ? [{
+                $match: {
+                    'location.city': { $regex: new RegExp(city, 'i') }
+                }
+            }] : []),
+            // 🔧 KEY CHANGE: Count individual elements, not posts
+            {
+                $group: {
+                    _id: "$post.postType",
+                    totalElements: { $sum: 1 }, // Each EnvironmentalContribution doc = 1 element
+                    uniquePosts: { $addToSet: "$postId" } // Track unique projects
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    totalElements: 1,
+                    totalPosts: { $size: "$uniquePosts" }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    categories: {
+                        $push: {
+                            category: "$_id",
+                            posts: "$totalPosts",
+                            totalElements: "$totalElements"
+                        }
+                    },
+                    totalPosts: { $sum: "$totalPosts" },
+                    totalElements: { $sum: "$totalElements" }
+                }
+            }
+        ];
+
+        const result = await this.environmentalContributionModel.aggregate(pipeline);
+
+        if (result.length === 0) {
+            return {
+                totalPosts: 0,
+                totalElements: 0,
+                categories: {
+                    plantation: { posts: 0, totalTrees: 0 },
+                    garbage_collection: { posts: 0, totalBins: 0 },
+                    water_ponds: { posts: 0, totalPonds: 0 },
+                    rain_water: { posts: 0, totalHarvesters: 0 }
+                }
+            };
+        }
+
+        const data = result[0];
+        const categoriesMap = {
+            plantation: { posts: 0, totalTrees: 0 },
+            garbage_collection: { posts: 0, totalBins: 0 },
+            water_ponds: { posts: 0, totalPonds: 0 },
+            rain_water: { posts: 0, totalHarvesters: 0 }
+        };
+
+        // 🔧 UPDATED: Map to more specific naming (trees, bins, ponds, harvesters)
+        data.categories.forEach(cat => {
+            if (cat.category === 'plantation') {
+                categoriesMap['plantation'] = { posts: cat.posts, totalTrees: cat.totalElements };
+            } else if (cat.category === 'garbage_collection') {
+                categoriesMap['garbage_collection'] = { posts: cat.posts, totalBins: cat.totalElements };
+            } else if (cat.category === 'water_ponds') {
+                categoriesMap['water_ponds'] = { posts: cat.posts, totalPonds: cat.totalElements };
+            } else if (cat.category === 'rain_water') {
+                categoriesMap['rain_water'] = { posts: cat.posts, totalHarvesters: cat.totalElements };
+            }
+        });
+
+        return {
+            totalPosts: data.totalPosts,
+            totalElements: data.totalElements, // Total individual elements across all categories
+            categories: categoriesMap
+        };
+    }
+
+    async searchGlobalMapLocations(query: SearchGlobalMapLocationsDTO) {
+        const { query: searchQuery, category, limit } = query;
+
+        // 🔧 UPDATED: Search individual elements and group by location
+        const pipeline: any = [
+            // Join with Post data
+            {
+                $lookup: {
+                    from: 'posts',
+                    localField: 'postId',
+                    foreignField: '_id',
+                    as: 'post'
+                }
+            },
+            {
+                $unwind: '$post'
+            },
+            // Filter by category and search criteria
+            {
+                $match: {
+                    'post.postType': { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
+                    'post.visibility': 'public',
+                    $or: [
+                        // Search in individual element locations
+                        { 'location.address': { $regex: new RegExp(searchQuery, 'i') } },
+                        { 'location.city': { $regex: new RegExp(searchQuery, 'i') } },
+                        { 'location.country': { $regex: new RegExp(searchQuery, 'i') } },
+                        // Also search in project details
+                        { 'post.projectDetails.name': { $regex: new RegExp(searchQuery, 'i') } },
+                        { 'post.projectDetails.description': { $regex: new RegExp(searchQuery, 'i') } }
+                    ]
+                }
+            },
+            // Group by city/country to show location-based results
+            {
+                $group: {
+                    _id: {
+                        city: '$location.city',
+                        country: '$location.country'
+                    },
+                    elementCount: { $sum: 1 }, // Count of individual elements in this location
+                    uniqueProjects: { $addToSet: '$postId' }, // Unique projects in this location
+                    center: {
+                        $first: {
+                            latitude: '$location.latitude',
+                            longitude: '$location.longitude'
+                        }
+                    },
+                    sampleElements: {
+                        $push: {
+                            contributionId: '$_id',
+                            postId: '$postId',
+                            postType: '$post.postType',
+                            location: '$location',
+                            projectName: '$post.projectDetails.name'
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    city: '$_id.city',
+                    country: '$_id.country',
+                    displayName: {
+                        $concat: [
+                            { $ifNull: ['$_id.city', ''] },
+                            { $cond: { if: { $and: ['$_id.city', '$_id.country'] }, then: ', ', else: '' } },
+                            { $ifNull: ['$_id.country', ''] }
+                        ]
+                    },
+                    elementCount: 1, // Total individual elements in this location
+                    projectCount: { $size: '$uniqueProjects' }, // Number of projects
+                    center: 1,
+                    sampleElements: { $slice: ['$sampleElements', 5] }
+                }
+            },
+            { $sort: { elementCount: -1 } },
+            { $limit: limit }
+        ];
+
+        const results = await this.environmentalContributionModel.aggregate(pipeline);
+
+        return {
+            results: results.map(result => ({
+                ...result,
+                count: result.elementCount, // For frontend compatibility
+                description: `${result.elementCount} elements in ${result.projectCount} projects`
+            })),
+            total: results.length
+        };
+    }
+
+    // 🔧 UPDATED: Get plantation elements due for updates (individual trees)
+    async getPlantationElementsDue(targetDate: Date, stage: any) {
+        const plantationElementsDue = await this.environmentalContributionModel.aggregate([
+            {
+                $match: {
+                    'plantationData.isActive': true,
+                    'plantationData.nextUpdateDue': {
+                        $gte: new Date(targetDate.setHours(0, 0, 0, 0)),
+                        $lt: new Date(targetDate.setHours(23, 59, 59, 999))
+                    }
+                }
+            },
+            // Join with Post to get user info and project details
+            {
+                $lookup: {
+                    from: 'posts',
+                    localField: 'postId',
+                    foreignField: '_id',
+                    as: 'post'
+                }
+            },
+            {
+                $unwind: '$post'
+            },
+            // Check for existing notifications (per individual element)
+            {
+                $lookup: {
+                    from: 'notificationlogs',
+                    let: { contributionId: '$_id', stage: stage.stage },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$contributionId', { $toString: '$$contributionId' }] },
+                                        { $eq: ['$stage', '$$stage'] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'sentNotifications'
+                }
+            },
+            {
+                $match: {
+                    'sentNotifications': { $size: 0 } // Only elements without this notification
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    postId: 1,
+                    user: '$post.user',
+                    projectName: '$post.projectDetails.name',
+                    plantationData: 1,
+                    location: 1, // Individual tree location
+                    createdAt: 1,
+                    media: 1 // Photos of this specific tree
+                }
+            }
+        ]);
+
+        return plantationElementsDue;
+    }
+
+    // Distance calculation helper (unchanged)
+    private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+        const R = 6371; // Earth's radius in kilometers
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    async getPlantationsDue(targetDate: Date, stage: any) {
+        const plantationsDue = await this.postModel.aggregate([
+            {
+                $match: {
+                    postType: 'plantation',
+                    'plantationData.isActive': true,
+                    'plantationData.nextUpdateDue': {
+                        $gte: new Date(targetDate.setHours(0, 0, 0, 0)),
+                        $lt: new Date(targetDate.setHours(23, 59, 59, 999))
+                    }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'notificationlogs',
+                    let: { postId: '$_id', stage: stage.stage },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$postId', { $toString: '$$postId' }] },
+                                        { $eq: ['$stage', '$$stage'] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'sentNotifications'
+                }
+            },
+            {
+                $match: {
+                    'sentNotifications': { $size: 0 } // Only posts without this notification
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    user: 1,
+                    plantationData: 1,
+                    location: 1,
+                    createdAt: 1
+                }
+            }
+        ]);
+        return plantationsDue
     }
 
     private async getClusteredMapData(geoQuery: any, clusterRadius: number, limit: number) {
@@ -5052,223 +5508,4 @@ export class PostsService {
         };
     }
 
-    async getGlobalMapCounts(query: GetGlobalMapCountsDTO) {
-        const { bounds, country, city } = query;
-
-        let baseQuery: any = {
-            postType: { $in: ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] },
-            visibility: 'public'
-        };
-
-        // Add geographic filtering
-        if (bounds) {
-            baseQuery.location = {
-                $geoWithin: {
-                    $box: [
-                        [bounds.southWest.longitude, bounds.southWest.latitude],
-                        [bounds.northEast.longitude, bounds.northEast.latitude]
-                    ]
-                }
-            };
-        }
-
-        if (country) {
-            baseQuery['location.country'] = { $regex: new RegExp(country, 'i') };
-        }
-
-        if (city) {
-            baseQuery['location.city'] = { $regex: new RegExp(city, 'i') };
-        }
-
-        const pipeline = [
-            { $match: baseQuery },
-            {
-                $group: {
-                    _id: "$postType",
-                    count: { $sum: 1 },
-                    // For plantation, count individual plants (media items)
-                    // For other types, count as 1 per post
-                    totalItems: {
-                        $sum: {
-                            $cond: {
-                                if: { $eq: ["$postType", "plantation"] },
-                                then: { $size: { $ifNull: ["$media", []] } },
-                                else: 1
-                            }
-                        }
-                    }
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    categories: {
-                        $push: {
-                            category: "$_id",
-                            posts: "$count",
-                            totalItems: "$totalItems"
-                        }
-                    },
-                    totalPosts: { $sum: "$count" },
-                    totalItems: { $sum: "$totalItems" }
-                }
-            }
-        ];
-
-        const result = await this.postModel.aggregate(pipeline);
-
-        if (result.length === 0) {
-            return {
-                totalPosts: 0,
-                totalItems: 0,
-                categories: {
-                    plantation: { posts: 0, totalPlants: 0 },
-                    garbage_collection: { posts: 0, totalBins: 0 },
-                    water_ponds: { posts: 0, totalWaterPonds: 0 },
-                    rain_water: { posts: 0, totalRainWater: 0 }
-                }
-            };
-        }
-
-        const data = result[0];
-        const categoriesMap = {
-            plantation: { posts: 0, totalPlants: 0 },
-            garbage_collection: { posts: 0, totalBins: 0 },
-            water_ponds: { posts: 0, totalWaterPonds: 0 },
-            rain_water: { posts: 0, totalRainWater: 0 }
-        };
-
-        data.categories.forEach(cat => {
-            if (cat.category === 'plantation') {
-                categoriesMap['plantation'] = { posts: cat.posts, totalPlants: cat.totalItems };
-            } else if (cat.category === 'garbage_collection') {
-                categoriesMap['garbage_collection'] = { posts: cat.posts, totalBins: cat.totalItems };
-            } else if (cat.category === 'water_ponds') {
-                categoriesMap['water_ponds'] = { posts: cat.posts, totalWaterPonds: cat.totalItems };
-            } else if (cat.category === 'rain_water') {
-                categoriesMap['rain_water'] = { posts: cat.posts, totalRainWater: cat.totalItems };
-            }
-        });
-
-        return {
-            totalPosts: data.totalPosts,
-            totalItems: data.totalItems,
-            categories: categoriesMap
-        };
-    }
-
-    async searchGlobalMapLocations(query: SearchGlobalMapLocationsDTO) {
-        const { query: searchQuery, category, limit } = query;
-
-        const baseQuery: any = {
-            postType: { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
-            visibility: 'public',
-            $or: [
-                { 'location.address': { $regex: new RegExp(searchQuery, 'i') } },
-                { 'location.city': { $regex: new RegExp(searchQuery, 'i') } },
-                { 'location.country': { $regex: new RegExp(searchQuery, 'i') } }
-            ]
-        };
-
-        const pipeline: any = [
-            { $match: baseQuery },
-            {
-                $group: {
-                    _id: {
-                        city: "$location.city",
-                        country: "$location.country"
-                    },
-                    count: { $sum: 1 },
-                    center: {
-                        $first: {
-                            latitude: "$location.latitude",
-                            longitude: "$location.longitude"
-                        }
-                    },
-                    posts: {
-                        $push: {
-                            postId: "$_id",
-                            postType: "$postType",
-                            location: "$location"
-                        }
-                    }
-                }
-            },
-            {
-                $project: {
-                    _id: 0,
-                    city: "$_id.city",
-                    country: "$_id.country",
-                    displayName: {
-                        $concat: [
-                            { $ifNull: ["$_id.city", ""] },
-                            { $cond: { if: { $and: ["$_id.city", "$_id.country"] }, then: ", ", else: "" } },
-                            { $ifNull: ["$_id.country", ""] }
-                        ]
-                    },
-                    count: 1,
-                    center: 1,
-                    posts: { $slice: ["$posts", 5] }
-                }
-            },
-            { $sort: { count: -1 } },
-            { $limit: limit }
-        ];
-
-        const results = await this.postModel.aggregate(pipeline);
-
-        return {
-            results,
-            total: results.length
-        };
-    }
-
-    async getPlantationsDue(targetDate: Date, stage: any) {
-        const plantationsDue = await this.postModel.aggregate([
-            {
-                $match: {
-                    postType: 'plantation',
-                    'plantationData.isActive': true,
-                    'plantationData.nextUpdateDue': {
-                        $gte: new Date(targetDate.setHours(0, 0, 0, 0)),
-                        $lt: new Date(targetDate.setHours(23, 59, 59, 999))
-                    }
-                }
-            },
-            {
-                $lookup: {
-                    from: 'notificationlogs',
-                    let: { postId: '$_id', stage: stage.stage },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$postId', { $toString: '$$postId' }] },
-                                        { $eq: ['$stage', '$$stage'] }
-                                    ]
-                                }
-                            }
-                        }
-                    ],
-                    as: 'sentNotifications'
-                }
-            },
-            {
-                $match: {
-                    'sentNotifications': { $size: 0 } // Only posts without this notification
-                }
-            },
-            {
-                $project: {
-                    _id: 1,
-                    user: 1,
-                    plantationData: 1,
-                    location: 1,
-                    createdAt: 1
-                }
-            }
-        ]);
-        return plantationsDue
-    }
 }

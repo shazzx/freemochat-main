@@ -106,7 +106,7 @@ const ReelsSuggestionSection = ({ reels, navigateToReels }) => {
         // Navigate to reels screen - adapt this to your routing structure
         navigate(`/reels/${reel._id}`, {
             state: {
-                sourceMode: 'feed',
+                sourceMode: 'videosFeed',
                 initialReelId: reel._id,
                 reelData: {
                     ...reel,
