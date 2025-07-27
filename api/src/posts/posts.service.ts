@@ -14,7 +14,7 @@ import { Member } from 'src/schema/members';
 import { EnvironmentalContribution, Post } from 'src/schema/post';
 import { Promotion } from 'src/schema/promotion';
 import { Report } from 'src/schema/report';
-import { GetGlobalMapCountsDTO, GetGlobalMapDataDTO, SearchGlobalMapLocationsDTO } from 'src/schema/validation/post';
+import { CreateEnvironmentalContributionDTO, GetGlobalMapCountsDTO, GetGlobalMapDataDTO, SearchGlobalMapLocationsDTO } from 'src/schema/validation/post';
 import { ViewedPosts } from 'src/schema/viewedPosts';
 import { UserService } from 'src/user/user.service';
 import { CURRENCIES, PAYMENT_PROVIDERS, PAYMENT_STATES, POST_PROMOTION, ReachStatus } from 'src/utils/enums/global.c';
@@ -2302,6 +2302,26 @@ export class PostsService {
                                 as: 'regularUserDetails'
                             }
                         },
+
+                        {
+                            $lookup: {
+                                from: 'environmentalcontributions',
+                                let: { postId: '$_id', postType: '$postType' },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ['$postId', '$$postId'] },
+                                                    { $in: ['$$postType', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ],
+                                as: 'environmentalContributions'
+                            }
+                        },
                         {
                             $addFields: {
                                 user: {
@@ -2465,8 +2485,8 @@ export class PostsService {
                                 isUploaded: 1,
                                 target: 1,
                                 location: 1,
-                                plantationData: 1,
-                                updateHistory: 1,
+                                projectDetails: 1,
+                                environmentalContributions: 1,
                                 postType: 1,
                                 mentions: 1,
                                 reaction: 1,
@@ -2602,7 +2622,39 @@ export class PostsService {
                     as: 'counters'
                 }
             },
-            // Combine fields for main post
+            {
+                $lookup: {
+                    from: 'environmentalcontributions',
+                    let: { postId: '$_id', postType: '$postType' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$postId', '$$postId'] },
+                                        { $in: ['$$postType', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 1,
+                                location: 1,
+                                plantationData: 1,
+                                garbageCollectionData: 1,
+                                waterPondsData: 1,
+                                rainWaterData: 1,
+                                media: 1,
+                                updateHistory: 1,
+                                createdAt: 1
+                            }
+                        }
+                    ],
+                    as: 'environmentalContributions'
+                }
+            },
+
             {
                 $addFields: {
                     target: {
@@ -2679,8 +2731,8 @@ export class PostsService {
                     isUploaded: 1,
                     target: 1,
                     location: 1,
-                    plantationData: 1,
-                    updateHistory: 1,
+                    projectDetails: 1,
+                    environmentalContributions: 1,
                     reaction: 1,
                     postType: 1,
                     mentions: 1,
@@ -4895,6 +4947,30 @@ export class PostsService {
             .exec();
     }
 
+    async getProjectEnvironmentalContributions(postId: string) {
+        return await this.environmentalContributionModel.aggregate([
+            {
+                $match: {
+                    postId: new Types.ObjectId(postId)
+                }
+            },
+            {
+                $lookup: {
+                    from: "posts",
+                    localField: "postId",
+                    foreignField: "_id",
+                    as: "postId",
+                    pipeline: [
+                        { $project: { projectDetails: 1, postType: 1 } }
+                    ]
+                }
+            },
+            {
+                $unwind: "$postId"
+            }
+        ]);
+    }
+
     async getGlobalMapData(query: GetGlobalMapDataDTO, userId: string) {
         const { bounds, category, limit, clustering } = query;
 
@@ -5506,6 +5582,11 @@ export class PostsService {
             type: 'individual',
             data: posts
         };
+    }
+
+    async createEnvironmentalContribution(data: CreateEnvironmentalContributionDTO) {
+        const environmentalContribution = await this.environmentalContributionModel.create({ ...data, postId: new Types.ObjectId(data.postId) })
+        return environmentalContribution
     }
 
 }

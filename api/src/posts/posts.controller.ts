@@ -13,7 +13,7 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreateEnvironmentalContribution, CreateEnvironmentalContributionDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
@@ -319,8 +319,6 @@ export class PostsController {
                 return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
                     .then(result => ({
                         ...result,
-                        // For environmental posts, associate media with both post and contribution
-                        // location: createPostDTO.mediaLocations?.[index],
                         contributionId: environmentalContribution?._id
                     }));
             });
@@ -344,7 +342,6 @@ export class PostsController {
         res.json(response);
     }
 
-    // 🔧 NEW: Helper method to get initial notes based on post type
     private getInitialNotes(postType: string): string {
         const notesMap = {
             plantation: 'Initial plantation',
@@ -355,6 +352,29 @@ export class PostsController {
         return notesMap[postType] || 'Environmental contribution created';
     }
 
+    @UseInterceptors(FileInterceptor('file'))
+    @Post('environmental-contributions/create')
+    async createEnvironmentalContribution(
+        @Body(new ZodValidationPipe(CreateEnvironmentalContribution, true, "elementData")) data: CreateEnvironmentalContributionDTO,
+        @Req() req: Request,
+        @Res() res: Response,
+        @UploadedFile() file: Express.Multer.File
+    ) {
+        if (!file) {
+            throw new BadRequestException("Image is required")
+        }
+
+        console.log(file, 'file')
+        const fileType = getFileType(file.mimetype);
+        const filename = uuidv4();
+        const { url } = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
+        console.log(url, 'url')
+        console.log(data, 'data')
+        const environmentalContribution = await this.postService.createEnvironmentalContribution({ ...data, media: [{ url, name: filename, type: 'image', capturedAt: data.media[0].capturedAt }] })
+        console.log(environmentalContribution, 'saved data')
+        res.json(environmentalContribution)
+    }
+
     @Get('environmental-contributions/:id')
     async getEnvironmentalContributionDetails(
         @Param('id') contributionId: string,
@@ -362,11 +382,26 @@ export class PostsController {
         @Res() res: Response
     ) {
         if (!Types.ObjectId.isValid(contributionId)) {
-            throw new BadRequestException('Invalid contribution ID format');
+            throw new BadRequestException('Invalid contribution Id format');
         }
-        res.json(await this.postService.getEnvironmentalContributionDetails(contributionId))
+        const contribution = await this.postService.getEnvironmentalContributionDetails(contributionId)
+        res.json(contribution)
     }
 
+    @Get('environmental-contributions/by-post/:postId')
+    async getProjectEnvironmentalContributions(
+        @Param('postId') postId: string,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        if (!Types.ObjectId.isValid(postId)) {
+            throw new BadRequestException('Invalid Post Id format');
+        }
+        console.log(postId)
+        const contributions = await this.postService.getProjectEnvironmentalContributions(postId)
+        console.log(contributions, 'these are contributions')
+        res.json(contributions)
+    }
 
     @Post("reel")
     async editReel(

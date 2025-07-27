@@ -24,11 +24,11 @@ const ProjectDetailsSchema = z.object({
 
 const MediaSchema = z.object({
     name: z.string().optional(),
-    url: z.string(),
+    url: z.string().optional(),
     watermarkUrl: z.string().optional(),
-    type: z.string(),
+    type: z.string().optional(),
     thumbnail: z.string().optional(),
-    capturedAt: z.date().optional()
+    capturedAt: z.string().optional()
 });
 
 // Environmental Contribution Data Schemas (for separate EnvironmentalContribution document)
@@ -82,11 +82,11 @@ export const CreatePost = z.object({
 }).refine((data) => {
     // If it's an environmental post type, require projectDetails
     const isEnvironmentalPost = ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(data.postType);
-    
+
     if (isEnvironmentalPost && !data.projectDetails) {
         return false;
     }
-    
+
     return true;
 }, {
     message: "Project details are required for environmental contribution posts"
@@ -101,16 +101,16 @@ export const CreateEnvironmentalContribution = z.object({
     garbageCollectionData: GarbageCollectionDataSchema.optional(),
     waterPondsData: WaterPondsDataSchema.optional(),
     rainWaterData: RainWaterDataSchema.optional(),
-    updateHistory: z.array(UpdateHistoryItemSchema).optional().default([])
+    // updateHistory: z.array(UpdateHistoryItemSchema).optional().default([])
 }).refine((data) => {
     // Ensure at least one environmental data type is provided
     const hasEnvironmentalData = !!(
-        data.plantationData || 
-        data.garbageCollectionData || 
-        data.waterPondsData || 
+        data.plantationData ||
+        data.garbageCollectionData ||
+        data.waterPondsData ||
         data.rainWaterData
     );
-    
+
     return hasEnvironmentalData;
 }, {
     message: "At least one environmental data type must be provided"

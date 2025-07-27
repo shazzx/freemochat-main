@@ -392,7 +392,27 @@ export class UploadService {
         try {
             const response = await this.rekognitionClient.send(command);
             const labels = response.ModerationLabels?.map(label => label.Name) || [];
-            return { isSafe: labels.length === 0, labels };
+
+            const allowedLabels = [
+                'Corpse',
+                'Dead Body',
+                'Injury',
+                'Corpses',
+                'Violence',
+                'Weapons',
+                'Violence',
+                'Weapon Violence',
+                'Graphic Violence',
+            ];
+
+            const blockingLabels = response.ModerationLabels?.filter(label =>
+                !allowedLabels.includes(label.Name)
+            ) || [];
+
+            return {
+                isSafe: blockingLabels.length === 0,
+                labels
+            };
         } catch (error) {
             console.error('❌ Error in image moderation:', error);
             throw error;
