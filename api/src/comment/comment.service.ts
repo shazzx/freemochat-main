@@ -19,29 +19,9 @@ export class CommentService {
 
     async getComments(postId, cursor, userId: string) {
         const limit = 36
-        // const cacheKey = `post:${postId}:comments:${cursor || 'start'}:${limit}`
-        // const cachedPage = await this.cacheService.get(cacheKey)
-        // console.log(cachedPage)
-        // if (cachedPage) {
-        //     const parsedPage = JSON.parse(cachedPage)
-        //     return parsedPage
-        // }
-
-        // const comments = await this.commentModel
-        //     .find(query)
-        //     .sort({ createdAt: -1 })
-        //     .limit(limit + 1)
-        //     .populate({
-        //         path: "user",
-        //         model: "User"
-        //     }).select("username images firstname lastname")
-        //     .exec();
-
-
         const query = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
         const comments = await this.commentModel.aggregate([
             { $match: { ...query, post: postId, type: 'comment' } },
-            // { $sort: { createdAt: -1 } },
             { $limit: limit + 1 },
             {
                 $lookup: {
@@ -49,7 +29,7 @@ export class CommentService {
                     let: { userId: '$user' },
                     pipeline: [
                         { $match: { $expr: { $eq: ['$_id', '$$userId'] } } },
-                        { $project: { _id: 1, username: 1, profile: 1, firstname: 1, lastname: 1 } } // Only fetch necessary user fields
+                        { $project: { _id: 1, username: 1, profile: 1, firstname: 1, lastname: 1 } }
                     ],
                     as: 'user'
                 }
@@ -98,6 +78,27 @@ export class CommentService {
                     as: 'counters'
                 }
             },
+
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'mentions',
+                    foreignField: '_id',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                username: 1,
+                                firstname: 1,
+                                lastname: 1,
+                                profile: 1
+                            }
+                        }
+                    ],
+                    as: 'mentions'
+                }
+            },
+
             {
                 $addFields: {
                     reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
@@ -110,12 +111,14 @@ export class CommentService {
                     },
                 },
             },
+
             {
                 $project: {
                     _id: 1,
                     content: 1,
                     post: 1,
                     user: 1,
+                    mentions: 1,
                     reaction: 1,
                     repliesCount: { $ifNull: ['$repliesCount.count', 0] },
                     audio: 1,
@@ -127,43 +130,19 @@ export class CommentService {
             },
         ]).sort({ createdAt: -1 });
 
-        console.log('getting comments')
-
         const hasNextPage = comments.length > limit;
         const _comments = hasNextPage ? comments.slice(0, -1) : comments;
         const nextCursor = hasNextPage ? _comments[_comments.length - 1].createdAt.toISOString() : null;
         const results = { comments: _comments, nextCursor };
-
-        // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
 
         return results
     }
 
     async getReplies(commentId, cursor, userId: string) {
         const limit = 36
-        // const cacheKey = `post:${postId}:comments:${cursor || 'start'}:${limit}`
-        // const cachedPage = await this.cacheService.get(cacheKey)
-        // console.log(cachedPage)
-        // if (cachedPage) {
-        //     const parsedPage = JSON.parse(cachedPage)
-        //     return parsedPage
-        // }
-
-        // const comments = await this.commentModel
-        //     .find(query)
-        //     .sort({ createdAt: -1 })
-        //     .limit(limit + 1)
-        //     .populate({
-        //         path: "user",
-        //         model: "User"
-        //     }).select("username images firstname lastname")
-        //     .exec();
-
-
         const query = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
         const replies = await this.commentModel.aggregate([
             { $match: { ...query, parentId: new Types.ObjectId(commentId), type: 'reply', } },
-            // { $sort: { createdAt: -1 } },
             { $limit: limit + 1 },
             {
                 $lookup: {
@@ -200,6 +179,25 @@ export class CommentService {
                     as: 'userLike',
                 },
             },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'mentions',
+                    foreignField: '_id',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                username: 1,
+                                firstname: 1,
+                                lastname: 1,
+                                profile: 1
+                            }
+                        }
+                    ],
+                    as: 'mentions'
+                }
+            },
 
             {
                 $addFields: {
@@ -213,6 +211,7 @@ export class CommentService {
                     content: 1,
                     post: 1,
                     user: 1,
+                    mentions: 1,
                     reaction: 1,
                     parentId: 1,
                     type: 1,
@@ -230,15 +229,14 @@ export class CommentService {
         const nextCursor = hasNextPage ? _replies[_replies.length - 1].createdAt.toISOString() : null;
 
         const results = { replies: _replies, nextCursor };
-        // console.log(results)
-        // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
-
         return results
     }
 
     async commentOnPost({
         commentDetails,
         postId,
+        mentions,
+        hashtags,
         userId,
         targetId,
         targetType,
@@ -247,6 +245,8 @@ export class CommentService {
         file }: {
             commentDetails: { content: string, duration: string, audio?: { src: string, duration: string } },
             postId: string,
+            mentions: string[],
+            hashtags: string[],
             userId: string,
             targetId: string,
             targetType: string,
@@ -271,8 +271,34 @@ export class CommentService {
 
 
         console.log(postType, 'this is post type')
-        const comment = await this.commentModel.create({ ...commentDetails, post: postId, user: new Types.ObjectId(userId), type: 'comment' })
+        const comment = await this.commentModel.create({
+            ...commentDetails,
+            mentions: mentions?.map(id => new Types.ObjectId(id)) || [],
+            hashtags,
+            post: postId,
+            user: new Types.ObjectId(userId),
+            type: 'comment'
+        })
+
+
+
         await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postId), (postType || 'post'), "comments")
+
+        if (comment.mentions.length > 0) {
+            comment.mentions.forEach((userId) => {
+                this.notificationService.createNotification(
+                    {
+                        from: new Types.ObjectId(String(comment.user)),
+                        user: userId,
+                        targetId: new Types.ObjectId(String(comment.post)),
+                        type: 'comment',
+                        postType: 'post',
+                        targetType: 'post',
+                        value: 'has mentioned you in a comment'
+                    }
+                )
+            })
+        }
 
         if (userId != authorId) {
             console.log('creating notificatoin for post owner')
@@ -292,15 +318,6 @@ export class CommentService {
         return comment
     }
 
-    // async updateComment(commentDetails, commentId: string, userId: string) {
-    //     const comment = await this.commentModel.findOneAndUpdate({ _id: new Types.ObjectId(commentId), user: new Types.ObjectId(userId) }, { content: commentDetails.content })
-
-    //     if (!comment) {
-    //         throw new BadRequestException('Comment not found or you do not have permission to update it.');
-    //     }
-    //     return comment
-    // }
-
     async removeComment(commentDetails, userId: string) {
         const deletedComment = await this.commentModel.findOneAndDelete({ _id: new Types.ObjectId(commentDetails.commentId), user: new Types.ObjectId(userId) })
 
@@ -316,10 +333,12 @@ export class CommentService {
         return deletedComment
     }
 
-    async replyOnComment({ replyDetails, postId, commentId, userId, authorId, commentAuthorId, targetId, targetType, postType, file }:
+    async replyOnComment({ replyDetails, mentions, hashtags, postId, commentId, userId, authorId, commentAuthorId, targetId, targetType, postType, file }:
         {
             replyDetails: { content: string, duration: string, audio?: { src: string, duration: string } },
             postId: string,
+            mentions: string[],
+            hashtags: string[],
             commentId: string,
             userId: string,
             targetId: string,
@@ -346,6 +365,8 @@ export class CommentService {
         const reply = await this.commentModel.create(
             {
                 ...replyDetails,
+                mentions: mentions?.map(id => new Types.ObjectId(id)) || [],
+                hashtags,
                 post: postId,
                 user: new Types.ObjectId(userId),
                 type: 'reply',
@@ -353,6 +374,21 @@ export class CommentService {
             })
         await this.metricsAggregatorService.incrementCount(new Types.ObjectId(commentId), "comment", "replies")
 
+        if (reply.mentions.length > 0) {
+            reply.mentions.forEach((userId) => {
+                this.notificationService.createNotification(
+                    {
+                        from: new Types.ObjectId(String(reply.user)),
+                        user: userId,
+                        targetId: new Types.ObjectId(String(reply.post)),
+                        type: 'reply',
+                        postType: 'post',
+                        targetType: 'post',
+                        value: 'has mentioned you in a reply'
+                    }
+                )
+            })
+        }
 
         if (userId != authorId) {
             console.log('creating notificatoin for post owner')
@@ -419,7 +455,7 @@ export class CommentService {
 
     }
 
-    async updateComment(commentDetails: { content: string }, commentId: string, userId: string) {
+    async updateComment(commentDetails: { content: string }, mentions: string[], commentId: string, userId: string) {
         const comment = await this.commentModel.findOneAndUpdate(
             {
                 _id: new Types.ObjectId(commentId),
@@ -427,12 +463,30 @@ export class CommentService {
             },
             {
                 content: commentDetails.content,
+                mentions: mentions?.map(id => new Types.ObjectId(id)) || [],
             },
-            { new: true } // Return the updated document
+            { new: true }
         ).populate('user', 'firstname lastname username profile');
 
         if (!comment) {
             throw new BadRequestException('Comment not found or you do not have permission to update it.');
+        }
+
+
+        if (comment.mentions.length > 0) {
+            comment.mentions.forEach((userId) => {
+                this.notificationService.createNotification(
+                    {
+                        from: new Types.ObjectId(String(comment.user)),
+                        user: userId,
+                        targetId: new Types.ObjectId(String(comment.post)),
+                        type: 'comment',
+                        postType: 'post',
+                        targetType: 'post',
+                        value: 'has mentioned you in a comment'
+                    }
+                )
+            })
         }
 
         return {
@@ -442,7 +496,7 @@ export class CommentService {
         };
     }
 
-    async updateReply(replyDetails: { content: string }, replyId: string, userId: string) {
+    async updateReply(replyDetails: { content: string }, mentions: string[], replyId: string, userId: string) {
         const reply = await this.commentModel.findOneAndUpdate(
             {
                 _id: new Types.ObjectId(replyId),
@@ -450,12 +504,29 @@ export class CommentService {
             },
             {
                 content: replyDetails.content,
+                mentions: mentions?.map(id => new Types.ObjectId(id)) || [],
             },
-            { new: true } // Return the updated document
+            { new: true }
         ).populate('user', 'firstname lastname username profile');
 
         if (!reply) {
             throw new BadRequestException('Reply not found or you do not have permission to update it.');
+        }
+
+        if (reply.mentions.length > 0) {
+            reply.mentions.forEach((userId) => {
+                this.notificationService.createNotification(
+                    {
+                        from: new Types.ObjectId(String(reply.user)),
+                        user: userId,
+                        targetId: new Types.ObjectId(String(reply.post)),
+                        type: 'reply',
+                        postType: 'post',
+                        targetType: 'post',
+                        value: 'has mentioned you in a reply'
+                    }
+                )
+            })
         }
 
         return {
@@ -483,8 +554,4 @@ export class CommentService {
         return deletedReply
 
     }
-
-
-
-
 }

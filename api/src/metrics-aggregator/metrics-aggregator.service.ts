@@ -1,21 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { NotificationService } from 'src/notification/notification.service';
 import { Counter } from 'src/schema/Counter';
 
 @Injectable()
 export class MetricsAggregatorService {
-    constructor(@InjectModel(Counter.name) private readonly counterModel: Model<Counter>) { }
+    constructor(
+        @InjectModel(Counter.name) private readonly counterModel: Model<Counter>,
+        // private readonly notificationService: NotificationService,
 
-    async incrementCount(targetId: Types.ObjectId, name: string, type: string, session?: any) {
+    ) { }
+
+    async incrementCount(targetId: Types.ObjectId, name: string, type: string, session?: any, customCount?: number) {
         let counter = await this.counterModel.updateOne(
             { targetId, name, type },
             {
                 $setOnInsert: { targetId, name, type },
-                $inc: { count: 1 }
+                $inc: { count: customCount ?? 1 }
             },
             { upsert: true, session }
-            
+
         )
         return counter
     }
@@ -26,6 +31,44 @@ export class MetricsAggregatorService {
         let unreadChatlists = await this.counterModel.findOne({ targetId: new Types.ObjectId(targetId), name: "unreadChatlist", type: "user" })
         return { notification, requests, unreadChatlists }
     }
+
+    async userContributions(targetId: string) {
+        let plantation = await this.counterModel.findOne(
+            {
+                targetId: new Types.ObjectId(targetId),
+                name: "plantation",
+                type: "contributions"
+            })
+
+        let garbageCollection = await this.counterModel.findOne(
+            {
+                targetId: new Types.ObjectId(targetId),
+                name: "garbage_collection",
+                type: "contributions"
+            })
+
+        let waterPonds = await this.counterModel.findOne(
+            {
+                targetId: new Types.ObjectId(targetId),
+                name: "water_ponds",
+                type: "contributions"
+            })
+
+        let rainWater = await this.counterModel.findOne(
+            {
+                targetId: new Types.ObjectId(targetId),
+                name: "rain_water",
+                type: "contributions"
+            })
+
+        return {
+            plantation: plantation?.count || 0,
+            garbageCollection: garbageCollection?.count || 0,
+            waterPonds: waterPonds?.count || 0,
+            rainWater: rainWater?.count || 0
+        }
+    }
+
 
     async getAll() {
         return await this.counterModel.find()
@@ -43,19 +86,14 @@ export class MetricsAggregatorService {
         return counter
     }
 
-    // async deleteAll() {
-    //     return await this.counterModel.deleteMany()
-    // }
-
-    async decrementCount(targetId: Types.ObjectId, name: string, type: string) {
+    async decrementCount(targetId: Types.ObjectId, name: string, type: string, customCount?: number) {
         let counter = await this.counterModel.updateOne(
             { targetId, name, type },
             {
                 $setOnInsert: { targetId, name, type },
-                $inc: { count: -1 }
+                $inc: { count: customCount ?? -1 }
             },
         )
         return counter
     }
-
 }

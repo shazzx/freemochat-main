@@ -121,7 +121,7 @@ const VideosList = ({ videos, setMediaOpenDetails, setMediaOpenModel }) => {
   )
 }
 
-const MediaSection = ({ media, setMediaOpenDetails, setMediaOpenModel, targetId }) => {
+const MediaSection = ({ media, setMediaOpenDetails, setMediaOpenModel, targetId, type = 'user' }) => {
   // Tab state
   const [currentTab, setCurrentTab] = useState('images')
 
@@ -150,7 +150,7 @@ const MediaSection = ({ media, setMediaOpenDetails, setMediaOpenModel, targetId 
         //   setMediaOpenDetails={setMediaOpenDetails}
         //   setMediaOpenModel={setMediaOpenModel}
         // />
-        <UserReelsSection targetId={targetId} />
+        <UserReelsSection targetId={targetId} type={type} />
       )
     }
   }

@@ -96,15 +96,6 @@ export class UploadService {
                 const fileSizeInMB = file.length / (1024 * 1024);
                 console.log(`📹 Processing video: ${fileSizeInMB.toFixed(2)} MB`);
 
-                if (isReel) {
-                    const videoDuration = await this.getVideoDuration(file);
-                    console.log(`⏱️ Video duration: ${videoDuration} seconds`);
-                    if (videoDuration > 90) {
-                        throw new UnprocessableEntityException('Reel videos must be 90 seconds or less.');
-                    }
-                }
-
-                // Smart optimization check - mobile-first approach
                 const shouldOptimize = await this.shouldOptimizeVideo(file, originalname || fileName);
 
                 let finalVideoBuffer: Buffer;
@@ -240,7 +231,8 @@ export class UploadService {
                 .outputOptions([
                     '-c:v copy',        // Copy video stream (no re-encoding)
                     '-c:a copy',        // Copy audio stream (no re-encoding)
-                    '-movflags faststart'  // Web optimization
+                    '-movflags faststart',  // Web optimization
+                    '-threads 2'
                 ])
                 .output(tempOutputPath)
                 .on('end', async () => {
@@ -400,7 +392,27 @@ export class UploadService {
         try {
             const response = await this.rekognitionClient.send(command);
             const labels = response.ModerationLabels?.map(label => label.Name) || [];
-            return { isSafe: labels.length === 0, labels };
+
+            const allowedLabels = [
+                'Corpse',
+                'Dead Body',
+                'Injury',
+                'Corpses',
+                'Violence',
+                'Weapons',
+                'Violence',
+                'Weapon Violence',
+                'Graphic Violence',
+            ];
+
+            const blockingLabels = response.ModerationLabels?.filter(label =>
+                !allowedLabels.includes(label.Name)
+            ) || [];
+
+            return {
+                isSafe: blockingLabels.length === 0,
+                labels
+            };
         } catch (error) {
             console.error('❌ Error in image moderation:', error);
             throw error;
@@ -598,7 +610,8 @@ export class UploadService {
                         .output(tempOutputPath)
                         .outputOptions([
                             '-codec:a copy',  // Copy audio codec
-                            '-q:v 1'          // High quality
+                            '-q:v 1',          // High quality
+                            '-threads 2'
                         ])
                         .on('start', (commandLine) => {
                             console.log(`🎬 FFmpeg text watermarking started: ${commandLine}`);
@@ -660,7 +673,8 @@ export class UploadService {
                                     ])
                                     .outputOptions([
                                         '-codec:a copy',  // Copy audio codec
-                                        '-q:v 1'          // High quality
+                                        '-q:v 1',          // High quality
+                                        '-threads 2'
                                     ])
                                     .output(tempOutputPath)
                                     .on('start', (commandLine) => {
@@ -1251,6 +1265,7 @@ export class UploadService {
                     `-level 3.0`,
                     `-crf ${compressionLevel}`,
                     `-preset ${preset}`,
+                    '-threads 2',
                     `-b:v ${videoBitrate}`,
                     `-maxrate ${videoBitrate}`,
                     `-bufsize ${parseInt(videoBitrate) * 2}k`,
@@ -1333,7 +1348,8 @@ export class UploadService {
                     .outputOptions([
                         '-c:v copy',           // Copy video stream (no re-encoding)
                         '-c:a copy',           // Copy audio stream (no re-encoding)
-                        '-movflags +faststart' // Web optimization
+                        '-movflags +faststart', // Web optimization
+                        '-threads 2'
                     ])
                     .output(tempOutputPath)
                     .on('start', () => {
@@ -1366,10 +1382,12 @@ export class UploadService {
                         '-level 3.0',          // Mobile compatibility
                         '-crf 18',             // Very high quality (minimal loss)
                         '-preset medium',      // Good quality/speed balance
+                        '-threads 2',
                         '-c:a aac',            // Re-encode audio to AAC
                         '-b:a 128k',           // Good audio quality
                         '-movflags +faststart', // Web optimization
                         '-pix_fmt yuv420p'     // iOS compatibility
+
                     ])
                     .output(tempOutputPath)
                     .on('start', () => {

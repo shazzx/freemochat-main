@@ -363,7 +363,7 @@ function PageProfile() {
                                     </div>
                                 </TabsContent>
                                 <TabsContent value="media" className='flex flex-col gap-2'>
-                                    <MediaSection targetId={_pageData.data?._id} media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
+                                    <MediaSection type='page' targetId={_pageData.data?._id} media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
 
                                 </TabsContent>
                                 <TabsContent value="about" className="">

@@ -1,12 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types, ObjectId } from 'mongoose';
+import { Model, Types, } from 'mongoose';
 import { FriendService } from 'src/friend/friend.service';
-import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
-import { Counter } from 'src/schema/Counter';
+import { NotificationService } from 'src/notification/notification.service';
 import { Story } from 'src/schema/story';
 import { ViewedStories } from 'src/schema/viewedStories';
-import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class StoriesService {
@@ -14,29 +12,146 @@ export class StoriesService {
     constructor(
         @InjectModel(Story.name) private readonly storyModel: Model<Story>,
         @InjectModel(ViewedStories.name) private readonly viewedStoriesModel: Model<ViewedStories>,
-        private readonly userService: UserService,
-        private readonly metricsAggregatorService: MetricsAggregatorService,
-        private readonly friendService: FriendService
+        private readonly friendService: FriendService,
+        private readonly notificationService: NotificationService
     ) { }
 
 
+    // async getStories(userId: string, username: string) {
+    //     const friendIds = await this.friendService.getFriends(userId, true)
+    //     console.log(friendIds, 'user friends stories')
+    //     const stories = await this.storyModel.aggregate([
+    //         {
+    //             $match: {
+    //                 user: { $in: [new Types.ObjectId(userId), ...friendIds] }
+    //                 // user: { $in: [new Types.ObjectId(userId), ...friendIds] }
+    //             }
+    //         },
+    //         {
+    //             $sort: { createdAt: -1 } // Sort by createdAt in descending order
+    //         },
+    //         {
+    //             $group: {
+    //                 _id: '$user',
+    //                 stories: { $push: '$$ROOT' }
+    //             }
+    //         },
+    //         {
+    //             $lookup: {
+    //                 from: 'users',
+    //                 localField: '_id',
+    //                 foreignField: '_id',
+    //                 as: 'user'
+    //             }
+    //         },
+    //         {
+    //             $unwind: '$user'
+    //         },
+    //         {
+    //             $project: {
+    //                 _id: 0,
+    //                 user: '$user',
+    //                 stories: 1
+    //             }
+    //         }
+    //     ]);
+
+    //     return stories
+    // }
+
+    // async getStories(userId: string, username: string) {
+    //     const friendIds = await this.friendService.getFriends(userId, true);
+    //     console.log(friendIds, 'user friends stories');
+
+    //     const currentUserObjectId = new Types.ObjectId(userId);
+
+    //     const stories = await this.storyModel.aggregate([
+    //         {
+    //             $match: {
+    //                 user: { $in: [currentUserObjectId, ...friendIds] }
+    //             }
+    //         },
+    //         {
+    //             $addFields: {
+    //                 // Check if current user liked this story
+    //                 isLiked: {
+    //                     $in: [currentUserObjectId, '$likedBy']
+    //                 }
+    //             }
+    //         },
+    //         {
+    //             $sort: { createdAt: -1 } // Sort by createdAt in descending order
+    //         },
+    //         {
+    //             $group: {
+    //                 _id: '$user',
+    //                 stories: { $push: '$ROOT' }
+    //             }
+    //         },
+    //         {
+    //             $lookup: {
+    //                 from: 'users',
+    //                 localField: '_id',
+    //                 foreignField: '_id',
+    //                 as: 'user'
+    //             }
+    //         },
+    //         {
+    //             $unwind: '$user'
+    //         },
+    //         {
+    //             $project: {
+    //                 _id: 0,
+    //                 user: '$user',
+    //                 stories: {
+    //                     $map: {
+    //                         input: '$stories',
+    //                         as: 'story',
+    //                         in: {
+    //                             _id: '$story._id',
+    //                             url: '$story.url',
+    //                             createdAt: '$story.createdAt',
+    //                             user: '$story.user',
+    //                             isLiked: '$story.isLiked'
+    //                             // Explicitly exclude likedBy array and no likeCount
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     ]);
+
+    //     return stories;
+    // }
+
+    // Alternative approach - even cleaner
     async getStories(userId: string, username: string) {
-        const friendIds = await this.friendService.getFriends(userId, true)
-        console.log(friendIds, 'user friends stories')
+        const friendIds = await this.friendService.getFriends(userId, true);
+        const currentUserObjectId = new Types.ObjectId(userId);
+
         const stories = await this.storyModel.aggregate([
             {
                 $match: {
-                    user: { $in: [new Types.ObjectId(userId), ...friendIds] }
-                    // user: { $in: [new Types.ObjectId(userId), ...friendIds] }
+                    user: { $in: [currentUserObjectId, ...friendIds] }
                 }
             },
             {
-                $sort: { createdAt: -1 } // Sort by createdAt in descending order
+                $sort: { createdAt: -1 }
             },
             {
                 $group: {
                     _id: '$user',
-                    stories: { $push: '$$ROOT' }
+                    stories: {
+                        $push: {
+                            _id: '$_id',
+                            url: '$url',
+                            createdAt: '$createdAt',
+                            user: '$user',
+                            isLiked: {
+                                $in: [currentUserObjectId, '$likedBy']
+                            }
+                        }
+                    }
                 }
             },
             {
@@ -59,7 +174,65 @@ export class StoriesService {
             }
         ]);
 
-        return stories
+        return stories;
+    }
+
+    async likeStory(storyId: string, userId: string) {
+        try {
+            const userObjectId = new Types.ObjectId(userId);
+            const storyObjectId = new Types.ObjectId(storyId);
+
+            const story = await this.storyModel.findById(storyObjectId, { likedBy: 1, user: 1 });
+
+            if (!story) {
+                throw new Error('Story not found');
+            }
+
+            const isAlreadyLiked = story.likedBy.some(id => id.toString() === userObjectId.toString());
+
+            if (isAlreadyLiked) {
+                return {
+                    success: true,
+                    isLiked: true,
+                    message: 'Story already liked',
+                    alreadyLiked: true
+                };
+            }
+
+            const updatedStory = await this.storyModel.findByIdAndUpdate(
+                storyObjectId,
+                { $addToSet: { likedBy: userObjectId } },
+                {
+                    new: true,
+                    select: 'likedBy',
+                    runValidators: true
+                }
+            );
+
+            console.log('story liked', story, new Types.ObjectId(String(story.user)))
+
+            await this.notificationService.createNotification(
+                {
+                    from: new Types.ObjectId(userId),
+                    user: new Types.ObjectId(String(story.user)),
+                    targetId: new Types.ObjectId(userId),
+                    type: "story",
+                    postType: null,
+                    targetType: 'user',
+                    value: 'has liked your story'
+                }
+            )
+
+            return {
+                success: true,
+                isLiked: true,
+                message: 'Story liked successfully',
+                alreadyLiked: false
+            };
+
+        } catch (error) {
+            throw new Error(`Error liking story: ${error.message}`);
+        }
     }
 
     async viewStory(storyId, userId) {
@@ -97,10 +270,60 @@ export class StoriesService {
     }
 
     async getStoryViewes(storyId) {
-        console.log(storyId, 'viewed stories storyid')
         const storyViews = await this.viewedStoriesModel.find({ storyId: new Types.ObjectId(storyId) }).populate('userId')
         console.log('viewed stories list', storyViews)
         return storyViews
+    }
+
+    async getStoryLikes(storyId: string) {
+        try {
+            const storyObjectId = new Types.ObjectId(storyId);
+
+            const result = await this.storyModel.aggregate([
+                {
+                    $match: { _id: storyObjectId }
+                },
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'likedBy',
+                        foreignField: '_id',
+                        as: 'likedUsers',
+                        pipeline: [
+                            {
+                                $project: {
+                                    username: 1,
+                                    profile: 1,
+                                    _id: 1,
+                                    isVerified: 1
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    $project: {
+                        likes: '$likedUsers',
+                        count: { $size: '$likedUsers' },
+                        createdAt: 1
+                    }
+                }
+            ]);
+
+            if (!result || result.length === 0) {
+                throw new Error('Story not found');
+            }
+
+            const storyData = result[0];
+
+            return {
+                likes: storyData.likes,
+                count: storyData.count,
+            };
+
+        } catch (error) {
+            throw new Error(`Error fetching story likes: ${error.message}`);
+        }
     }
 
     async createStory(userId, storyDetails) {

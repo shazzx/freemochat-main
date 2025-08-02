@@ -18,17 +18,6 @@ class Location {
     city?: string;
 }
 
-class ProjectDetails {
-    @Prop({ type: String, required: true })
-    name: string;
-
-    @Prop({ type: String, required: true })
-    description: string;
-
-    @Prop({ type: String })
-    owner?: string;
-}
-
 class Media {
     @Prop()
     name: string;
@@ -45,16 +34,19 @@ class Media {
     @Prop()
     thumbnail: string;
 
+    @Prop({ type: Location })
+    location?: Location;
+
     @Prop()
     capturedAt?: Date;
 }
 
 class PlantationData {
     @Prop({ type: String })
-    type?: string;
+    plantType?: string;
 
     @Prop({ type: String })
-    species?: string;
+    plantSpecies?: string;
 
     @Prop({ type: Number })
     estimatedHeight?: number;
@@ -71,7 +63,7 @@ class PlantationData {
 
 class GarbageCollectionData {
     @Prop({ type: String })
-    type?: string; // Recycling, Organic, General, etc.
+    binType?: string;
 
     @Prop({ type: String })
     capacity?: string;
@@ -82,7 +74,7 @@ class GarbageCollectionData {
 
 class WaterPondsData {
     @Prop({ type: String })
-    type?: string; // Storage, Decorative, Irrigation, etc.
+    pondType?: string;
 
     @Prop({ type: String })
     capacity?: string;
@@ -96,7 +88,7 @@ class WaterPondsData {
 
 class RainWaterData {
     @Prop({ type: String })
-    type?: string; // Rooftop, Ground catchment, etc.
+    harvesterType?: string;
 
     @Prop({ type: String })
     capacity?: string;
@@ -125,6 +117,9 @@ export class Post {
     @Prop({ type: Types.ObjectId })
     sharedPost: ObjectId
 
+    @Prop([{ type: Types.ObjectId, ref: 'User' }])
+    mentions: Types.ObjectId[];
+
     @Prop({ type: String, required: true })
     type: String;
 
@@ -147,40 +142,6 @@ export class Post {
     @Prop({ type: Location })
     location?: Location;
 
-    @Prop({ type: ProjectDetails })
-    projectDetails?: ProjectDetails;
-
-
-    @Prop([{ type: String }])
-    hashtags: string[];
-
-    @Prop([{ type: Types.ObjectId, ref: 'User' }])
-    mentions: Types.ObjectId[];
-
-
-    @Prop()
-    createdAt: Date
-}
-
-export const PostSchema = SchemaFactory.createForClass(Post)
-PostSchema.index({ content: 1 });
-PostSchema.index({ location: '2dsphere' });
-PostSchema.index({ postType: 1 });
-PostSchema.index({ 'plantationData.nextUpdateDue': 1 });
-PostSchema.index({ hashtags: 1 });
-
-// this will represent single entity in a project of envirmental contribution like single plant and a project can have multiple plants so multiple docs.
-@Schema({ timestamps: true })
-export class EnvironmentalContribution {
-    @Prop({ type: Types.ObjectId, ref: "Post", required: true, index: true })
-    postId: ObjectId;
-
-    @Prop({ type: Array<Media> })
-    media: Media[]
-
-    @Prop({ type: Location })
-    location?: Location;
-
     @Prop({ type: PlantationData })
     plantationData?: PlantationData;
 
@@ -193,18 +154,23 @@ export class EnvironmentalContribution {
     @Prop({ type: RainWaterData })
     rainWaterData?: RainWaterData;
 
-
-    @Prop({ type: [{ updateDate: Date, media: Array<Media>, notes: String }] })
+    @Prop({ type: [{ updateDate: Date, imageCount: Number, notes: String }] })
     updateHistory?: Array<{
         updateDate: Date;
-        media: Media[];
+        imageCount: Number;
         notes: String;
     }>;
+
+    @Prop([{ type: String }])
+    hashtags: string[];
 
     @Prop()
     createdAt: Date
 }
 
-export const EnvironmentalContributionSchema = SchemaFactory.createForClass(EnvironmentalContribution);
-
-EnvironmentalContributionSchema.index({ location: '2dsphere' });
+export const PostSchema = SchemaFactory.createForClass(Post)
+PostSchema.index({ content: 1 });
+PostSchema.index({ location: '2dsphere' });
+PostSchema.index({ postType: 1 });
+PostSchema.index({ 'plantationData.nextUpdateDue': 1 });
+PostSchema.index({ hashtags: 1 });

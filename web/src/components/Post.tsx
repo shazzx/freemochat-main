@@ -392,8 +392,6 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
         const deltaX = Math.abs(touch.clientX - touchStartPos.current.x);
         const deltaY = Math.abs(touch.clientY - touchStartPos.current.y);
 
-        // Consider it a tap if:
-        // 1. Touch duration is less than 300ms (quick tap)
         // 2. Movement is less than 10px in any direction (not a scroll)
         if (touchDuration < 300 && deltaX < 10 && deltaY < 10) {
             e.preventDefault();

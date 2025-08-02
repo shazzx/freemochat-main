@@ -93,8 +93,8 @@ export function useVideosFeed(initialReelId) {
     };
 }
 
-// User profile reels query
-export function useUserReels(targetId) {
+
+export function useUserReels(targetId, type) {
     const {
         data,
         isLoading,
@@ -109,7 +109,7 @@ export function useUserReels(targetId) {
         hasNextPage
     } = useInfiniteQuery({
         queryKey: ['userReels', targetId],
-        queryFn: ({ pageParam }) => fetchReels(pageParam, targetId),
+        queryFn: ({ pageParam }) => fetchReels(pageParam, targetId, type),
         enabled: !!targetId,
         refetchInterval: false,
         refetchOnWindowFocus: true,
@@ -122,7 +122,7 @@ export function useUserReels(targetId) {
     const pages: any = data?.pages ?? [];
 
     return {
-        data: pages, // Ensure data is typed as an array of PostType arrays
+        data: pages,
         isLoading,
         isSuccess,
         isFetching,
@@ -136,7 +136,7 @@ export function useUserReels(targetId) {
     };
 }
 
-interface QueryParams { userId?: string, initialReelId?: string }
+interface QueryParams { userId?: string, initialReelId?: string, profileType?: string }
 
 export const getQueryKeyForMode = (mode, params: QueryParams = {}) => {
     switch (mode) {
@@ -206,7 +206,7 @@ export const useReelsDataSource = (mode = 'feed', params: QueryParams = {}) => {
     console.log(`[ReelsData] Using mode: ${mode}, initialReelId: ${params.initialReelId}`, params);
 
     if (mode === 'profile') {
-        sourceQuery = useUserReels(params.userId || '');
+        sourceQuery = useUserReels(params.userId || '', params?.profileType || 'user');
     }
     else if (mode === 'bookmarks') {
         sourceQuery = useBookamrks();

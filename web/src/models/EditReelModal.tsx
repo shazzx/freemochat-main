@@ -193,37 +193,9 @@ function EditReel({ setModelTrigger, createPost, editPost, postDetails, updatePo
                                     onChange={async (e) => {
                                         let _selectedMedia = []
 
-                                        const checkVideoDuration = (file): Promise<boolean> => {
-                                            return new Promise((resolve) => {
-                                                const video = document.createElement('video');
-                                                video.preload = 'metadata';
-
-                                                video.onloadedmetadata = () => {
-                                                    window.URL.revokeObjectURL(video.src);
-                                                    const duration = video.duration;
-                                                    resolve(duration <= 90);
-                                                };
-
-                                                video.onerror = () => {
-                                                    window.URL.revokeObjectURL(video.src);
-                                                    resolve(false);
-                                                };
-
-                                                video.src = URL.createObjectURL(file);
-                                            });
-                                        };
-
                                         for (let file of e.target.files) {
                                             if (isReel) {
                                                 if (file.type.startsWith('video/')) {
-                                                    const isValidDuration = await checkVideoDuration(file);
-
-                                                    if (!isValidDuration) {
-                                                        toast.error("Video duration must be 90 seconds or less for reels");
-                                                        e.target.value = '';
-                                                        return;
-                                                    }
-
                                                     _selectedMedia = [{ file, type: 'video', url: URL.createObjectURL(file) }]
                                                     break;
                                                 }

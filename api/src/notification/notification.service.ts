@@ -7,6 +7,7 @@ import { Types } from 'mongoose'
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 import Expo, { ExpoPushMessage, ExpoPushTicket } from 'expo-server-sdk';
 import { ConfigService } from '@nestjs/config';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class NotificationService {
@@ -14,9 +15,9 @@ export class NotificationService {
 
   constructor(
     private configService: ConfigService,
-    @InjectModel(Notification.name) private notificationModel: Model<Notification>,
     private readonly notificationGateway: ChatGateway,
     private readonly metricsAggregatorService: MetricsAggregatorService,
+    @InjectModel(Notification.name) private notificationModel: Model<Notification>,
   ) {
     this.expo = new Expo({
       accessToken: this.configService.get('EXPO_ACCESS_TOKEN'),
@@ -25,15 +26,12 @@ export class NotificationService {
 
   async createNotification(data: { from: Types.ObjectId, user: Types.ObjectId, targetId: Types.ObjectId, type: string, postType?: string, targetType?: string, value: string, handle?: string }, isComment: boolean = false) {
     if (!isComment) {
-      console.log("finding notification exist")
       const notifications = await this.notificationModel.findOne(data)
       if (notifications) {
         return null
       }
     }
-    console.log("creating notification")
     const notification = await this.notificationModel.create(data);
-    console.log("notification created", notification)
     this.metricsAggregatorService.incrementCount(data.user, "notification", "user")
     this.notificationGateway.handleNotifications(data);
     return notification
@@ -84,6 +82,21 @@ export class NotificationService {
     };
 
     return this.sendNotifications([message]);
+  }
+
+  public async readNotification(
+    userId: string,
+    notificationId: string
+  ) {
+    await this.notificationModel.findByIdAndUpdate(notificationId, { isRead: true })
+    await this.metricsAggregatorService.decrementCount(new Types.ObjectId(userId), 'notification', 'user')
+  }
+
+  public async readAllNotifications() {
+    return await this.notificationModel.updateMany(
+      { isRead: false },
+      { $set: { isRead: true } }
+    );
   }
 
   public async getPushNotificationReceipts(
@@ -155,4 +168,61 @@ export class NotificationService {
 
     return results
   }
+
+  // private async logNotification(plantation: any, stage: any) {
+  //   await this.notificationLogModel.create({
+  //     postId: plantation._id.toString(),
+  //     userId: plantation.user.toString(),
+  //     notificationType: 'plantation_reminder',
+  //     stage: stage.stage,
+  //     sentAt: new Date(),
+  //     dueDate: plantation.plantationData.nextUpdateDue
+  //   });
+  // }
+
+  // Optional: Run more frequently for urgent notifications (last 24 hours)
+  // @Cron('0 */6 * * *') // Every 6 hours
+  // async checkUrgentReminders() {
+  //   const today = new Date();
+  //   const tomorrow = new Date(today);
+  //   tomorrow.setDate(tomorrow.getDate() + 1);
+
+  //   // Check for overdue plantations
+  //   const overduePlantations = await this.postModel.find({
+  //     postType: 'plantation',
+  //     'plantationData.isActive': true,
+  //     'plantationData.nextUpdateDue': { $lt: today }
+  //   }).populate('user', 'fcmToken');
+
+  //   for (const plantation of overduePlantations) {
+  //     await this.sendOverdueNotification(plantation);
+  //   }
+  // }
+
+  // private async sendOverdueNotification(plantation: any) {
+  //   const daysOverdue = Math.ceil((new Date().getTime() - new Date(plantation.plantationData.nextUpdateDue).getTime()) / (1000 * 60 * 60 * 24));
+
+  //   await this.notificationService.sendNotification({
+  //     userId: plantation.user._id,
+  //     title: 'Plantation Update Overdue!',
+  //     body: `Your plants are ${daysOverdue} days overdue for an update. Please visit and update them soon!`,
+  //     type: 'plantation_overdue',
+  //     data: {
+  //       postId: plantation._id.toString(),
+  //       daysOverdue: daysOverdue,
+  //       action: 'update_plantation'
+  //     }
+  //   });
+  // }
+
+  // Manual method to send immediate notifications (for testing)
+  // async sendTestNotification(postId: string) {
+  //   const plantation = await this.postModel.findById(postId);
+  //   if (plantation && plantation.postType === 'plantation') {
+  //     await this.sendPlantationReminder(plantation, {
+  //       stage: '24_hours',
+  //       title: 'Test Notification'
+  //     });
+  //   }
+  // }
 }

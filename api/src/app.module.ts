@@ -35,22 +35,16 @@ import { BullModule } from '@nestjs/bullmq';
 import { MediaConsumerModule } from './media-consumer/media-consumer.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { UploadListener } from './posts/upload.listener';
-import { ChatGateway } from './chat/chat.gateway';
 import { ChatModule } from './chat/chat.module';
 import { EncryptionModule } from './encryption/encryption.module';
 import { CryptoModule } from './crypto/crypto.module';
 import { TwilioModule } from './twilio/twilio.module';
 import { LocationModule } from './location/location.module';
 import { PaymentModule } from './payment/payment.module';
+import { HashtagModule } from './hashtag/hashtag.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
-    BullModule.forRoot({
-      connection: {
-        host: "localhost",
-        port: 6379
-      }
-    }),
     EventEmitterModule.forRoot(),
     UserModule,
     UploadModule,
@@ -88,6 +82,7 @@ import { PaymentModule } from './payment/payment.module';
     TwilioModule,
     LocationModule,
     PaymentModule,
+    HashtagModule
   ],
   controllers: [AppController],
   providers: [AppService, { provide: "APP_GUARD", useClass: JwtAuthGuard }, UploadListener],

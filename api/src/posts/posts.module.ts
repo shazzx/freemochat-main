@@ -1,9 +1,9 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { PostsController } from './posts.controller';
 import { UserModule } from 'src/user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Post, PostSchema } from 'src/schema/post';
+import { EnvironmentalContribution, EnvironmentalContributionSchema, Post, PostSchema } from 'src/schema/post';
 import { JwtModule } from '@nestjs/jwt';
 import { Comment, CommentSchema } from 'src/schema/comment';
 import { Report, ReportSchema } from 'src/schema/report';
@@ -17,12 +17,11 @@ import { ViewedPosts, ViewedPostsSchema } from 'src/schema/viewedPosts';
 import { UploadModule } from 'src/upload/upload.module';
 import { MediaModule } from 'src/media/media.module';
 import { MetricsAggregatorModule } from 'src/metrics-aggregator/metrics-aggregator.module';
-import { BullModule } from '@nestjs/bullmq';
-import { UploadListener } from './upload.listener';
 import FollowerSchema, { Follower } from 'src/schema/followers';
 import MemberSchema, { Member } from 'src/schema/members';
 import { PaymentModule } from 'src/payment/payment.module';
 import { LocationModule } from 'src/location/location.module';
+import { HashtagModule } from 'src/hashtag/hashtag.module';
 
 @Module({
   imports: [UserModule, JwtModule,
@@ -36,11 +35,9 @@ import { LocationModule } from 'src/location/location.module';
       { name: ViewedPosts.name, schema: ViewedPostsSchema },
       { name: Follower.name, schema: FollowerSchema },
       { name: Member.name, schema: MemberSchema },
+      { name: EnvironmentalContribution.name, schema: EnvironmentalContributionSchema },
     ]),
 
-    BullModule.registerQueue({
-      name: "media-upload"
-    }),
     MediaModule,
     PaymentModule,
     LocationModule,
@@ -48,7 +45,8 @@ import { LocationModule } from 'src/location/location.module';
     CacheModule,
     NotificationModule,
     ChatModule,
-    UploadModule
+    UploadModule,
+    HashtagModule
   ],
   providers: [PostsService],
   controllers: [PostsController],

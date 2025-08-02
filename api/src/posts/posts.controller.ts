@@ -1,7 +1,6 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Query, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
-import { UserService } from 'src/user/user.service';
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Query, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { PostsService } from './posts.service';
-import { response, Response } from 'express';
+import { Response } from 'express';
 import { Types } from 'mongoose'
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
@@ -14,81 +13,22 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPostsDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreateEnvironmentalContribution, CreateEnvironmentalContributionDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
-import { Cursor, CursorDTO, ValidMongoId } from 'src/schema/validation/global';
+import { Cursor, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
 import { z } from 'zod';
-
-// @Processor('media-upload')
-// export class MediaUploadConsumer extends WorkerHost {
-//     constructor(
-//         private readonly postsService: PostsService,
-//         private readonly uploadService: UploadService,
-//         private readonly mediaService: MediaService
-//     ) {
-//         super()
-//     }
-
-//     @OnQueueEvent('active')
-//     onActive(job: Job) {
-//         console.log(
-//             `Processing job ${job.id} of type ${job.name} with data ${job.data}...`,
-//         );
-//     }
-
-//     @Process("media")
-//     async process(job: Job<{ postId: string; files: any, targetId: Types.ObjectId }>) {
-//         const { postId, files, targetId } = job.data;
-//         console.log(files)
-//         // console.log('ths is queue bro')
-//         try {
-
-//             let media = {
-//                 images: [],
-//                 videos: []
-//             }
-
-//             let postMedia = []
-//             for (let file of files) {
-//                 const fileType = file.fileType
-//                 const filename = file.filename
-//                 const buffer = Buffer.from(file.file, 'base64')
-//                 let uploaded = await this.uploadService.processAndUploadContent(buffer, filename, fileType)
-//                 console.log(uploaded)
-//                 if (fileType == 'video') {
-//                     media.videos.push(uploaded)
-//                     postMedia.push({ type: 'video', url: uploaded })
-//                 }
-//                 if (fileType == 'image') {
-//                     media.images.push(uploaded)
-//                     postMedia.push({ type: 'image', url: uploaded })
-//                 }
-//             }
-
-
-//             const postDetails = { media: postMedia, isUploaded: true }
-//             console.log(postDetails, postId, targetId, 'meda upload consumer')
-//             await this.postsService.updatePost(postId, postDetails);
-//             await this.mediaService.storeMedia(targetId, media)
-//         } catch (error) {
-//             console.error(`Error uploading media for post ${postId}:`, error);
-//             await this.postsService.deletePost(postId);
-//         }
-//     }
-// }
+import { HashtagService } from 'src/hashtag/hashtagservice';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Controller('posts')
 export class PostsController {
     constructor(
-        private userService: UserService,
         private postService: PostsService,
         private uploadService: UploadService,
         private readonly mediaService: MediaService,
-        private readonly eventEmiiter: EventEmitter2,
-        private readonly chatGateway: ChatGateway,
-        @InjectQueue("media-upload") private readonly mediaUploadQueue: Queue,
-
+        private readonly eventEmitter: EventEmitter2,
+        private readonly hashtagService: HashtagService,
     ) { }
 
     @Get()
@@ -105,12 +45,6 @@ export class PostsController {
         console.log(targetId, 'get reels targetId')
         response.json(await this.postService.getReels(cursor, sub, targetId, type))
     }
-
-    // @Public()
-    // @Get('/bulkupdate')
-    // async bulkUpdatePost(){
-    //     await this.postService.bulkUpdate()
-    // }
 
     @Get('feed')
     async feed(@Req() req: Request, @Res() response: Response) {
@@ -173,38 +107,305 @@ export class PostsController {
         response.json(await this.postService.getPost(sub, postId, type))
     }
 
-    @UseInterceptors(FilesInterceptor('files'))
-    @Post("create")
-    async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
-        const uploadPromise = files.map((file) => {
-            const fileType = getFileType(file.mimetype)
-            const filename = uuidv4()
-            return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
-        })
+    // @UseInterceptors(FilesInterceptor('files'))
+    // @Post("create")
+    // async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
+    //     const uploadPromise = files.map((file) => {
+    //         const fileType = getFileType(file.mimetype)
+    //         const filename = uuidv4()
+    //         return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
+    //     })
 
-        const { sub } = req.user
-        let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId)
+    //     const { sub } = req.user
+    //     let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId)
 
-        let uploadedPost = await this.postService.createPost(
-            {
-                ...createPostDTO,
-                isUploaded: files.length > 0 ? false : null,
-                targetId,
-                postType: 'post',
-                user: new Types.ObjectId(sub)
-            })
+    //     let uploadedPost = await this.postService.createPost(
+    //         {
+    //             ...createPostDTO,
+    //             isUploaded: files.length > 0 ? false : null,
+    //             targetId,
+    //             postType: 'post',
+    //             user: new Types.ObjectId(sub)
+    //         })
 
-        if (files.length > 0) {
-            this.eventEmiiter.emit("files.uploaded", { uploadPromise, postId: uploadedPost._id.toString(), targetId, type: createPostDTO.type })
-        }
+    //     if (files.length > 0) {
+    //         this.eventEmitter.emit("files.uploaded", { uploadPromise, postId: uploadedPost._id.toString(), targetId, type: createPostDTO.type })
+    //     }
 
-        res.json(uploadedPost)
+    //     res.json(uploadedPost)
+    // }
+
+
+    // In your existing PostController - just modify this method
+    // @UseInterceptors(FilesInterceptor('files'))
+    // @Post("create")
+    // async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
+    //     const { sub } = req.user;
+    //     let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId);
+
+    //     console.log(createPostDTO, 'create post data');
+
+    //     // 🔧 ADD THIS: Handle location posts
+    //     if (createPostDTO.postType && ['plantation', 'garbage_collection', 'dam'].includes(createPostDTO.postType)) {
+    //         // Add plantation update cycle
+    //         if (createPostDTO.postType === 'plantation' && createPostDTO.plantationData) {
+    //             const nextUpdateDue = new Date();
+    //             nextUpdateDue.setMonth(nextUpdateDue.getMonth() + 3);
+    //             createPostDTO.plantationData = {
+    //                 ...createPostDTO.plantationData,
+    //                 lastUpdateDate: new Date(),
+    //                 nextUpdateDue,
+    //                 isActive: true
+    //             };
+    //             createPostDTO.updateHistory = [{
+    //                 updateDate: new Date(),
+    //                 imageCount: files.length,
+    //                 notes: 'Initial plantation'
+    //             }];
+    //         }
+    //     }
+
+    //     // Your existing createPost logic continues unchanged
+    //     let uploadedPost = await this.postService.createPost({
+    //         ...createPostDTO,
+    //         isUploaded: files.length > 0 ? false : null,
+    //         targetId,
+    //         postType: createPostDTO.postType || 'post', // 🔧 ADD THIS LINE
+    //         user: new Types.ObjectId(sub)
+    //     });
+
+    //     if (files.length > 0) {
+    //         // 🔧 MODIFY THIS: Add location data to upload promise
+    //         const uploadPromise = files.map((file, index) => {
+    //             const fileType = getFileType(file.mimetype);
+    //             const filename = uuidv4();
+    //             return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
+    //                 .then(result => ({
+    //                     ...result,
+    //                     location: createPostDTO.mediaLocations?.[index] // 🔧 ADD THIS
+    //                 }));
+    //         });
+
+    //         this.eventEmitter.emit("files.uploaded", {
+    //             uploadPromise,
+    //             postId: uploadedPost._id.toString(),
+    //             targetId,
+    //             type: createPostDTO.type
+    //         });
+    //     }
+
+    //     res.json(uploadedPost);
+    // }
+
+
+    @Get("global-map/data")
+    async getGlobalMapData(
+        @Query(new ZodValidationPipe(GetGlobalMapData)) query: GetGlobalMapDataDTO,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        const { sub } = req.user;
+        const result = await this.postService.getGlobalMapData(query, sub);
+        res.json(result);
+    }
+
+    @Get("global-map/counts")
+    async getGlobalMapCounts(
+        @Query(new ZodValidationPipe(GetGlobalMapCounts)) query: GetGlobalMapCountsDTO,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        const result = await this.postService.getGlobalMapCounts(query);
+        res.json(result);
+    }
+
+    @Get("global-map/search")
+    async searchGlobalMapLocations(
+        @Query(new ZodValidationPipe(SearchGlobalMapLocations)) query: SearchGlobalMapLocationsDTO,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        const result = await this.postService.searchGlobalMapLocations(query);
+        res.json(result);
     }
 
 
+    @UseInterceptors(FilesInterceptor('files'))
+    @Post("create")
+    async createPost(
+        @Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO,
+        @Req() req: Request,
+        @Res() res: Response,
+        @UploadedFiles() files: Express.Multer.File[]
+    ) {
+        const { sub } = req.user;
+        let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId);
+        const hashtags = this.hashtagService.extractHashtags(createPostDTO.content || '');
+        const mentions = createPostDTO?.mentions?.map(id => new Types.ObjectId(id)) || []
+
+        // 🔧 UPDATED: Simplified post data - no environmental data
+        let finalPostData = {
+            ...createPostDTO,
+            hashtags,
+            mentions,
+            isUploaded: files.length > 0 ? false : null,
+            targetId,
+            postType: createPostDTO.postType || 'post',
+            user: new Types.ObjectId(sub)
+        } as ServerPostData
+
+        // Create the main post first
+        let uploadedPost = await this.postService.createPost(finalPostData);
+        this.hashtagService.processPostHashtags(uploadedPost._id, hashtags);
+
+        // 🔧 NEW: Create EnvironmentalContribution document for environmental posts
+        let environmentalContribution = null;
+        if (createPostDTO.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(createPostDTO.postType)) {
+
+            let environmentalData: any = {
+                postId: uploadedPost._id,
+                location: createPostDTO.location, // Use main location from post
+                updateHistory: [{
+                    updateDate: new Date(),
+                    media: [], // Will be populated after file upload
+                    notes: this.getInitialNotes(createPostDTO.postType)
+                }]
+            };
+
+            // Add type-specific environmental data based on postType
+            if (createPostDTO.postType === 'plantation') {
+                // Note: You'll need to add plantationData to CreatePostDTO or handle it separately
+                const nextUpdateDue = new Date();
+                nextUpdateDue.setMonth(nextUpdateDue.getMonth() + 6);
+
+                environmentalData.plantationData = {
+                    // Add default or passed plantation data
+                    lastUpdateDate: new Date(),
+                    nextUpdateDue,
+                    isActive: true,
+                    // You might want to add plantationData back to CreatePostDTO
+                    // or handle this data separately in the request
+                };
+            }
+
+            if (createPostDTO.postType === 'garbage_collection') {
+                environmentalData.garbageCollectionData = {
+                    // Add garbage collection specific data
+                    // You might want to add this data to CreatePostDTO
+                };
+            }
+
+            if (createPostDTO.postType === 'water_ponds') {
+                environmentalData.waterPondsData = {
+                    // Add water ponds specific data
+                };
+            }
+
+            if (createPostDTO.postType === 'rain_water') {
+                environmentalData.rainWaterData = {
+                    // Add rain water specific data
+                };
+            }
+
+            // Create the environmental contribution document
+            // environmentalContribution = await this.environmentalContributionService.create(environmentalData);
+        }
+
+        // Handle file uploads
+        if (files.length > 0) {
+            const uploadPromise = files.map((file, index) => {
+                const fileType = getFileType(file.mimetype);
+                const filename = uuidv4();
+                return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
+                    .then(result => ({
+                        ...result,
+                        contributionId: environmentalContribution?._id
+                    }));
+            });
+
+            this.eventEmitter.emit("files.uploaded", {
+                uploadPromise,
+                postId: uploadedPost._id.toString(),
+                contributionId: environmentalContribution?._id?.toString(),
+                targetId,
+                type: createPostDTO.type,
+                postType: createPostDTO.postType
+            });
+        }
+
+        // Return post with environmental contribution data if applicable
+        const response = {
+            ...uploadedPost.toObject(),
+            environmentalContribution: environmentalContribution?.toObject()
+        };
+
+        res.json(response);
+    }
+
+    private getInitialNotes(postType: string): string {
+        const notesMap = {
+            plantation: 'Initial plantation',
+            water_ponds: 'Water pond established',
+            rain_water: 'Rain water harvesting system installed',
+            garbage_collection: 'Garbage collection point established'
+        };
+        return notesMap[postType] || 'Environmental contribution created';
+    }
+
+    @UseInterceptors(FileInterceptor('file'))
+    @Post('environmental-contributions/create')
+    async createEnvironmentalContribution(
+        @Body(new ZodValidationPipe(CreateEnvironmentalContribution, true, "elementData")) data: CreateEnvironmentalContributionDTO,
+        @Req() req: Request,
+        @Res() res: Response,
+        @UploadedFile() file: Express.Multer.File
+    ) {
+        if (!file) {
+            throw new BadRequestException("Image is required")
+        }
+
+        console.log(file, 'file')
+        const fileType = getFileType(file.mimetype);
+        const filename = uuidv4();
+        const { url } = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
+        console.log(url, 'url')
+        console.log(data, 'data')
+        const environmentalContribution = await this.postService.createEnvironmentalContribution({ ...data, media: [{ url, name: filename, type: 'image', capturedAt: data.media[0].capturedAt }] })
+        console.log(environmentalContribution, 'saved data')
+        res.json(environmentalContribution)
+    }
+
+    @Get('environmental-contributions/:id')
+    async getEnvironmentalContributionDetails(
+        @Param('id') contributionId: string,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        if (!Types.ObjectId.isValid(contributionId)) {
+            throw new BadRequestException('Invalid contribution Id format');
+        }
+        const contribution = await this.postService.getEnvironmentalContributionDetails(contributionId)
+        res.json(contribution)
+    }
+
+    @Get('environmental-contributions/by-post/:postId')
+    async getProjectEnvironmentalContributions(
+        @Param('postId') postId: string,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        if (!Types.ObjectId.isValid(postId)) {
+            throw new BadRequestException('Invalid Post Id format');
+        }
+        console.log(postId)
+        const contributions = await this.postService.getProjectEnvironmentalContributions(postId)
+        console.log(contributions, 'these are contributions')
+        res.json(contributions)
+    }
+
     @Post("reel")
     async editReel(
-        @Body(new ZodValidationPipe(z.object({ postId: ValidMongoId, content: z.string() }))) reelData: { content: string, postId: string },
+        @Body(new ZodValidationPipe(z.object({ postId: ValidMongoId, content: z.string() }))) reelData: { content: string, postId: string, mentions: string[] },
         @Req() req: Request,
         @Res() res: Response,
     ) {
@@ -215,23 +416,27 @@ export class PostsController {
             throw new BadRequestException("No post found")
         }
 
-        // if (post.postType !== 'reel') {
-        //     throw new BadRequestException("Provided post is not a reel")
-        // }
-
         if (post.isUploaded == false) {
             throw new BadRequestException("please wait previous post update is in process...")
         }
-
-        console.log(post.user.toString(), sub, 'user id')
 
         if (post.user.toString() !== sub) {
             throw new BadRequestException("You are not allowed to edit this post")
         }
 
+        let hashtags;
+
+        if (reelData.content) {
+            hashtags = this.hashtagService.extractHashtags(reelData.content);
+        }
+
+        const mentions = reelData?.mentions?.map(id => new Types.ObjectId(id)) || []
+
         let updatedPost = await this.postService.updatePost(
             reelData.postId,
             {
+                ...(hashtags && { hashtags }),
+                mentions: [...post?.mentions, mentions],
                 content: reelData.content,
             })
         res.json({ updatedPost, success: true })
@@ -247,26 +452,18 @@ export class PostsController {
         const { sub } = req.user
         const post = await this.postService._getPost(deleteReelData.postId)
         if (!post) {
-            throw new BadRequestException("No post found")
+            throw new BadRequestException("Post not found")
         }
-
-        // if (post.postType !== 'reel') {
-        //     throw new BadRequestException("Provided post is not a reel")
-        // }
 
         if (post.isUploaded == false) {
             throw new BadRequestException("please wait previous post update is in process...")
         }
-
-        console.log(post.user.toString(), sub, 'user id')
 
         if (post.user.toString() !== sub) {
             throw new BadRequestException("You are not allowed to delete this post")
         }
 
         try {
-
-
             post.media.forEach(async (media) => {
                 if (media.url) {
                     let videoUrlSplit = media?.url?.split("/")
@@ -304,8 +501,10 @@ export class PostsController {
                 }
             })
 
-            const deleted = await this.postService.deletePost(deleteReelData.postId)
-            res.json({ deleted: true, success: true })
+            await this.postService.deletePost(deleteReelData.postId)
+            this.hashtagService.removePostHashtags(post._id.toString(), post.hashtags)
+
+            res.json({ deleted: true })
         } catch (error) {
             throw new BadRequestException("Error deleting reel post, please try again later.");
         }
@@ -329,16 +528,20 @@ export class PostsController {
 
         const { sub } = req.user
         let targetId = reelData.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(reelData.targetId)
+        const hashtags = this.hashtagService.extractHashtags(reelData.content);
+        const mentions = reelData?.mentions?.map(id => new Types.ObjectId(id)) || []
 
         let uploadedPost = await this.postService.createPost({
             ...reelData,
             isUploaded: false,
+            hashtags,
+            mentions,
             postType: 'post',
             targetId,
             user: new Types.ObjectId(sub)
         });
 
-        this.eventEmiiter.emit("reel.upload", {
+        this.eventEmitter.emit("reel.upload", {
             uploadPromise,
             postId: uploadedPost._id.toString(),
             targetId,
@@ -376,79 +579,27 @@ export class PostsController {
     async updatePost(@Body(new ZodValidationPipe(UpdatePost, true, "postData")) updatePostDto: UpdatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
         const _postData = updatePostDto
 
-        // const media = {
-        //     images: [],
-        //     videos: []
-        // }
-
-        // const removeMedia = {
-        //     images: [],
-        //     videos: []
-        // }
-
-        // const postMedia = []
-
-        // if (_postData.media.length > 0) {
-        //     const { media } = _postData
-        //     for (let file in media) {
-        //         if (media[file].remove) {
-        //             let imageUrlSplit = media[file].url.split("/")
-        //             console.log(`deleting ${imageUrlSplit} from s3...`)
-        //             let filename = imageUrlSplit[imageUrlSplit.length - 1]
-        //             await this.uploadService.deleteFromS3(filename)
-        //         }
-        //     }
-        // }
-
-        // _postData.media.forEach((_media) => {
-        //     if (!_media?.remove && _media.type == 'video') {
-        //         postMedia.push({ type: 'video', url: _media.url })
-        //     }
-        //     if (!_media?.remove && _media.type == 'image') {
-        //         postMedia.push({ type: 'image', url: _media.url })
-        //     }
-        //     if (_media?.remove && _media.type == 'video') {
-        //         removeMedia.videos.push(_media.url)
-        //     }
-        //     if (_media?.remove && _media.type == 'image') {
-        //         removeMedia.images.push(_media.url)
-        //     }
-        // })
-
-        // for (let file of files) {
-        //     const fileType = getFileType(file.mimetype)
-        //     const filename = uuidv4()
-        //     console.log(file)
-        //     let uploaded = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-        //     console.log(uploaded)
-        //     if (fileType == 'video') {
-        //         media.videos.push(uploaded.url)
-        //         postMedia.push({ type: 'video', url: uploaded.url })
-        //     }
-        //     if (fileType == 'image') {
-        //         media.images.push(uploaded.url)
-        //         postMedia.push({ type: 'image', url: uploaded.url })
-        //     }
-        // }
-
-        // const { sub } = req.user as { username: string, sub: string }
-
-        // await this.mediaService.storeMedia(new Types.ObjectId(sub), media)
-        // await this.mediaService.removeMedia(new Types.ObjectId(sub), removeMedia)
-
-        // console.log(postMedia, media, removeMedia)
-        // this.chatGateway.uploadSuccess({isSuccess: true})
-
         const post = await this.postService._getPost(_postData.postId)
 
         if (!post || post.isUploaded == false) {
             throw new BadRequestException("please wait previous post update is in process...")
         }
 
+        let hashtags: string[];
+
+        if (_postData.content) {
+            hashtags = this.hashtagService.extractHashtags(_postData.content);
+        }
+
+
+        const mentions = _postData?.mentions?.map(id => new Types.ObjectId(id)) || []
+
         let uploadedPost = await this.postService.updatePost(
             _postData.postId,
             {
                 ...updatePostDto,
+                ...(hashtags && { hashtags }),
+                mentions: [...post?.mentions, mentions],
                 isUploaded: files.length > 0 ? false : null,
             })
 
@@ -460,7 +611,7 @@ export class PostsController {
                 return this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
             })
 
-            this.eventEmiiter.emit("files.uploaded", { uploadPromise, postId: post._id.toString(), targetId: post.targetId, type: post.type, uploadType: 'update', _postData })
+            this.eventEmitter.emit("files.uploaded", { uploadPromise, postId: post._id.toString(), targetId: post.targetId, type: post.type, uploadType: 'update', _postData })
         }
 
         res.json(uploadedPost)
@@ -470,6 +621,12 @@ export class PostsController {
     async deletePost(@Body(new ZodValidationPipe(DeletePost)) deletePostDTO: DeletePostDTO, @Req() req, @Res() res: Response) {
         const { postDetails } = deletePostDTO
 
+        const post = await this.postService._getPost(postDetails.postId)
+
+        if (!post) {
+            throw new BadRequestException('post not found')
+        }
+
         const { sub } = req.user
 
         let media: { images: string[], videos: string[] } = {
@@ -477,8 +634,8 @@ export class PostsController {
             videos: []
         }
 
-        if (postDetails.media && postDetails.media.length > 0) {
-            const { media } = postDetails
+        if (post.media && post.media.length > 0) {
+            const { media } = post
             for (let image in media) {
                 if (typeof media[image].url == 'string') {
                     let imageUrlSplit = media[image].url.split("/")
@@ -488,20 +645,21 @@ export class PostsController {
             }
         }
 
-        if (postDetails.media && postDetails.media.length > 0) {
-            for (let file in postDetails.media) {
-                if (postDetails.media[file].type == 'video') {
-                    media.videos.push(postDetails.media[file].url)
+        if (post.media && post.media.length > 0) {
+            for (let file in post.media) {
+                if (post.media[file].type == 'video') {
+                    media.videos.push(post.media[file].url)
                 }
-                if (postDetails.media[file].type == 'image') {
-                    media.images.push(postDetails.media[file].url)
+                if (post.media[file].type == 'image') {
+                    media.images.push(post.media[file].url)
                 }
             }
 
             await this.mediaService.removeMedia(new Types.ObjectId(sub), media)
         }
-
-        res.json(await this.postService.deletePost(postDetails.postId))
+        await this.postService.deletePost(post._id)
+        this.hashtagService.removePostHashtags(post._id.toString(), post.hashtags)
+        res.json({ deleted: true })
     }
 
     // @Post("post")

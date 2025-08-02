@@ -38,22 +38,29 @@ export class UploadListener {
         _postData?: any
     }) {
         try {
-            const files = await Promise.all(uploadPromise)
+            const files = await Promise.all(uploadPromise);
 
-            let media = {
-                images: [],
-                videos: []
-            }
+            let media = { images: [], videos: [] };
+            let postMedia = [];
 
-            let postMedia = []
             for (let file of files) {
                 if (file.fileType == 'video') {
-                    media.videos.push(file.url)
-                    postMedia.push({ type: 'video', url: file.url })
+                    media.videos.push(file.url);
+                    postMedia.push({
+                        type: 'video',
+                        url: file.url,
+                        location: file.location, // 🔧 ADD THIS
+                        capturedAt: file.location ? new Date() : undefined // 🔧 ADD THIS
+                    });
                 }
                 if (file.fileType == 'image') {
-                    media.images.push(file.url)
-                    postMedia.push({ type: 'image', url: file.url })
+                    media.images.push(file.url);
+                    postMedia.push({
+                        type: 'image',
+                        url: file.url,
+                        location: file.location, // 🔧 ADD THIS
+                        capturedAt: file.location ? new Date() : undefined // 🔧 ADD THIS
+                    });
                 }
             }
 

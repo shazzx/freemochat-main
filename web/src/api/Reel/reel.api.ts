@@ -14,11 +14,12 @@ export async function fetchVideosFeed(pageParam, postId) {
   return response.data;
 }
 
-export async function fetchReels(pageParam: string, targetId: string) {
+export async function fetchReels(pageParam: string, targetId: string, type: 'user' | 'group' = 'user') {
   const response = await axiosClient.get('/posts/reels', {
     params: {
       cursor: pageParam,
-      targetId
+      targetId,
+      type
     }
   });
   return response.data;
