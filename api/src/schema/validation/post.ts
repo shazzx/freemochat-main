@@ -4,9 +4,19 @@
 // PostSchema.index({ postType: 1, visibility: 1, createdAt: -1 });
 // PostSchema.index({ "location.latitude": 1, "location.longitude": 1, postType: 1 });
 
+
 import { z } from 'zod'
 import { Cursor, ValidMongoId } from './global'
 import { Types } from 'mongoose';
+
+export type EnvironmentalContributionType = 'plantation' | 'garbage_collection' | 'water_ponds' | 'rain_water';
+export interface ValidationResult {
+    isValid: boolean;
+    confidence: number;
+    detectedLabels: string[];
+    reason?: string;
+    suggestedCategory?: EnvironmentalContributionType;
+}
 
 const LocationSchema = z.object({
     latitude: z.number().min(-90).max(90),

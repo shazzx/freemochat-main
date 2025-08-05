@@ -1,11 +1,11 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Media } from 'src/schema/media';
 import { Model } from 'mongoose';
-import { DetectModerationLabelsCommand, RekognitionClient } from '@aws-sdk/client-rekognition';
+import { DetectLabelsCommand, DetectModerationLabelsCommand, RekognitionClient } from '@aws-sdk/client-rekognition';
 import { DetectDocumentTextCommand, TextractClient } from '@aws-sdk/client-textract';
 import sharp from 'sharp';
 import ffmpeg from 'fluent-ffmpeg';
@@ -17,6 +17,8 @@ import path from 'path';
 import os from 'os';
 import { PostsService } from 'src/posts/posts.service';
 import { lookup } from 'mime-types';
+import { ValidationResult } from 'src/schema/validation/post';
+import { EnvironmentalContributionType } from 'src/schema/validation/post';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
@@ -49,6 +51,324 @@ export class UploadService {
         this.s3Client = new S3Client(awsConfig);
         this.textractClient = new TextractClient(awsConfig);
     }
+    private readonly VALIDATION_CONFIG = {
+        plantation: {
+            requiredLabels: [
+                // Actual planted vegetation - what user has planted
+                'Plant', 'Tree', 'Vegetation', 'Flora', 'Leaf', 'Branch', 'Trunk', 'Root',
+                'Sapling', 'Seedling', 'Bush', 'Shrub', 'Flower', 'Blossom', 'Stem',
+                // Planted areas and gardens created by user
+                'Garden', 'Landscape', 'Grass', 'Lawn', 'Agriculture', 'Farm', 'Crop', 'Grove', 'Orchard',
+                // Evidence of planting activity
+                'Soil', 'Earth', 'Ground', 'Dirt', 'Gardening', 'Planting', 'Planted Area',
+                // Tools used in planting (evidence of planting action)
+                'Shovel', 'Spade', 'Gardening Tool', 'Watering Can', 'Pot', 'Planter'
+            ],
+            conflictingLabels: [
+                'Building', 'Architecture', 'Urban', 'City', 'Road', 'Vehicle', 'Car',
+                'Electronics', 'Computer', 'Phone', 'Screen', 'Indoor', 'Furniture',
+                'Garbage', 'Trash', 'Waste', 'Water Tank', 'Container'
+            ],
+            minConfidence: 75,
+            description: 'actual tree planting or vegetation cultivation by the user'
+        },
+        garbage_collection: {
+            requiredLabels: [
+                // Garbage collection systems/boxes placed by user
+                'Trash Can', 'Garbage Can', 'Dumpster', 'Bin', 'Container', 'Waste Container',
+                'Recycle Bin', 'Dustbin', 'Garbage Bin', 'Waste Bin',
+                // Collection infrastructure placed by user
+                'Collection Point', 'Waste Management', 'Recycling Station',
+                // Evidence of waste collection setup
+                'Bag', 'Plastic Bag', 'Collection Bag', 'Waste Collection',
+                // Environmental cleanup efforts by user
+                'Cleaning', 'Collection', 'Street', 'Park', 'Public Space', 'Cleanup',
+                // Types of collection systems
+                'Plastic', 'Metal', 'Recycling', 'Waste Sorting'
+            ],
+            conflictingLabels: [
+                'Plant', 'Tree', 'Vegetation', 'Clean Nature', 'Pristine Environment',
+                'Water', 'Pool', 'Lake', 'River', 'Swimming'
+            ],
+            minConfidence: 70,
+            description: 'garbage collection boxes or waste management systems placed by the user'
+        },
+        water_ponds: {
+            requiredLabels: [
+                // Water conservation structures created by user
+                'Pond', 'Water Body', 'Basin', 'Reservoir', 'Tank', 'Water Storage',
+                'Artificial Pond', 'Man-made Water Body',
+                // Construction evidence of water pond creation
+                'Construction', 'Excavation', 'Concrete', 'Stone', 'Rock', 'Built Structure',
+                'Water Conservation', 'Storage System', 'Water Management',
+                // Water pond infrastructure created by user
+                'Dam', 'Barrier', 'Wall', 'Channel', 'Water Infrastructure',
+                // Natural/excavated water features
+                'Water', 'Reflection', 'Waterhole', 'Lagoon',
+                // Tools/evidence of pond creation
+                'Excavation', 'Earth Work', 'Construction Equipment'
+            ],
+            conflictingLabels: [
+                'Swimming Pool', 'Hot Tub', 'Bathtub', 'Sink', 'Bathroom', 'Kitchen',
+                'Indoor', 'Decorative Fountain', 'Ornamental Water'
+            ],
+            minConfidence: 70,
+            description: 'water pond or water conservation structure created by the user'
+        },
+        rain_water: {
+            requiredLabels: [
+                // Rainwater harvesting systems created/installed by user
+                'Tank', 'Water Tank', 'Storage Tank', 'Container', 'Barrel', 'Storage',
+                'Reservoir', 'Cistern', 'Water Storage', 'Collection Tank',
+                // Rainwater collection infrastructure installed by user
+                'Collection System', 'Harvesting System', 'Water Collection',
+                'Gutter', 'Pipe', 'Drainage', 'Channel', 'Spout', 'Downspout',
+                'Collector', 'Filter', 'Rain Collection',
+                // Installation evidence
+                'Installation', 'Equipment', 'Infrastructure', 'Water System',
+                'Construction', 'Building', 'Structure', 'Setup',
+                // Roof collection systems (part of rainwater harvesting)
+                'Roof', 'Rooftop Collection', 'Catchment'
+            ],
+            conflictingLabels: [
+                'Swimming Pool', 'Hot Tub', 'Bathroom', 'Kitchen', 'Indoor Plumbing',
+                'Decorative', 'Fountain', 'Ornamental', 'Jacuzzi'
+            ],
+            minConfidence: 70,
+            description: 'rainwater harvesting or storage system created/installed by the user'
+        }
+    };
+
+    /**
+ * Main validation method for environmental contribution images
+ */
+    async validateEnvironmentalImage(
+        imageBuffer: Buffer,
+        claimedType: EnvironmentalContributionType
+    ): Promise<ValidationResult> {
+        try {
+            console.log(`🔍 Validating image for ${claimedType} environmental action...`);
+
+            // Get detailed image labels from AWS Rekognition
+            const labels = await this.detectImageLabels(imageBuffer);
+            console.log(`📋 Detected ${labels.length} labels:`, labels.map(l => `${l.Name} (${l.Confidence?.toFixed(1)}%)`));
+
+            // Validate against claimed type
+            const validation = this.validateAgainstType(labels, claimedType);
+
+            // If validation fails, suggest the most likely category
+            if (!validation.isValid) {
+                validation.suggestedCategory = this.suggestCorrectCategory(labels);
+            }
+
+            console.log(`✅ Validation result for ${claimedType}:`, {
+                isValid: validation.isValid,
+                confidence: validation.confidence,
+                reason: validation.reason
+            });
+
+            return validation;
+
+        } catch (error) {
+            console.error('❌ Error in environmental image validation:', error);
+            // Don't block uploads on validation errors, but log them
+            return {
+                isValid: true, // Fail open for now
+                confidence: 0,
+                detectedLabels: [],
+                reason: 'Validation service temporarily unavailable'
+            };
+        }
+    }
+
+    /**
+     * Detect labels in image using AWS Rekognition
+     */
+    private async detectImageLabels(imageBuffer: Buffer): Promise<any[]> {
+        const command = new DetectLabelsCommand({
+            Image: { Bytes: imageBuffer },
+            MaxLabels: 50, // Get more labels for better accuracy
+            MinConfidence: 60, // Lower threshold to catch more possibilities
+        });
+
+        const response = await this.rekognitionClient.send(command);
+        return response.Labels || [];
+    }
+
+    /**
+     * Validate detected labels against claimed environmental action type
+     */
+    private validateAgainstType(
+        detectedLabels: any[],
+        claimedType: EnvironmentalContributionType
+    ): ValidationResult {
+        const config = this.VALIDATION_CONFIG[claimedType];
+        const labelNames = detectedLabels.map(label => label.Name);
+        const labelConfidences = detectedLabels.reduce((acc, label) => {
+            acc[label.Name] = label.Confidence;
+            return acc;
+        }, {} as Record<string, number>);
+
+        // Check for conflicting labels (things that shouldn't be in this action type)
+        const conflicts = config.conflictingLabels.filter(conflictLabel =>
+            labelNames.some(detectedLabel =>
+                detectedLabel.toLowerCase().includes(conflictLabel.toLowerCase()) ||
+                conflictLabel.toLowerCase().includes(detectedLabel.toLowerCase())
+            )
+        );
+
+        if (conflicts.length > 0) {
+            const conflictConfidences = conflicts.map(conflict =>
+                Math.max(...labelNames
+                    .filter(label =>
+                        label.toLowerCase().includes(conflict.toLowerCase()) ||
+                        conflict.toLowerCase().includes(label.toLowerCase())
+                    )
+                    .map(label => labelConfidences[label] || 0)
+                )
+            );
+            const maxConflictConfidence = Math.max(...conflictConfidences);
+
+            if (maxConflictConfidence > 80) {
+                return {
+                    isValid: false,
+                    confidence: maxConflictConfidence,
+                    detectedLabels: labelNames,
+                    reason: `Image doesn't show evidence of ${config.description}. Detected: ${conflicts.join(', ')}`
+                };
+            }
+        }
+
+        // Check for required labels (evidence of the environmental action)
+        const matchedLabels = config.requiredLabels.filter(requiredLabel =>
+            labelNames.some(detectedLabel =>
+                detectedLabel.toLowerCase().includes(requiredLabel.toLowerCase()) ||
+                requiredLabel.toLowerCase().includes(detectedLabel.toLowerCase()) ||
+                this.isSemanticMatch(detectedLabel, requiredLabel)
+            )
+        );
+
+        if (matchedLabels.length === 0) {
+            return {
+                isValid: false,
+                confidence: 0,
+                detectedLabels: labelNames,
+                reason: `Image doesn't show evidence of ${config.description}. Please ensure image shows the environmental action you performed.`
+            };
+        }
+
+        // Calculate confidence based on matched labels and their individual confidences
+        const matchConfidences = matchedLabels.map(matchedLabel => {
+            const correspondingDetectedLabels = labelNames.filter(detectedLabel =>
+                detectedLabel.toLowerCase().includes(matchedLabel.toLowerCase()) ||
+                matchedLabel.toLowerCase().includes(detectedLabel.toLowerCase()) ||
+                this.isSemanticMatch(detectedLabel, matchedLabel)
+            );
+            return Math.max(...correspondingDetectedLabels.map(label => labelConfidences[label] || 0));
+        });
+
+        const avgConfidence = matchConfidences.reduce((sum, conf) => sum + conf, 0) / matchConfidences.length;
+
+        // Require minimum confidence and minimum number of matches
+        const isValid = avgConfidence >= config.minConfidence && matchedLabels.length >= 1;
+
+        return {
+            isValid,
+            confidence: Math.round(avgConfidence),
+            detectedLabels: labelNames,
+            reason: isValid
+                ? `Image verified as evidence of ${config.description} with ${matchedLabels.length} relevant elements detected`
+                : `Low confidence (${Math.round(avgConfidence)}%) for ${config.description}. Need ${config.minConfidence}% minimum confidence.`
+        };
+    }
+
+    /**
+     * Suggest the most likely correct category based on detected labels
+     */
+    private suggestCorrectCategory(detectedLabels: any[]): EnvironmentalContributionType | undefined {
+        const labelNames = detectedLabels.map(label => label.Name);
+        const scores: Record<EnvironmentalContributionType, number> = {
+            plantation: 0,
+            garbage_collection: 0,
+            water_ponds: 0,
+            rain_water: 0
+        };
+
+        // Score each category based on label matches
+        Object.keys(this.VALIDATION_CONFIG).forEach(type => {
+            const config = this.VALIDATION_CONFIG[type as EnvironmentalContributionType];
+            const matches = config.requiredLabels.filter(requiredLabel =>
+                labelNames.some(detectedLabel =>
+                    detectedLabel.toLowerCase().includes(requiredLabel.toLowerCase()) ||
+                    requiredLabel.toLowerCase().includes(detectedLabel.toLowerCase())
+                )
+            );
+            scores[type as EnvironmentalContributionType] = matches.length;
+        });
+
+        // Return category with highest score, if any
+        const maxScore = Math.max(...Object.values(scores));
+        if (maxScore > 0) {
+            return Object.keys(scores).find(
+                key => scores[key as EnvironmentalContributionType] === maxScore
+            ) as EnvironmentalContributionType;
+        }
+
+        return undefined;
+    }
+
+    /**
+     * Check for semantic matches between labels (e.g., "Flora" matches "Plant")
+     */
+    private isSemanticMatch(detected: string, required: string): boolean {
+        const semanticGroups = {
+            plants: ['plant', 'tree', 'vegetation', 'flora', 'leaf', 'branch', 'trunk', 'bush', 'shrub'],
+            water: ['water', 'liquid', 'pond', 'lake', 'pool', 'reservoir', 'tank'],
+            waste: ['trash', 'garbage', 'waste', 'litter', 'rubbish', 'debris'],
+            containers: ['container', 'bin', 'tank', 'barrel', 'can', 'bucket']
+        };
+
+        const detectedLower = detected.toLowerCase();
+        const requiredLower = required.toLowerCase();
+
+        for (const group of Object.values(semanticGroups)) {
+            if (group.includes(detectedLower) && group.includes(requiredLower)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Enhanced moderation that includes environmental validation
+     */
+    async moderateAndValidateEnvironmentalImage(
+        imageBuffer: Buffer,
+        claimedType: EnvironmentalContributionType
+    ): Promise<{
+        isSafe: boolean;
+        isValidType: boolean;
+        confidence: number;
+        moderationLabels: string[];
+        validationReason?: string;
+        suggestedCategory?: EnvironmentalContributionType;
+    }> {
+        // Run both moderation and validation in parallel
+        const [moderationResult, validationResult] = await Promise.all([
+            this.moderateImage(imageBuffer),
+            this.validateEnvironmentalImage(imageBuffer, claimedType)
+        ]);
+
+        return {
+            isSafe: moderationResult.isSafe,
+            isValidType: validationResult.isValid,
+            confidence: validationResult.confidence,
+            moderationLabels: moderationResult.labels,
+            validationReason: validationResult.reason,
+            suggestedCategory: validationResult.suggestedCategory
+        };
+    }
 
     async processAndUploadContent(
         file: Buffer,
@@ -56,6 +376,9 @@ export class UploadService {
         contentType: string,
         originalname?: string,
         isReel: boolean = false,
+        // NEW: Add environmental validation parameters
+        environmentalType?: EnvironmentalContributionType,
+        skipEnvironmentalValidation: boolean = false
     ) {
         let processedContent: Buffer;
         let moderationResult: { isSafe: boolean; labels: string[] } | string;
@@ -77,21 +400,48 @@ export class UploadService {
                     finalImageBuffer = optimizationResult.optimizedBuffer;
                     finalMimeType = optimizationResult.finalMimeType;
 
-                    // Mobile-optimized images are always under 5MB, perfect for Rekognition
                     console.log('✅ Mobile-optimized image ready for moderation and upload');
                 } else {
                     console.log('✅ Image already mobile-optimized, using original');
                 }
 
-                // Direct moderation on final optimized image (no separate resizing needed)
-                moderationResult = await this.moderateImage(finalImageBuffer);
+                // NEW: Environmental validation for contribution images
+                if (environmentalType && !skipEnvironmentalValidation) {
+                    console.log(`🌱 Validating image for ${environmentalType} contribution...`);
 
-                if (moderationResult.isSafe) {
-                    const uploadResult = await this.uploadToS3(finalImageBuffer, fileName, finalMimeType);
-                    return { url: uploadResult, fileName, fileType: contentType, originalname };
+                    const validationResult = await this.moderateAndValidateEnvironmentalImage(
+                        finalImageBuffer,
+                        environmentalType
+                    );
+
+                    // Check moderation first
+                    if (!validationResult.isSafe) {
+                        throw new Error(`Content violates moderation policies: ${validationResult.moderationLabels.join(', ')}`);
+                    }
+
+                    if (!validationResult.isValidType) {
+                        let errorMessage = `Image does not appear to show ${environmentalType} activity.`;
+
+                        if (validationResult.suggestedCategory) {
+                            errorMessage += ` Did you mean to select "${validationResult.suggestedCategory}" instead?`;
+                        }
+
+                        throw new BadRequestException(errorMessage);
+                    }
+
+                    console.log(`✅ Image validated as ${environmentalType} with ${validationResult.confidence}% confidence`);
                 } else {
-                    throw new Error('Content violates moderation policies');
+                    // Standard moderation for non-environmental images
+                    moderationResult = await this.moderateImage(finalImageBuffer);
+
+                    if (!moderationResult.isSafe) {
+                        throw new Error('Content violates moderation policies');
+                    }
                 }
+
+                const uploadResult = await this.uploadToS3(finalImageBuffer, fileName, finalMimeType);
+                return { url: uploadResult, fileName, fileType: contentType, originalname };
+
             } else if (contentType === 'video') {
                 const fileSizeInMB = file.length / (1024 * 1024);
                 console.log(`📹 Processing video: ${fileSizeInMB.toFixed(2)} MB`);
@@ -99,7 +449,7 @@ export class UploadService {
                 const shouldOptimize = await this.shouldOptimizeVideo(file, originalname || fileName);
 
                 let finalVideoBuffer: Buffer;
-                const finalContentType = 'video/mp4'; // Always MP4 after processing
+                const finalContentType = 'video/mp4';
 
                 if (shouldOptimize) {
                     console.log(`🔄 Optimizing ${isReel ? 'reel' : 'normal video'} for mobile devices...`);
@@ -108,7 +458,6 @@ export class UploadService {
                     console.log('✅ Video already mobile-optimized, skipping processing');
                     finalVideoBuffer = file;
 
-                    // Ensure MP4 format for consistency
                     const originalFormat = await this.getVideoFormat(file);
                     if (originalFormat !== 'mp4') {
                         console.log('🔄 Converting to MP4 for mobile compatibility');
@@ -123,12 +472,12 @@ export class UploadService {
                 processedContent = file;
                 moderationResult = await this.moderatePdf(file);
 
-                if (moderationResult.isSafe) {
-                    const uploadResult = await this.uploadToS3(file, fileName, 'application/pdf');
-                    return { url: uploadResult, fileName, fileType: contentType, originalname };
-                } else {
+                if (!moderationResult.isSafe) {
                     throw new Error('Content violates moderation policies');
                 }
+
+                const uploadResult = await this.uploadToS3(file, fileName, 'application/pdf');
+                return { url: uploadResult, fileName, fileType: contentType, originalname };
 
             } else if (contentType === 'audio') {
                 const detectedAudioType = this.detectAudioMimeType(file, originalname || fileName);
@@ -145,6 +494,7 @@ export class UploadService {
             throw error;
         }
     }
+
 
     // Mobile compatibility checker
     private async checkMobileCompatibility(videoBuffer: Buffer): Promise<boolean> {

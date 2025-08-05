@@ -13,7 +13,7 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreateEnvironmentalContribution, CreateEnvironmentalContributionDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdateEnvironmentalContribution, UpdateEnvironmentalContributionDTO, UpdatePost, UpdatePostDTO, UpdateProject, UpdateProjectDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreateEnvironmentalContribution, CreateEnvironmentalContributionDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, EnvironmentalContributionType, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdateEnvironmentalContribution, UpdateEnvironmentalContributionDTO, UpdatePost, UpdatePostDTO, UpdateProject, UpdateProjectDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
@@ -373,7 +373,14 @@ export class PostsController {
         console.log(file, 'file')
         const fileType = getFileType(file.mimetype);
         const filename = uuidv4();
-        const { url } = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
+        const { url } = await this.uploadService.processAndUploadContent(
+            file.buffer,
+            filename,
+            fileType,
+            file.originalname,
+            false,
+            post.postType as EnvironmentalContributionType
+        )
         console.log(url, 'url')
         console.log(data, 'data')
 
@@ -383,10 +390,10 @@ export class PostsController {
             data = { ...data, plantationData: { ...data.plantationData, nextUpdateDue, lastUpdateDate: new Date() } }
         }
 
-
         const environmentalContribution = await this.postService.createElement({ ...data, media: [{ url, name: filename, type: 'image', capturedAt: data.media[0].capturedAt }] })
         console.log(environmentalContribution, 'saved data')
         res.json(environmentalContribution)
+
     }
 
     @UseInterceptors(FileInterceptor('file'))
@@ -425,7 +432,14 @@ export class PostsController {
         console.log(file, 'file')
         const fileType = getFileType(file.mimetype);
         const filename = uuidv4();
-        const { url } = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
+        const { url } = await this.uploadService.processAndUploadContent(
+            file.buffer, 
+            filename,
+            fileType, 
+            file.originalname,
+            false,
+            post.postType as EnvironmentalContributionType
+        )
         console.log(url, 'url')
         console.log(data, 'data')
         const elementUpdateHistory: any = [...element.updateHistory]
