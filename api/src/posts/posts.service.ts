@@ -14,7 +14,7 @@ import { Member } from 'src/schema/members';
 import { EnvironmentalContribution, Post } from 'src/schema/post';
 import { Promotion } from 'src/schema/promotion';
 import { Report } from 'src/schema/report';
-import { CreateEnvironmentalContributionDTO, GetGlobalMapCountsDTO, GetGlobalMapDataDTO, SearchGlobalMapLocationsDTO } from 'src/schema/validation/post';
+import { CreateEnvironmentalContributionDTO, GetGlobalMapCountsDTO, GetGlobalMapDataDTO, SearchGlobalMapLocationsDTO, UpdateEnvironmentalContributionDTO } from 'src/schema/validation/post';
 import { ViewedPosts } from 'src/schema/viewedPosts';
 import { UserService } from 'src/user/user.service';
 import { CURRENCIES, PAYMENT_PROVIDERS, PAYMENT_STATES, POST_PROMOTION, ReachStatus } from 'src/utils/enums/global.c';
@@ -365,6 +365,26 @@ export class PostsService {
                                 as: 'userBookmark',
                             },
                         },
+
+                        {
+                            $lookup: {
+                                from: 'environmentalcontributions',
+                                let: { postId: '$_id', postType: '$postType' },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ['$postId', '$$postId'] },
+                                                    { $in: ['$$postType', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ],
+                                as: 'environmentalContributions'
+                            }
+                        },
                         // Handle counters for shared post
                         {
                             $lookup: {
@@ -443,8 +463,8 @@ export class PostsService {
                                 user: 1,
                                 promotion: 1,
                                 location: 1,
-                                plantationData: 1,
-                                updateHistory: 1,
+                                projectDetails: 1,
+                                environmentalContributions: 1,
                                 isUploaded: 1,
                                 target: 1,
                                 reaction: 1,
@@ -504,6 +524,25 @@ export class PostsService {
                     ],
                     as: 'userBookmark',
                 },
+            },
+            {
+                $lookup: {
+                    from: 'environmentalcontributions',
+                    let: { postId: '$_id', postType: '$postType' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$postId', '$$postId'] },
+                                        { $in: ['$$postType', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'environmentalContributions'
+                }
             },
             {
                 $lookup: {
@@ -571,8 +610,8 @@ export class PostsService {
                     target: 1,
                     reaction: 1,
                     location: 1,
-                    plantationData: 1,
-                    updateHistory: 1,
+                    environmentalContributions: 1,
+                    projectDetails: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
@@ -4895,6 +4934,11 @@ export class PostsService {
         ])
     }
 
+    async updateProject(postId: string, projectDetails: any) {
+        const updatedProject = await this.postModel.findByIdAndUpdate(postId, { $set: { ...projectDetails } }, { new: true })
+        return updatedProject
+    }
+
     async updatePost(postId: string, postDetails: any) {
         const updatedPost = await this.postModel.findByIdAndUpdate(postId, { $set: { ...postDetails } }, { new: true })
 
@@ -4941,13 +4985,17 @@ export class PostsService {
         return post
     }
 
-    async getEnvironmentalContributionDetails(contributionId: string) {
-        return await this.environmentalContributionModel.findById(contributionId)
+    async getElementDetails(elementId: string) {
+        return await this.environmentalContributionModel.findById(elementId)
             .populate('postId', 'projectDetails postType')
             .exec();
     }
 
-    async getProjectEnvironmentalContributions(postId: string) {
+    async elementExist(elementId: string) {
+        return await this.environmentalContributionModel.findById(elementId)
+    }
+
+    async getProjectElements(postId: string) {
         return await this.environmentalContributionModel.aggregate([
             {
                 $match: {
@@ -5584,8 +5632,21 @@ export class PostsService {
         };
     }
 
-    async createEnvironmentalContribution(data: CreateEnvironmentalContributionDTO) {
+    async createElement(data: CreateEnvironmentalContributionDTO) {
         const environmentalContribution = await this.environmentalContributionModel.create({ ...data, postId: new Types.ObjectId(data.postId) })
+        return environmentalContribution
+    }
+
+
+    async updateElement(elementId: string, data: UpdateEnvironmentalContributionDTO) {
+        const environmentalContribution = await this.environmentalContributionModel.findByIdAndUpdate(
+            elementId,
+            {
+                $set:
+                {
+                    updateHistory: data.updateHistory
+                }
+            })
         return environmentalContribution
     }
 

@@ -11,6 +11,9 @@ class Location {
     @Prop({ type: String })
     address?: string;
 
+    @Prop({ type: Number })
+    accuracy?: number;
+
     @Prop({ type: String })
     country?: string;
 
