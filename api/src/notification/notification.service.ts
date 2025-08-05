@@ -140,7 +140,10 @@ export class NotificationService {
         }
       },
       {
-        $unwind: "$sender"
+        $unwind: {
+          path: "$sender",
+          preserveNullAndEmptyArrays: true 
+        }
       },
       {
         $project: {
@@ -152,12 +155,13 @@ export class NotificationService {
           targetType: 1,
           handle: 1,
           targetId: 1,
-          sender: 1,
+          sender: 1,  // Will be null for system notifications
           updatedAt: 1,
           createdAt: 1,
         },
       },
     ]);
+
 
     const hasNextPage = notifications.length > limit;
     const _notifications = hasNextPage ? notifications.slice(0, -1) : notifications;
