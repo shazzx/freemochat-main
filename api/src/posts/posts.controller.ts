@@ -391,7 +391,7 @@ export class PostsController {
         }
 
         const environmentalContribution = await this.postService.createElement(
-            String(post.user),
+            String(post.targetId),
             String(post.postType),    
             { ...data, media: [{ url, name: filename, type: 'image', capturedAt: data.media[0].capturedAt }] }
         )

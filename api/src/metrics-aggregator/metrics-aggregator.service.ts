@@ -32,7 +32,7 @@ export class MetricsAggregatorService {
         return { notification, requests, unreadChatlists }
     }
 
-    async userContributions(targetId: string) {
+    async userAndPageContributions(targetId: string) {
         let plantation = await this.counterModel.findOne(
             {
                 targetId: new Types.ObjectId(targetId),

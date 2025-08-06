@@ -457,6 +457,33 @@ export class PostsService {
             {
                 $unwind: "$target"
             },
+            // Environmental profile lookup for main target - ADD THIS NEW STAGE
+            {
+                $lookup: {
+                    from: 'counters',
+                    let: { targetId: '$targetId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$targetId'] },
+                                        { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                        { $eq: ['$type', 'contributions'] }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                contributionTypes: { $addToSet: '$name' }
+                            }
+                        }
+                    ],
+                    as: 'targetEnvironmentalContributions'
+                }
+            },
             {
                 $lookup: {
                     from: 'posts',
@@ -607,7 +634,6 @@ export class PostsService {
                                 as: 'userBookmark',
                             },
                         },
-
                         {
                             $lookup: {
                                 from: 'environmentalcontributions',
@@ -648,17 +674,75 @@ export class PostsService {
                                 as: 'counters'
                             }
                         },
-                        // Combine fields for shared post
+                        // Environmental profile lookup for shared post target - ADD THIS NEW STAGE
+                        {
+                            $lookup: {
+                                from: 'counters',
+                                let: { targetId: '$targetId' },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ['$targetId', '$$targetId'] },
+                                                    { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                                    { $eq: ['$type', 'contributions'] }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    {
+                                        $group: {
+                                            _id: null,
+                                            contributionTypes: { $addToSet: '$name' }
+                                        }
+                                    }
+                                ],
+                                as: 'targetEnvironmentalContributions'
+                            }
+                        },
+                        // Combine fields for shared post - UPDATE THIS STAGE
                         {
                             $addFields: {
                                 target: {
-                                    $switch: {
-                                        branches: [
-                                            { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-                                        ],
-                                        default: null
+                                    $let: {
+                                        vars: {
+                                            targetObj: {
+                                                $switch: {
+                                                    branches: [
+                                                        { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                                        { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                                        { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                                                    ],
+                                                    default: null
+                                                }
+                                            },
+                                            envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                                        },
+                                        in: {
+                                            $cond: {
+                                                if: {
+                                                    $and: [
+                                                        { $ne: ['$$targetObj', null] },
+                                                        { $ne: ['$$targetObj.type', 'group'] }
+                                                    ]
+                                                },
+                                                then: {
+                                                    $mergeObjects: [
+                                                        '$$targetObj',
+                                                        {
+                                                            environmentalProfile: {
+                                                                plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                                garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                                water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                                rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                else: '$$targetObj'
+                                            }
+                                        }
                                     }
                                 },
                                 likesCount: {
@@ -806,8 +890,40 @@ export class PostsService {
                     as: 'counters'
                 }
             },
+            // UPDATE THIS STAGE - Add environmental profile to main target
             {
                 $addFields: {
+                    target: {
+                        $let: {
+                            vars: {
+                                envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                            },
+                            in: {
+                                $cond: {
+                                    if: {
+                                        $and: [
+                                            { $ne: ['$target', null] },
+                                            { $ne: ['$target.type', 'group'] }
+                                        ]
+                                    },
+                                    then: {
+                                        $mergeObjects: [
+                                            '$target',
+                                            {
+                                                environmentalProfile: {
+                                                    plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                    garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                    water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                    rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    else: '$target'
+                                }
+                            }
+                        }
+                    },
                     reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
@@ -1606,6 +1722,53 @@ export class PostsService {
                                 as: 'counters'
                             }
                         },
+                        // Environmental profile lookup for shared post target - NEW STAGE
+                        {
+                            $lookup: {
+                                from: 'counters',
+                                let: { targetId: '$targetId' },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ['$targetId', '$$targetId'] },
+                                                    { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                                    { $eq: ['$type', 'contributions'] }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    {
+                                        $group: {
+                                            _id: null,
+                                            contributionTypes: { $addToSet: '$name' }
+                                        }
+                                    }
+                                ],
+                                as: 'targetEnvironmentalContributions'
+                            }
+                        },
+                        // Environmental contributions lookup for shared post - NEW STAGE
+                        {
+                            $lookup: {
+                                from: 'environmentalcontributions',
+                                let: { postId: '$_id', postType: '$postType' },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ['$postId', '$$postId'] },
+                                                    { $in: ['$$postType', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ],
+                                as: 'environmentalContributions'
+                            }
+                        },
                         {
                             $lookup: {
                                 from: 'users',
@@ -1625,16 +1788,48 @@ export class PostsService {
                                 as: 'mentions'
                             }
                         },
+                        // UPDATED - Enhanced target field with environmental profile
                         {
                             $addFields: {
                                 target: {
-                                    $switch: {
-                                        branches: [
-                                            { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-                                        ],
-                                        default: null
+                                    $let: {
+                                        vars: {
+                                            targetObj: {
+                                                $switch: {
+                                                    branches: [
+                                                        { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                                        { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                                        { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                                                    ],
+                                                    default: null
+                                                }
+                                            },
+                                            envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                                        },
+                                        in: {
+                                            $cond: {
+                                                if: {
+                                                    $and: [
+                                                        { $ne: ['$$targetObj', null] },
+                                                        { $ne: ['$$targetObj.type', 'group'] }
+                                                    ]
+                                                },
+                                                then: {
+                                                    $mergeObjects: [
+                                                        '$$targetObj',
+                                                        {
+                                                            environmentalProfile: {
+                                                                plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                                garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                                water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                                rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                else: '$$targetObj'
+                                            }
+                                        }
                                     }
                                 },
                                 likesCount: {
@@ -1672,6 +1867,7 @@ export class PostsService {
                                 isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                             }
                         },
+                        // UPDATED - Added missing fields to projection
                         {
                             $project: {
                                 _id: 1,
@@ -1681,6 +1877,9 @@ export class PostsService {
                                 promotion: 1,
                                 isUploaded: 1,
                                 target: 1,
+                                location: 1,
+                                projectDetails: 1,
+                                environmentalContributions: 1,
                                 reaction: 1,
                                 mentions: 1,
                                 likesCount: { $ifNull: ['$likesCount.count', 0] },
@@ -1802,13 +2001,73 @@ export class PostsService {
                                     $and: [
                                         { $eq: ['$targetId', '$$postId'] },
                                         { $eq: ['$name', 'post'] },
-                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares']] }
+                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares', 'videoViews']] }
                                     ]
                                 }
                             }
                         }
                     ],
                     as: 'counters'
+                }
+            },
+            // Environmental profile lookup for main post target - NEW STAGE
+            {
+                $lookup: {
+                    from: 'counters',
+                    let: { targetId: '$targetId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$targetId'] },
+                                        { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                        { $eq: ['$type', 'contributions'] }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                contributionTypes: { $addToSet: '$name' }
+                            }
+                        }
+                    ],
+                    as: 'targetEnvironmentalContributions'
+                }
+            },
+            // Environmental contributions lookup for main post - NEW STAGE
+            {
+                $lookup: {
+                    from: 'environmentalcontributions',
+                    let: { postId: '$_id', postType: '$postType' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$postId', '$$postId'] },
+                                        { $in: ['$$postType', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 1,
+                                location: 1,
+                                plantationData: 1,
+                                garbageCollectionData: 1,
+                                waterPondsData: 1,
+                                rainWaterData: 1,
+                                media: 1,
+                                updateHistory: 1,
+                                createdAt: 1
+                            }
+                        }
+                    ],
+                    as: 'environmentalContributions'
                 }
             },
             {
@@ -1830,16 +2089,48 @@ export class PostsService {
                     as: 'mentions'
                 }
             },
+            // UPDATED - Enhanced target field with environmental profile
             {
                 $addFields: {
                     target: {
-                        $switch: {
-                            branches: [
-                                { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-                                { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-                                { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-                            ],
-                            default: null
+                        $let: {
+                            vars: {
+                                targetObj: {
+                                    $switch: {
+                                        branches: [
+                                            { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                            { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                            { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                                        ],
+                                        default: null
+                                    }
+                                },
+                                envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                            },
+                            in: {
+                                $cond: {
+                                    if: {
+                                        $and: [
+                                            { $ne: ['$$targetObj', null] },
+                                            { $ne: ['$$targetObj.type', 'group'] }
+                                        ]
+                                    },
+                                    then: {
+                                        $mergeObjects: [
+                                            '$$targetObj',
+                                            {
+                                                environmentalProfile: {
+                                                    plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                    garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                    water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                    rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    else: '$$targetObj'
+                                }
+                            }
                         }
                     },
                     reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
@@ -1868,9 +2159,16 @@ export class PostsService {
                             { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
                             { count: 0 }
                         ]
+                    },
+                    videoViewsCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'videoViews'] } } }, 0] },
+                            { count: 0 }
+                        ]
                     }
                 },
             },
+            // UPDATED - Added missing fields to projection
             {
                 $project: {
                     _id: 1,
@@ -1880,12 +2178,16 @@ export class PostsService {
                     promotion: 1,
                     isUploaded: 1,
                     target: 1,
+                    location: 1,
+                    projectDetails: 1,
+                    environmentalContributions: 1,
                     reaction: 1,
                     mentions: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     sharesCount: { $ifNull: ['$sharesCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
+                    videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
                     isLikedByUser: 1,
                     targetId: 1,
                     type: 1,
@@ -2414,17 +2716,6 @@ export class PostsService {
         }
 
         // Posts query
-        // const postsQuery = cursor
-        //     ? {
-        //         createdAt: { $lt: new Date(cursor) },
-        //         ...visibility,
-        //         postType: { $in: ['post'] }
-        //     }
-        //     : {
-        //         ...visibility,
-        //         postType: { $in: ['post'] }
-        //     };
-
         const postsQuery = cursor ? {
             createdAt: { $lt: new Date(cursor) },
             ...visibility,
@@ -2583,44 +2874,6 @@ export class PostsService {
                                 as: 'regularUserDetails'
                             }
                         },
-                        // NEW: Lookup user contribution counters for badges
-                        {
-                            $lookup: {
-                                from: 'counters',
-                                let: {
-                                    postUserId: "$user", // Direct user reference for user/page posts
-                                    postType: "$type"
-                                },
-                                pipeline: [
-                                    {
-                                        $match: {
-                                            $expr: {
-                                                $and: [
-                                                    { $ne: ["$$postType", "group"] }, // Skip group posts entirely
-                                                    { $eq: ["$targetId", "$$postUserId"] },
-                                                    { $eq: ["$type", "contributions"] },
-                                                    {
-                                                        $in: ["$name", [
-                                                            "plantation",
-                                                            "garbage_collection",
-                                                            "water_ponds",
-                                                            "rain_water"
-                                                        ]]
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    {
-                                        $project: {
-                                            name: 1,
-                                            count: 1
-                                        }
-                                    }
-                                ],
-                                as: 'userContributionCounters'
-                            }
-                        },
                         {
                             $lookup: {
                                 from: 'environmentalcontributions',
@@ -2648,129 +2901,14 @@ export class PostsService {
                                         then: {
                                             $cond: {
                                                 if: { $gt: [{ $size: "$userDetails" }, 0] },
-                                                then: { $arrayElemAt: ["$userDetails", 0] },  // ✅ This is CORRECT
+                                                then: { $arrayElemAt: ["$userDetails", 0] },
                                                 else: null
                                             }
                                         },
                                         else: {
                                             $cond: {
                                                 if: { $gt: [{ $size: "$regularUserDetails" }, 0] },
-                                                then: {
-                                                    $mergeObjects: [
-                                                        { $arrayElemAt: ["$regularUserDetails", 0] },
-                                                        {
-                                                            environmentalProfile: {
-                                                                $let: {
-                                                                    vars: { counters: "$userContributionCounters" },
-                                                                    in: {
-                                                                        categories: {
-                                                                            plantation: {
-                                                                                $gt: [
-                                                                                    {
-                                                                                        $ifNull: [
-                                                                                            { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "plantation"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
-                                                                                            0
-                                                                                        ]
-                                                                                    },
-                                                                                    0
-                                                                                ]
-                                                                            },
-                                                                            garbage_collection: {
-                                                                                $gt: [
-                                                                                    {
-                                                                                        $ifNull: [
-                                                                                            { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "garbage_collection"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
-                                                                                            0
-                                                                                        ]
-                                                                                    },
-                                                                                    0
-                                                                                ]
-                                                                            },
-                                                                            water_ponds: {
-                                                                                $gt: [
-                                                                                    {
-                                                                                        $ifNull: [
-                                                                                            { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "water_ponds"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
-                                                                                            0
-                                                                                        ]
-                                                                                    },
-                                                                                    0
-                                                                                ]
-                                                                            },
-                                                                            rain_water: {
-                                                                                $gt: [
-                                                                                    {
-                                                                                        $ifNull: [
-                                                                                            { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "rain_water"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
-                                                                                            0
-                                                                                        ]
-                                                                                    },
-                                                                                    0
-                                                                                ]
-                                                                            },
-                                                                            totalCategories: {
-                                                                                $size: {
-                                                                                    $filter: {
-                                                                                        input: "$$counters",
-                                                                                        cond: { $gt: ["$$this.count", 0] }
-                                                                                    }
-                                                                                }
-                                                                            },
-                                                                            totalProjects: { $sum: "$$counters.count" }
-                                                                        },
-                                                                        contributionLevel: {
-                                                                            $let: {
-                                                                                vars: {
-                                                                                    activeCategories: {
-                                                                                        $size: {
-                                                                                            $filter: {
-                                                                                                input: "$$counters",
-                                                                                                cond: { $gt: ["$$this.count", 0] }
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                },
-                                                                                in: {
-                                                                                    $switch: {
-                                                                                        branches: [
-                                                                                            { case: { $eq: ["$$activeCategories", 4] }, then: "eco_champion" },
-                                                                                            { case: { $eq: ["$$activeCategories", 3] }, then: "eco_advocate" },
-                                                                                            { case: { $eq: ["$$activeCategories", 2] }, then: "eco_supporter" },
-                                                                                            { case: { $eq: ["$$activeCategories", 1] }, then: "eco_starter" }
-                                                                                        ],
-                                                                                        default: "no_contributions"
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        },
-                                                                        badges: {
-                                                                            $map: {
-                                                                                input: {
-                                                                                    $filter: {
-                                                                                        input: "$$counters",
-                                                                                        cond: { $gt: ["$$this.count", 0] }
-                                                                                    }
-                                                                                },
-                                                                                as: "counter",
-                                                                                in: {
-                                                                                    $switch: {
-                                                                                        branches: [
-                                                                                            { case: { $eq: ["$$counter.name", "plantation"] }, then: "tree_planter" },
-                                                                                            { case: { $eq: ["$$counter.name", "garbage_collection"] }, then: "waste_warrior" },
-                                                                                            { case: { $eq: ["$$counter.name", "water_ponds"] }, then: "water_guardian" },
-                                                                                            { case: { $eq: ["$$counter.name", "rain_water"] }, then: "rain_harvester" }
-                                                                                        ],
-                                                                                        default: null
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    ]
-                                                },
+                                                then: { $arrayElemAt: ["$regularUserDetails", 0] },
                                                 else: "$user"
                                             }
                                         }
@@ -2840,17 +2978,75 @@ export class PostsService {
                                 as: 'counters'
                             }
                         },
+                        // Environmental profile lookup for shared post target
+                        {
+                            $lookup: {
+                                from: 'counters',
+                                let: { targetId: '$targetId' },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ['$targetId', '$$targetId'] },
+                                                    { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                                    { $eq: ['$type', 'contributions'] }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    {
+                                        $group: {
+                                            _id: null,
+                                            contributionTypes: { $addToSet: '$name' }
+                                        }
+                                    }
+                                ],
+                                as: 'targetEnvironmentalContributions'
+                            }
+                        },
                         // Combine fields for shared post
                         {
                             $addFields: {
                                 target: {
-                                    $switch: {
-                                        branches: [
-                                            { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-                                        ],
-                                        default: null
+                                    $let: {
+                                        vars: {
+                                            targetObj: {
+                                                $switch: {
+                                                    branches: [
+                                                        { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                                        { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                                        { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                                                    ],
+                                                    default: null
+                                                }
+                                            },
+                                            envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                                        },
+                                        in: {
+                                            $cond: {
+                                                if: {
+                                                    $and: [
+                                                        { $ne: ['$$targetObj', null] },
+                                                        { $ne: ['$$targetObj.type', 'group'] }
+                                                    ]
+                                                },
+                                                then: {
+                                                    $mergeObjects: [
+                                                        '$$targetObj',
+                                                        {
+                                                            environmentalProfile: {
+                                                                plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                                garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                                water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                                rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                else: '$$targetObj'
+                                            }
+                                        }
                                     }
                                 },
                                 likesCount: {
@@ -2970,45 +3166,6 @@ export class PostsService {
                     as: 'regularUserDetails'
                 }
             },
-            // NEW: Lookup user contribution counters for badges
-            {
-                $lookup: {
-                    from: 'counters',
-                    let: {
-                        postUserId: "$user", // Direct user reference for user/page posts
-                        postType: "$type"
-                    },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $ne: ["$$postType", "group"] }, // Skip group posts entirely
-                                        { $eq: ["$targetId", "$$postUserId"] },
-                                        { $eq: ["$type", "contributions"] },
-                                        {
-                                            $in: ["$name", [
-                                                "plantation",
-                                                "garbage_collection",
-                                                "water_ponds",
-                                                "rain_water"
-                                            ]]
-                                        }
-                                    ]
-                                }
-                            }
-                        },
-                        {
-                            $project: {
-                                name: 1,
-                                count: 1
-                            }
-                        }
-                    ],
-                    as: 'userContributionCounters'
-                }
-            },
-
             {
                 $addFields: {
                     user: {
@@ -3024,122 +3181,7 @@ export class PostsService {
                             else: {
                                 $cond: {
                                     if: { $gt: [{ $size: "$regularUserDetails" }, 0] },
-                                    then: {
-                                        $mergeObjects: [
-                                            { $arrayElemAt: ["$regularUserDetails", 0] },
-                                            {
-                                                environmentalProfile: {
-                                                    $let: {
-                                                        vars: { counters: "$userContributionCounters" },
-                                                        in: {
-                                                            categories: {
-                                                                plantation: {
-                                                                    $gt: [
-                                                                        {
-                                                                            $ifNull: [
-                                                                                { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "plantation"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
-                                                                                0
-                                                                            ]
-                                                                        },
-                                                                        0
-                                                                    ]
-                                                                },
-                                                                garbage_collection: {
-                                                                    $gt: [
-                                                                        {
-                                                                            $ifNull: [
-                                                                                { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "garbage_collection"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
-                                                                                0
-                                                                            ]
-                                                                        },
-                                                                        0
-                                                                    ]
-                                                                },
-                                                                water_ponds: {
-                                                                    $gt: [
-                                                                        {
-                                                                            $ifNull: [
-                                                                                { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "water_ponds"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
-                                                                                0
-                                                                            ]
-                                                                        },
-                                                                        0
-                                                                    ]
-                                                                },
-                                                                rain_water: {
-                                                                    $gt: [
-                                                                        {
-                                                                            $ifNull: [
-                                                                                { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "rain_water"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
-                                                                                0
-                                                                            ]
-                                                                        },
-                                                                        0
-                                                                    ]
-                                                                },
-                                                                totalCategories: {
-                                                                    $size: {
-                                                                        $filter: {
-                                                                            input: "$$counters",
-                                                                            cond: { $gt: ["$$this.count", 0] }
-                                                                        }
-                                                                    }
-                                                                },
-                                                                totalProjects: { $sum: "$$counters.count" }
-                                                            },
-                                                            contributionLevel: {
-                                                                $let: {
-                                                                    vars: {
-                                                                        activeCategories: {
-                                                                            $size: {
-                                                                                $filter: {
-                                                                                    input: "$$counters",
-                                                                                    cond: { $gt: ["$$this.count", 0] }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    },
-                                                                    in: {
-                                                                        $switch: {
-                                                                            branches: [
-                                                                                { case: { $eq: ["$$activeCategories", 4] }, then: "eco_champion" },
-                                                                                { case: { $eq: ["$$activeCategories", 3] }, then: "eco_advocate" },
-                                                                                { case: { $eq: ["$$activeCategories", 2] }, then: "eco_supporter" },
-                                                                                { case: { $eq: ["$$activeCategories", 1] }, then: "eco_starter" }
-                                                                            ],
-                                                                            default: "no_contributions"
-                                                                        }
-                                                                    }
-                                                                }
-                                                            },
-                                                            badges: {
-                                                                $map: {
-                                                                    input: {
-                                                                        $filter: {
-                                                                            input: "$$counters",
-                                                                            cond: { $gt: ["$$this.count", 0] }
-                                                                        }
-                                                                    },
-                                                                    as: "counter",
-                                                                    in: {
-                                                                        $switch: {
-                                                                            branches: [
-                                                                                { case: { $eq: ["$$counter.name", "plantation"] }, then: "tree_planter" },
-                                                                                { case: { $eq: ["$$counter.name", "garbage_collection"] }, then: "waste_warrior" },
-                                                                                { case: { $eq: ["$$counter.name", "water_ponds"] }, then: "water_guardian" },
-                                                                                { case: { $eq: ["$$counter.name", "rain_water"] }, then: "rain_harvester" }
-                                                                            ],
-                                                                            default: null
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        ]
-                                    },
+                                    then: { $arrayElemAt: ["$regularUserDetails", 0] },
                                     else: "$user"
                                 }
                             }
@@ -3209,6 +3251,33 @@ export class PostsService {
                     as: 'counters'
                 }
             },
+            // Environmental profile lookup for main post target
+            {
+                $lookup: {
+                    from: 'counters',
+                    let: { targetId: '$targetId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$targetId'] },
+                                        { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                        { $eq: ['$type', 'contributions'] }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                contributionTypes: { $addToSet: '$name' }
+                            }
+                        }
+                    ],
+                    as: 'targetEnvironmentalContributions'
+                }
+            },
             {
                 $lookup: {
                     from: 'environmentalcontributions',
@@ -3241,17 +3310,47 @@ export class PostsService {
                     as: 'environmentalContributions'
                 }
             },
-
             {
                 $addFields: {
                     target: {
-                        $switch: {
-                            branches: [
-                                { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-                                { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-                                { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-                            ],
-                            default: null
+                        $let: {
+                            vars: {
+                                targetObj: {
+                                    $switch: {
+                                        branches: [
+                                            { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                            { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                            { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                                        ],
+                                        default: null
+                                    }
+                                },
+                                envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                            },
+                            in: {
+                                $cond: {
+                                    if: {
+                                        $and: [
+                                            { $ne: ['$$targetObj', null] },
+                                            { $ne: ['$$targetObj.type', 'group'] }
+                                        ]
+                                    },
+                                    then: {
+                                        $mergeObjects: [
+                                            '$$targetObj',
+                                            {
+                                                environmentalProfile: {
+                                                    plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                    garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                    water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                    rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    else: '$$targetObj'
+                                }
+                            }
                         }
                     },
                     likesCount: {
@@ -6131,9 +6230,9 @@ export class PostsService {
         };
     }
 
-    async createElement(userId: string, postType: string, data: CreateEnvironmentalContributionDTO) {
+    async createElement(targetId: string, postType: string, data: CreateEnvironmentalContributionDTO) {
         const environmentalContribution = await this.environmentalContributionModel.create({ ...data, postId: new Types.ObjectId(data.postId) })
-        await this.metricsAggregatorService.incrementCount(new Types.ObjectId(userId), postType, 'contributions')
+        await this.metricsAggregatorService.incrementCount(new Types.ObjectId(targetId), postType, 'contributions')
         return environmentalContribution
     }
 
