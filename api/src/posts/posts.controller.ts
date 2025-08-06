@@ -378,8 +378,8 @@ export class PostsController {
             filename,
             fileType,
             file.originalname,
-            false,
-            post.postType as EnvironmentalContributionType
+            // false,
+            // post.postType as EnvironmentalContributionType
         )
         console.log(url, 'url')
         console.log(data, 'data')
@@ -390,7 +390,11 @@ export class PostsController {
             data = { ...data, plantationData: { ...data.plantationData, nextUpdateDue, lastUpdateDate: new Date() } }
         }
 
-        const environmentalContribution = await this.postService.createElement({ ...data, media: [{ url, name: filename, type: 'image', capturedAt: data.media[0].capturedAt }] })
+        const environmentalContribution = await this.postService.createElement(
+            String(post.user),
+            String(post.postType),    
+            { ...data, media: [{ url, name: filename, type: 'image', capturedAt: data.media[0].capturedAt }] }
+        )
         console.log(environmentalContribution, 'saved data')
         res.json(environmentalContribution)
 

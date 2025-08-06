@@ -41,7 +41,7 @@ export class PostsService {
         private readonly paymentService: PaymentService,
     ) { }
 
-    @Cron('0 9 * * *') 
+    @Cron('0 9 * * *')
     async processPlantationManagement() {
         console.log('Processing plantation management: reminders and removals...');
 
@@ -314,22 +314,28 @@ export class PostsService {
         // Messages with 3-day removal warning
         switch (stage.stage) {
             case '1_month':
-                return `🌱 Reminder: ${plantText} in "${projectName}" need${plantCount === 1 ? 's' : ''} an update in 1 month. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
+                return `Reminder: ${plantText}(plant) in "${projectName}"
+                (project) need${plantCount === 1 ? 's' : ''} an update in 1 month. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
 
             case '15_days':
-                return `⏰ Reminder: ${plantText} in "${projectName}" need${plantCount === 1 ? 's' : ''} an update in 15 days. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
+                return `Reminder: ${plantText}(plant) in "${projectName}"
+                (project) need${plantCount === 1 ? 's' : ''} an update in 15 days. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
 
             case '7_days':
-                return `🚨 Urgent: ${plantText} in "${projectName}" need${plantCount === 1 ? 's' : ''} an update in 7 days. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
+                return `Urgent: ${plantText}(plant) in "${projectName}"
+                (project) need${plantCount === 1 ? 's' : ''} an update in 7 days. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
 
             case '3_days':
-                return `⚡ Critical: ${plantText} in "${projectName}" need${plantCount === 1 ? 's' : ''} an update in 3 days. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
+                return `Critical: ${plantText}(plant) in "${projectName}"
+                (project) need${plantCount === 1 ? 's' : ''} an update in 3 days. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
 
             case '24_hours':
-                return `🔔 Final Notice: ${plantText} in "${projectName}" need${plantCount === 1 ? 's' : ''} an update tomorrow. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
+                return `Final Notice: ${plantText}(plant) in "${projectName}"
+                (project) need${plantCount === 1 ? 's' : ''} an update tomorrow. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
 
             default:
-                return `📋 Reminder: ${plantText} in "${projectName}" need${plantCount === 1 ? 's' : ''} an update in ${daysRemaining} days. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
+                return `Reminder: ${plantText}(plant) in "${projectName}"
+                (project) need${plantCount === 1 ? 's' : ''} an update in ${daysRemaining} days. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
         }
     }
 
@@ -2577,7 +2583,44 @@ export class PostsService {
                                 as: 'regularUserDetails'
                             }
                         },
-
+                        // NEW: Lookup user contribution counters for badges
+                        {
+                            $lookup: {
+                                from: 'counters',
+                                let: {
+                                    postUserId: "$user", // Direct user reference for user/page posts
+                                    postType: "$type"
+                                },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $ne: ["$$postType", "group"] }, // Skip group posts entirely
+                                                    { $eq: ["$targetId", "$$postUserId"] },
+                                                    { $eq: ["$type", "contributions"] },
+                                                    {
+                                                        $in: ["$name", [
+                                                            "plantation",
+                                                            "garbage_collection",
+                                                            "water_ponds",
+                                                            "rain_water"
+                                                        ]]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    {
+                                        $project: {
+                                            name: 1,
+                                            count: 1
+                                        }
+                                    }
+                                ],
+                                as: 'userContributionCounters'
+                            }
+                        },
                         {
                             $lookup: {
                                 from: 'environmentalcontributions',
@@ -2605,14 +2648,129 @@ export class PostsService {
                                         then: {
                                             $cond: {
                                                 if: { $gt: [{ $size: "$userDetails" }, 0] },
-                                                then: { $arrayElemAt: ["$userDetails", 0] },
+                                                then: { $arrayElemAt: ["$userDetails", 0] },  // ✅ This is CORRECT
                                                 else: null
                                             }
                                         },
                                         else: {
                                             $cond: {
                                                 if: { $gt: [{ $size: "$regularUserDetails" }, 0] },
-                                                then: { $arrayElemAt: ["$regularUserDetails", 0] },
+                                                then: {
+                                                    $mergeObjects: [
+                                                        { $arrayElemAt: ["$regularUserDetails", 0] },
+                                                        {
+                                                            environmentalProfile: {
+                                                                $let: {
+                                                                    vars: { counters: "$userContributionCounters" },
+                                                                    in: {
+                                                                        categories: {
+                                                                            plantation: {
+                                                                                $gt: [
+                                                                                    {
+                                                                                        $ifNull: [
+                                                                                            { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "plantation"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
+                                                                                            0
+                                                                                        ]
+                                                                                    },
+                                                                                    0
+                                                                                ]
+                                                                            },
+                                                                            garbage_collection: {
+                                                                                $gt: [
+                                                                                    {
+                                                                                        $ifNull: [
+                                                                                            { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "garbage_collection"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
+                                                                                            0
+                                                                                        ]
+                                                                                    },
+                                                                                    0
+                                                                                ]
+                                                                            },
+                                                                            water_ponds: {
+                                                                                $gt: [
+                                                                                    {
+                                                                                        $ifNull: [
+                                                                                            { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "water_ponds"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
+                                                                                            0
+                                                                                        ]
+                                                                                    },
+                                                                                    0
+                                                                                ]
+                                                                            },
+                                                                            rain_water: {
+                                                                                $gt: [
+                                                                                    {
+                                                                                        $ifNull: [
+                                                                                            { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "rain_water"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
+                                                                                            0
+                                                                                        ]
+                                                                                    },
+                                                                                    0
+                                                                                ]
+                                                                            },
+                                                                            totalCategories: {
+                                                                                $size: {
+                                                                                    $filter: {
+                                                                                        input: "$$counters",
+                                                                                        cond: { $gt: ["$$this.count", 0] }
+                                                                                    }
+                                                                                }
+                                                                            },
+                                                                            totalProjects: { $sum: "$$counters.count" }
+                                                                        },
+                                                                        contributionLevel: {
+                                                                            $let: {
+                                                                                vars: {
+                                                                                    activeCategories: {
+                                                                                        $size: {
+                                                                                            $filter: {
+                                                                                                input: "$$counters",
+                                                                                                cond: { $gt: ["$$this.count", 0] }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                },
+                                                                                in: {
+                                                                                    $switch: {
+                                                                                        branches: [
+                                                                                            { case: { $eq: ["$$activeCategories", 4] }, then: "eco_champion" },
+                                                                                            { case: { $eq: ["$$activeCategories", 3] }, then: "eco_advocate" },
+                                                                                            { case: { $eq: ["$$activeCategories", 2] }, then: "eco_supporter" },
+                                                                                            { case: { $eq: ["$$activeCategories", 1] }, then: "eco_starter" }
+                                                                                        ],
+                                                                                        default: "no_contributions"
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        badges: {
+                                                                            $map: {
+                                                                                input: {
+                                                                                    $filter: {
+                                                                                        input: "$$counters",
+                                                                                        cond: { $gt: ["$$this.count", 0] }
+                                                                                    }
+                                                                                },
+                                                                                as: "counter",
+                                                                                in: {
+                                                                                    $switch: {
+                                                                                        branches: [
+                                                                                            { case: { $eq: ["$$counter.name", "plantation"] }, then: "tree_planter" },
+                                                                                            { case: { $eq: ["$$counter.name", "garbage_collection"] }, then: "waste_warrior" },
+                                                                                            { case: { $eq: ["$$counter.name", "water_ponds"] }, then: "water_guardian" },
+                                                                                            { case: { $eq: ["$$counter.name", "rain_water"] }, then: "rain_harvester" }
+                                                                                        ],
+                                                                                        default: null
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    ]
+                                                },
                                                 else: "$user"
                                             }
                                         }
@@ -2812,6 +2970,45 @@ export class PostsService {
                     as: 'regularUserDetails'
                 }
             },
+            // NEW: Lookup user contribution counters for badges
+            {
+                $lookup: {
+                    from: 'counters',
+                    let: {
+                        postUserId: "$user", // Direct user reference for user/page posts
+                        postType: "$type"
+                    },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $ne: ["$$postType", "group"] }, // Skip group posts entirely
+                                        { $eq: ["$targetId", "$$postUserId"] },
+                                        { $eq: ["$type", "contributions"] },
+                                        {
+                                            $in: ["$name", [
+                                                "plantation",
+                                                "garbage_collection",
+                                                "water_ponds",
+                                                "rain_water"
+                                            ]]
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $project: {
+                                name: 1,
+                                count: 1
+                            }
+                        }
+                    ],
+                    as: 'userContributionCounters'
+                }
+            },
+
             {
                 $addFields: {
                     user: {
@@ -2827,7 +3024,122 @@ export class PostsService {
                             else: {
                                 $cond: {
                                     if: { $gt: [{ $size: "$regularUserDetails" }, 0] },
-                                    then: { $arrayElemAt: ["$regularUserDetails", 0] },
+                                    then: {
+                                        $mergeObjects: [
+                                            { $arrayElemAt: ["$regularUserDetails", 0] },
+                                            {
+                                                environmentalProfile: {
+                                                    $let: {
+                                                        vars: { counters: "$userContributionCounters" },
+                                                        in: {
+                                                            categories: {
+                                                                plantation: {
+                                                                    $gt: [
+                                                                        {
+                                                                            $ifNull: [
+                                                                                { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "plantation"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
+                                                                                0
+                                                                            ]
+                                                                        },
+                                                                        0
+                                                                    ]
+                                                                },
+                                                                garbage_collection: {
+                                                                    $gt: [
+                                                                        {
+                                                                            $ifNull: [
+                                                                                { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "garbage_collection"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
+                                                                                0
+                                                                            ]
+                                                                        },
+                                                                        0
+                                                                    ]
+                                                                },
+                                                                water_ponds: {
+                                                                    $gt: [
+                                                                        {
+                                                                            $ifNull: [
+                                                                                { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "water_ponds"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
+                                                                                0
+                                                                            ]
+                                                                        },
+                                                                        0
+                                                                    ]
+                                                                },
+                                                                rain_water: {
+                                                                    $gt: [
+                                                                        {
+                                                                            $ifNull: [
+                                                                                { $arrayElemAt: [{ $map: { input: { $filter: { input: "$$counters", cond: { $eq: ["$$this.name", "rain_water"] } } }, as: "counter", in: "$$counter.count" } }, 0] },
+                                                                                0
+                                                                            ]
+                                                                        },
+                                                                        0
+                                                                    ]
+                                                                },
+                                                                totalCategories: {
+                                                                    $size: {
+                                                                        $filter: {
+                                                                            input: "$$counters",
+                                                                            cond: { $gt: ["$$this.count", 0] }
+                                                                        }
+                                                                    }
+                                                                },
+                                                                totalProjects: { $sum: "$$counters.count" }
+                                                            },
+                                                            contributionLevel: {
+                                                                $let: {
+                                                                    vars: {
+                                                                        activeCategories: {
+                                                                            $size: {
+                                                                                $filter: {
+                                                                                    input: "$$counters",
+                                                                                    cond: { $gt: ["$$this.count", 0] }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    },
+                                                                    in: {
+                                                                        $switch: {
+                                                                            branches: [
+                                                                                { case: { $eq: ["$$activeCategories", 4] }, then: "eco_champion" },
+                                                                                { case: { $eq: ["$$activeCategories", 3] }, then: "eco_advocate" },
+                                                                                { case: { $eq: ["$$activeCategories", 2] }, then: "eco_supporter" },
+                                                                                { case: { $eq: ["$$activeCategories", 1] }, then: "eco_starter" }
+                                                                            ],
+                                                                            default: "no_contributions"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            },
+                                                            badges: {
+                                                                $map: {
+                                                                    input: {
+                                                                        $filter: {
+                                                                            input: "$$counters",
+                                                                            cond: { $gt: ["$$this.count", 0] }
+                                                                        }
+                                                                    },
+                                                                    as: "counter",
+                                                                    in: {
+                                                                        $switch: {
+                                                                            branches: [
+                                                                                { case: { $eq: ["$$counter.name", "plantation"] }, then: "tree_planter" },
+                                                                                { case: { $eq: ["$$counter.name", "garbage_collection"] }, then: "waste_warrior" },
+                                                                                { case: { $eq: ["$$counter.name", "water_ponds"] }, then: "water_guardian" },
+                                                                                { case: { $eq: ["$$counter.name", "rain_water"] }, then: "rain_harvester" }
+                                                                            ],
+                                                                            default: null
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
                                     else: "$user"
                                 }
                             }
@@ -5819,8 +6131,9 @@ export class PostsService {
         };
     }
 
-    async createElement(data: CreateEnvironmentalContributionDTO) {
+    async createElement(userId: string, postType: string, data: CreateEnvironmentalContributionDTO) {
         const environmentalContribution = await this.environmentalContributionModel.create({ ...data, postId: new Types.ObjectId(data.postId) })
+        await this.metricsAggregatorService.incrementCount(new Types.ObjectId(userId), postType, 'contributions')
         return environmentalContribution
     }
 
