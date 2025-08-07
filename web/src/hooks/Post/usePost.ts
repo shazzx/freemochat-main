@@ -105,16 +105,28 @@ export function useUserPosts(type: string, targetId: string, isSelf): any {
 }
 
 
+export interface MentionReference {
+  _id: string;       // User ID from backend
+  username: string;  // Username
+  firstname: string;
+  lastname: string;
+  profile: string;
+}
+
+export interface Mentions {
+  _id: string;       
+}
+
 export const useCreatePost = (key: string, targetId?: string) => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (postDetails: { postType?: string, content: string, selectedMedia: { file: File, type: string, url: UrlObject }[], formData: FormData, type: string, target: any, isUploaded?: boolean }) => {
+    mutationFn: (postDetails: { postType?: string, mentions: Mentions[], mentionReferences: MentionReference, backgroundColor?: string, content: string, selectedMedia: { file: File, type: string, url: UrlObject }[], formData: FormData, type: string, target: any, isUploaded?: boolean }) => {
       return createPost(postDetails.formData)
     },
 
 
-    onMutate: async ({ content, selectedMedia, postType, type, target }) => {
+    onMutate: async ({ content, selectedMedia, postType, backgroundColor, type, target, mentions, mentionReferences }) => {
       await queryClient.cancelQueries({ queryKey: [key, targetId] })
       const previousPosts = queryClient.getQueryData([key, targetId])
       await queryClient.cancelQueries({ queryKey: ['feed'] })
@@ -123,7 +135,7 @@ export const useCreatePost = (key: string, targetId?: string) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft?.pages && draft?.pages[0].posts) {
             console.log(pages, 'feed')
-            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, postType, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, backgroundColor, mentions, mentionReferences, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, postType, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
             return draft
           }
 
@@ -145,7 +157,7 @@ export const useCreatePost = (key: string, targetId?: string) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft?.pages && draft?.pages[0].posts) {
 
-            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, postType, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), mentions, mentionReferences, target, type, postType, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
             return draft
           }
 
