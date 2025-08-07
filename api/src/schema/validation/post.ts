@@ -83,6 +83,7 @@ export const CreatePost = z.object({
     targetId: ValidMongoId.optional(),
     username: z.string().optional(),
     content: z.string().optional(),
+    backgroundColor: z.string().optional(),
     type: z.string(),
     postType: z.enum(['post', 'plantation', 'garbage_collection', 'water_ponds', 'rain_water']).default('post'),
     visibility: z.string().default('public'),
@@ -153,6 +154,7 @@ export const CreateSharedPost = z.object({
 export const UpdatePost = z.object({
     postId: ValidMongoId,
     content: z.string().optional(),
+    backgroundColor: z.string().optional(),
     type: z.string(),
     mentions: z.array(ValidMongoId).max(50).optional().default([]),
     visibility: z.string(),

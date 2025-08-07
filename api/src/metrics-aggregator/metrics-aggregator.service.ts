@@ -1,15 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { NotificationService } from 'src/notification/notification.service';
 import { Counter } from 'src/schema/Counter';
 
 @Injectable()
 export class MetricsAggregatorService {
     constructor(
         @InjectModel(Counter.name) private readonly counterModel: Model<Counter>,
-        // private readonly notificationService: NotificationService,
-
     ) { }
 
     async incrementCount(targetId: Types.ObjectId, name: string, type: string, session?: any, customCount?: number) {

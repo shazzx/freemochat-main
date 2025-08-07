@@ -128,6 +128,9 @@ export class Post {
     @Prop({ type: Types.ObjectId })
     sharedPost: ObjectId
 
+    @Prop({ type: String })
+    backgroundColor: String;
+
     @Prop({ type: String, required: true })
     type: String;
 

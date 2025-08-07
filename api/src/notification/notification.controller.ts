@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { Req, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { NotificationService } from './notification.service';
@@ -18,9 +18,21 @@ export class NotificationController {
     res.json(await this.notificationService.getNotifications(cursor, sub))
   }
 
-  @Post()
-  async readNotification(@Query(new ZodValidationPipe(ReadNotificationSchema)) { notificationId }: ReadNotificationDTO, @Req() req: Request, @Res() res: Response) {
+  @Post('read/:notificationId')
+  async readNotification(@Param(new ZodValidationPipe(ReadNotificationSchema)) { notificationId }: ReadNotificationDTO,
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
     const { sub } = req.user
     res.json(await this.notificationService.readNotification(sub, notificationId))
+  }
+
+  @Post('read-all')
+  async readAllNotification(
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    const { sub } = req.user
+    res.json(await this.notificationService.readAllNotifications(sub))
   }
 }
