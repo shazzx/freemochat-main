@@ -90,3 +90,15 @@ export async function bookmarkPost(postDetails) {
   const { data } = await axiosClient.post("/posts/bookmark", postDetails)
   return data
 }
+
+export async function fetchHashtagsFeed({ cursor, hashtag, refresh }) {
+  const { data } = await axiosClient.get(
+    `/search/hashtag-posts?hashtag=${encodeURIComponent(hashtag)}&cursor=${refresh ? '' : cursor || ''}&limit=10`
+  );
+  return data;
+}
+
+export async function fetchHashtag(hashtag: string) {
+  const { data } = await axiosClient.get("hashtag", { params: { name: hashtag } })
+  return data
+}
