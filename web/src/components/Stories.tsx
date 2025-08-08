@@ -127,7 +127,7 @@ function Stories() {
     }, [data, isLoading, isSuccess])
 
     return (
-        <div className="w-full bg-white py-2 w-full bg-black ">
+        <div className="w-full bg-card w-full bg-black">
             <div className='flex gap-2 overflow-hidden overflow-x-auto px-2 z-50 scrollbar-hide'>
                 {stories && openStory && openedStoryIndex >= 0 && storyViewIndex >= 0 && stories?.length > 0 &&
                     <div className="z-50 fixed top-0 left-0 justify-center items-center w-full h-screen flex bg-black" onClick={() => {

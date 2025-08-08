@@ -16,32 +16,31 @@ import { Link, useNavigate, useSearchParams, useParams } from 'react-router-dom'
 import { ArrowLeft, Hash, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-// Hashtag Header Component
 const HashtagHeader = ({ isLoading, hashtag, onBack }) => (
-  <div className="flex items-center px-4 py-3 border-b border-gray-200 bg-white sticky top-0 z-10">
-    <Button
+  <div className="flex items-center px-4 py-3 bg-card sticky top-0 z-10">
+    {/* <Button
       variant="ghost"
       size="sm"
       onClick={onBack}
       className="mr-3 p-2 hover:bg-gray-100 rounded-full"
     >
       <ArrowLeft size={20} />
-    </Button>
+    </Button> */}
     
     {isLoading ? (
       <div className="flex items-center">
         <Loader2 className="animate-spin mr-2" size={20} />
-        <span className="text-sm text-gray-500">Loading...</span>
+        <span className="text-sm text-foreground">Loading...</span>
       </div>
     ) : (
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <Hash size={20} className="text-gray-600" />
-          <h1 className="text-xl font-bold text-gray-900">
+          <Hash size={20} className="text-foreground" />
+          <h1 className="text-xl font-bold text-foreground">
             {hashtag?.name}
           </h1>
         </div>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-foreground mt-1">
           {hashtag?.usageCount?.toLocaleString()} {hashtag?.usageCount === 1 ? 'post' : 'posts'}
         </p>
       </div>

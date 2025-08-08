@@ -24,7 +24,7 @@ import PrivacyPolicy from "./pages/user/PrivacyPolicy";
 import ChildSafetyPolicy from "./pages/user/ChildrenPrivacy";
 import ReelsContainer from "./components/Reel/ReelsSection";
 import GlobalEnvironmentalMap from "./components/GlobalEnvironmentalMap";
-import HashtagScreen from "./components/HashtagScreen";
+import HashtagScreen from "./sections/HashtagScreen";
 // import ReelsFeed from "./sections/ReelsFeed";
 
 export const router = createBrowserRouter([
