@@ -5,7 +5,7 @@ import {
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MdCancel, MdGroup, MdNotifications, MdSearch } from 'react-icons/md'
+import { MdCancel, MdGroup, MdMap, MdNotifications, MdSearch } from 'react-icons/md'
 
 import {
   DropdownMenu,
@@ -380,6 +380,9 @@ const MainHome = ({ children }: any) => {
             {friendRequestState &&
               <FriendRequests setFriendRequestState={setFriendRequestState} />
             }
+            <Link to={"environmental-contributions"}>
+              <MdMap size="24px" cursor="pointer" />
+            </Link>
             <div className="relative" onClick={() => {
               setNotificationsState(true)
             }}>

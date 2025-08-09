@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, X, TreePine, Trash2, Droplets, CloudRain, MapPin, Briefcase, Globe, ArrowRight, Loader2 } from 'lucide-react';
+import { Search, X, TreePine, Trash2, Droplets, CloudRain, MapPin, Briefcase, Globe, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 import { axiosClient } from '@/api/axiosClient';
+import ElementDetailsModal from '@/models/ElementDetailsModa';
 
 // Interfaces
 interface MapData {
@@ -110,7 +111,7 @@ const createCustomMarkerIcon = (postType: string, count?: number): string => {
   const config = getCategoryConfig(postType);
   const isCluster = count && count > 1;
   const size = isCluster ? 50 : 30;
-  
+
   const getIconPath = (category: string): string => {
     const paths = {
       plantation: 'M12 2l3.09 6.26L22 9l-5 4.87L18.18 21 12 17.77 5.82 21 7 13.87 2 9l6.91-1.74L12 2z',
@@ -124,13 +125,13 @@ const createCustomMarkerIcon = (postType: string, count?: number): string => {
 
   const svgIcon = `
     <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="${size/2}" cy="${size/2}" r="${size/2-2}" fill="${config.color}" stroke="white" stroke-width="2"/>
-      <svg width="${size*0.4}" height="${size*0.4}" x="${size*0.3}" y="${size*0.3}" viewBox="0 0 24 24" fill="white">
+      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 2}" fill="${config.color}" stroke="white" stroke-width="2"/>
+      <svg width="${size * 0.4}" height="${size * 0.4}" x="${size * 0.3}" y="${size * 0.3}" viewBox="0 0 24 24" fill="white">
         <path d="${getIconPath(postType)}" />
       </svg>
       ${isCluster ? `
-        <circle cx="${size*0.8}" cy="${size*0.2}" r="8" fill="white" stroke="${config.color}" stroke-width="1"/>
-        <text x="${size*0.8}" y="${size*0.2}" text-anchor="middle" dy="0.3em" font-size="10" font-weight="bold" fill="${config.color}">${count}</text>
+        <circle cx="${size * 0.8}" cy="${size * 0.2}" r="8" fill="white" stroke="${config.color}" stroke-width="1"/>
+        <text x="${size * 0.8}" y="${size * 0.2}" text-anchor="middle" dy="0.3em" font-size="10" font-weight="bold" fill="${config.color}">${count}</text>
       ` : ''}
     </svg>
   `;
@@ -155,12 +156,12 @@ const FallbackMap: React.FC<{
           ))}
         </div>
       </div>
-      
+
       {/* Fallback markers */}
       {mapData?.data?.map((element, index) => {
         const config = getCategoryConfig(element.postType || element.postId?.postType);
         const IconComponent = config.icon;
-        
+
         return (
           <div
             key={`fallback-marker-${index}`}
@@ -171,26 +172,26 @@ const FallbackMap: React.FC<{
             }}
             onClick={() => onMarkerClick(element, element.count > 1)}
           >
-            <div 
+            <div
               className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-lg"
               style={{ backgroundColor: config.color }}
             >
               <IconComponent className="w-4 h-4 text-white" />
             </div>
             {element.count && element.count > 1 && (
-              <div className="absolute -bottom-2 -right-2 bg-white text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow">
+              <div className="absolute -bottom-2 -right-2 bg-card text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow">
                 {element.count}
               </div>
             )}
           </div>
         );
       })}
-      
+
       {/* Center indicator */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
         <div className="w-2 h-2 bg-red-500 rounded-full"></div>
       </div>
-      
+
       {/* Fallback message */}
       <div className="absolute top-4 left-4 right-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
         <div className="flex items-center space-x-2">
@@ -202,51 +203,8 @@ const FallbackMap: React.FC<{
   );
 };
 
-// Element Details Modal
-const ElementDetailsModal: React.FC<{
-  visible: boolean;
-  element: SelectedElement | null;
-  isLoading: boolean;
-  onClose: () => void;
-}> = ({ visible, element, isLoading, onClose }) => {
-  if (!visible) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-lg font-semibold">Element Details</h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="p-4">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin" />
-            </div>
-          ) : element ? (
-            <div>
-              <h3 className="font-medium mb-2">{element.postId?.projectDetails?.name || 'Environmental Project'}</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                {element.location?.address || `${element.location?.city}, ${element.location?.country}`}
-              </p>
-              {element.createdAt && (
-                <p className="text-xs text-gray-500">Created: {new Date(element.createdAt).toLocaleDateString()}</p>
-              )}
-            </div>
-          ) : (
-            <p>No element data available</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Main Component
-const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({ 
-  visible = true, 
+const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
+  visible = true,
   onClose,
   googleMapsApiKey = 'AIzaSyDEz0n0ST4J3KYECJDx_-hTtnejV2A0-to'
 }) => {
@@ -314,10 +272,10 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
       if (status === 200) {
         console.log('Global element counts received:', data);
-        setGlobalCounts({ 
-          ...defaultCounts, 
-          ...data, 
-          categories: { ...defaultCounts.categories, ...data?.categories } 
+        setGlobalCounts({
+          ...defaultCounts,
+          ...data,
+          categories: { ...defaultCounts.categories, ...data?.categories }
         });
       } else {
         throw new Error(`API returned status: ${status}`);
@@ -362,16 +320,16 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
       const { data, status } = await axiosClient.get('/posts/global-map/data', { params });
 
       // if (status === 200) {
-        console.log('Individual elements received:', data);
-        setMapData(data);
-        lastFetchedBoundsRef.current = boundsString;
+      console.log('Individual elements received:', data);
+      setMapData(data);
+      lastFetchedBoundsRef.current = boundsString;
       // } else {
-        // throw new Error(`API returned status: ${status}`);
+      // throw new Error(`API returned status: ${status}`);
       // }
     } catch (error) {
       console.error('Error fetching map data:', error);
       setMapData({ type: 'clustered', data: [] });
-      
+
       if (error instanceof Error) {
         if (error.message.includes('404')) {
           console.log('No environmental elements found for this region');
@@ -445,7 +403,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
       const newZoom = Math.min(mapZoom + 3, 18);
       setMapCenter(newCenter);
       setMapZoom(newZoom);
-      
+
       // Update region for API calls
       setCurrentRegion({
         latitude: element.center.latitude,
@@ -473,14 +431,14 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     const newCenter = { lat: result.center.latitude, lng: result.center.longitude };
     setMapCenter(newCenter);
     setMapZoom(12);
-    
+
     setCurrentRegion({
       latitude: result.center.latitude,
       longitude: result.center.longitude,
       latitudeDelta: 0.1,
       longitudeDelta: 0.1,
     });
-    
+
     setShowSearchResults(false);
     setSearchQuery('');
   }, []);
@@ -489,11 +447,11 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     if (mapRef.current && !isInitialLoad) {
       const bounds = mapRef.current.getBounds();
       const center = mapRef.current.getCenter();
-      
+
       if (bounds && center) {
         const ne = bounds.getNorthEast();
         const sw = bounds.getSouthWest();
-        
+
         const newRegion = {
           latitude: center.lat(),
           longitude: center.lng(),
@@ -649,14 +607,14 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
               enableHighAccuracy: true
             });
           });
-          
+
           const newRegion = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
             latitudeDelta: 0.5,
             longitudeDelta: 0.5,
           };
-          
+
           setCurrentRegion(newRegion);
           setMapCenter({ lat: position.coords.latitude, lng: position.coords.longitude });
         }
@@ -728,7 +686,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
   if (!googleMapsApiKey) {
     return (
-      <div className="h-screen flex flex-col bg-white">
+      <div className="h-screen flex flex-col bg-card">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center p-8 max-w-md">
             <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-400" />
@@ -753,9 +711,9 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
             <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
               <p className="text-xs text-blue-800 mb-2">
                 <strong>Need an API key?</strong> Get one from the{' '}
-                <a 
-                  href="https://console.cloud.google.com/apis/credentials" 
-                  target="_blank" 
+                <a
+                  href="https://console.cloud.google.com/apis/credentials"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="underline"
                 >
@@ -773,10 +731,10 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   }
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="h-screen flex flex-col bg-card">
       {/* Header */}
       {onClose && (
-        <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-white">
+        <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-card">
           <h1 className="text-xl font-bold text-gray-900">Global Environmental Map</h1>
           <button
             onClick={onClose}
@@ -788,16 +746,16 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
       )}
 
       {/* Search Container */}
-      <div className="p-4 bg-white border-b border-gray-200">
+      <div className="p-4 bg-card border-b border-gray-200">
         <div className="relative">
-          <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2">
-            <Search className="w-5 h-5 text-gray-500 mr-2" />
+          <div className="flex items-center bg-gray-100 dark:bg-background border border-accent rounded-lg px-3 py-2">
+            <Search className="w-5 h-5 text-gray-500 dark:text-foreground mr-2" />
             <input
               type="text"
               placeholder="Search cities, projects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-500"
+              className="flex-1 bg-transparent outline-none text-gray-900 dark:text-foreground placeholder-gray-500 dark:placeholder-foreground"
             />
             {searchLoading && (
               <Loader2 className="w-4 h-4 text-gray-500 animate-spin" />
@@ -806,7 +764,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
           {/* Search Results */}
           {showSearchResults && searchResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-50">
+            <div className="absolute top-full left-0 right-0 bg-card border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-50">
               {searchResults.map((result, index) => (
                 <button
                   key={`search-${index}`}
@@ -828,8 +786,8 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
       </div>
 
       {/* Category Filter */}
-      <div className="p-4 bg-white border-b border-gray-200">
-        <div className="flex space-x-2 overflow-x-auto pb-2">
+      <div className="p-4 bg-card border-b border-gray-200">
+        <div className="flex space-x-2 overflow-x-auto no-scrollbar pb-2">
           {(['plantation', 'water_ponds', 'rain_water', 'garbage_collection', 'all'] as const).map((category) => {
             const config = getCategoryConfig(category);
             const isSelected = selectedCategory === category;
@@ -860,11 +818,10 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                  isSelected 
-                    ? 'text-white shadow-md' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${isSelected
+                  ? 'text-white dark:text-foreground shadow-md'
+                  : 'bg-background border border-accent text-foreground hover:bg-card'
+                  }`}
                 style={isSelected ? { backgroundColor: config.color } : {}}
               >
                 <IconComponent className="w-4 h-4" />
@@ -900,7 +857,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
                 </div>
               </div>
               <div className="mt-4 space-x-2">
-                <button 
+                <button
                   onClick={() => {
                     setMapLoadError(null);
                     window.location.reload();
@@ -909,7 +866,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
                 >
                   Retry
                 </button>
-                <button 
+                <button
                   onClick={() => setMapLoadError(null)}
                   className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
                 >
@@ -919,7 +876,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
             </div>
           </div>
         ) : (
-          <LoadScript 
+          <LoadScript
             googleMapsApiKey={'AIzaSyDEz0n0ST4J3KYECJDx_-hTtnejV2A0-to'}
             // libraries={libraries}
             onLoad={() => {
@@ -961,55 +918,69 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
                 onClick={() => setShowInfoWindow(false)}
               >
                 {renderMarkers()}
-                
+
                 {/* Info Window */}
                 {showInfoWindow && activeMarker && (
-                  <InfoWindow
-                    position={{ 
-                      lat: activeMarker.location.latitude, 
-                      lng: activeMarker.location.longitude 
-                    }}
-                    onCloseClick={() => setShowInfoWindow(false)}
-                  >
-                    <div className="p-2 max-w-xs">
+                  <div className="fixed inset-0 pointer-events-none z-20">
+                    <div
+                      className="absolute bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 max-w-xs pointer-events-auto"
+                      style={{
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -100%)',
+                        marginTop: '-60px'
+                      }}
+                    >
+                      {/* Close button */}
+                      <button
+                        onClick={() => setShowInfoWindow(false)}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+
+                      {/* Pointer arrow */}
+                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white dark:bg-gray-800 border-b border-r border-gray-200 dark:border-gray-700 rotate-45"></div>
+
                       <div className="flex items-center space-x-2 mb-2">
                         {(() => {
                           const config = getCategoryConfig(activeMarker.postType);
                           const IconComponent = config.icon;
                           return <IconComponent className="w-5 h-5" style={{ color: config.color }} />;
                         })()}
-                        <h3 className="font-semibold text-sm">
+                        <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                           {activeMarker.projectDetails?.name || activeMarker.postId?.projectDetails?.name || 'Environmental Project'}
                         </h3>
                       </div>
-                      
-                      <p className="text-xs text-gray-600 mb-2">
+
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
                         {activeMarker.location.address || `${activeMarker.location.city}, ${activeMarker.location.country}`}
                       </p>
 
                       {getElementSpecificData(activeMarker) && (
                         <div className="mb-2">
-                          <p className="text-xs font-medium text-gray-700 mb-1">
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                             {getElementSpecificData(activeMarker)?.type} Details
                           </p>
                           {getElementSpecificData(activeMarker)?.details.slice(0, 2).map((detail, index) => (
                             <div key={index} className="flex justify-between text-xs">
-                              <span className="text-gray-600">{detail.label}:</span>
-                              <span className="font-medium">{detail.value}</span>
+                              <span className="text-gray-600 dark:text-gray-400">{detail.label}:</span>
+                              <span className="font-medium text-gray-900 dark:text-gray-100">{detail.value}</span>
                             </div>
                           ))}
                         </div>
                       )}
 
-                      <button 
+                      <button
                         onClick={handleViewMore}
-                        className="w-full text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded px-2 py-1 hover:bg-blue-100 transition-colors"
+                        className="w-full text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded px-2 py-1 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
                       >
                         View More Details
                       </button>
                     </div>
-                  </InfoWindow>
+                  </div>
                 )}
+
               </GoogleMap>
             ) : (
               <FallbackMap
@@ -1024,7 +995,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
         {/* Loading Indicator */}
         {isLoadingData && (
-          <div className="absolute top-4 right-4 bg-white bg-opacity-90 rounded-lg px-3 py-2 shadow-md flex items-center space-x-2 z-10">
+          <div className="absolute top-4 right-4 bg-card bg-opacity-90 rounded-lg px-3 py-2 shadow-md flex items-center space-x-2 z-10">
             <Loader2 className="w-4 h-4 animate-spin" style={{ color: selectedConfig.color }} />
             <span className="text-sm font-medium" style={{ color: selectedConfig.color }}>
               Loading {selectedConfig.name.toLowerCase()}...
@@ -1038,29 +1009,32 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
           element={selectedElement}
           isLoading={isLoadingElementDetails}
           onClose={() => setShowElementModal(false)}
+          // onEdit={handleEditElement}  // Optional: Add if you want edit functionality
+          // onDelete={handleDeleteElement}  // Optional: Add if you want delete functionality
+          // allowEdit={false}  // Set to true if you want edit/delete buttons
         />
 
         {/* Stats Card */}
         {globalCounts && (
-          <div className="absolute bottom-4 left-4 right-4 bg-white rounded-lg shadow-lg p-4 z-10">
+          <div className="absolute bottom-4 left-4 right-4 bg-card rounded-lg shadow-lg p-4 z-10">
             <div className="flex justify-around text-center">
               <div className="flex flex-col items-center">
                 {(() => {
                   const IconComponent = selectedConfig.icon;
-                  return <IconComponent className="w-6 h-6 mb-1" style={{ color: selectedConfig.color }} />;
+                  return <IconComponent className="w-6 h-6 mb-1 dark:text-foreground" />;
                 })()}
                 <div className="font-bold text-lg">{currentTotals.elements.toLocaleString()}</div>
-                <div className="text-xs text-gray-600">{currentTotals.label}</div>
+                <div className="text-xs text-gray-600 dark:text-foreground">{currentTotals.label}</div>
               </div>
               <div className="flex flex-col items-center">
-                <Briefcase className="w-6 h-6 mb-1 text-gray-600" />
+                <Briefcase className="w-6 h-6 mb-1 text-gray-600 dark:text-foreground" />
                 <div className="font-bold text-lg">{currentTotals.posts.toLocaleString()}</div>
-                <div className="text-xs text-gray-600">Projects</div>
+                <div className="text-xs text-gray-600 dark:text-foreground">Projects</div>
               </div>
               <div className="flex flex-col items-center">
-                <Globe className="w-6 h-6 mb-1 text-blue-600" />
-                <div className="font-bold text-lg">{selectedCategory === 'all' ? 'Global' : 'Filtered'}</div>
-                <div className="text-xs text-gray-600">View</div>
+                <Globe className="w-6 h-6 mb-1 dark:text-foreground" />
+                <div className="font-bold text-lg text-foreground">{selectedCategory === 'all' ? 'Global' : 'Filtered'}</div>
+                <div className="text-xs text-gray-600 dark:text-foreground">View</div>
               </div>
             </div>
           </div>
@@ -1068,15 +1042,15 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
         {/* No Data Message */}
         {mapData && mapData.data.length === 0 && !isLoadingData && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white bg-opacity-90 rounded-lg p-6 text-center max-w-sm">
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-card bg-opacity-90 rounded-lg p-6 text-center max-w-sm">
             {(() => {
               const IconComponent = selectedConfig.icon;
               return <IconComponent className="w-12 h-12 mx-auto mb-3 text-gray-400" />;
             })()}
-            <h3 className="font-medium text-gray-700 mb-2">
+            <h3 className="font-medium text-gray-700 dark:text-foreground mb-2">
               No {selectedConfig.name.toLowerCase()} found in this area
             </h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-foreground">
               Try zooming out or changing the category filter to see more environmental elements
             </p>
           </div>
