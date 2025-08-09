@@ -29,6 +29,10 @@ export class MetricsAggregatorService {
         return { notification, requests, unreadChatlists }
     }
 
+    async getGlobalEnvironmentalCounts() {
+        return await this.counterModel.find({ targetId: null, type: "contributions" })
+    }
+
     async userAndPageContributions(targetId: string) {
         let plantation = await this.counterModel.findOne(
             {

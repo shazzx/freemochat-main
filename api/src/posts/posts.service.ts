@@ -5563,7 +5563,12 @@ export class PostsService {
                 )
             })
         }
-
+        if (post.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(String(post.postType))) {
+            Promise.all([
+                this.metricsAggregatorService.incrementCount(null, `${String(post.postType)}_projects`, 'contributions'),
+                this.metricsAggregatorService.incrementCount(null, `projects`, 'contributions')
+            ])
+        }
         return await post.populate({
             path: "user",
             model: "User"
@@ -5748,24 +5753,54 @@ export class PostsService {
             {
                 $limit: limit || 500
             },
-            // 🔧 IMPORTANT: Each document represents 1 individual element
             {
                 $project: {
                     _id: 1,
-                    postId: 1,
                     postType: '$post.postType',
-                    location: 1, // Individual element location (not project location)
-                    createdAt: '$post.createdAt',
-                    projectDetails: '$post.projectDetails',
-                    // Include specific environmental data for this individual element
-                    elementData: {
-                        plantationData: 1,
-                        garbageCollectionData: 1,
-                        waterPondsData: 1,
-                        rainWaterData: 1
-                    },
-                    media: 1, // Media for this specific element
-                    updateHistory: 1
+                    location: 1,
+                    projectName: '$post.projectDetails.name',
+                    elementSummary: {
+                        $switch: {
+                            branches: [
+                                {
+                                    case: { $eq: ['$post.postType', 'plantation'] },
+                                    then: {
+                                        species: '$plantationData.species',
+                                        type: '$plantationData.type',
+                                        estimatedHeight: '$plantationData.estimatedHeight',
+                                        isActive: '$plantationData.isActive'
+                                    }
+                                },
+                                {
+                                    case: { $eq: ['$post.postType', 'garbage_collection'] },
+                                    then: {
+                                        type: '$garbageCollectionData.type',
+                                        capacity: '$garbageCollectionData.capacity',
+                                        material: '$garbageCollectionData.material'
+                                    }
+                                },
+                                {
+                                    case: { $eq: ['$post.postType', 'water_ponds'] },
+                                    then: {
+                                        type: '$waterPondsData.type',
+                                        purpose: '$waterPondsData.purpose',
+                                        capacity: '$waterPondsData.capacity',
+                                        estimatedDepth: '$waterPondsData.estimatedDepth'
+                                    }
+                                },
+                                {
+                                    case: { $eq: ['$post.postType', 'rain_water'] },
+                                    then: {
+                                        type: '$rainWaterData.type',
+                                        capacity: '$rainWaterData.capacity',
+                                        storageMethod: '$rainWaterData.storageMethod',
+                                        estimatedVolume: '$rainWaterData.estimatedVolume'
+                                    }
+                                }
+                            ],
+                            default: {}
+                        }
+                    }
                 }
             }
         ];
@@ -5832,125 +5867,61 @@ export class PostsService {
         return clusters;
     }
 
-    async getGlobalMapCounts(query: GetGlobalMapCountsDTO) {
-        const { bounds, country, city } = query;
-
-        // 🔧 UPDATED: Count individual EnvironmentalContribution documents
-        const pipeline = [
-            // Join with Post data for filtering
-            {
-                $lookup: {
-                    from: 'posts',
-                    localField: 'postId',
-                    foreignField: '_id',
-                    as: 'post'
-                }
-            },
-            {
-                $unwind: '$post'
-            },
-            // Filter by environmental post types and visibility
-            {
-                $match: {
-                    'post.postType': { $in: ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] },
-                    'post.visibility': 'public'
-                }
-            },
-            // Add geographic filtering on individual element locations
-            ...(bounds ? [{
-                $match: {
-                    'location.latitude': {
-                        $gte: bounds.southWest.latitude,
-                        $lte: bounds.northEast.latitude
-                    },
-                    'location.longitude': {
-                        $gte: bounds.southWest.longitude,
-                        $lte: bounds.northEast.longitude
-                    }
-                }
-            }] : []),
-            ...(country ? [{
-                $match: {
-                    'location.country': { $regex: new RegExp(country, 'i') }
-                }
-            }] : []),
-            ...(city ? [{
-                $match: {
-                    'location.city': { $regex: new RegExp(city, 'i') }
-                }
-            }] : []),
-            // 🔧 KEY CHANGE: Count individual elements, not posts
-            {
-                $group: {
-                    _id: "$post.postType",
-                    totalElements: { $sum: 1 }, // Each EnvironmentalContribution doc = 1 element
-                    uniquePosts: { $addToSet: "$postId" } // Track unique projects
-                }
-            },
-            {
-                $project: {
-                    _id: 1,
-                    totalElements: 1,
-                    totalPosts: { $size: "$uniquePosts" }
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    categories: {
-                        $push: {
-                            category: "$_id",
-                            posts: "$totalPosts",
-                            totalElements: "$totalElements"
-                        }
-                    },
-                    totalPosts: { $sum: "$totalPosts" },
-                    totalElements: { $sum: "$totalElements" }
-                }
+    formatCounterDataToResponse(counters: any[]) {
+        const data = {
+            totalPosts: 0,
+            totalElements: 0,
+            categories: {
+                plantation: { posts: 0, totalTrees: 0 },
+                garbage_collection: { posts: 0, totalBins: 0 },
+                water_ponds: { posts: 0, totalPonds: 0 },
+                rain_water: { posts: 0, totalHarvesters: 0 }
             }
-        ];
-
-        const result = await this.environmentalContributionModel.aggregate(pipeline);
-
-        if (result.length === 0) {
-            return {
-                totalPosts: 0,
-                totalElements: 0,
-                categories: {
-                    plantation: { posts: 0, totalTrees: 0 },
-                    garbage_collection: { posts: 0, totalBins: 0 },
-                    water_ponds: { posts: 0, totalPonds: 0 },
-                    rain_water: { posts: 0, totalHarvesters: 0 }
-                }
-            };
-        }
-
-        const data = result[0];
-        const categoriesMap = {
-            plantation: { posts: 0, totalTrees: 0 },
-            garbage_collection: { posts: 0, totalBins: 0 },
-            water_ponds: { posts: 0, totalPonds: 0 },
-            rain_water: { posts: 0, totalHarvesters: 0 }
         };
 
-        // 🔧 UPDATED: Map to more specific naming (trees, bins, ponds, harvesters)
-        data.categories.forEach(cat => {
-            if (cat.category === 'plantation') {
-                categoriesMap['plantation'] = { posts: cat.posts, totalTrees: cat.totalElements };
-            } else if (cat.category === 'garbage_collection') {
-                categoriesMap['garbage_collection'] = { posts: cat.posts, totalBins: cat.totalElements };
-            } else if (cat.category === 'water_ponds') {
-                categoriesMap['water_ponds'] = { posts: cat.posts, totalPonds: cat.totalElements };
-            } else if (cat.category === 'rain_water') {
-                categoriesMap['rain_water'] = { posts: cat.posts, totalHarvesters: cat.totalElements };
+        const elementCounterMap = {
+            'plantation': 'totalTrees',
+            'garbage_collection': 'totalBins',
+            'water_ponds': 'totalPonds',
+            'rain_water': 'totalHarvesters'
+        };
+
+        const projectCounterMap = {
+            'plantation_projects': 'plantation',
+            'garbage_collection_projects': 'garbage_collection',
+            'water_ponds_projects': 'water_ponds',
+            'rain_water_projects': 'rain_water'
+        };
+
+        counters.forEach(counter => {
+            const count = counter.count || 0;
+            const name = counter.name;
+
+            if (elementCounterMap[name]) {
+                const category = name;
+                const elementField = elementCounterMap[name];
+
+                data.categories[category][elementField] += count;
+                data.totalElements += count;
+            }
+
+            else if (projectCounterMap[name]) {
+                const category = projectCounterMap[name];
+
+                data.categories[category].posts += count;
+                data.totalPosts += count;
             }
         });
 
-        return {
-            totalPosts: data.totalPosts,
-            totalElements: data.totalElements, // Total individual elements across all categories
-            categories: categoriesMap
-        };
+
+        return data;
+    }
+
+    async getGlobalMapCounts(query: GetGlobalMapCountsDTO) {
+        const { bounds, country, city } = query;
+
+        const data = await this.metricsAggregatorService.getGlobalEnvironmentalCounts()
+        return this.formatCounterDataToResponse(data)
     }
 
     async searchGlobalMapLocations(query: SearchGlobalMapLocationsDTO) {
@@ -6238,7 +6209,16 @@ export class PostsService {
 
     async createElement(targetId: string, postType: string, data: CreateEnvironmentalContributionDTO) {
         const environmentalContribution = await this.environmentalContributionModel.create({ ...data, postId: new Types.ObjectId(data.postId) })
-        await this.metricsAggregatorService.incrementCount(new Types.ObjectId(targetId), postType, 'contributions')
+
+        // global contributions
+        Promise.all([
+            this.metricsAggregatorService.incrementCount(null, "global_environmental_contributions", 'contributions'),
+            this.metricsAggregatorService.incrementCount(null, postType, "contributions"),
+            this.metricsAggregatorService.incrementCount(null, postType, `${environmentalContribution.location.country}_contributions`),
+
+            // user/page specific contributions
+            this.metricsAggregatorService.incrementCount(new Types.ObjectId(targetId), postType, 'contributions')
+        ])
         return environmentalContribution
     }
 
