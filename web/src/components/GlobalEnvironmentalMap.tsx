@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, X, TreePine, Trash2, Droplets, CloudRain, MapPin, Briefcase, Globe, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 import { axiosClient } from '@/api/axiosClient';
-import ElementDetailsModal from '@/models/ElementDetailsModa';
+import ElementDetailsModal from '@/models/ElementDetailsModal';
 
 // Interfaces
 interface MapData {

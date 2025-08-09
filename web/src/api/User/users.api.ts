@@ -113,6 +113,11 @@ export const fetchUserMetrics = async () => {
     return data
 }
 
+export const fetchTargetContributions = async () => {
+    const { data } = await axiosClient.get("metrics-aggregator/contributions")
+    return data
+}
+
 
 export const defaultMetric = async (name, targetId?: string) => {
     const { data } = await axiosClient.post("metrics-aggregator/user/metrics/default", { name, targetId })
