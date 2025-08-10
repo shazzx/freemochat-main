@@ -5598,9 +5598,13 @@ export class PostsService {
     }
 
     async updatePost(postId: string, postDetails: any) {
+        console.log(postDetails, 'post data')
         const updatedPost = await this.postModel.findByIdAndUpdate(postId, { $set: { ...postDetails } }, { new: true })
 
-        if (updatedPost.mentions.length > 0) {
+        console.log('post updated')
+
+        if (updatedPost?.mentions?.length > 0) {
+            console.log('inside mentions')
             updatedPost.mentions.forEach((userId) => {
                 this.notificationService.createNotification(
                     {
@@ -5616,9 +5620,14 @@ export class PostsService {
             })
         }
 
+        console.log('passed mentions')
+
         if (updatedPost.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(String(updatedPost.postType))) {
+            console.log('inside plantation')
             this.metricsAggregatorService.incrementCount(new Types.ObjectId(String(updatedPost.user)), String(updatedPost.postType), 'contributions', null, updatedPost.media.length)
         }
+
+        console.log('passed plantation type check')
         return updatedPost
     }
 

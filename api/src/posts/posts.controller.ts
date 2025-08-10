@@ -392,7 +392,7 @@ export class PostsController {
 
         const environmentalContribution = await this.postService.createElement(
             String(post.targetId),
-            String(post.postType),    
+            String(post.postType),
             { ...data, media: [{ url, name: filename, type: 'image', capturedAt: data.media[0].capturedAt }] }
         )
         console.log(environmentalContribution, 'saved data')
@@ -437,9 +437,9 @@ export class PostsController {
         const fileType = getFileType(file.mimetype);
         const filename = uuidv4();
         const { url } = await this.uploadService.processAndUploadContent(
-            file.buffer, 
+            file.buffer,
             filename,
-            fileType, 
+            fileType,
             file.originalname,
             false,
             post.postType as EnvironmentalContributionType
@@ -495,13 +495,15 @@ export class PostsController {
         res.json(contributions)
     }
 
+    @UseInterceptors(FileInterceptor('file'))
     @Post("reel")
     async editReel(
-        @Body(new ZodValidationPipe(z.object({ postId: ValidMongoId, content: z.string() }))) reelData: { content: string, postId: string, mentions: string[] },
+        @Body(new ZodValidationPipe(z.object({ postId: ValidMongoId, content: z.string() }), true, 'reelData'))
+        reelData: { content: string, postId: string, mentions: string[] },
         @Req() req: Request,
         @Res() res: Response,
+        @UploadedFile() file: Express.Multer.File
     ) {
-
         const { sub } = req.user
         const post = await this.postService._getPost(reelData.postId)
         if (!post) {
@@ -523,14 +525,39 @@ export class PostsController {
         }
 
         const mentions = reelData?.mentions?.map(id => new Types.ObjectId(id)) || []
+        console.log('these are mentions')
 
         let updatedPost = await this.postService.updatePost(
             reelData.postId,
             {
                 ...(hashtags && { hashtags }),
-                mentions: [...post?.mentions, mentions],
+                mentions: [...post?.mentions, ...mentions],
                 content: reelData.content,
             })
+
+        console.log(file, 'this is file')
+
+        if (file) {
+            const fileType = getFileType(file.mimetype);
+            const filename = uuidv4();
+            const uploadPromise = [this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname, true)];
+
+            const { sub } = req.user
+            let targetId = updatedPost.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(String(updatedPost.targetId))
+
+            this.eventEmitter.emit("reel.upload", {
+                uploadPromise,
+                postId: updatedPost._id.toString(),
+                targetId,
+                type: updatedPost.type,
+                postType: 'post',
+                fileBuffer: file.buffer,
+                filename,
+                _media: post?.media
+            });
+
+        }
+
         res.json({ updatedPost, success: true })
     }
 
@@ -668,8 +695,16 @@ export class PostsController {
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("update")
-    async updatePost(@Body(new ZodValidationPipe(UpdatePost, true, "postData")) updatePostDto: UpdatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
+    async updatePost(
+        @Body(new ZodValidationPipe(UpdatePost, true, "postData"))
+        updatePostDto: UpdatePostDTO,
+        @Req() req: Request,
+        @Res() res: Response,
+        @UploadedFiles()
+        files: Express.Multer.File[]) {
         const _postData = updatePostDto
+
+        console.log(updatePostDto)
 
         const post = await this.postService._getPost(_postData.postId)
 
@@ -688,16 +723,19 @@ export class PostsController {
 
 
         const mentions = _postData?.mentions?.map(id => new Types.ObjectId(id)) || []
+        console.log('these are mentions')
 
         let uploadedPost = await this.postService.updatePost(
             _postData.postId,
             {
                 ...updatePostDto,
                 ...(hashtags && { hashtags }),
-                mentions: [...post?.mentions, mentions],
+                mentions: [...post?.mentions, ...mentions],
                 isUploaded: files.length > 0 ? false : null,
             })
 
+
+        console.log("post uploaded")
         if (files.length > 0) {
 
             const uploadPromise = files.map((file) => {
