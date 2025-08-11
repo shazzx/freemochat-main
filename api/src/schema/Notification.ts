@@ -32,7 +32,7 @@ export class Notification {
     @Prop({ type: Date })
     time: Date
 
-    @Prop({ type: Boolean })
+    @Prop({ type: Boolean, default: false })
     isRead: Boolean
 }
 

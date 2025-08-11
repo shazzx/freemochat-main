@@ -13,7 +13,7 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreateEnvironmentalContribution, CreateEnvironmentalContributionDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdatePost, UpdatePostDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreateEnvironmentalContribution, CreateEnvironmentalContributionDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, EnvironmentalContributionType, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdateEnvironmentalContribution, UpdateEnvironmentalContributionDTO, UpdatePost, UpdatePostDTO, UpdateProject, UpdateProjectDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
@@ -364,14 +364,108 @@ export class PostsController {
             throw new BadRequestException("Image is required")
         }
 
+        const post = await this.postService._getPost(data.postId)
+
+        if (!post) {
+            throw new BadRequestException("Project not found")
+        }
+
         console.log(file, 'file')
         const fileType = getFileType(file.mimetype);
         const filename = uuidv4();
-        const { url } = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
+        const { url } = await this.uploadService.processAndUploadContent(
+            file.buffer,
+            filename,
+            fileType,
+            file.originalname,
+            // false,
+            // post.postType as EnvironmentalContributionType
+        )
         console.log(url, 'url')
         console.log(data, 'data')
-        const environmentalContribution = await this.postService.createEnvironmentalContribution({ ...data, media: [{ url, name: filename, type: 'image', capturedAt: data.media[0].capturedAt }] })
+
+        if (post?.postType == 'plantation') {
+            const nextUpdateDue = new Date();
+            nextUpdateDue.setMonth(nextUpdateDue.getMonth() + 6);
+            data = { ...data, plantationData: { ...data.plantationData, nextUpdateDue, lastUpdateDate: new Date() } }
+        }
+
+        const environmentalContribution = await this.postService.createElement(
+            String(post.targetId),
+            String(post.postType),
+            { ...data, media: [{ url, name: filename, type: 'image', capturedAt: data.media[0].capturedAt }] }
+        )
         console.log(environmentalContribution, 'saved data')
+        res.json(environmentalContribution)
+
+    }
+
+    @UseInterceptors(FileInterceptor('file'))
+    @Post('environmental-contributions/update')
+    async updateEnvironmentalContribution(
+        @Body(new ZodValidationPipe(UpdateEnvironmentalContribution, true, "elementData")) data: UpdateEnvironmentalContributionDTO,
+        @Req() req: Request,
+        @Res() res: Response,
+        @UploadedFile() file: Express.Multer.File
+    ) {
+        if (!file) {
+            throw new BadRequestException("Image is required")
+        }
+
+        const post = await this.postService._getPost(data.postId)
+
+        if (!post) {
+            throw new BadRequestException("Project not found")
+        }
+
+        if (!data.elementId) {
+            throw new BadRequestException('Element id is required')
+        }
+
+        const element = await (await this.postService.elementExist(data.elementId)).toObject()
+
+        if (!element) {
+            throw new NotFoundException("Element not found")
+        }
+
+        console.log(String(element.postId), post._id.toString())
+        if (String(element.postId) !== post._id.toString()) {
+            throw new BadRequestException("Element is not part of the project")
+        }
+
+        console.log(file, 'file')
+        const fileType = getFileType(file.mimetype);
+        const filename = uuidv4();
+        const { url } = await this.uploadService.processAndUploadContent(
+            file.buffer,
+            filename,
+            fileType,
+            file.originalname,
+            false,
+            post.postType as EnvironmentalContributionType
+        )
+        console.log(url, 'url')
+        console.log(data, 'data')
+        const elementUpdateHistory: any = [...element.updateHistory]
+
+        const updateData = {
+            ...data,
+            updateHistory: [
+                ...elementUpdateHistory,
+                {
+                    ...data.updateHistory[0],
+                    media: [
+                        {
+                            name: filename,
+                            url,
+                            type: 'image',
+                            capturedAt: data.updateHistory[0].media[0].capturedAt
+                        }
+                    ]
+                }],
+        }
+        const environmentalContribution = await this.postService.updateElement(data.elementId, updateData)
+        console.log(environmentalContribution, 'updated data')
         res.json(environmentalContribution)
     }
 
@@ -384,7 +478,7 @@ export class PostsController {
         if (!Types.ObjectId.isValid(contributionId)) {
             throw new BadRequestException('Invalid contribution Id format');
         }
-        const contribution = await this.postService.getEnvironmentalContributionDetails(contributionId)
+        const contribution = await this.postService.getElementDetails(contributionId)
         res.json(contribution)
     }
 
@@ -397,19 +491,19 @@ export class PostsController {
         if (!Types.ObjectId.isValid(postId)) {
             throw new BadRequestException('Invalid Post Id format');
         }
-        console.log(postId)
-        const contributions = await this.postService.getProjectEnvironmentalContributions(postId)
-        console.log(contributions, 'these are contributions')
+        const contributions = await this.postService.getProjectElements(postId)
         res.json(contributions)
     }
 
+    @UseInterceptors(FileInterceptor('file'))
     @Post("reel")
     async editReel(
-        @Body(new ZodValidationPipe(z.object({ postId: ValidMongoId, content: z.string() }))) reelData: { content: string, postId: string, mentions: string[] },
+        @Body(new ZodValidationPipe(z.object({ postId: ValidMongoId, content: z.string() }), true, 'reelData'))
+        reelData: { content: string, postId: string, mentions: string[] },
         @Req() req: Request,
         @Res() res: Response,
+        @UploadedFile() file: Express.Multer.File
     ) {
-
         const { sub } = req.user
         const post = await this.postService._getPost(reelData.postId)
         if (!post) {
@@ -431,14 +525,39 @@ export class PostsController {
         }
 
         const mentions = reelData?.mentions?.map(id => new Types.ObjectId(id)) || []
+        console.log('these are mentions')
 
         let updatedPost = await this.postService.updatePost(
             reelData.postId,
             {
                 ...(hashtags && { hashtags }),
-                mentions: [...post?.mentions, mentions],
+                mentions: [...post?.mentions, ...mentions],
                 content: reelData.content,
             })
+
+        console.log(file, 'this is file')
+
+        if (file) {
+            const fileType = getFileType(file.mimetype);
+            const filename = uuidv4();
+            const uploadPromise = [this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname, true)];
+
+            const { sub } = req.user
+            let targetId = updatedPost.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(String(updatedPost.targetId))
+
+            this.eventEmitter.emit("reel.upload", {
+                uploadPromise,
+                postId: updatedPost._id.toString(),
+                targetId,
+                type: updatedPost.type,
+                postType: 'post',
+                fileBuffer: file.buffer,
+                filename,
+                _media: post?.media
+            });
+
+        }
+
         res.json({ updatedPost, success: true })
     }
 
@@ -576,15 +695,26 @@ export class PostsController {
 
     @UseInterceptors(FilesInterceptor('files'))
     @Post("update")
-    async updatePost(@Body(new ZodValidationPipe(UpdatePost, true, "postData")) updatePostDto: UpdatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
+    async updatePost(
+        @Body(new ZodValidationPipe(UpdatePost, true, "postData"))
+        updatePostDto: UpdatePostDTO,
+        @Req() req: Request,
+        @Res() res: Response,
+        @UploadedFiles()
+        files: Express.Multer.File[]) {
         const _postData = updatePostDto
+
+        console.log(updatePostDto)
 
         const post = await this.postService._getPost(_postData.postId)
 
-        if (!post || post.isUploaded == false) {
-            throw new BadRequestException("please wait previous post update is in process...")
+        if (!post) {
+            throw new BadRequestException("post not found")
         }
 
+        if (post.isUploaded == false) {
+            throw new BadRequestException("please wait previous post update is in process...")
+        }
         let hashtags: string[];
 
         if (_postData.content) {
@@ -593,16 +723,19 @@ export class PostsController {
 
 
         const mentions = _postData?.mentions?.map(id => new Types.ObjectId(id)) || []
+        console.log('these are mentions')
 
         let uploadedPost = await this.postService.updatePost(
             _postData.postId,
             {
                 ...updatePostDto,
                 ...(hashtags && { hashtags }),
-                mentions: [...post?.mentions, mentions],
+                mentions: [...post?.mentions, ...mentions],
                 isUploaded: files.length > 0 ? false : null,
             })
 
+
+        console.log("post uploaded")
         if (files.length > 0) {
 
             const uploadPromise = files.map((file) => {
@@ -615,6 +748,25 @@ export class PostsController {
         }
 
         res.json(uploadedPost)
+    }
+
+    @UseInterceptors(FilesInterceptor('files'))
+    @Post("/project/update")
+    async updateProject(@Body(new ZodValidationPipe(UpdateProject)) data: UpdateProjectDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
+
+        const post = await this.postService._getPost(data.postId)
+
+        if (!post) {
+            throw new BadRequestException("post not found")
+        }
+
+        if (post.isUploaded == false) {
+            throw new BadRequestException("please wait previous post update is in process...")
+        }
+
+        let updatedPost = await this.postService.updateProject(data.postId, data)
+
+        res.json(updatedPost)
     }
 
     @Post("delete")

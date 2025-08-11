@@ -30,6 +30,8 @@ import EmojiPicker from 'emoji-picker-react'
 import { Socket } from 'socket.io-client'
 import QuickChat from './QuickChat'
 import BottomCreatePost from '@/models/BottomCreatePost'
+import EnvironmentalContributorTag from '@/models/EnvironmentalContributorTag'
+import { useTargetContributions } from '@/hooks/User/useUser'
 
 function PageProfile() {
 
@@ -175,6 +177,7 @@ function PageProfile() {
         })
     }, [])
 
+    const { data: pageContributions, isLoading: isPageContributionsLoading } = useTargetContributions(_pageData.data?._id)
 
     return (
         <>
@@ -201,7 +204,7 @@ function PageProfile() {
                     }
                     {profileSettingsModel && <QuickSettings user={user} setModelTrigger={setProfileSettingsModel} />}
                     {/* {postModal && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />} */}
-                    {searchParams.get("createpost") && ( width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
+                    {searchParams.get("createpost") && (width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
 
                     <div className='flex w-full flex-col items-center w-ful'>
                         <div className="flex max-w-5xl w-full flex-col justify-cente relative">
@@ -213,7 +216,20 @@ function PageProfile() {
                                     <div className='flex gap-4 items-end mb-4'>
                                         <div>
                                             <div className='flex flex-col'>
-                                                <div className='leading-5 text-xl'>{_pageData?.data?.name}</div>
+                                                <div className='flex gap-2 items-center'>
+                                                    <div className='leading-5 text-xl'>{_pageData?.data?.name}</div>
+                                                    {
+                                                        !isPageContributionsLoading &&
+                                                        <EnvironmentalContributorTag
+                                                            data={{
+                                                                plantation: pageContributions?.plantation,
+                                                                garbage_collection: pageContributions?.garbageCollection,
+                                                                water_ponds: pageContributions?.waterPonds,
+                                                                rain_water: pageContributions?.rainWater
+                                                            }}
+                                                        />
+                                                    }
+                                                </div>
                                                 <div className='text-gray-400 text-sm'>@{_pageData?.data?.handle}</div>
                                             </div>
                                             <div>

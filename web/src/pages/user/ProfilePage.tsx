@@ -15,7 +15,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useBookmarkPost, useCreatePost, useLikePost, useUpdatePost, useUserPosts } from '@/hooks/Post/usePost'
 import { useMedia } from '@/hooks/useMedia'
-import { useAcceptFriendRequest, useFollowUserToggle, useFriendRequestToggle, useRemoveFriend, useUser, useUserFollowers, useUserFriends } from '@/hooks/User/useUser'
+import { useAcceptFriendRequest, useFollowUserToggle, useFriendRequestToggle, useRemoveFriend, useTargetContributions, useUser, useUserFollowers, useUserFriends } from '@/hooks/User/useUser'
 import CPostModal from '@/models/CPostModal'
 import QuickSettings from '@/models/QuickSettings'
 import { setMediaModelDetails } from '@/utils/mediaOpenModel'
@@ -37,6 +37,7 @@ import { toast } from 'react-toastify'
 import { Label } from '@/components/ui/label'
 import { format } from 'date-fns'
 import { FiExternalLink } from "react-icons/fi";
+import EnvironmentalContributorTag from '@/models/EnvironmentalContributorTag'
 // import UserReelsSection from '@/components/Reel/UserReelsSection'
 
 const ProfilePage: FC<{ role?: string }> = ({ role }) => {
@@ -66,7 +67,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
     const [posts, setPosts] = useState([])
     const [newPost, setNewPost] = useState(undefined)
-    const tabList = [{ value: "posts", name: "Posts" }, { value: "friends", name: "Friends" }, { value: "followers", name: "Followers" },  { value: "media", name: "Media" }, { value: "about", name: "About" }]
+    const tabList = [{ value: "posts", name: "Posts" }, { value: "friends", name: "Friends" }, { value: "followers", name: "Followers" }, { value: "media", name: "Media" }, { value: "about", name: "About" }]
     const navigate = useNavigate()
 
     const [searchParams, setSearchParams] = useSearchParams()
@@ -171,6 +172,8 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
         })
     }, [])
 
+    const { data: userContributions, isLoading: isUserContributionLoading } = useTargetContributions(_id)
+
     return (
         <>
             {query.isError &&
@@ -214,7 +217,20 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                     <div className='flex gap-4'>
                                         <div className='pl-1 lg:pl-0 lg:pt-8'>
                                             <div className='flex flex-col'>
-                                                <div className='leading-3'>{firstname} {lastname}</div>
+                                                <div className='flex gap-2 items-center'>
+                                                    <div className='leading-5 text-xl'>{firstname} {lastname}</div>
+                                                    {
+                                                        !isUserContributionLoading &&
+                                                        <EnvironmentalContributorTag
+                                                            data={{
+                                                                plantation: userContributions.plantation,
+                                                                garbage_collection: userContributions.garbageCollection,
+                                                                water_ponds: userContributions.waterPonds,
+                                                                rain_water: userContributions.rainWater
+                                                            }}
+                                                        />
+                                                    }
+                                                </div>
                                                 <div className='text-gray-500 text-sm'>@{username}</div>
                                             </div>
                                             <div>

@@ -1,8 +1,27 @@
-import { acceptFriendRequest, defaultMetric, fetchUser, fetchUserMetrics, fetchUserOnlineStatus, fetchUserStories, fetchUserStoryViews, followUserToggle, rejectFriendRequest, removeFriend, removeStory, sendFriendRequest, uploadStory, userFollowers, userFriendRequests, userFriends } from "@/api/User/users.api"
+import { acceptFriendRequest, defaultMetric, fetchTargetContributions, fetchUser, fetchUserMetrics, fetchUserOnlineStatus, fetchUserStories, fetchUserStoryViews, followUserToggle, rejectFriendRequest, removeFriend, removeStory, sendFriendRequest, uploadStory, userFollowers, userFriendRequests, userFriends } from "@/api/User/users.api"
 import { useAppSelector } from "@/app/hooks"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { produce } from "immer"
 import { toast } from "react-toastify"
+
+export const useTargetContributions = (targetId: string) => {
+
+    const { data, isLoading, isError, isFetched, isSuccess } = useQuery({
+        queryKey: ['contributions', targetId],
+        queryFn: () => {
+            return fetchTargetContributions()
+        },
+
+    })
+
+    return {
+        data,
+        isLoading,
+        isError,
+        isFetched,
+        isSuccess,
+    }
+}
 
 export const useUser = (username, shouldFetch) => {
     const { data, isLoading, isError, isFetched, isSuccess, error } = useQuery({

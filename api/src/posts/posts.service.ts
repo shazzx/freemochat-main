@@ -14,7 +14,7 @@ import { Member } from 'src/schema/members';
 import { EnvironmentalContribution, Post } from 'src/schema/post';
 import { Promotion } from 'src/schema/promotion';
 import { Report } from 'src/schema/report';
-import { CreateEnvironmentalContributionDTO, GetGlobalMapCountsDTO, GetGlobalMapDataDTO, SearchGlobalMapLocationsDTO } from 'src/schema/validation/post';
+import { CreateEnvironmentalContributionDTO, GetGlobalMapCountsDTO, GetGlobalMapDataDTO, SearchGlobalMapLocationsDTO, UpdateEnvironmentalContributionDTO } from 'src/schema/validation/post';
 import { ViewedPosts } from 'src/schema/viewedPosts';
 import { UserService } from 'src/user/user.service';
 import { CURRENCIES, PAYMENT_PROVIDERS, PAYMENT_STATES, POST_PROMOTION, ReachStatus } from 'src/utils/enums/global.c';
@@ -42,85 +42,327 @@ export class PostsService {
     ) { }
 
     @Cron('0 9 * * *')
-    async checkPlantationReminders() {
-        console.log('Checking plantation update reminders...');
+    async processPlantationManagement() {
+        console.log('Processing plantation management: reminders and removals...');
 
         const today = new Date();
 
+        try {
+            // Step 1: Send reminders for upcoming due dates
+            await this.processPlantationReminders(today);
+
+            // Step 2: Remove plants that are 3+ days overdue
+            await this.removeOverduePlantations(today);
+
+            console.log('✅ Completed plantation management processing');
+        } catch (error) {
+            console.error('❌ Error in plantation management:', error);
+        }
+    }
+
+    private async processPlantationReminders(today: Date) {
+
         const notificationStages = [
-            { stage: '3_months', daysBefore: 90, title: '3 Months Until Plant Update' },
-            { stage: '1_month', daysBefore: 30, title: '1 Month Until Plant Update' },
-            { stage: '15_days', daysBefore: 15, title: '15 Days Until Plant Update' },
-            { stage: '7_days', daysBefore: 7, title: '1 Week Until Plant Update' },
-            { stage: '3_days', daysBefore: 3, title: '3 Days Until Plant Update' },
-            { stage: '24_hours', daysBefore: 1, title: 'Update Your Plants Tomorrow!' }
+            { stage: '1_month', daysBefore: 30 },
+            { stage: '15_days', daysBefore: 15 },
+            { stage: '7_days', daysBefore: 7 },
+            { stage: '3_days', daysBefore: 3 },
+            { stage: '24_hours', daysBefore: 1 }
         ];
 
         for (const stage of notificationStages) {
-            await this.processNotificationStage(today, stage);
+            const targetDate = new Date(today);
+            targetDate.setDate(targetDate.getDate() + stage.daysBefore);
+
+            const plantationsDue = await this.getPlantationsDue(targetDate, stage);
+
+            if (plantationsDue.length > 0) {
+                console.log(`Found ${plantationsDue.length} plantations for ${stage.stage} notification`);
+
+                // Group and send consolidated notifications
+                const groupedPlantations = this.groupPlantationsByUserAndProject(plantationsDue);
+                console.log(`Grouped into ${Object.keys(groupedPlantations).length} consolidated notifications`);
+
+                for (const [groupKey, plantations] of Object.entries(groupedPlantations)) {
+                    await this.sendGroupedPlantationReminder(plantations, stage);
+                }
+            }
         }
     }
 
-    private async processNotificationStage(today: Date, stage: any) {
-        const targetDate = new Date(today);
-        targetDate.setDate(targetDate.getDate() + stage.daysBefore);
+    private async removeOverduePlantations(today: Date) {
+        console.log('Checking for plants to remove (3+ days overdue)...');
 
-        const plantationsDue = await this.getPlantationsDue(targetDate, stage)
-        console.log(`Found ${plantationsDue.length} plantations for ${stage.stage} notification`);
+        const threeDaysAgo = new Date(today);
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+        threeDaysAgo.setHours(23, 59, 59, 999);
 
-        for (const plantation of plantationsDue) {
-            await this.sendPlantationReminder(plantation, stage);
-        }
-    }
-
-    async sendPlantationReminder(plantation: any, stage: any) {
         try {
+            const overduePlantations = await this.environmentalContributionModel.aggregate([
+                {
+                    $match: {
+                        'plantationData.nextUpdateDue': { $lt: threeDaysAgo },
+                        plantationData: { $exists: true }
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'posts',
+                        localField: 'postId',
+                        foreignField: '_id',
+                        as: 'post'
+                    }
+                },
+                { $unwind: '$post' },
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'post.user',
+                        foreignField: '_id',
+                        as: 'user'
+                    }
+                },
+                { $unwind: '$user' },
+                {
+                    $match: {
+                        'post.postType': 'plantation'
+                    }
+                }
+            ]);
+
+            console.log(`Found ${overduePlantations.length} plantations to remove (3+ days overdue)`);
+
+            if (overduePlantations.length === 0) {
+                return;
+            }
+
+            // Group by user and project for consolidated removal notifications
+            const groupedRemovals = this.groupPlantationsByUserAndProject(overduePlantations);
+
+            for (const [groupKey, plantations] of Object.entries(groupedRemovals)) {
+                const plantationIds = plantations.map(p => p._id);
+
+                const deleteResult = await this.environmentalContributionModel.deleteMany(
+                    { _id: { $in: plantationIds } }
+                );
+
+                console.log(`🗑️ Deleted ${deleteResult.deletedCount} plantations from database`);
+
+                const user = plantations[0].user;
+                const project = plantations[0].post;
+                const plantCount = plantations.length;
+                const plantSummary = this.createPlantSummary(plantations);
+
+                const plantText = plantCount === 1 ?
+                    `Your ${plantSummary}` :
+                    `Your ${plantCount} plants${plantSummary ? ` (${plantSummary})` : ''}`;
+
+                await this.notificationService.createNotification({
+                    from: null,
+                    user: user._id,
+                    targetId: new Types.ObjectId(project._id),
+                    type: 'system',
+                    postType: 'plantation_removed',
+                    targetType: 'project',
+                    value: `❌ ${plantText} in "${project.projectDetails?.name}" ${plantCount === 1 ? 'has' : 'have'} been permanently removed from the system (3+ days overdue). You can add ${plantCount === 1 ? 'it' : 'them'} back by creating new plantation entries.`,
+                });
+
+                console.log(`✅ Removed and notified about ${plantations.length} plantations from project ${project._id}`);
+            }
+
+            console.log(`✅ Total removed: ${overduePlantations.length} plantations from ${Object.keys(groupedRemovals).length} projects`);
+
+        } catch (error) {
+            console.error('❌ Error removing overdue plantations:', error);
+        }
+    }
+
+
+    private groupPlantationsByUserAndProject(plantations: any[]): Record<string, any[]> {
+        const grouped: Record<string, any[]> = {};
+
+        for (const plantation of plantations) {
+            const groupKey = `${plantation.user._id}_${plantation.post._id}`;
+
+            if (!grouped[groupKey]) {
+                grouped[groupKey] = [];
+            }
+
+            grouped[groupKey].push(plantation);
+        }
+
+        return grouped;
+    }
+
+    private async getPlantationsDue(targetDate: Date, stage: any) {
+        try {
+            const startOfDay = new Date(targetDate);
+            startOfDay.setHours(0, 0, 0, 0);
+
+            const endOfDay = new Date(targetDate);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            // FIXED: Removed isActive and notificationStages references
+            const query = {
+                'plantationData.nextUpdateDue': {
+                    $gte: startOfDay,
+                    $lte: endOfDay
+                },
+                plantationData: { $exists: true }
+            };
+
+            const plantations = await this.environmentalContributionModel.aggregate([
+                { $match: query },
+                {
+                    $lookup: {
+                        from: 'posts',
+                        localField: 'postId',
+                        foreignField: '_id',
+                        as: 'post'
+                    }
+                },
+                { $unwind: '$post' },
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'post.user',
+                        foreignField: '_id',
+                        as: 'user'
+                    }
+                },
+                { $unwind: '$user' },
+                {
+                    $match: {
+                        'post.postType': 'plantation'
+                    }
+                }
+            ]);
+
+            // SIMPLE DUPLICATE PREVENTION: Check if we sent notification today
             const today = new Date();
-            const dueDate = new Date(plantation.plantationData.nextUpdateDue);
+            const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+            // Filter out plantations that might have been notified today
+            // Since we don't have notificationStages field, we use a simple daily check
+            const filteredPlantations = plantations.filter(plantation => {
+                const lastUpdate = plantation.plantationData.lastUpdateDate;
+                if (!lastUpdate) return true; // Never updated, needs reminder
+
+                const lastUpdateDate = new Date(lastUpdate).toISOString().split('T')[0];
+                // If updated today, no need for reminder
+                return lastUpdateDate !== todayString;
+            });
+
+            return filteredPlantations;
+
+        } catch (error) {
+            console.error('Error fetching plantations due:', error);
+            return [];
+        }
+    }
+
+    async sendGroupedPlantationReminder(plantations: any[], stage: any) {
+        try {
+            if (plantations.length === 0) return;
+
+            const firstPlantation = plantations[0];
+            const user = firstPlantation.user;
+            const project = firstPlantation.post;
+
+            const today = new Date();
+            const dueDate = new Date(firstPlantation.plantationData.nextUpdateDue);
             const daysRemaining = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-            const message = this.createNotificationMessage(plantation, stage, daysRemaining);
-            console.log('sending remind plantation', plantation)
+            // Create consolidated message
+            const message = this.createGroupedReminderMessage(plantations, project, stage, daysRemaining);
 
+            console.log(`Sending grouped plantation reminder:`, {
+                userId: user._id,
+                projectId: project._id,
+                plantCount: plantations.length,
+                stage: stage.stage
+            });
+
+            // Send single consolidated notification
             await this.notificationService.createNotification({
                 from: null,
-                user: new Types.ObjectId(plantation.user),
-                targetId: null,
+                user: new Types.ObjectId(user._id),
+                targetId: new Types.ObjectId(project._id),
                 type: 'system',
                 postType: 'plantation_reminder',
-                targetType: 'system',
+                targetType: 'project',
                 value: message,
             });
 
-            console.log(`Sent ${stage.stage} notification for plantation ${plantation._id}`);
+            // REMOVED: notificationStages update since field doesn't exist in schema
+            console.log(`✅ Sent grouped ${stage.stage} reminder for ${plantations.length} plantations`);
 
         } catch (error) {
-            console.error(`Failed to send notification for plantation ${plantation._id}:`, error);
+            console.error(`❌ Failed to send grouped reminder:`, error);
         }
     }
 
-    private createNotificationMessage(plantation: any, stage: any, daysRemaining: number): string {
-        const plantInfo = plantation.plantationData.plantType || 'plants';
-        const location = plantation.location?.city || plantation.location?.address || 'your plantation';
+    private createGroupedReminderMessage(plantations: any[], project: any, stage: any, daysRemaining: number): string {
+        const projectName = project.projectDetails?.name || 'your plantation project';
+        const plantCount = plantations.length;
+        const plantSummary = this.createPlantSummary(plantations);
 
+        const plantText = plantCount === 1 ?
+            `your ${plantSummary}` :
+            `your ${plantCount} plants${plantSummary ? ` (${plantSummary})` : ''}`;
+
+        // Messages with 3-day removal warning
         switch (stage.stage) {
-            case '3_months':
-                return `Your ${plantInfo} in ${location} will need an update in 3 months. Start planning your next visit!`;
             case '1_month':
-                return `Just 1 month left! Your ${plantInfo} in ${location} will need an update soon.`;
+                return `Reminder: ${plantText}(plant) in "${projectName}"
+                (project) need${plantCount === 1 ? 's' : ''} an update in 1 month. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
+
             case '15_days':
-                return `Only 15 days remaining! Don't forget to update your ${plantInfo} in ${location}.`;
+                return `Reminder: ${plantText}(plant) in "${projectName}"
+                (project) need${plantCount === 1 ? 's' : ''} an update in 15 days. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
+
             case '7_days':
-                return `One week left! Your ${plantInfo} in ${location} needs an update very soon.`;
+                return `Urgent: ${plantText}(plant) in "${projectName}"
+                (project) need${plantCount === 1 ? 's' : ''} an update in 7 days. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
+
             case '3_days':
-                return `Only 3 days left! Please plan to update your ${plantInfo} in ${location}.`;
+                return `Critical: ${plantText}(plant) in "${projectName}"
+                (project) need${plantCount === 1 ? 's' : ''} an update in 3 days. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
+
             case '24_hours':
-                return `Tomorrow is the day! Your ${plantInfo} in ${location} needs an update. Don't miss it!`;
+                return `Final Notice: ${plantText}(plant) in "${projectName}"
+                (project) need${plantCount === 1 ? 's' : ''} an update tomorrow. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
+
             default:
-                return `Your ${plantInfo} in ${location} needs an update in ${daysRemaining} days.`;
+                return `Reminder: ${plantText}(plant) in "${projectName}"
+                (project) need${plantCount === 1 ? 's' : ''} an update in ${daysRemaining} days. ${plantCount === 1 ? 'It' : 'They'} will be permanently removed 3 days after the due date.`;
         }
     }
 
+    private createPlantSummary(plantations: any[]): string {
+        const plantTypes = new Map<string, number>();
+
+        for (const plantation of plantations) {
+            const plantData = plantation.plantationData;
+            const key = plantData?.species || plantData?.type || 'plant';
+            plantTypes.set(key, (plantTypes.get(key) || 0) + 1);
+        }
+
+        const entries = Array.from(plantTypes.entries());
+
+        if (entries.length === 1) {
+            const [type, count] = entries[0];
+            return count > 1 ? `${count} ${type}s` : type;
+        } else if (entries.length === 2) {
+            return entries.map(([type, count]) => count > 1 ? `${count} ${type}s` : type).join(' and ');
+        } else if (entries.length <= 4) {
+            const last = entries.pop()!;
+            const others = entries.map(([type, count]) => count > 1 ? `${count} ${type}s` : type);
+            return `${others.join(', ')}, and ${last[1] > 1 ? `${last[1]} ${last[0]}s` : last[0]}`;
+        } else {
+            return `including ${entries.slice(0, 2).map(([type]) => type).join(', ')} and ${entries.length - 2} other types`;
+        }
+    }
 
     async getPosts(cursor: string | null, userId: string, targetId: string, type: string, self: string) {
         let model = type + 's'
@@ -214,6 +456,33 @@ export class PostsService {
             },
             {
                 $unwind: "$target"
+            },
+            // Environmental profile lookup for main target - ADD THIS NEW STAGE
+            {
+                $lookup: {
+                    from: 'counters',
+                    let: { targetId: '$targetId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$targetId'] },
+                                        { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                        { $eq: ['$type', 'contributions'] }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                contributionTypes: { $addToSet: '$name' }
+                            }
+                        }
+                    ],
+                    as: 'targetEnvironmentalContributions'
+                }
             },
             {
                 $lookup: {
@@ -365,6 +634,25 @@ export class PostsService {
                                 as: 'userBookmark',
                             },
                         },
+                        {
+                            $lookup: {
+                                from: 'environmentalcontributions',
+                                let: { postId: '$_id', postType: '$postType' },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ['$postId', '$$postId'] },
+                                                    { $in: ['$$postType', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ],
+                                as: 'environmentalContributions'
+                            }
+                        },
                         // Handle counters for shared post
                         {
                             $lookup: {
@@ -386,17 +674,75 @@ export class PostsService {
                                 as: 'counters'
                             }
                         },
-                        // Combine fields for shared post
+                        // Environmental profile lookup for shared post target - ADD THIS NEW STAGE
+                        {
+                            $lookup: {
+                                from: 'counters',
+                                let: { targetId: '$targetId' },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ['$targetId', '$$targetId'] },
+                                                    { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                                    { $eq: ['$type', 'contributions'] }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    {
+                                        $group: {
+                                            _id: null,
+                                            contributionTypes: { $addToSet: '$name' }
+                                        }
+                                    }
+                                ],
+                                as: 'targetEnvironmentalContributions'
+                            }
+                        },
+                        // Combine fields for shared post - UPDATE THIS STAGE
                         {
                             $addFields: {
                                 target: {
-                                    $switch: {
-                                        branches: [
-                                            { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-                                        ],
-                                        default: null
+                                    $let: {
+                                        vars: {
+                                            targetObj: {
+                                                $switch: {
+                                                    branches: [
+                                                        { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                                        { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                                        { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                                                    ],
+                                                    default: null
+                                                }
+                                            },
+                                            envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                                        },
+                                        in: {
+                                            $cond: {
+                                                if: {
+                                                    $and: [
+                                                        { $ne: ['$$targetObj', null] },
+                                                        { $ne: ['$$targetObj.type', 'group'] }
+                                                    ]
+                                                },
+                                                then: {
+                                                    $mergeObjects: [
+                                                        '$$targetObj',
+                                                        {
+                                                            environmentalProfile: {
+                                                                plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                                garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                                water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                                rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                else: '$$targetObj'
+                                            }
+                                        }
                                     }
                                 },
                                 likesCount: {
@@ -443,8 +789,8 @@ export class PostsService {
                                 user: 1,
                                 promotion: 1,
                                 location: 1,
-                                plantationData: 1,
-                                updateHistory: 1,
+                                projectDetails: 1,
+                                environmentalContributions: 1,
                                 isUploaded: 1,
                                 target: 1,
                                 reaction: 1,
@@ -457,6 +803,7 @@ export class PostsService {
                                 targetId: 1,
                                 postType: 1,
                                 type: 1,
+                                backgroundColor: 1,
                                 isBookmarkedByUser: 1,
                                 updatedAt: 1,
                                 createdAt: 1
@@ -507,6 +854,25 @@ export class PostsService {
             },
             {
                 $lookup: {
+                    from: 'environmentalcontributions',
+                    let: { postId: '$_id', postType: '$postType' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$postId', '$$postId'] },
+                                        { $in: ['$$postType', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'environmentalContributions'
+                }
+            },
+            {
+                $lookup: {
                     from: 'counters',
                     let: { postId: '$_id' },
                     pipeline: [
@@ -525,8 +891,40 @@ export class PostsService {
                     as: 'counters'
                 }
             },
+            // UPDATE THIS STAGE - Add environmental profile to main target
             {
                 $addFields: {
+                    target: {
+                        $let: {
+                            vars: {
+                                envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                            },
+                            in: {
+                                $cond: {
+                                    if: {
+                                        $and: [
+                                            { $ne: ['$target', null] },
+                                            { $ne: ['$target.type', 'group'] }
+                                        ]
+                                    },
+                                    then: {
+                                        $mergeObjects: [
+                                            '$target',
+                                            {
+                                                environmentalProfile: {
+                                                    plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                    garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                    water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                    rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    else: '$target'
+                                }
+                            }
+                        }
+                    },
                     reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
@@ -571,8 +969,8 @@ export class PostsService {
                     target: 1,
                     reaction: 1,
                     location: 1,
-                    plantationData: 1,
-                    updateHistory: 1,
+                    environmentalContributions: 1,
+                    projectDetails: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
@@ -581,6 +979,7 @@ export class PostsService {
                     isLikedByUser: 1,
                     targetId: 1,
                     type: 1,
+                    backgroundColor: 1,
                     postType: 1,
                     isBookmarkedByUser: 1,
                     updatedAt: 1,
@@ -1325,6 +1724,53 @@ export class PostsService {
                                 as: 'counters'
                             }
                         },
+                        // Environmental profile lookup for shared post target - NEW STAGE
+                        {
+                            $lookup: {
+                                from: 'counters',
+                                let: { targetId: '$targetId' },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ['$targetId', '$$targetId'] },
+                                                    { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                                    { $eq: ['$type', 'contributions'] }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    {
+                                        $group: {
+                                            _id: null,
+                                            contributionTypes: { $addToSet: '$name' }
+                                        }
+                                    }
+                                ],
+                                as: 'targetEnvironmentalContributions'
+                            }
+                        },
+                        // Environmental contributions lookup for shared post - NEW STAGE
+                        {
+                            $lookup: {
+                                from: 'environmentalcontributions',
+                                let: { postId: '$_id', postType: '$postType' },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ['$postId', '$$postId'] },
+                                                    { $in: ['$$postType', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ],
+                                as: 'environmentalContributions'
+                            }
+                        },
                         {
                             $lookup: {
                                 from: 'users',
@@ -1344,16 +1790,48 @@ export class PostsService {
                                 as: 'mentions'
                             }
                         },
+                        // UPDATED - Enhanced target field with environmental profile
                         {
                             $addFields: {
                                 target: {
-                                    $switch: {
-                                        branches: [
-                                            { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-                                        ],
-                                        default: null
+                                    $let: {
+                                        vars: {
+                                            targetObj: {
+                                                $switch: {
+                                                    branches: [
+                                                        { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                                        { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                                        { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                                                    ],
+                                                    default: null
+                                                }
+                                            },
+                                            envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                                        },
+                                        in: {
+                                            $cond: {
+                                                if: {
+                                                    $and: [
+                                                        { $ne: ['$$targetObj', null] },
+                                                        { $ne: ['$$targetObj.type', 'group'] }
+                                                    ]
+                                                },
+                                                then: {
+                                                    $mergeObjects: [
+                                                        '$$targetObj',
+                                                        {
+                                                            environmentalProfile: {
+                                                                plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                                garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                                water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                                rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                else: '$$targetObj'
+                                            }
+                                        }
                                     }
                                 },
                                 likesCount: {
@@ -1391,6 +1869,7 @@ export class PostsService {
                                 isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                             }
                         },
+                        // UPDATED - Added missing fields to projection
                         {
                             $project: {
                                 _id: 1,
@@ -1400,6 +1879,9 @@ export class PostsService {
                                 promotion: 1,
                                 isUploaded: 1,
                                 target: 1,
+                                location: 1,
+                                projectDetails: 1,
+                                environmentalContributions: 1,
                                 reaction: 1,
                                 mentions: 1,
                                 likesCount: { $ifNull: ['$likesCount.count', 0] },
@@ -1410,6 +1892,7 @@ export class PostsService {
                                 isLikedByUser: 1,
                                 targetId: 1,
                                 type: 1,
+                                backgroundColor: 1,
                                 postType: 1,
                                 isBookmarkedByUser: 1,
                                 updatedAt: 1,
@@ -1521,13 +2004,73 @@ export class PostsService {
                                     $and: [
                                         { $eq: ['$targetId', '$$postId'] },
                                         { $eq: ['$name', 'post'] },
-                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares']] }
+                                        { $in: ['$type', ['likes', 'comments', 'bookmarks', 'shares', 'videoViews']] }
                                     ]
                                 }
                             }
                         }
                     ],
                     as: 'counters'
+                }
+            },
+            // Environmental profile lookup for main post target - NEW STAGE
+            {
+                $lookup: {
+                    from: 'counters',
+                    let: { targetId: '$targetId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$targetId'] },
+                                        { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                        { $eq: ['$type', 'contributions'] }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                contributionTypes: { $addToSet: '$name' }
+                            }
+                        }
+                    ],
+                    as: 'targetEnvironmentalContributions'
+                }
+            },
+            // Environmental contributions lookup for main post - NEW STAGE
+            {
+                $lookup: {
+                    from: 'environmentalcontributions',
+                    let: { postId: '$_id', postType: '$postType' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$postId', '$$postId'] },
+                                        { $in: ['$$postType', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 1,
+                                location: 1,
+                                plantationData: 1,
+                                garbageCollectionData: 1,
+                                waterPondsData: 1,
+                                rainWaterData: 1,
+                                media: 1,
+                                updateHistory: 1,
+                                createdAt: 1
+                            }
+                        }
+                    ],
+                    as: 'environmentalContributions'
                 }
             },
             {
@@ -1549,16 +2092,48 @@ export class PostsService {
                     as: 'mentions'
                 }
             },
+            // UPDATED - Enhanced target field with environmental profile
             {
                 $addFields: {
                     target: {
-                        $switch: {
-                            branches: [
-                                { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-                                { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-                                { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-                            ],
-                            default: null
+                        $let: {
+                            vars: {
+                                targetObj: {
+                                    $switch: {
+                                        branches: [
+                                            { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                            { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                            { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                                        ],
+                                        default: null
+                                    }
+                                },
+                                envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                            },
+                            in: {
+                                $cond: {
+                                    if: {
+                                        $and: [
+                                            { $ne: ['$$targetObj', null] },
+                                            { $ne: ['$$targetObj.type', 'group'] }
+                                        ]
+                                    },
+                                    then: {
+                                        $mergeObjects: [
+                                            '$$targetObj',
+                                            {
+                                                environmentalProfile: {
+                                                    plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                    garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                    water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                    rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    else: '$$targetObj'
+                                }
+                            }
                         }
                     },
                     reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
@@ -1587,9 +2162,16 @@ export class PostsService {
                             { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
                             { count: 0 }
                         ]
+                    },
+                    videoViewsCount: {
+                        $ifNull: [
+                            { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'videoViews'] } } }, 0] },
+                            { count: 0 }
+                        ]
                     }
                 },
             },
+            // UPDATED - Added missing fields to projection
             {
                 $project: {
                     _id: 1,
@@ -1599,15 +2181,20 @@ export class PostsService {
                     promotion: 1,
                     isUploaded: 1,
                     target: 1,
+                    location: 1,
+                    projectDetails: 1,
+                    environmentalContributions: 1,
                     reaction: 1,
                     mentions: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     sharesCount: { $ifNull: ['$sharesCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
+                    videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
                     isLikedByUser: 1,
                     targetId: 1,
                     type: 1,
+                    backgroundColor: 1,
                     postType: 1,
                     isBookmarkedByUser: 1,
                     updatedAt: 1,
@@ -2133,17 +2720,6 @@ export class PostsService {
         }
 
         // Posts query
-        // const postsQuery = cursor
-        //     ? {
-        //         createdAt: { $lt: new Date(cursor) },
-        //         ...visibility,
-        //         postType: { $in: ['post'] }
-        //     }
-        //     : {
-        //         ...visibility,
-        //         postType: { $in: ['post'] }
-        //     };
-
         const postsQuery = cursor ? {
             createdAt: { $lt: new Date(cursor) },
             ...visibility,
@@ -2302,7 +2878,6 @@ export class PostsService {
                                 as: 'regularUserDetails'
                             }
                         },
-
                         {
                             $lookup: {
                                 from: 'environmentalcontributions',
@@ -2407,17 +2982,75 @@ export class PostsService {
                                 as: 'counters'
                             }
                         },
+                        // Environmental profile lookup for shared post target
+                        {
+                            $lookup: {
+                                from: 'counters',
+                                let: { targetId: '$targetId' },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ['$targetId', '$$targetId'] },
+                                                    { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                                    { $eq: ['$type', 'contributions'] }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    {
+                                        $group: {
+                                            _id: null,
+                                            contributionTypes: { $addToSet: '$name' }
+                                        }
+                                    }
+                                ],
+                                as: 'targetEnvironmentalContributions'
+                            }
+                        },
                         // Combine fields for shared post
                         {
                             $addFields: {
                                 target: {
-                                    $switch: {
-                                        branches: [
-                                            { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-                                            { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-                                        ],
-                                        default: null
+                                    $let: {
+                                        vars: {
+                                            targetObj: {
+                                                $switch: {
+                                                    branches: [
+                                                        { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                                        { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                                        { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                                                    ],
+                                                    default: null
+                                                }
+                                            },
+                                            envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                                        },
+                                        in: {
+                                            $cond: {
+                                                if: {
+                                                    $and: [
+                                                        { $ne: ['$$targetObj', null] },
+                                                        { $ne: ['$$targetObj.type', 'group'] }
+                                                    ]
+                                                },
+                                                then: {
+                                                    $mergeObjects: [
+                                                        '$$targetObj',
+                                                        {
+                                                            environmentalProfile: {
+                                                                plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                                garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                                water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                                rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                else: '$$targetObj'
+                                            }
+                                        }
                                     }
                                 },
                                 likesCount: {
@@ -2498,6 +3131,7 @@ export class PostsService {
                                 isLikedByUser: 1,
                                 targetId: 1,
                                 type: 1,
+                                backgroundColor: 1,
                                 isBookmarkedByUser: 1,
                                 hashtags: 1,
                                 updatedAt: 1,
@@ -2622,6 +3256,33 @@ export class PostsService {
                     as: 'counters'
                 }
             },
+            // Environmental profile lookup for main post target
+            {
+                $lookup: {
+                    from: 'counters',
+                    let: { targetId: '$targetId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$targetId'] },
+                                        { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                        { $eq: ['$type', 'contributions'] }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                contributionTypes: { $addToSet: '$name' }
+                            }
+                        }
+                    ],
+                    as: 'targetEnvironmentalContributions'
+                }
+            },
             {
                 $lookup: {
                     from: 'environmentalcontributions',
@@ -2654,17 +3315,47 @@ export class PostsService {
                     as: 'environmentalContributions'
                 }
             },
-
             {
                 $addFields: {
                     target: {
-                        $switch: {
-                            branches: [
-                                { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-                                { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-                                { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-                            ],
-                            default: null
+                        $let: {
+                            vars: {
+                                targetObj: {
+                                    $switch: {
+                                        branches: [
+                                            { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                            { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                            { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                                        ],
+                                        default: null
+                                    }
+                                },
+                                envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                            },
+                            in: {
+                                $cond: {
+                                    if: {
+                                        $and: [
+                                            { $ne: ['$$targetObj', null] },
+                                            { $ne: ['$$targetObj.type', 'group'] }
+                                        ]
+                                    },
+                                    then: {
+                                        $mergeObjects: [
+                                            '$$targetObj',
+                                            {
+                                                environmentalProfile: {
+                                                    plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                    garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                    water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                    rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    else: '$$targetObj'
+                                }
+                            }
                         }
                     },
                     likesCount: {
@@ -2744,6 +3435,7 @@ export class PostsService {
                     isLikedByUser: 1,
                     targetId: 1,
                     type: 1,
+                    backgroundColor: 1,
                     isBookmarkedByUser: 1,
                     hashtags: 1,
                     updatedAt: 1,
@@ -4871,7 +5563,12 @@ export class PostsService {
                 )
             })
         }
-
+        if (post.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(String(post.postType))) {
+            Promise.all([
+                this.metricsAggregatorService.incrementCount(null, `${String(post.postType)}_projects`, 'contributions'),
+                this.metricsAggregatorService.incrementCount(null, `projects`, 'contributions')
+            ])
+        }
         return await post.populate({
             path: "user",
             model: "User"
@@ -4895,10 +5592,19 @@ export class PostsService {
         ])
     }
 
+    async updateProject(postId: string, projectDetails: any) {
+        const updatedProject = await this.postModel.findByIdAndUpdate(postId, { $set: { ...projectDetails } }, { new: true })
+        return updatedProject
+    }
+
     async updatePost(postId: string, postDetails: any) {
+        console.log(postDetails, 'post data')
         const updatedPost = await this.postModel.findByIdAndUpdate(postId, { $set: { ...postDetails } }, { new: true })
 
-        if (updatedPost.mentions.length > 0) {
+        console.log('post updated')
+
+        if (updatedPost?.mentions?.length > 0) {
+            console.log('inside mentions')
             updatedPost.mentions.forEach((userId) => {
                 this.notificationService.createNotification(
                     {
@@ -4914,9 +5620,14 @@ export class PostsService {
             })
         }
 
+        console.log('passed mentions')
+
         if (updatedPost.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(String(updatedPost.postType))) {
+            console.log('inside plantation')
             this.metricsAggregatorService.incrementCount(new Types.ObjectId(String(updatedPost.user)), String(updatedPost.postType), 'contributions', null, updatedPost.media.length)
         }
+
+        console.log('passed plantation type check')
         return updatedPost
     }
 
@@ -4941,13 +5652,17 @@ export class PostsService {
         return post
     }
 
-    async getEnvironmentalContributionDetails(contributionId: string) {
-        return await this.environmentalContributionModel.findById(contributionId)
+    async getElementDetails(elementId: string) {
+        return await this.environmentalContributionModel.findById(elementId)
             .populate('postId', 'projectDetails postType')
             .exec();
     }
 
-    async getProjectEnvironmentalContributions(postId: string) {
+    async elementExist(elementId: string) {
+        return await this.environmentalContributionModel.findById(elementId)
+    }
+
+    async getProjectElements(postId: string) {
         return await this.environmentalContributionModel.aggregate([
             {
                 $match: {
@@ -5047,24 +5762,54 @@ export class PostsService {
             {
                 $limit: limit || 500
             },
-            // 🔧 IMPORTANT: Each document represents 1 individual element
             {
                 $project: {
                     _id: 1,
-                    postId: 1,
                     postType: '$post.postType',
-                    location: 1, // Individual element location (not project location)
-                    createdAt: '$post.createdAt',
-                    projectDetails: '$post.projectDetails',
-                    // Include specific environmental data for this individual element
-                    elementData: {
-                        plantationData: 1,
-                        garbageCollectionData: 1,
-                        waterPondsData: 1,
-                        rainWaterData: 1
-                    },
-                    media: 1, // Media for this specific element
-                    updateHistory: 1
+                    location: 1,
+                    projectName: '$post.projectDetails.name',
+                    elementSummary: {
+                        $switch: {
+                            branches: [
+                                {
+                                    case: { $eq: ['$post.postType', 'plantation'] },
+                                    then: {
+                                        species: '$plantationData.species',
+                                        type: '$plantationData.type',
+                                        estimatedHeight: '$plantationData.estimatedHeight',
+                                        isActive: '$plantationData.isActive'
+                                    }
+                                },
+                                {
+                                    case: { $eq: ['$post.postType', 'garbage_collection'] },
+                                    then: {
+                                        type: '$garbageCollectionData.type',
+                                        capacity: '$garbageCollectionData.capacity',
+                                        material: '$garbageCollectionData.material'
+                                    }
+                                },
+                                {
+                                    case: { $eq: ['$post.postType', 'water_ponds'] },
+                                    then: {
+                                        type: '$waterPondsData.type',
+                                        purpose: '$waterPondsData.purpose',
+                                        capacity: '$waterPondsData.capacity',
+                                        estimatedDepth: '$waterPondsData.estimatedDepth'
+                                    }
+                                },
+                                {
+                                    case: { $eq: ['$post.postType', 'rain_water'] },
+                                    then: {
+                                        type: '$rainWaterData.type',
+                                        capacity: '$rainWaterData.capacity',
+                                        storageMethod: '$rainWaterData.storageMethod',
+                                        estimatedVolume: '$rainWaterData.estimatedVolume'
+                                    }
+                                }
+                            ],
+                            default: {}
+                        }
+                    }
                 }
             }
         ];
@@ -5131,125 +5876,61 @@ export class PostsService {
         return clusters;
     }
 
-    async getGlobalMapCounts(query: GetGlobalMapCountsDTO) {
-        const { bounds, country, city } = query;
-
-        // 🔧 UPDATED: Count individual EnvironmentalContribution documents
-        const pipeline = [
-            // Join with Post data for filtering
-            {
-                $lookup: {
-                    from: 'posts',
-                    localField: 'postId',
-                    foreignField: '_id',
-                    as: 'post'
-                }
-            },
-            {
-                $unwind: '$post'
-            },
-            // Filter by environmental post types and visibility
-            {
-                $match: {
-                    'post.postType': { $in: ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] },
-                    'post.visibility': 'public'
-                }
-            },
-            // Add geographic filtering on individual element locations
-            ...(bounds ? [{
-                $match: {
-                    'location.latitude': {
-                        $gte: bounds.southWest.latitude,
-                        $lte: bounds.northEast.latitude
-                    },
-                    'location.longitude': {
-                        $gte: bounds.southWest.longitude,
-                        $lte: bounds.northEast.longitude
-                    }
-                }
-            }] : []),
-            ...(country ? [{
-                $match: {
-                    'location.country': { $regex: new RegExp(country, 'i') }
-                }
-            }] : []),
-            ...(city ? [{
-                $match: {
-                    'location.city': { $regex: new RegExp(city, 'i') }
-                }
-            }] : []),
-            // 🔧 KEY CHANGE: Count individual elements, not posts
-            {
-                $group: {
-                    _id: "$post.postType",
-                    totalElements: { $sum: 1 }, // Each EnvironmentalContribution doc = 1 element
-                    uniquePosts: { $addToSet: "$postId" } // Track unique projects
-                }
-            },
-            {
-                $project: {
-                    _id: 1,
-                    totalElements: 1,
-                    totalPosts: { $size: "$uniquePosts" }
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    categories: {
-                        $push: {
-                            category: "$_id",
-                            posts: "$totalPosts",
-                            totalElements: "$totalElements"
-                        }
-                    },
-                    totalPosts: { $sum: "$totalPosts" },
-                    totalElements: { $sum: "$totalElements" }
-                }
+    formatCounterDataToResponse(counters: any[]) {
+        const data = {
+            totalPosts: 0,
+            totalElements: 0,
+            categories: {
+                plantation: { posts: 0, totalTrees: 0 },
+                garbage_collection: { posts: 0, totalBins: 0 },
+                water_ponds: { posts: 0, totalPonds: 0 },
+                rain_water: { posts: 0, totalHarvesters: 0 }
             }
-        ];
-
-        const result = await this.environmentalContributionModel.aggregate(pipeline);
-
-        if (result.length === 0) {
-            return {
-                totalPosts: 0,
-                totalElements: 0,
-                categories: {
-                    plantation: { posts: 0, totalTrees: 0 },
-                    garbage_collection: { posts: 0, totalBins: 0 },
-                    water_ponds: { posts: 0, totalPonds: 0 },
-                    rain_water: { posts: 0, totalHarvesters: 0 }
-                }
-            };
-        }
-
-        const data = result[0];
-        const categoriesMap = {
-            plantation: { posts: 0, totalTrees: 0 },
-            garbage_collection: { posts: 0, totalBins: 0 },
-            water_ponds: { posts: 0, totalPonds: 0 },
-            rain_water: { posts: 0, totalHarvesters: 0 }
         };
 
-        // 🔧 UPDATED: Map to more specific naming (trees, bins, ponds, harvesters)
-        data.categories.forEach(cat => {
-            if (cat.category === 'plantation') {
-                categoriesMap['plantation'] = { posts: cat.posts, totalTrees: cat.totalElements };
-            } else if (cat.category === 'garbage_collection') {
-                categoriesMap['garbage_collection'] = { posts: cat.posts, totalBins: cat.totalElements };
-            } else if (cat.category === 'water_ponds') {
-                categoriesMap['water_ponds'] = { posts: cat.posts, totalPonds: cat.totalElements };
-            } else if (cat.category === 'rain_water') {
-                categoriesMap['rain_water'] = { posts: cat.posts, totalHarvesters: cat.totalElements };
+        const elementCounterMap = {
+            'plantation': 'totalTrees',
+            'garbage_collection': 'totalBins',
+            'water_ponds': 'totalPonds',
+            'rain_water': 'totalHarvesters'
+        };
+
+        const projectCounterMap = {
+            'plantation_projects': 'plantation',
+            'garbage_collection_projects': 'garbage_collection',
+            'water_ponds_projects': 'water_ponds',
+            'rain_water_projects': 'rain_water'
+        };
+
+        counters.forEach(counter => {
+            const count = counter.count || 0;
+            const name = counter.name;
+
+            if (elementCounterMap[name]) {
+                const category = name;
+                const elementField = elementCounterMap[name];
+
+                data.categories[category][elementField] += count;
+                data.totalElements += count;
+            }
+
+            else if (projectCounterMap[name]) {
+                const category = projectCounterMap[name];
+
+                data.categories[category].posts += count;
+                data.totalPosts += count;
             }
         });
 
-        return {
-            totalPosts: data.totalPosts,
-            totalElements: data.totalElements, // Total individual elements across all categories
-            categories: categoriesMap
-        };
+
+        return data;
+    }
+
+    async getGlobalMapCounts(query: GetGlobalMapCountsDTO) {
+        const { bounds, country, city } = query;
+
+        const data = await this.metricsAggregatorService.getGlobalEnvironmentalCounts()
+        return this.formatCounterDataToResponse(data)
     }
 
     async searchGlobalMapLocations(query: SearchGlobalMapLocationsDTO) {
@@ -5423,55 +6104,6 @@ export class PostsService {
         return R * c;
     }
 
-    async getPlantationsDue(targetDate: Date, stage: any) {
-        const plantationsDue = await this.postModel.aggregate([
-            {
-                $match: {
-                    postType: 'plantation',
-                    'plantationData.isActive': true,
-                    'plantationData.nextUpdateDue': {
-                        $gte: new Date(targetDate.setHours(0, 0, 0, 0)),
-                        $lt: new Date(targetDate.setHours(23, 59, 59, 999))
-                    }
-                }
-            },
-            {
-                $lookup: {
-                    from: 'notificationlogs',
-                    let: { postId: '$_id', stage: stage.stage },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$postId', { $toString: '$$postId' }] },
-                                        { $eq: ['$stage', '$$stage'] }
-                                    ]
-                                }
-                            }
-                        }
-                    ],
-                    as: 'sentNotifications'
-                }
-            },
-            {
-                $match: {
-                    'sentNotifications': { $size: 0 } // Only posts without this notification
-                }
-            },
-            {
-                $project: {
-                    _id: 1,
-                    user: 1,
-                    plantationData: 1,
-                    location: 1,
-                    createdAt: 1
-                }
-            }
-        ]);
-        return plantationsDue
-    }
-
     private async getClusteredMapData(geoQuery: any, clusterRadius: number, limit: number) {
         const radiusInRadians = clusterRadius / 6371;
 
@@ -5584,8 +6216,31 @@ export class PostsService {
         };
     }
 
-    async createEnvironmentalContribution(data: CreateEnvironmentalContributionDTO) {
+    async createElement(targetId: string, postType: string, data: CreateEnvironmentalContributionDTO) {
         const environmentalContribution = await this.environmentalContributionModel.create({ ...data, postId: new Types.ObjectId(data.postId) })
+
+        // global contributions
+        Promise.all([
+            this.metricsAggregatorService.incrementCount(null, "global_environmental_contributions", 'contributions'),
+            this.metricsAggregatorService.incrementCount(null, postType, "contributions"),
+            this.metricsAggregatorService.incrementCount(null, postType, `${environmentalContribution.location.country}_contributions`),
+
+            // user/page specific contributions
+            this.metricsAggregatorService.incrementCount(new Types.ObjectId(targetId), postType, 'contributions')
+        ])
+        return environmentalContribution
+    }
+
+
+    async updateElement(elementId: string, data: UpdateEnvironmentalContributionDTO) {
+        const environmentalContribution = await this.environmentalContributionModel.findByIdAndUpdate(
+            elementId,
+            {
+                $set:
+                {
+                    updateHistory: data.updateHistory
+                }
+            })
         return environmentalContribution
     }
 

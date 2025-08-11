@@ -23,6 +23,8 @@ import TermsAndConditions from "./pages/user/TermsAndConditions";
 import PrivacyPolicy from "./pages/user/PrivacyPolicy";
 import ChildSafetyPolicy from "./pages/user/ChildrenPrivacy";
 import ReelsContainer from "./components/Reel/ReelsSection";
+import GlobalEnvironmentalMap from "./components/GlobalEnvironmentalMap";
+import HashtagScreen from "./sections/HashtagScreen";
 // import ReelsFeed from "./sections/ReelsFeed";
 
 export const router = createBrowserRouter([
@@ -35,11 +37,16 @@ export const router = createBrowserRouter([
                 element: <MainHome children={<FeedSection />} />,
                 index: true
             },
-            // {
-            //     path: "/reels",
-            //     element: <ReelsFeed />,
-            //     index: true
-            // },
+            {
+                path: "/environmental-contributions",
+                element: <GlobalEnvironmentalMap />,
+                index: true
+            },
+
+            {
+                path: "/hashtags-feed/:hashtag",
+                element: <MainHome children={<HashtagScreen />} />,
+            },
             {
                 path: "/login",
                 element: <LoginForm />,

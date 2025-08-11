@@ -36,10 +36,10 @@ function FeedSection() {
     const createPost = useCreatePost("userPosts", user?._id)
     const createReel = useCreateReel()
 
-    const _createPost = async ({ visibility, content, selectedMedia, formData }) => {
-        let postDetails = { content, type: "user", postType: 'post', targetId: user?._id, visibility }
+    const _createPost = async ({ visibility, content, selectedMedia, backgroundColor, mentions, mentionReferences, formData }) => {
+        let postDetails = { content, type: "user", postType: 'post', backgroundColor, mentions,  targetId: user?._id, visibility }
         formData.append("postData", JSON.stringify(postDetails))
-        createPost.mutate({ content, formData, selectedMedia, postType: 'post', type: "user", target: user })
+        createPost.mutate({ content, formData, selectedMedia, mentions, mentionReferences, backgroundColor, postType: 'post', type: "user", target: user })
         setPostModal(false)
     }
 

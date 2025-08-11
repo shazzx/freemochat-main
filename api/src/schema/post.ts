@@ -11,6 +11,9 @@ class Location {
     @Prop({ type: String })
     address?: string;
 
+    @Prop({ type: Number })
+    accuracy?: number;
+
     @Prop({ type: String })
     country?: string;
 
@@ -124,6 +127,9 @@ export class Post {
 
     @Prop({ type: Types.ObjectId })
     sharedPost: ObjectId
+
+    @Prop({ type: String })
+    backgroundColor: String;
 
     @Prop({ type: String, required: true })
     type: String;

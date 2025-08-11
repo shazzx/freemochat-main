@@ -194,7 +194,8 @@ export class UploadListener {
         type,
         uploadType,
         fileBuffer,
-        filename
+        filename,
+        _media
     }) {
         try {
             // Wait for video upload to complete
@@ -212,6 +213,42 @@ export class UploadListener {
             const media = [{ ...postMedia[0], thumbnail: thumbnail.url }]
             const postDetails = { media, isUploaded: null }
             await this.postsService.updatePost(postId, postDetails);
+            if (_media.length > 0) {
+                _media.forEach(async (media) => {
+                    if (media.url) {
+                        let videoUrlSplit = media?.url?.split("/")
+                        let thumbnailUrlSplit = media?.thumbnail?.split("/")
+                        let watermarkUrlSplit = media?.watermarkUrl?.split("/")
+
+                        console.log(`deleting ${videoUrlSplit}, ${thumbnailUrlSplit}, ${watermarkUrlSplit} from s3...`)
+
+                        let videoFilename = videoUrlSplit?.[videoUrlSplit?.length - 1]
+                        let thumbnailFilename = thumbnailUrlSplit?.[thumbnailUrlSplit?.length - 1]
+                        let watermarkedVideoFilename = watermarkUrlSplit?.[watermarkUrlSplit?.length - 1]
+
+                        console.log(videoFilename, thumbnailFilename, watermarkedVideoFilename, 'filenames')
+
+                        console.log(`deleting ${videoFilename} from s3...`)
+
+                        if (videoFilename) {
+                            const video = await this.uploadService.deleteFromS3(videoFilename)
+                            console.log(video.$metadata.httpStatusCode)
+                        }
+
+                        if (thumbnailFilename) {
+                            const thumbnail = await this.uploadService.deleteFromS3(thumbnailFilename)
+                            console.log(`deleting ${thumbnailFilename} from s3...`)
+                            console.log(thumbnail.$metadata.httpStatusCode)
+                        }
+
+                        if (watermarkedVideoFilename) {
+                            const watermarkVideo = await this.uploadService.deleteFromS3(watermarkedVideoFilename)
+                            console.log(`deleting ${watermarkedVideoFilename} from s3...`)
+                            console.log(watermarkVideo.$metadata.httpStatusCode, 'deleted')
+                        }
+                    }
+                })
+            }
             await this.chatGateway.uploadSuccess({
                 isSuccess: true, target: {
                     targetId,

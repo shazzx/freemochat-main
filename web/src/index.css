@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
 .campaign_cards-container {
   display: flex;
   gap: 12px;
@@ -46,14 +58,14 @@
 
 
 @media screen and (max-width: 500px) {
-  .empty-chat-container{
+  .empty-chat-container {
     display: none;
   }
 
 }
 
-@media screen and (min-width: 500px){
-  .chat-sidebar-container{
+@media screen and (min-width: 500px) {
+  .chat-sidebar-container {
     display: flex;
   }
 }
@@ -90,7 +102,6 @@
     --profile: 0 0% 90%;
     --particles: 0 0% 95%;
     --dark: 0 0% 3.5%
-
   }
 
   .dark {
@@ -115,7 +126,7 @@
     --border: 0 0% 8%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
-    
+
     /* custom */
     --primary-active: 227 100% 57%;
     --primary-foreground: 210 40% 98%;
@@ -169,7 +180,7 @@ audio::-moz-progress-bar {
   opacity: 100%;
 }
 
-#videoCallContainer{
+#videoCallContainer {
   overflow: hidden;
   padding: 40px;
   width: 100vw;
@@ -185,7 +196,7 @@ audio::-moz-progress-bar {
   overflow: hidden;
 }
 
-#audioCallContainer{
+#audioCallContainer {
   overflow: hidden;
   padding: 40px;
   width: 100vw;
@@ -211,7 +222,7 @@ audio::-moz-progress-bar {
   overflow: hidden;
 }
 
-.mainContainer{
+.mainContainer {
   width: 100vw;
   height: 100vh;
 }
@@ -220,7 +231,7 @@ audio::-moz-progress-bar {
 /* video call */
 
 /* remote user */
-.remoteVideoContainer{
+.remoteVideoContainer {
   display: flex;
   background-color: black;
   align-items: center;
@@ -232,12 +243,12 @@ audio::-moz-progress-bar {
   padding: 10px;
 }
 
-.remote-video-container-mobile{
+.remote-video-container-mobile {
   aspect-ratio: 9/16;
   height: 100%;
 }
 
-.remote-video-container{
+.remote-video-container {
   border-radius: 6px;
   overflow: hidden;
   aspect-ratio: 9/5;

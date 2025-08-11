@@ -99,30 +99,41 @@ export function Notifications({ setNotificationsState }) {
                                         className="flex gap-2 p-2 hover:bg-accent rounded-md cursor-pointer active:bg-muted"
                                     >
                                         <div className='w-14 h-14 flex flex-col items-center justify-center rounded-lg border-primary border-2 bg-card overflow-hidden'>
-                                            <Link onClick={() => setNotificationsState(false)} to={domain + "/user/" + notification?.sender?.username}>
+                                            {notification?.sender ? <Link onClick={() => setNotificationsState(false)} to={domain + "/user/" + notification?.sender?.username}>
 
                                                 <Avatar>
                                                     <AvatarImage src={notification?.sender?.profile} alt="Avatar" />
                                                     <AvatarFallback className='text-xl'>{notification?.sender?.firstname[0]?.toUpperCase()}</AvatarFallback>
                                                 </Avatar>
-                                            </Link>
+                                            </Link> :
+                                                <Avatar>
+                                                    <AvatarFallback className='text-xl'>{'S'}</AvatarFallback>
+                                                </Avatar>
+                                            }
                                         </div>
-                                        <div className="space-y-1 flex  justify-center flex-col">
-                                            <Link onClick={() => setNotificationsState(false)} to={domain + "/user/" + notification?.sender?.username}>
+                                        <div className="max-w-[80%] space-y-1 flex  justify-center flex-col">
+                                            {notification?.sender ? < Link onClick={() => setNotificationsState(false)} to={domain + "/user/" + notification?.sender?.username}>
                                                 <p className="text-md flex gap-2 font-medium leading-none">
                                                     {notification?.sender?.firstname + " " + notification?.sender?.lastname}
                                                     <span className="text-sm">({notification?.sender?.username})</span>
-                                                    {/* <span className="text-xs">{format(notification.createdAt ?? Date.now(), 'MMM d, h:mm a')}</span> */}
+                                                </p>
+                                            </Link>
+                                                :
+                                                <p className="text-md flex gap-2 font-medium leading-none">
+                                                    {"System"}
                                                 </p>
 
-                                            </Link>
-
-                                            <Link onClick={() => setNotificationsState(false)} to={getTarget(notification.targetType, notification.targetId, notification?.handle, notification.type)}>
-
-                                                <p className="text-sm text-muted-foreground">
+                                            }
+                                            {notification?.sender ? <Link onClick={() => setNotificationsState(false)} to={getTarget(notification.targetType, notification.targetId, notification?.handle, notification.type)}>
+                                                <p className="text-sm text-wrap text-muted-foreground">
                                                     {notification?.value}
                                                 </p>
                                             </Link>
+                                                :
+                                                <p className="text-sm text-wrap text-muted-foreground">
+                                                    {notification?.value}
+                                                </p>
+                                            }
 
                                         </div>
                                     </div>)
@@ -132,7 +143,7 @@ export function Notifications({ setNotificationsState }) {
                     </div>
                 </CardContent>
             </Card>
-        </div>
+        </div >
 
     )
 }

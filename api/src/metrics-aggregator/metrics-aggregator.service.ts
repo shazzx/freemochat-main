@@ -1,15 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { NotificationService } from 'src/notification/notification.service';
 import { Counter } from 'src/schema/Counter';
 
 @Injectable()
 export class MetricsAggregatorService {
     constructor(
         @InjectModel(Counter.name) private readonly counterModel: Model<Counter>,
-        // private readonly notificationService: NotificationService,
-
     ) { }
 
     async incrementCount(targetId: Types.ObjectId, name: string, type: string, session?: any, customCount?: number) {
@@ -32,7 +29,11 @@ export class MetricsAggregatorService {
         return { notification, requests, unreadChatlists }
     }
 
-    async userContributions(targetId: string) {
+    async getGlobalEnvironmentalCounts() {
+        return await this.counterModel.find({ targetId: null, type: "contributions" })
+    }
+
+    async userAndPageContributions(targetId: string) {
         let plantation = await this.counterModel.findOne(
             {
                 targetId: new Types.ObjectId(targetId),

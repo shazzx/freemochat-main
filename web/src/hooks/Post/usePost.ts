@@ -2,13 +2,189 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { toast } from 'react-toastify';
 import { produce } from 'immer'
-import { bookmarkPost, createPost, createSharedPost, fetchFeed, fetchPost, fetchPostLikes, fetchPosts, likePost, promotePost, removePost, updatePost } from '@/api/Post/posts';
+import { bookmarkPost, createPost, createSharedPost, fetchFeed, fetchHashtag, fetchHashtagsFeed, fetchPost, fetchPostLikes, fetchPosts, likePost, promotePost, removePost, updatePost } from '@/api/Post/posts';
 import { UrlObject } from 'url';
 import { axiosClient } from '@/api/axiosClient';
 import { redirectToCheckout } from '@/utils/redirectToCheckout';
 import { createReel } from '@/api/Reel/reel.api';
 import { useCallback } from 'react';
 
+export function useHashtagsFeed(hashtag: string, refresh = false) {
+  const {
+    data,
+    isLoading,
+    isFetching,
+    fetchNextPage,
+    fetchPreviousPage,
+    fetchStatus,
+    isSuccess,
+    refetch,
+    isFetchingNextPage,
+    error,
+    hasNextPage
+  } = useInfiniteQuery({
+    queryKey: ['hashtags-feed', hashtag],
+    queryFn: ({ pageParam }) => {
+      return fetchHashtagsFeed({ cursor: pageParam, hashtag, refresh });
+    },
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined,
+  });
+
+  const pages = data?.pages ?? [];
+
+  return {
+    data: pages,
+    isLoading,
+    isSuccess,
+    isFetching,
+    fetchPreviousPage,
+    isFetchingNextPage,
+    fetchStatus,
+    refetch,
+    fetchNextPage,
+    error,
+    hasNextPage: !!pages[pages.length - 1]?.nextCursor,
+  };
+}
+
+export function useHashtag(hashtag: string) {
+  const {
+    data,
+    isLoading,
+  } = useQuery({
+    queryKey: ['hashtag', hashtag],
+    queryFn: () => {
+      return fetchHashtag(hashtag);
+    },
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+  });
+
+
+  return {
+    data,
+    isLoading,
+  };
+}
+
+export const useLikeHashtagsFeedPost = (hashtag: string) => {
+  const queryClient = useQueryClient()
+  const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+    mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, authorId: string, type?: string, targetId: string, reaction?: string }) => {
+      return likePost({ postId: postDetails.postId, authorId: postDetails.authorId, type: postDetails?.type, targetId: postDetails.targetId, reaction: postDetails?.reaction })
+    },
+
+    onMutate: async ({ postId, postIndex, pageIndex, reaction }) => {
+      await queryClient.cancelQueries({ queryKey: ['hashtags-feed', hashtag] })
+      const previousFeed = queryClient.getQueryData(['hashtags-feed', hashtag])
+
+      queryClient.setQueryData(['hashtags-feed', hashtag], (pages: any) => {
+        const updatedFeed = produce(pages, (draft: any) => {
+          console.log(postId, postIndex, pageIndex, reaction)
+
+          if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
+            draft.pages[pageIndex].posts[postIndex].isLikedByUser = false
+            draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount - 1
+            draft.pages[pageIndex].posts[postIndex] = { ...draft.pages[pageIndex].posts[postIndex], reaction: null }
+            return draft
+          }
+
+          if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isLikedByUser) {
+            draft.pages[pageIndex].posts[postIndex].likesCount = draft.pages[pageIndex].posts[postIndex].likesCount + 1
+            draft.pages[pageIndex].posts[postIndex] = { ...draft.pages[pageIndex].posts[postIndex], reaction }
+            draft.pages[pageIndex].posts[postIndex].isLikedByUser = true
+            return draft
+          }
+
+          throw new Error()
+        })
+        return updatedFeed
+      });
+
+      return { previousFeed };
+    },
+
+    onError: (err, newComment, context) => {
+      console.log(err.message)
+      toast.error("Something went wrong")
+      queryClient.setQueryData(['hashtags-feed', hashtag], context.previousFeed)
+    },
+
+    onSettled: (data) => {
+      // Uncomment this will refetch the feed again from the server to be in sync
+      // queryClient.invalidateQueries({ queryKey: ["hashtags-feed", hashtag] })
+    }
+  })
+
+  return {
+    data,
+    isPending,
+    isSuccess,
+    mutateAsync,
+    mutate
+  }
+}
+
+export const useBookmarkHashtagsFeedPost = (hashtag: string) => {
+  const queryClient = useQueryClient()
+  const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+    mutationFn: (postDetails: { postId: string, pageIndex: number, postIndex: number, targetId: string, type: string, postType?: string }) => {
+      return bookmarkPost({ postId: postDetails.postId, targetId: postDetails.targetId, type: postDetails.type, postType: postDetails?.postType })
+    },
+
+    onMutate: async ({ postId, postIndex, pageIndex }) => {
+      await queryClient.cancelQueries({ queryKey: ['hashtags-feed', hashtag] })
+      const previousPosts = queryClient.getQueryData(['hashtags-feed', hashtag])
+
+      queryClient.setQueryData(['hashtags-feed', hashtag], (pages: any) => {
+        const updatedPosts = produce(pages, (draft: any) => {
+          if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && draft.pages[pageIndex].posts[postIndex].isBookmarkedByUser) {
+            draft.pages[pageIndex].posts[postIndex].isBookmarkedByUser = false
+            return draft
+          }
+
+          if (draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId && !draft.pages[pageIndex].posts[postIndex].isBookmarkedByUser) {
+            draft.pages[pageIndex].posts[postIndex].isBookmarkedByUser = true
+            return draft
+          }
+
+          throw new Error()
+        })
+        return updatedPosts
+      });
+
+      return { previousPosts };
+    },
+
+    onError: (err, newComment, context) => {
+      toast.error("Something went wrong")
+      queryClient.setQueryData(['hashtags-feed', hashtag], context.previousPosts)
+    },
+
+    onSettled: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['hashtags-feed', hashtag] })
+      // Uncomment this will refetch the feed again from the server to be in sync
+      // queryClient.invalidateQueries({ queryKey: ["hashtags-feed", hashtag] })
+    }
+  })
+
+  return {
+    data,
+    isPending,
+    isSuccess,
+    mutateAsync,
+    mutate
+  }
+}
 
 export function useFeed(reelsCursorRef = { current: null }) {
   const fetchFeedWithRef = useCallback(({ pageParam }) => {
@@ -105,16 +281,28 @@ export function useUserPosts(type: string, targetId: string, isSelf): any {
 }
 
 
+export interface MentionReference {
+  _id: string;       // User ID from backend
+  username: string;  // Username
+  firstname: string;
+  lastname: string;
+  profile: string;
+}
+
+export interface Mentions {
+  _id: string;
+}
+
 export const useCreatePost = (key: string, targetId?: string) => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (postDetails: { postType?: string, content: string, selectedMedia: { file: File, type: string, url: UrlObject }[], formData: FormData, type: string, target: any, isUploaded?: boolean }) => {
+    mutationFn: (postDetails: { postType?: string, mentions: Mentions[], mentionReferences: MentionReference, backgroundColor?: string, content: string, selectedMedia: { file: File, type: string, url: UrlObject }[], formData: FormData, type: string, target: any, isUploaded?: boolean }) => {
       return createPost(postDetails.formData)
     },
 
 
-    onMutate: async ({ content, selectedMedia, postType, type, target }) => {
+    onMutate: async ({ content, selectedMedia, postType, backgroundColor, type, target, mentions, mentionReferences }) => {
       await queryClient.cancelQueries({ queryKey: [key, targetId] })
       const previousPosts = queryClient.getQueryData([key, targetId])
       await queryClient.cancelQueries({ queryKey: ['feed'] })
@@ -123,7 +311,7 @@ export const useCreatePost = (key: string, targetId?: string) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft?.pages && draft?.pages[0].posts) {
             console.log(pages, 'feed')
-            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, postType, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, backgroundColor, mentions, mentionReferences, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, postType, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
             return draft
           }
 
@@ -145,7 +333,7 @@ export const useCreatePost = (key: string, targetId?: string) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft?.pages && draft?.pages[0].posts) {
 
-            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, postType, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), mentions, mentionReferences, target, type, postType, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
             return draft
           }
 

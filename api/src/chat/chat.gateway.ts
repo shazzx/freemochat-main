@@ -367,9 +367,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async uploadSuccess(data) {
     let user = JSON.parse(await this.cacheService.getOnlineUser(data?.target?.targetId))
-    this.server.emit('upload-status', data)
     this.server.to(user?.socketId).emit('upload-status', data)
-    // this.server.to(recepientId).emit('notification', event)
   }
 
   async handleConnection(socket: Socket) {

@@ -4,13 +4,24 @@
 // PostSchema.index({ postType: 1, visibility: 1, createdAt: -1 });
 // PostSchema.index({ "location.latitude": 1, "location.longitude": 1, postType: 1 });
 
+
 import { z } from 'zod'
 import { Cursor, ValidMongoId } from './global'
 import { Types } from 'mongoose';
 
+export type EnvironmentalContributionType = 'plantation' | 'garbage_collection' | 'water_ponds' | 'rain_water';
+export interface ValidationResult {
+    isValid: boolean;
+    confidence: number;
+    detectedLabels: string[];
+    reason?: string;
+    suggestedCategory?: EnvironmentalContributionType;
+}
+
 const LocationSchema = z.object({
     latitude: z.number().min(-90).max(90),
     longitude: z.number().min(-180).max(180),
+    accuracy: z.number().min(0).max(100),
     address: z.string().optional(),
     country: z.string().optional(),
     city: z.string().optional()
@@ -62,7 +73,7 @@ const RainWaterDataSchema = z.object({
 });
 
 const UpdateHistoryItemSchema = z.object({
-    updateDate: z.date(),
+    updateDate: z.string().datetime(),
     media: z.array(MediaSchema),
     notes: z.string().optional()
 });
@@ -72,6 +83,7 @@ export const CreatePost = z.object({
     targetId: ValidMongoId.optional(),
     username: z.string().optional(),
     content: z.string().optional(),
+    backgroundColor: z.string().optional(),
     type: z.string(),
     postType: z.enum(['post', 'plantation', 'garbage_collection', 'water_ponds', 'rain_water']).default('post'),
     visibility: z.string().default('public'),
@@ -94,6 +106,7 @@ export const CreatePost = z.object({
 
 // Separate Environmental Contribution Schema
 export const CreateEnvironmentalContribution = z.object({
+    elementId: ValidMongoId.optional(),
     postId: ValidMongoId,
     media: z.array(MediaSchema).optional().default([]),
     location: LocationSchema.optional(),
@@ -118,14 +131,15 @@ export const CreateEnvironmentalContribution = z.object({
 
 // Update Environmental Contribution Schema
 export const UpdateEnvironmentalContribution = z.object({
-    contributionId: ValidMongoId,
-    media: z.array(MediaSchema).optional(),
-    location: LocationSchema.optional(),
+    elementId: ValidMongoId,
+    postId: ValidMongoId,
+    // media: z.array(MediaSchema).optional(),
+    // location: LocationSchema.optional(),
     plantationData: PlantationDataSchema.optional(),
     garbageCollectionData: GarbageCollectionDataSchema.optional(),
     waterPondsData: WaterPondsDataSchema.optional(),
     rainWaterData: RainWaterDataSchema.optional(),
-    updateNotes: z.string().optional()
+    updateHistory: z.array(UpdateHistoryItemSchema).optional().default([])
 });
 
 // Existing schemas (updated where necessary)
@@ -140,6 +154,7 @@ export const CreateSharedPost = z.object({
 export const UpdatePost = z.object({
     postId: ValidMongoId,
     content: z.string().optional(),
+    backgroundColor: z.string().optional(),
     type: z.string(),
     mentions: z.array(ValidMongoId).max(50).optional().default([]),
     visibility: z.string(),
@@ -149,6 +164,11 @@ export const UpdatePost = z.object({
         remove: z.boolean().optional(),
         type: z.string(),
     })).optional(),
+});
+
+export const UpdateProject = z.object({
+    postId: ValidMongoId,
+    projectDetails: ProjectDetailsSchema.optional(),
 });
 
 export const DeletePost = z.object({
@@ -269,6 +289,7 @@ export type CreateEnvironmentalContributionDTO = z.infer<typeof CreateEnvironmen
 export type UpdateEnvironmentalContributionDTO = z.infer<typeof UpdateEnvironmentalContribution>;
 export type CreateSharedPostDTO = z.infer<typeof CreateSharedPost>;
 export type UpdatePostDTO = z.infer<typeof UpdatePost>;
+export type UpdateProjectDTO = z.infer<typeof UpdateProject>;
 export type DeletePostDTO = z.infer<typeof DeletePost>;
 export type GetPostDTO = z.infer<typeof GetPost>;
 export type LikePostDTO = z.infer<typeof LikePost>;

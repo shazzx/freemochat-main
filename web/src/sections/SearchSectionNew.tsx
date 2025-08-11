@@ -8,16 +8,19 @@ import { domain } from '@/config/domain'
 import { useBookmarkSearchPost, useLikeSearchPost } from '@/hooks/Post/usePost'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import NoSearchResult from './NoSearchResult'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useInView } from 'react-intersection-observer'
+import HashtagResult from './HashtagResult'
+import TrendingHashtags from './TrendingHashtags'
 
 const ITEMS_PER_PAGE = 10
 
 function SearchSection() {
     const [searchParams, setSearchParams] = useSearchParams()
     const dispatch = useAppDispatch()
+    const navigate = useNavigate()
     const { user } = useAppSelector(state => state.user)
 
     // Get search parameters
@@ -60,11 +63,23 @@ function SearchSection() {
         refetchOnWindowFocus: false,
     })
 
+    // Fetch trending hashtags when on hashtags tab with no search query
+    const { data: trendingHashtags, isLoading: trendingLoading } = useQuery({
+        queryKey: ['trending-hashtags'],
+        queryFn: async () => {
+            const { data } = await axiosClient.get('/search/trending-hashtags?limit=10')
+            return data
+        },
+        enabled: type === 'hashtags' && !searchQuery.trim(),
+        refetchOnWindowFocus: false,
+    })
+
     // Flatten the results from all pages
     const allUsers = data ? data.pages.flatMap(page => page.users || []) : []
     const allPosts = data ? data.pages.flatMap(page => page.posts || []) : []
     const allGroups = data ? data.pages.flatMap(page => page.groups || []) : []
     const allPages = data ? data.pages.flatMap(page => page.pages || []) : []
+    const allHashtags = data ? data.pages.flatMap(page => page.hashtags || []) : []
 
     // Load more when second-to-last item is in view
     useEffect(() => {
@@ -79,6 +94,11 @@ function SearchSection() {
         setSearchParams(searchParams)
         setType(newType)
     }
+
+    // Handle hashtag press
+    const handleHashtagPress = useCallback((hashtag) => {
+        navigate(`/hashtags-feed/${hashtag}`)
+    }, [navigate])
 
     // Join group handler
     const joinGroup = async (groupId) => {
@@ -150,33 +170,6 @@ function SearchSection() {
                         <div className='text-gray-400 text-sm'>@{userData?.username}</div>
                     </div>
                 </div>
-                {/* {showActions && user?.username !== userData?.username && (
-                    <div className='flex gap-2'>
-                        {user?.friends?.includes(userData?._id) && (
-                            <Button variant="outline">Friends</Button>
-                        )}
-                        {user?.sentRequests?.includes(userData?._id) && (
-                            <Button variant="outline" onClick={(e) => {
-                                e.preventDefault()
-                                sendFriendRequest(userData?.username)
-                            }}>Cancel</Button>
-                        )}
-                        {user?.recievedRequests?.includes(userData?._id) && (
-                            <Button onClick={(e) => {
-                                e.preventDefault()
-                                acceptFriendRequest(userData?.username)
-                            }}>Accept</Button>
-                        )}
-                        {!user?.recievedRequests?.includes(userData?._id) &&
-                            !user?.sentRequests?.includes(userData?._id) &&
-                            !user?.friends?.includes(userData?._id) && (
-                                <Button onClick={(e) => {
-                                    e.preventDefault()
-                                    sendFriendRequest(userData?.username)
-                                }}>Add Friend</Button>
-                            )}
-                    </div>
-                )} */}
             </div>
         </Link>
     )
@@ -199,16 +192,6 @@ function SearchSection() {
                         <div className='text-gray-400 text-sm'>@{group?.handle}</div>
                     </div>
                 </div>
-                {/* <div className='flex gap-2'>
-                    {!group?.admins?.includes(user?._id) && !group?.members?.includes(user?._id) ? (
-                        <Button onClick={(e) => {
-                            e.preventDefault()
-                            joinGroup(group?._id)
-                        }}>Join</Button>
-                    ) : (
-                        <Button variant="outline">Member</Button>
-                    )}
-                </div> */}
             </div>
         </Link>
     )
@@ -231,19 +214,6 @@ function SearchSection() {
                         <div className='text-gray-400 text-sm'>@{page?.handle}</div>
                     </div>
                 </div>
-                {/* <div className='flex gap-2'>
-                    {page && !page.admins?.includes(user?._id) && (
-                        page?.followers?.includes(user?._id) ? (
-                            <Button variant="outline">Followed</Button>
-                        ) : (
-                            <Button onClick={(e) => {
-                                e.preventDefault()
-                                followPage(page?._id)
-                            }}>Follow</Button>
-                        )
-                    )}
-                    {page && page.admins?.includes(user?._id) && <Button variant="outline">Admin</Button>}
-                </div> */}
             </div>
         </Link>
     )
@@ -264,13 +234,69 @@ function SearchSection() {
         />
     )
 
+    // Render hashtag content
+    const renderHashtagContent = () => {
+        // Show trending hashtags when no search query
+        if (!searchQuery.trim()) {
+            if (trendingLoading) {
+                return <ScreenLoader />
+            }
+            return (
+                <div className='w-full flex flex-col gap-2'>
+                    <TrendingHashtags onHashtagPress={handleHashtagPress} />
+                </div>
+            )
+        }
+
+        // Show hashtag search results
+        if (isLoading) {
+            return <ScreenLoader />
+        }
+
+        if (allHashtags.length === 0) {
+            return <NoSearchResult content={`No hashtags found for "${searchQuery}"`} />
+        }
+
+        return (
+            <div className='w-full flex flex-col gap-2'>
+                <div className='font-medium text-lg'>Hashtags</div>
+                {allHashtags.map((hashtag, index) => {
+                    // Add ref to second-to-last item for infinite loading
+                    if (index === allHashtags.length - 2) {
+                        return (
+                            <div ref={loadMoreRef} key={hashtag._id}>
+                                <HashtagResult
+                                    hashtag={hashtag}
+                                    onPress={handleHashtagPress}
+                                />
+                            </div>
+                        )
+                    }
+                    return (
+                        <HashtagResult
+                            key={hashtag._id}
+                            hashtag={hashtag}
+                            onPress={handleHashtagPress}
+                        />
+                    )
+                })}
+                {isFetchingNextPage && <div className="w-full text-center py-4">Loading more...</div>}
+            </div>
+        )
+    }
+
     // Render content based on type
     const renderContent = () => {
+        // Special handling for hashtags
+        if (type === 'hashtags') {
+            return renderHashtagContent()
+        }
+
         if (isLoading) return <ScreenLoader />
         if (isError) return <NoSearchResult content="An error occurred" />
 
         if (type === 'all') {
-            if (allUsers.length === 0 && allGroups.length === 0 && allPages.length === 0 && allPosts.length === 0) {
+            if (allUsers.length === 0 && allGroups.length === 0 && allPages.length === 0 && allPosts.length === 0 && allHashtags.length === 0) {
                 return <NoSearchResult content='No results found' />
             }
 
@@ -330,23 +356,29 @@ function SearchSection() {
                         </div>
                     )}
 
-                    {/* Posts section - Optional for default view */}
-                    {/* {allPosts.length > 0 && (
+                    {/* Hashtags section */}
+                    {allHashtags.length > 0 && (
                         <div className='w-full flex flex-col gap-2 mb-4'>
-                            <div className='font-medium text-lg'>Posts</div>
-                            {allPosts.slice(0, 3).map((post, index) => renderPost(post, index))}
-                            {allPosts.length > 3 && (
+                            <div className='font-medium text-lg'>Hashtags</div>
+                            {allHashtags.slice(0, 3).map(hashtag => (
+                                <HashtagResult
+                                    key={hashtag._id}
+                                    hashtag={hashtag}
+                                    onPress={handleHashtagPress}
+                                />
+                            ))}
+                            {allHashtags.length > 3 && (
                                 <div className='w-full text-center mt-2'>
                                     <Button
                                         className='bg-card hover:bg-card/90 text-foreground'
-                                        onClick={() => updateType("posts")}
+                                        onClick={() => updateType("hashtags")}
                                     >
-                                        Show more posts
+                                        Show more hashtags
                                     </Button>
                                 </div>
                             )}
                         </div>
-                    )} */}
+                    )}
                 </>
             )
         }
@@ -428,34 +460,34 @@ function SearchSection() {
                 {/* Search filters */}
                 <div className='flex w-full gap-3 flex-wrap items-center border border-muted p-2 bg-card rounded-md'>
                     <Button
-                        className={`${type === 'all' ? 'bg-primary' : 'bg-button'}`}
+                        className={`${type === 'all' ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80 text-foreground'}`}
                         onClick={() => updateType("all")}
                     >
                         All
                     </Button>
                     <Button
-                        className={`${type === 'users' ? 'bg-primary' : 'bg-button'}`}
+                        className={`${type === 'users' ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80 text-foreground'}`}
                         onClick={() => updateType("users")}
                     >
                         Users
                     </Button>
-                    {/* <Button
-                        className={`${type === 'posts' ? 'bg-primary' : 'bg-button'}`}
-                        onClick={() => updateType("posts")}
-                    >
-                        Posts
-                    </Button> */}
                     <Button
-                        className={`${type === 'pages' ? 'bg-primary' : 'bg-button'}`}
+                        className={`${type === 'pages' ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80 text-foreground'}`}
                         onClick={() => updateType("pages")}
                     >
                         Pages
                     </Button>
                     <Button
-                        className={`${type === 'groups' ? 'bg-primary' : 'bg-button'}`}
+                        className={`${type === 'groups' ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80 text-foreground'}`}
                         onClick={() => updateType("groups")}
                     >
                         Groups
+                    </Button>
+                    <Button
+                        className={`${type === 'hashtags' ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80 text-foreground'}`}
+                        onClick={() => updateType("hashtags")}
+                    >
+                        Hashtags
                     </Button>
                 </div>
 

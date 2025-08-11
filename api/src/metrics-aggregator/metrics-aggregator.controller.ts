@@ -14,10 +14,10 @@ export class MetricsAggregatorController {
     res.json(await this.metricsAggregatorService.userMetrics(sub))
   }
 
-  @Get("user/contributions")
+  @Get("contributions")
   async userContributions(@Req() req: Request, @Res() res: Response) {
     const { sub } = req.user as { sub: string }
-    res.json(await this.metricsAggregatorService.userContributions(sub))
+    res.json(await this.metricsAggregatorService.userAndPageContributions(sub))
   }
 
   @Post("user/metrics/default")

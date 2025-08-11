@@ -92,11 +92,23 @@ export class NotificationService {
     await this.metricsAggregatorService.decrementCount(new Types.ObjectId(userId), 'notification', 'user')
   }
 
-  public async readAllNotifications() {
-    return await this.notificationModel.updateMany(
-      { isRead: false },
-      { $set: { isRead: true } }
+  public async readAllNotifications(userId: string) {
+    const result = await this.notificationModel.updateMany(
+      {
+        user: new Types.ObjectId(userId),
+        isRead: { $ne: true } 
+      },
+      {
+        $set: {
+          isRead: true,
+          readAt: new Date() 
+        }
+      }
     );
+
+    await this.metricsAggregatorService.defaultCount(userId, 'notification', 'user')
+
+    return result;
   }
 
   public async getPushNotificationReceipts(
@@ -140,7 +152,10 @@ export class NotificationService {
         }
       },
       {
-        $unwind: "$sender"
+        $unwind: {
+          path: "$sender",
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $project: {
@@ -152,12 +167,14 @@ export class NotificationService {
           targetType: 1,
           handle: 1,
           targetId: 1,
-          sender: 1,
+          sender: 1,  
+          isRead: 1,  
           updatedAt: 1,
           createdAt: 1,
         },
       },
     ]);
+
 
     const hasNextPage = notifications.length > limit;
     const _notifications = hasNextPage ? notifications.slice(0, -1) : notifications;
