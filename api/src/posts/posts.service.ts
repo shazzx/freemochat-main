@@ -60,6 +60,84 @@ export class PostsService {
         }
     }
 
+    // async updatePosts() {
+    //     // Replace this with your actual domains:
+    //     const OLD_DOMAIN = "https://d2skidyn2qrzjz.cloudfront.net";
+    //     const NEW_DOMAIN = "https://cdn.freemochat.com";
+
+    //     // Update Posts collection
+    //     const data = await this.postModel.updateMany(
+    //         {
+    //             $or: [
+    //                 { "media.url": { $regex: "d2skidyn2qrzjz.cloudfront.net" } },
+    //                 { "media.watermarkUrl": { $regex: "d2skidyn2qrzjz.cloudfront.net" } },
+    //                 { "media.thumbnail": { $regex: "d2skidyn2qrzjz.cloudfront.net" } }
+    //             ]
+    //         },
+    //         [
+    //             {
+    //                 $set: {
+    //                     media: {
+    //                         $map: {
+    //                             input: "$media",
+    //                             as: "mediaItem",
+    //                             in: {
+    //                                 $mergeObjects: [
+    //                                     "$$mediaItem",
+    //                                     {
+    //                                         url: {
+    //                                             $cond: {
+    //                                                 if: { $ne: ["$$mediaItem.url", null] },
+    //                                                 then: {
+    //                                                     $replaceAll: {
+    //                                                         input: "$$mediaItem.url",
+    //                                                         find: OLD_DOMAIN,
+    //                                                         replacement: NEW_DOMAIN
+    //                                                     }
+    //                                                 },
+    //                                                 else: "$$mediaItem.url"
+    //                                             }
+    //                                         },
+    //                                         watermarkUrl: {
+    //                                             $cond: {
+    //                                                 if: { $ne: ["$$mediaItem.watermarkUrl", null] },
+    //                                                 then: {
+    //                                                     $replaceAll: {
+    //                                                         input: "$$mediaItem.watermarkUrl",
+    //                                                         find: OLD_DOMAIN,
+    //                                                         replacement: NEW_DOMAIN
+    //                                                     }
+    //                                                 },
+    //                                                 else: "$$mediaItem.watermarkUrl"
+    //                                             }
+    //                                         },
+    //                                         thumbnail: {
+    //                                             $cond: {
+    //                                                 if: { $ne: ["$$mediaItem.thumbnail", null] },
+    //                                                 then: {
+    //                                                     $replaceAll: {
+    //                                                         input: "$$mediaItem.thumbnail",
+    //                                                         find: OLD_DOMAIN,
+    //                                                         replacement: NEW_DOMAIN
+    //                                                     }
+    //                                                 },
+    //                                                 else: "$$mediaItem.thumbnail"
+    //                                             }
+    //                                         }
+    //                                     }
+    //                                 ]
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         ]
+    //     );
+
+    //     console.log(data, 'response')
+    //     return data
+    // }
+
     private async processPlantationReminders(today: Date) {
 
         const notificationStages = [
@@ -6242,6 +6320,29 @@ export class PostsService {
                 }
             })
         return environmentalContribution
+    }
+
+    async deleteElements(postId: string) {
+        const objectId = new Types.ObjectId(postId);
+
+        const [elements, deleteResult] = await Promise.all([
+            this.environmentalContributionModel.aggregate([
+                { $match: { postId: objectId } }
+            ]),
+            this.environmentalContributionModel.deleteMany({ postId: objectId })
+        ]);
+
+        console.log(`Deleted ${deleteResult.deletedCount} elements from database`);
+        return elements;
+    }
+
+    async deleteElement(elementId: string) {
+        const objectId = new Types.ObjectId(elementId);
+
+        const element = await this.environmentalContributionModel.findByIdAndDelete(objectId)
+
+        console.log(`Deleted ${element} from database`);
+        return [element];
     }
 
 }

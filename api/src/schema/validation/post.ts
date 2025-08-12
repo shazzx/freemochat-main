@@ -171,6 +171,16 @@ export const UpdateProject = z.object({
     projectDetails: ProjectDetailsSchema.optional(),
 });
 
+
+export const DeleteProject = z.object({
+    postId: ValidMongoId,
+});
+
+export const DeleteElement = z.object({
+    postId: ValidMongoId,
+    elementId: ValidMongoId,
+});
+
 export const DeletePost = z.object({
     postDetails: z.object({
         postId: ValidMongoId,
@@ -290,6 +300,8 @@ export type UpdateEnvironmentalContributionDTO = z.infer<typeof UpdateEnvironmen
 export type CreateSharedPostDTO = z.infer<typeof CreateSharedPost>;
 export type UpdatePostDTO = z.infer<typeof UpdatePost>;
 export type UpdateProjectDTO = z.infer<typeof UpdateProject>;
+export type DeleteProjectDTO = z.infer<typeof DeleteProject>;
+export type DeleteElementDTO = z.infer<typeof DeleteElement>;
 export type DeletePostDTO = z.infer<typeof DeletePost>;
 export type GetPostDTO = z.infer<typeof GetPost>;
 export type LikePostDTO = z.infer<typeof LikePost>;

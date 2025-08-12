@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, Req, Res } from '@nestjs/common';
 import { MetricsAggregatorService } from './metrics-aggregator.service';
 import { Public } from 'src/auth/public.decorator';
 import { Request, Response } from 'express'
@@ -14,10 +14,12 @@ export class MetricsAggregatorController {
     res.json(await this.metricsAggregatorService.userMetrics(sub))
   }
 
-  @Get("contributions")
-  async userContributions(@Req() req: Request, @Res() res: Response) {
-    const { sub } = req.user as { sub: string }
-    res.json(await this.metricsAggregatorService.userAndPageContributions(sub))
+  @Get("contributions/:targetId")
+  async userContributions(
+    @Param('targetId') targetId: string, 
+    @Res() res: Response
+  ) {
+    res.json(await this.metricsAggregatorService.userAndPageContributions(targetId))
   }
 
   @Post("user/metrics/default")
