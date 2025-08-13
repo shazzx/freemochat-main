@@ -13,7 +13,7 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreateEnvironmentalContribution, CreateEnvironmentalContributionDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeleteElementDTO, DeletePost, DeletePostDTO, DeleteProject, DeleteProjectDTO, EnvironmentalContributionType, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdateEnvironmentalContribution, UpdateEnvironmentalContributionDTO, UpdatePost, UpdatePostDTO, UpdateProject, UpdateProjectDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreateEnvironmentalContribution, CreateEnvironmentalContributionDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeleteElement, DeleteElementDTO, DeletePost, DeletePostDTO, DeleteProject, DeleteProjectDTO, EnvironmentalContributionType, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdateEnvironmentalContribution, UpdateEnvironmentalContributionDTO, UpdatePost, UpdatePostDTO, UpdateProject, UpdateProjectDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
@@ -771,18 +771,17 @@ export class PostsController {
     }
 
     @Post("/element/delete")
-    async deleteElement(@Body(new ZodValidationPipe(DeleteProject)) { postId, elementId }: DeleteElementDTO, @Req() req, @Res() res: Response) {
+    async deleteElement(@Body(new ZodValidationPipe(DeleteElement)) { postId, elementId }: DeleteElementDTO, @Req() req, @Res() res: Response) {
 
         const post = await this.postService._getPost(postId)
 
         if (!post) {
-            throw new BadRequestException('project not found')
+            throw new BadRequestException('Project not found')
         }
-        const elements = await this.postService.deleteElement(String(post._id));
+        const elements = await this.postService.deleteElement(elementId, String(post?.postType), String(post?.targetId));
 
-        if (elements.length > 0) {
-            await this.cleanupElementFiles(elements);
-            console.log('✅ Element files cleanup completed');
+        if (!elements) {
+            throw new BadRequestException("Element not found")
         }
 
         res.json({ deleted: true })
@@ -796,83 +795,13 @@ export class PostsController {
         if (!post) {
             throw new BadRequestException('project not found')
         }
-        const elements = await this.postService.deleteElements(String(post._id));
 
-        if (elements.length > 0) {
-            await this.cleanupElementFiles(elements);
-            console.log('✅ Element files cleanup completed');
-        }
-
+        await this.postService.deleteElements(String(post._id), String(post.postType), String(post.targetId));
         await this.postService.deletePost(post._id)
         this.hashtagService.removePostHashtags(post._id.toString(), post.hashtags)
         res.json({ deleted: true })
     }
 
-    private async cleanupElementFiles(elements: any[]): Promise<void> {
-        const filesToDelete = this.extractAllFilenames(elements);
-
-        if (filesToDelete.length === 0) return;
-
-        console.log(`🗑️ Processing ${filesToDelete.length} files for deletion`);
-
-        if (filesToDelete.length <= 10) {
-            await this.deleteFilesParallel(filesToDelete);
-        } else if (filesToDelete.length <= 1000) {
-            await this.uploadService.deleteMultipleFromS3(filesToDelete);
-        } else {
-            await this.deleteMultipleBatches(filesToDelete);
-        }
-    }
-
-    private async deleteFilesParallel(filenames: string[]): Promise<void> {
-        console.log('📤 Using parallel individual deletions');
-        const deletePromises = filenames.map(filename =>
-            this.uploadService.deleteFromS3(filename)
-        );
-        await Promise.allSettled(deletePromises);
-    }
-
-    private async deleteMultipleBatches(filenames: string[]): Promise<void> {
-        console.log('🔄 Using multiple batch deletions');
-        const batchSize = 1000;
-
-        for (let i = 0; i < filenames.length; i += batchSize) {
-            const batch = filenames.slice(i, i + batchSize);
-            console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(filenames.length / batchSize)}`);
-            await this.uploadService.deleteMultipleFromS3(batch);
-        }
-    }
-
-    private extractAllFilenames(elements: any[]): string[] {
-        const filesToDelete: string[] = [];
-
-        elements.forEach(element => {
-            if (element.media?.length > 0) {
-                element.media.forEach(mediaItem => {
-                    if (typeof mediaItem.url === 'string') {
-                        const filename = this.extractFilename(mediaItem.url);
-                        if (filename) filesToDelete.push(filename);
-                    }
-                });
-            }
-
-            if (element?.updateHistory?.media?.length > 0) {
-                element.updateHistory.media.forEach(mediaItem => {
-                    if (typeof mediaItem.url === 'string') {
-                        const filename = this.extractFilename(mediaItem.url);
-                        if (filename) filesToDelete.push(filename);
-                    }
-                });
-            }
-        });
-
-        return filesToDelete;
-    }
-
-    private extractFilename(url: string): string {
-        const parts = url.split("/");
-        return parts[parts.length - 1] || '';
-    }
 
     @Post("delete")
     async deletePost(@Body(new ZodValidationPipe(DeletePost)) deletePostDTO: DeletePostDTO, @Req() req, @Res() res: Response) {

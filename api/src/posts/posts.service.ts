@@ -16,6 +16,7 @@ import { Promotion } from 'src/schema/promotion';
 import { Report } from 'src/schema/report';
 import { CreateEnvironmentalContributionDTO, GetGlobalMapCountsDTO, GetGlobalMapDataDTO, SearchGlobalMapLocationsDTO, UpdateEnvironmentalContributionDTO } from 'src/schema/validation/post';
 import { ViewedPosts } from 'src/schema/viewedPosts';
+import { UploadService } from 'src/upload/upload.service';
 import { UserService } from 'src/user/user.service';
 import { CURRENCIES, PAYMENT_PROVIDERS, PAYMENT_STATES, POST_PROMOTION, ReachStatus } from 'src/utils/enums/global.c';
 import { SBulkViewPost, SPostPromotion, SViewPost } from 'src/utils/types/service/posts';
@@ -34,6 +35,7 @@ export class PostsService {
         @InjectModel(Follower.name) private readonly followerModel: Model<Follower>,
         @InjectModel(Member.name) private readonly memberModel: Model<Member>,
         @InjectModel(EnvironmentalContribution.name) private readonly environmentalContributionModel: Model<EnvironmentalContribution>,
+        private uploadService: UploadService,
         private readonly notificationService: NotificationService,
         private readonly metricsAggregatorService: MetricsAggregatorService,
         private readonly userService: UserService,
@@ -254,7 +256,6 @@ export class PostsService {
             console.error('❌ Error removing overdue plantations:', error);
         }
     }
-
 
     private groupPlantationsByUserAndProject(plantations: any[]): Record<string, any[]> {
         const grouped: Record<string, any[]> = {};
@@ -1586,7 +1587,6 @@ export class PostsService {
         return results
     }
 
-
     async getPost(userId: string, postId: string, type: string) {
         const limit = 5
         let query = { _id: new Types.ObjectId(postId) }
@@ -2290,7 +2290,6 @@ export class PostsService {
 
         return post
     }
-
 
     // async feed(userId, cursor) {
     //     const limit = 12
@@ -5192,14 +5191,11 @@ export class PostsService {
         return sessionId
     }
 
-
-
     async promotionPaymentSuccess(promotionId: string, totalAmount: string, paymentIntentId: string) {
         const promotion = await this.promotionModel.findByIdAndUpdate(promotionId, { $set: { active: 1, paymentDetails: { totalAmount, status: PAYMENT_STATES.PAID, paymentProvider: PAYMENT_PROVIDERS.STRIPE, paymentIntentId }, reachStatus: ReachStatus.IN_PROGRESS } })
         await this.metricsAggregatorService.incrementCount(null, "count", "campaigns")
         return promotion
     }
-
 
     async promotionPaymentFailure(promotionId: string) {
         const promotion = await this.promotionModel.findByIdAndDelete(promotionId)
@@ -5210,8 +5206,6 @@ export class PostsService {
         const post = await this.postModel.findById(postId)
         return post
     }
-
-
 
     async getLikedUsers({ postId }) {
         const post = (await this.postModel.findById(postId)).populate("likedBy")
@@ -5250,7 +5244,6 @@ export class PostsService {
         post.save()
         return post
     }
-
 
     async toggleBookmark(userId: string, postId: string, targetId: string, type: string, postType: string): Promise<boolean> {
         const filter = {
@@ -6322,7 +6315,7 @@ export class PostsService {
         return environmentalContribution
     }
 
-    async deleteElements(postId: string) {
+    async deleteElements(postId: string, postType: string, targetId: string) {
         const objectId = new Types.ObjectId(postId);
 
         const [elements, deleteResult] = await Promise.all([
@@ -6333,16 +6326,114 @@ export class PostsService {
         ]);
 
         console.log(`Deleted ${deleteResult.deletedCount} elements from database`);
-        return elements;
+
+        if (elements.length > 0) {
+            await this.cleanupElementFiles(elements);
+            console.log('✅ Element files cleanup completed');
+            await this.decrementElementCounts(elements, postType, targetId);
+            return { deleteCount: deleteResult.deletedCount };
+        }
+        return null
     }
 
-    async deleteElement(elementId: string) {
-        const objectId = new Types.ObjectId(elementId);
+    async deleteElement(elementId: string, postType: string, targetId: string) {
+        console.log(elementId, 'element id')
+        const element = await this.environmentalContributionModel.findByIdAndDelete(elementId)
 
-        const element = await this.environmentalContributionModel.findByIdAndDelete(objectId)
+        if (element && element['media']) {
+            console.log(`Deleted ${element} from database`);
 
-        console.log(`Deleted ${element} from database`);
-        return [element];
+            await this.cleanupElementFiles([element]);
+            await this.decrementElementCounts([element], postType, targetId);
+            console.log('✅ Element files cleanup completed');
+            return true
+        }
+
+        return null;
+    }
+    private async decrementElementCounts(elements: any, postType: string, targetId: string) {
+        const countryCounts = elements.reduce((acc, element) => {
+            const country = element.location?.country;
+            console.log(country)
+            if (country) {
+                acc[country] = (acc[country] || 0) + 1;
+            }
+            return acc;
+        }, {});
+
+        return Promise.all([
+            this.metricsAggregatorService.decrementCount(null, "global_environmental_contributions", 'contributions', elements.length),
+            this.metricsAggregatorService.decrementCount(null, postType, "contributions", elements.length),
+            this.metricsAggregatorService.decrementCount(new Types.ObjectId(targetId), postType, 'contributions', elements.length),
+
+            ...Object.entries(countryCounts).map(([country, count]) =>
+                this.metricsAggregatorService.decrementCount(null, postType, `${country}_contributions`, count as number)
+            )
+        ]);
+    }
+    private async cleanupElementFiles(elements: any[]): Promise<void> {
+        const filesToDelete = this.extractAllFilenames(elements);
+
+        if (filesToDelete.length === 0) return;
+
+        console.log(`🗑️ Processing ${filesToDelete.length} files for deletion`);
+
+        if (filesToDelete.length <= 10) {
+            await this.deleteFilesParallel(filesToDelete);
+        } else if (filesToDelete.length <= 1000) {
+            await this.uploadService.deleteMultipleFromS3(filesToDelete);
+        } else {
+            await this.deleteMultipleBatches(filesToDelete);
+        }
+    }
+
+    private async deleteFilesParallel(filenames: string[]): Promise<void> {
+        console.log('📤 Using parallel individual deletions');
+        const deletePromises = filenames.map(filename =>
+            this.uploadService.deleteFromS3(filename)
+        );
+        await Promise.allSettled(deletePromises);
+    }
+
+    private async deleteMultipleBatches(filenames: string[]): Promise<void> {
+        console.log('🔄 Using multiple batch deletions');
+        const batchSize = 1000;
+
+        for (let i = 0; i < filenames.length; i += batchSize) {
+            const batch = filenames.slice(i, i + batchSize);
+            console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(filenames.length / batchSize)}`);
+            await this.uploadService.deleteMultipleFromS3(batch);
+        }
+    }
+
+    private extractAllFilenames(elements: any[]): string[] {
+        const filesToDelete: string[] = [];
+        elements.forEach(element => {
+            if (element.media?.length > 0) {
+                element.media.forEach(mediaItem => {
+                    if (typeof mediaItem.url === 'string') {
+                        const filename = this.extractFilename(mediaItem.url);
+                        if (filename) filesToDelete.push(filename);
+                    }
+                });
+            }
+
+            if (element?.updateHistory?.media?.length > 0) {
+                element.updateHistory.media.forEach(mediaItem => {
+                    if (typeof mediaItem.url === 'string') {
+                        const filename = this.extractFilename(mediaItem.url);
+                        if (filename) filesToDelete.push(filename);
+                    }
+                });
+            }
+        });
+
+        return filesToDelete;
+    }
+
+    private extractFilename(url: string): string {
+        const parts = url.split("/");
+        return parts[parts.length - 1] || '';
     }
 
 }
