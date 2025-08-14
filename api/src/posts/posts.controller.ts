@@ -13,7 +13,7 @@ import { Queue } from 'bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ZodValidationPipe } from 'src/zod-validation.pipe';
-import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreateEnvironmentalContribution, CreateEnvironmentalContributionDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeletePost, DeletePostDTO, EnvironmentalContributionType, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdateEnvironmentalContribution, UpdateEnvironmentalContributionDTO, UpdatePost, UpdatePostDTO, UpdateProject, UpdateProjectDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
+import { BookmarkPost, BookmarkPostDTO, BulkViewPost, BulkViewPostDTO, CreateEnvironmentalContribution, CreateEnvironmentalContributionDTO, CreatePost, CreatePostDTO, CreateSharedPost, CreateSharedPostDTO, DeleteElement, DeleteElementDTO, DeletePost, DeletePostDTO, DeleteProject, DeleteProjectDTO, EnvironmentalContributionType, GetBookmarkedPostsDTO, GetGlobalMapCounts, GetGlobalMapCountsDTO, GetGlobalMapData, GetGlobalMapDataDTO, GetPost, GetPostDTO, GetPostLikes, GetPostLikestDTO, GetPromotions, GetPromotionsDTO, LikeCommentOrReply, LikeCommentOrReplyDTO, LikePost, LikePostDTO, PromotePost, PromotePostDTO, PromotionActivation, PromotionActivationDTO, ReportPost, ReportPostDTO, SearchGlobalMapLocations, SearchGlobalMapLocationsDTO, ServerPostData, UpdateEnvironmentalContribution, UpdateEnvironmentalContributionDTO, UpdatePost, UpdatePostDTO, UpdateProject, UpdateProjectDTO, ViewPost, ViewPostDTO } from 'src/schema/validation/post';
 import { Request } from 'types/global';
 import { Cursor, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
@@ -30,6 +30,7 @@ export class PostsController {
         private readonly eventEmitter: EventEmitter2,
         private readonly hashtagService: HashtagService,
     ) { }
+
 
     @Get()
     async getPosts(@Req() req: Request, @Res() response: Response) {
@@ -660,6 +661,8 @@ export class PostsController {
             user: new Types.ObjectId(sub)
         });
 
+        this.hashtagService.processPostHashtags(uploadedPost._id, hashtags);
+
         this.eventEmitter.emit("reel.upload", {
             uploadPromise,
             postId: uploadedPost._id.toString(),
@@ -768,6 +771,39 @@ export class PostsController {
 
         res.json(updatedPost)
     }
+
+    @Post("/element/delete")
+    async deleteElement(@Body(new ZodValidationPipe(DeleteElement)) { postId, elementId }: DeleteElementDTO, @Req() req, @Res() res: Response) {
+
+        const post = await this.postService._getPost(postId)
+
+        if (!post) {
+            throw new BadRequestException('Project not found')
+        }
+        const elements = await this.postService.deleteElement(elementId, String(post?.postType), String(post?.targetId));
+
+        if (!elements) {
+            throw new BadRequestException("Element not found")
+        }
+
+        res.json({ deleted: true })
+    }
+
+    @Post("/project/delete")
+    async deleteProject(@Body(new ZodValidationPipe(DeleteProject)) { postId }: DeleteProjectDTO, @Req() req, @Res() res: Response) {
+
+        const post = await this.postService._getPost(postId)
+
+        if (!post) {
+            throw new BadRequestException('project not found')
+        }
+
+        await this.postService.deleteElements(String(post._id), String(post.postType), String(post.targetId));
+        await this.postService.deletePost(post._id)
+        this.hashtagService.removePostHashtags(post._id.toString(), post.hashtags)
+        res.json({ deleted: true })
+    }
+
 
     @Post("delete")
     async deletePost(@Body(new ZodValidationPipe(DeletePost)) deletePostDTO: DeletePostDTO, @Req() req, @Res() res: Response) {

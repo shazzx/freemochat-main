@@ -37,7 +37,7 @@ function FeedSection() {
     const createReel = useCreateReel()
 
     const _createPost = async ({ visibility, content, selectedMedia, backgroundColor, mentions, mentionReferences, formData }) => {
-        let postDetails = { content, type: "user", postType: 'post', backgroundColor, mentions,  targetId: user?._id, visibility }
+        let postDetails = { content, type: "user", postType: 'post', backgroundColor, mentions, targetId: user?._id, visibility }
         formData.append("postData", JSON.stringify(postDetails))
         createPost.mutate({ content, formData, selectedMedia, mentions, mentionReferences, backgroundColor, postType: 'post', type: "user", target: user })
         setPostModal(false)
@@ -157,6 +157,15 @@ function FeedSection() {
             />
         );
     }, [flattenedData, navigateToReels, user, ref, fetchNextPage]);
+
+    const updatePosts = async () => {
+        const { data } = await axiosClient.get('/posts/posts/update')
+        alert(JSON.stringify(data))
+    }
+
+    useEffect(() => {
+        updatePosts()
+    }, [])
 
     return (
         <div className='w-full z-10 flex justify-center md:justify-normal overflow-y-auto border-muted md:px-6 lg:px-24'>

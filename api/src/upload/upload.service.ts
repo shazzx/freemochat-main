@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, DeleteObjectsCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
 import { InjectModel } from '@nestjs/mongoose';
@@ -830,6 +830,42 @@ export class UploadService {
             // We're not throwing here to avoid breaking the main flow if deletion fails
         }
     }
+
+    async deleteMultipleFromS3(keys: string[]) {
+        if (keys.length === 0) return;
+
+        const command = new DeleteObjectsCommand({
+            Bucket: this.bucketName,
+            Delete: {
+                Objects: keys.map(key => ({ Key: key })),
+                Quiet: true
+            }
+        });
+
+        try {
+            const result = await this.s3Client.send(command);
+            console.log(`✅ Batch deleted ${keys.length} files from S3`);
+            return result;
+        } catch (error) {
+            console.error('⚠️ Error batch deleting from S3:', error);
+            await this.fallbackIndividualDeletes(keys);
+        }
+    }
+
+    private async fallbackIndividualDeletes(keys: string[]): Promise<void> {
+        console.log(`🔄 Falling back to individual deletions for ${keys.length} files`);
+
+        const deletePromises = keys.map(key =>
+            this.deleteFromS3(key).catch(error => {
+                console.error(`Failed to delete ${key}:`, error);
+                return null;
+            })
+        );
+
+        await Promise.allSettled(deletePromises);
+    }
+
+
 
     async uploadFile(filename: string, file: Buffer) {
         let fileName = encodeURIComponent(filename);

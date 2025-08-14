@@ -88,11 +88,12 @@ export class MetricsAggregatorService {
     }
 
     async decrementCount(targetId: Types.ObjectId, name: string, type: string, customCount?: number) {
+        console.log(type, 'decrementing count for', name, 'with customCount:', customCount);
         let counter = await this.counterModel.updateOne(
             { targetId, name, type },
             {
                 $setOnInsert: { targetId, name, type },
-                $inc: { count: customCount ?? -1 }
+                $inc: { count: customCount ? -customCount : -1 }
             },
         )
         return counter

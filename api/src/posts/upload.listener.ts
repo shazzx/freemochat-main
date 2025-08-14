@@ -213,7 +213,7 @@ export class UploadListener {
             const media = [{ ...postMedia[0], thumbnail: thumbnail.url }]
             const postDetails = { media, isUploaded: null }
             await this.postsService.updatePost(postId, postDetails);
-            if (_media.length > 0) {
+            if (_media && _media?.length > 0) {
                 _media.forEach(async (media) => {
                     if (media.url) {
                         let videoUrlSplit = media?.url?.split("/")
