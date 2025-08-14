@@ -272,7 +272,6 @@ export class HashtagService {
         }
       },
 
-      // Shared post lookup (if needed)
       {
         $lookup: {
           from: 'posts',

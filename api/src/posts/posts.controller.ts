@@ -661,6 +661,8 @@ export class PostsController {
             user: new Types.ObjectId(sub)
         });
 
+        this.hashtagService.processPostHashtags(uploadedPost._id, hashtags);
+
         this.eventEmitter.emit("reel.upload", {
             uploadPromise,
             postId: uploadedPost._id.toString(),
