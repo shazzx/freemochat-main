@@ -23,7 +23,7 @@ export class CommentController {
 
     const post = await this.postService._getPost(postId)
     if (!post) {
-      throw new BadRequestException('post not found')
+      throw new BadRequestException('Post not found')
     }
 
     const hashtags = this.hashtagService.extractHashtags(commentDetails.content);
@@ -41,9 +41,6 @@ export class CommentController {
       authorId,
       file
     })
-
-    const postHashtags = [...post.hashtags, ...hashtags]
-    this.postService.updatePost(postId, { hashtags: postHashtags })
 
     response.json(comment)
   }
@@ -89,9 +86,6 @@ export class CommentController {
         file
       })
 
-    const postHashtags = [...post.hashtags, ...hashtags]
-    this.postService.updatePost(postId, { hashtags: postHashtags })
-
     response.json(reply)
   }
 
@@ -109,14 +103,23 @@ export class CommentController {
   async updateComment(
     @Req() req: Request,
     @Res() res: Response,
-    @Body() body: { commentId: string; content: string, mentions: string[] }
+    @Body() body: { commentId: string; content: string, mentions: string[], postId: string }
   ) {
-    const { commentId, content, mentions } = body;
+    const { commentId, content, mentions, postId } = body;
     const { sub } = req.user as { sub: string };
+
+    const post = await this.postService._getPost(postId)
+    if (!post) {
+      throw new BadRequestException('Post not found')
+    }
+
+    const hashtags = this.hashtagService.extractHashtags(content);
+    this.hashtagService.processPostHashtags(postId, hashtags)
 
     const result = await this.commentService.updateComment(
       { content },
       mentions,
+      hashtags,
       commentId,
       sub
     );
@@ -128,14 +131,23 @@ export class CommentController {
   async updateReply(
     @Req() req: Request,
     @Res() res: Response,
-    @Body() body: { replyId: string; content: string, mentions: string[] }
+    @Body() body: { replyId: string; content: string, mentions: string[], postId: string }
   ) {
-    const { replyId, content, mentions } = body;
+    const { replyId, content, mentions, postId } = body;
     const { sub } = req.user as { sub: string };
+
+    const post = await this.postService._getPost(postId)
+    if (!post) {
+      throw new BadRequestException('Post not found')
+    }
+
+    const hashtags = this.hashtagService.extractHashtags(content);
+    this.hashtagService.processPostHashtags(postId, hashtags)
 
     const result = await this.commentService.updateReply(
       { content },
       mentions,
+      hashtags,
       replyId,
       sub
     );

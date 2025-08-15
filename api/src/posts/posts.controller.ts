@@ -257,7 +257,7 @@ export class PostsController {
 
         // Create the main post first
         let uploadedPost = await this.postService.createPost(finalPostData);
-        this.hashtagService.processPostHashtags(uploadedPost._id, hashtags);
+        this.hashtagService.processPostHashtags(String(uploadedPost._id), hashtags);
 
         // 🔧 NEW: Create EnvironmentalContribution document for environmental posts
         let environmentalContribution = null;
@@ -662,7 +662,7 @@ export class PostsController {
             user: new Types.ObjectId(sub)
         });
 
-        this.hashtagService.processPostHashtags(uploadedPost._id, hashtags);
+        this.hashtagService.processPostHashtags(String(uploadedPost._id), hashtags);
 
         this.eventEmitter.emit("reel.upload", {
             uploadPromise,

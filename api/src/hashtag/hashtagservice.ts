@@ -30,7 +30,7 @@ export class HashtagService {
   }
 
   // Create or update hashtags when a post is created/updated
-  async processPostHashtags(postId: Types.ObjectId, hashtags: string[]): Promise<string[]> {
+  async processPostHashtags(postId: string, hashtags: string[]): Promise<string[]> {
 
     if (hashtags.length === 0) return [];
 

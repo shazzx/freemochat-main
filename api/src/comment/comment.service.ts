@@ -455,7 +455,7 @@ export class CommentService {
 
     }
 
-    async updateComment(commentDetails: { content: string }, mentions: string[], commentId: string, userId: string) {
+    async updateComment(commentDetails: { content: string }, hashtags: string[], mentions: string[], commentId: string, userId: string) {
         const comment = await this.commentModel.findOneAndUpdate(
             {
                 _id: new Types.ObjectId(commentId),
@@ -464,6 +464,7 @@ export class CommentService {
             {
                 content: commentDetails.content,
                 mentions: mentions?.map(id => new Types.ObjectId(id)) || [],
+                hashtags
             },
             { new: true }
         ).populate('user', 'firstname lastname username profile');
@@ -496,7 +497,7 @@ export class CommentService {
         };
     }
 
-    async updateReply(replyDetails: { content: string }, mentions: string[], replyId: string, userId: string) {
+    async updateReply(replyDetails: { content: string }, hashtags: string[], mentions: string[], replyId: string, userId: string) {
         const reply = await this.commentModel.findOneAndUpdate(
             {
                 _id: new Types.ObjectId(replyId),
@@ -505,6 +506,7 @@ export class CommentService {
             {
                 content: replyDetails.content,
                 mentions: mentions?.map(id => new Types.ObjectId(id)) || [],
+                hashtags
             },
             { new: true }
         ).populate('user', 'firstname lastname username profile');
