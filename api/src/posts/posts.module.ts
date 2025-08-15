@@ -22,6 +22,7 @@ import MemberSchema, { Member } from 'src/schema/members';
 import { PaymentModule } from 'src/payment/payment.module';
 import { LocationModule } from 'src/location/location.module';
 import { HashtagModule } from 'src/hashtag/hashtag.module';
+import { FollowerModule } from 'src/follower/follower.module';
 
 @Module({
   imports: [UserModule, JwtModule,
@@ -43,6 +44,7 @@ import { HashtagModule } from 'src/hashtag/hashtag.module';
     LocationModule,
     MetricsAggregatorModule,
     CacheModule,
+    FollowerModule,
     NotificationModule,
     ChatModule,
     UploadModule,

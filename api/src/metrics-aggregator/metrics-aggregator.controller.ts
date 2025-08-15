@@ -14,9 +14,16 @@ export class MetricsAggregatorController {
     res.json(await this.metricsAggregatorService.userMetrics(sub))
   }
 
+  @Get("global/contributions")
+  async countryContributions(
+    @Res() res: Response
+  ) {
+    res.json(await this.metricsAggregatorService.getCountryContributions())
+  }
+
   @Get("contributions/:targetId")
   async userContributions(
-    @Param('targetId') targetId: string, 
+    @Param('targetId') targetId: string,
     @Res() res: Response
   ) {
     res.json(await this.metricsAggregatorService.userAndPageContributions(targetId))

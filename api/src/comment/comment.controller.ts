@@ -4,6 +4,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { HashtagService } from 'src/hashtag/hashtagservice';
 import { PostsService } from 'src/posts/posts.service';
+import { checkForSpecialMentions } from 'src/utils/global';
 
 @Controller('comments')
 export class CommentController {
@@ -29,11 +30,14 @@ export class CommentController {
     const hashtags = this.hashtagService.extractHashtags(commentDetails.content);
     this.hashtagService.processPostHashtags(postId, hashtags)
 
+    const hasFollowersMention = checkForSpecialMentions(commentDetails.content);
+
     const comment = await this.commentService.commentOnPost({
       commentDetails,
       postId,
       mentions,
       hashtags,
+      hasFollowersMention,
       userId: sub,
       targetId: postId,
       targetType,
@@ -44,6 +48,7 @@ export class CommentController {
 
     response.json(comment)
   }
+
 
   @UseInterceptors(FileInterceptor('file'))
   @Post("comment/reply")
@@ -69,6 +74,8 @@ export class CommentController {
 
     const hashtags = this.hashtagService.extractHashtags(replyDetails.content);
     this.hashtagService.processPostHashtags(postId, hashtags)
+    const hasFollowersMention = checkForSpecialMentions(replyDetails.content);
+
 
     const reply = await this.commentService.replyOnComment(
       {
@@ -77,6 +84,7 @@ export class CommentController {
         mentions,
         hashtags,
         commentId,
+        hasFollowersMention,
         userId: sub,
         postType,
         targetType,
@@ -115,13 +123,17 @@ export class CommentController {
 
     const hashtags = this.hashtagService.extractHashtags(content);
     this.hashtagService.processPostHashtags(postId, hashtags)
+    const hasFollowersMention = checkForSpecialMentions(content);
 
     const result = await this.commentService.updateComment(
-      { content },
-      mentions,
-      hashtags,
-      commentId,
-      sub
+      {
+        commentDetails: { content },
+        mentions,
+        hashtags,
+        commentId,
+        userId: sub,
+        hasFollowersMention
+      },
     );
 
     return res.json(result);
@@ -144,12 +156,17 @@ export class CommentController {
     const hashtags = this.hashtagService.extractHashtags(content);
     this.hashtagService.processPostHashtags(postId, hashtags)
 
+    const hasFollowersMention = checkForSpecialMentions(content);
+
     const result = await this.commentService.updateReply(
-      { content },
-      mentions,
-      hashtags,
-      replyId,
-      sub
+      {
+        replyDetails: { content },
+        mentions,
+        hashtags,
+        replyId,
+        userId: sub,
+        hasFollowersMention
+      }
     );
 
     return res.json(result);

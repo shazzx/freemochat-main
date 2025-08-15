@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
 import { Model, Types } from 'mongoose';
+import { FollowerService } from 'src/follower/follower.service';
 import { LocationService } from 'src/location/location.service';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 import { NotificationService } from 'src/notification/notification.service';
@@ -41,6 +42,7 @@ export class PostsService {
         private readonly userService: UserService,
         private readonly locationService: LocationService,
         private readonly paymentService: PaymentService,
+        private readonly followersService: FollowerService,
     ) { }
 
     @Cron('0 9 * * *')
@@ -5742,24 +5744,23 @@ export class PostsService {
         return report
     }
 
-    async createPost(postData: any) {
+    async createPost(
+        postData: any,
+        userId?: string,
+        hasFollowersMention?: boolean
+    ) {
         const post = await this.postModel.create({ ...postData })
 
-        if (post.mentions.length > 0) {
-            post.mentions.forEach((userId) => {
-                this.notificationService.createNotification(
-                    {
-                        from: new Types.ObjectId(String(post.user)),
-                        user: userId,
-                        targetId: post?._id,
-                        type: 'post',
-                        postType: 'post',
-                        targetType: 'post',
-                        value: 'has mentioned you in their post'
-                    }
-                )
-            })
+        if (hasFollowersMention) {
+            const followers = await this.followersService.getRawFollowers(userId, 'user');
+            this.notificationService.sendBulkNotifications({ users: followers, targetId: post._id.toString(), author: post.user.toString(), type: "post", postType: "post", targetType: "post", value: "has mentioned you in their post" });
         }
+
+
+        if (post.mentions.length > 0) {
+            this.notificationService.sendBulkNotifications({ users: post.mentions.map((userId) => userId.toString()), targetId: post._id.toString(), author: post.user.toString(), type: "post", postType: "post", targetType: "post", value: "has mentioned you in their post" });
+        }
+
         if (post.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(String(post.postType))) {
             Promise.all([
                 this.metricsAggregatorService.incrementCount(null, `${String(post.postType)}_projects`, 'contributions'),
@@ -5794,11 +5795,19 @@ export class PostsService {
         return updatedProject
     }
 
-    async updatePost(postId: string, postDetails: any) {
+    async updatePost(postId: string, postDetails: any,  userId?: string, hasFollowersMention?: boolean) {
         console.log(postDetails, 'post data')
         const updatedPost = await this.postModel.findByIdAndUpdate(postId, { $set: { ...postDetails } }, { new: true })
 
-        console.log('post updated')
+        if (hasFollowersMention) {
+            const followers = await this.followersService.getRawFollowers(userId, 'user');
+            this.notificationService.sendBulkNotifications({ users: followers, targetId: updatedPost._id.toString(), author: updatedPost.user.toString(), type: "post", postType: "post", targetType: "post", value: "has mentioned you in their post" });
+        }
+
+
+        if (updatedPost.mentions.length > 0) {
+            this.notificationService.sendBulkNotifications({ users: updatedPost.mentions.map((userId) => userId.toString()), targetId: updatedPost._id.toString(), author: updatedPost.user.toString(), type: "post", postType: "post", targetType: "post", value: "has mentioned you in their post" });
+        }
 
         if (updatedPost?.mentions?.length > 0) {
             console.log('inside mentions')
@@ -6420,7 +6429,7 @@ export class PostsService {
         Promise.all([
             this.metricsAggregatorService.incrementCount(null, "global_environmental_contributions", 'contributions'),
             this.metricsAggregatorService.incrementCount(null, postType, "contributions"),
-            this.metricsAggregatorService.incrementCount(null, postType, `${environmentalContribution.location.country}_contributions`),
+            this.metricsAggregatorService.incrementCount(null, postType, `${environmentalContribution.location.country}_country_contributions`),
 
             // user/page specific contributions
             this.metricsAggregatorService.incrementCount(new Types.ObjectId(targetId), postType, 'contributions')
@@ -6493,7 +6502,7 @@ export class PostsService {
             this.metricsAggregatorService.decrementCount(new Types.ObjectId(targetId), postType, 'contributions', elements.length),
 
             ...Object.entries(countryCounts).map(([country, count]) =>
-                this.metricsAggregatorService.decrementCount(null, postType, `${country}_contributions`, count as number)
+                this.metricsAggregatorService.decrementCount(null, postType, `${country}_country_contributions`, count as number)
             )
         ]);
     }

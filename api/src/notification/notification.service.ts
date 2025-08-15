@@ -37,6 +37,22 @@ export class NotificationService {
     return notification
   }
 
+  async sendBulkNotifications({ users, targetId, author, type, postType, targetType, value }: { users: string[], targetId: string, author: string, type: string, postType: string, targetType: string, value: string }) {
+    users.forEach((userId) => {
+      this.createNotification(
+        {
+          from: new Types.ObjectId(author),
+          user: new Types.ObjectId(String(userId)),
+          targetId: new Types.ObjectId(targetId),
+          type,
+          postType,
+          targetType,
+          value,
+        }
+      )
+    })
+  }
+
   public isExpoPushToken(token: string): boolean {
     return Expo.isExpoPushToken(token);
   }
@@ -96,12 +112,12 @@ export class NotificationService {
     const result = await this.notificationModel.updateMany(
       {
         user: new Types.ObjectId(userId),
-        isRead: { $ne: true } 
+        isRead: { $ne: true }
       },
       {
         $set: {
           isRead: true,
-          readAt: new Date() 
+          readAt: new Date()
         }
       }
     );
@@ -167,8 +183,8 @@ export class NotificationService {
           targetType: 1,
           handle: 1,
           targetId: 1,
-          sender: 1,  
-          isRead: 1,  
+          sender: 1,
+          isRead: 1,
           updatedAt: 1,
           createdAt: 1,
         },

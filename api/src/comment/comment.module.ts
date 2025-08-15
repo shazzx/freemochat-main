@@ -9,6 +9,7 @@ import { MetricsAggregatorModule } from 'src/metrics-aggregator/metrics-aggregat
 import { NotificationModule } from 'src/notification/notification.module';
 import { HashtagModule } from 'src/hashtag/hashtag.module';
 import { PostsModule } from 'src/posts/posts.module';
+import { FollowerModule } from 'src/follower/follower.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PostsModule } from 'src/posts/posts.module';
     NotificationModule,
     HashtagModule,
     PostsModule,
+    FollowerModule,
     MongooseModule.forFeature([{ name: Comment.name, schema: CommentSchema }])
   ],
   controllers: [CommentController],
