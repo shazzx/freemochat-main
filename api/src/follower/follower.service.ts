@@ -51,6 +51,9 @@ export class FollowerService {
 
         return results
     }
-
     
+    async getRawFollowers(userId: string, type: string) {
+        const followers = await this.followerModel.find({ targetId: new Types.ObjectId(userId), type })
+        return followers.map(follower => follower.follower.toString());
+    }
 }

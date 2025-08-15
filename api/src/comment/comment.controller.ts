@@ -4,6 +4,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { HashtagService } from 'src/hashtag/hashtagservice';
 import { PostsService } from 'src/posts/posts.service';
+import { checkForSpecialMentions } from 'src/utils/global';
 
 @Controller('comments')
 export class CommentController {
@@ -23,17 +24,20 @@ export class CommentController {
 
     const post = await this.postService._getPost(postId)
     if (!post) {
-      throw new BadRequestException('post not found')
+      throw new BadRequestException('Post not found')
     }
 
     const hashtags = this.hashtagService.extractHashtags(commentDetails.content);
     this.hashtagService.processPostHashtags(postId, hashtags)
+
+    const hasFollowersMention = checkForSpecialMentions(commentDetails.content);
 
     const comment = await this.commentService.commentOnPost({
       commentDetails,
       postId,
       mentions,
       hashtags,
+      hasFollowersMention,
       userId: sub,
       targetId: postId,
       targetType,
@@ -42,11 +46,9 @@ export class CommentController {
       file
     })
 
-    const postHashtags = [...post.hashtags, ...hashtags]
-    this.postService.updatePost(postId, { hashtags: postHashtags })
-
     response.json(comment)
   }
+
 
   @UseInterceptors(FileInterceptor('file'))
   @Post("comment/reply")
@@ -72,6 +74,8 @@ export class CommentController {
 
     const hashtags = this.hashtagService.extractHashtags(replyDetails.content);
     this.hashtagService.processPostHashtags(postId, hashtags)
+    const hasFollowersMention = checkForSpecialMentions(replyDetails.content);
+
 
     const reply = await this.commentService.replyOnComment(
       {
@@ -80,6 +84,7 @@ export class CommentController {
         mentions,
         hashtags,
         commentId,
+        hasFollowersMention,
         userId: sub,
         postType,
         targetType,
@@ -88,9 +93,6 @@ export class CommentController {
         commentAuthorId,
         file
       })
-
-    const postHashtags = [...post.hashtags, ...hashtags]
-    this.postService.updatePost(postId, { hashtags: postHashtags })
 
     response.json(reply)
   }
@@ -109,16 +111,29 @@ export class CommentController {
   async updateComment(
     @Req() req: Request,
     @Res() res: Response,
-    @Body() body: { commentId: string; content: string, mentions: string[] }
+    @Body() body: { commentId: string; content: string, mentions: string[], postId: string }
   ) {
-    const { commentId, content, mentions } = body;
+    const { commentId, content, mentions, postId } = body;
     const { sub } = req.user as { sub: string };
 
+    const post = await this.postService._getPost(postId)
+    if (!post) {
+      throw new BadRequestException('Post not found')
+    }
+
+    const hashtags = this.hashtagService.extractHashtags(content);
+    this.hashtagService.processPostHashtags(postId, hashtags)
+    const hasFollowersMention = checkForSpecialMentions(content);
+
     const result = await this.commentService.updateComment(
-      { content },
-      mentions,
-      commentId,
-      sub
+      {
+        commentDetails: { content },
+        mentions,
+        hashtags,
+        commentId,
+        userId: sub,
+        hasFollowersMention
+      },
     );
 
     return res.json(result);
@@ -128,16 +143,30 @@ export class CommentController {
   async updateReply(
     @Req() req: Request,
     @Res() res: Response,
-    @Body() body: { replyId: string; content: string, mentions: string[] }
+    @Body() body: { replyId: string; content: string, mentions: string[], postId: string }
   ) {
-    const { replyId, content, mentions } = body;
+    const { replyId, content, mentions, postId } = body;
     const { sub } = req.user as { sub: string };
 
+    const post = await this.postService._getPost(postId)
+    if (!post) {
+      throw new BadRequestException('Post not found')
+    }
+
+    const hashtags = this.hashtagService.extractHashtags(content);
+    this.hashtagService.processPostHashtags(postId, hashtags)
+
+    const hasFollowersMention = checkForSpecialMentions(content);
+
     const result = await this.commentService.updateReply(
-      { content },
-      mentions,
-      replyId,
-      sub
+      {
+        replyDetails: { content },
+        mentions,
+        hashtags,
+        replyId,
+        userId: sub,
+        hasFollowersMention
+      }
     );
 
     return res.json(result);

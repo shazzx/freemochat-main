@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { FollowerService } from 'src/follower/follower.service';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
 import { NotificationService } from 'src/notification/notification.service';
 import { Comment } from 'src/schema/comment';
@@ -15,6 +16,7 @@ export class CommentService {
         private readonly uploadService: UploadService,
         private readonly metricsAggregatorService: MetricsAggregatorService,
         private readonly notificationService: NotificationService,
+        private readonly followersService: FollowerService,
     ) { }
 
     async getComments(postId, cursor, userId: string) {
@@ -237,6 +239,7 @@ export class CommentService {
         postId,
         mentions,
         hashtags,
+        hasFollowersMention,
         userId,
         targetId,
         targetType,
@@ -247,6 +250,7 @@ export class CommentService {
             postId: string,
             mentions: string[],
             hashtags: string[],
+            hasFollowersMention: boolean,
             userId: string,
             targetId: string,
             targetType: string,
@@ -270,7 +274,6 @@ export class CommentService {
 
 
 
-        console.log(postType, 'this is post type')
         const comment = await this.commentModel.create({
             ...commentDetails,
             mentions: mentions?.map(id => new Types.ObjectId(id)) || [],
@@ -280,28 +283,19 @@ export class CommentService {
             type: 'comment'
         })
 
-
-
         await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postId), (postType || 'post'), "comments")
 
+        if (hasFollowersMention) {
+            const followers = await this.followersService.getRawFollowers(userId, 'user');
+            this.notificationService.sendBulkNotifications({ users: followers, targetId: comment.post.toString(), author: comment.user.toString(), type: 'comment', postType, targetType, value: "has mentioned you in a comment" });
+        }
+
+
         if (comment.mentions.length > 0) {
-            comment.mentions.forEach((userId) => {
-                this.notificationService.createNotification(
-                    {
-                        from: new Types.ObjectId(String(comment.user)),
-                        user: userId,
-                        targetId: new Types.ObjectId(String(comment.post)),
-                        type: 'comment',
-                        postType: 'post',
-                        targetType: 'post',
-                        value: 'has mentioned you in a comment'
-                    }
-                )
-            })
+            this.notificationService.sendBulkNotifications({ users: mentions, targetId: comment.post.toString(), author: comment.user.toString(), type: 'comment', postType, targetType, value: "has mentioned you in a comment" });
         }
 
         if (userId != authorId) {
-            console.log('creating notificatoin for post owner')
             await this.notificationService.createNotification(
                 {
                     from: new Types.ObjectId(userId),
@@ -333,7 +327,9 @@ export class CommentService {
         return deletedComment
     }
 
-    async replyOnComment({ replyDetails, mentions, hashtags, postId, commentId, userId, authorId, commentAuthorId, targetId, targetType, postType, file }:
+
+
+    async replyOnComment({ replyDetails, mentions, hashtags, postId, commentId, userId, authorId, commentAuthorId, targetId, targetType, postType, hasFollowersMention, file }:
         {
             replyDetails: { content: string, duration: string, audio?: { src: string, duration: string } },
             postId: string,
@@ -346,6 +342,7 @@ export class CommentService {
             postType: string,
             authorId: string,
             commentAuthorId: string,
+            hasFollowersMention?: boolean,
             file: Express.Multer.File
         }
     ) {
@@ -374,20 +371,14 @@ export class CommentService {
             })
         await this.metricsAggregatorService.incrementCount(new Types.ObjectId(commentId), "comment", "replies")
 
+        if (hasFollowersMention) {
+            const followers = await this.followersService.getRawFollowers(userId, 'user');
+            this.notificationService.sendBulkNotifications({ users: followers, targetId: reply.post.toString(), author: reply.user.toString(), type: 'reply', postType, targetType, value: "has mentioned you in a reply" });
+        }
+
+
         if (reply.mentions.length > 0) {
-            reply.mentions.forEach((userId) => {
-                this.notificationService.createNotification(
-                    {
-                        from: new Types.ObjectId(String(reply.user)),
-                        user: userId,
-                        targetId: new Types.ObjectId(String(reply.post)),
-                        type: 'reply',
-                        postType: 'post',
-                        targetType: 'post',
-                        value: 'has mentioned you in a reply'
-                    }
-                )
-            })
+            this.notificationService.sendBulkNotifications({ users: mentions, targetId: reply.post.toString(), author: reply.user.toString(), type: 'reply', postType, targetType, value: "has mentioned you in a reply" });
         }
 
         if (userId != authorId) {
@@ -452,10 +443,9 @@ export class CommentService {
                 }
             )
         })
-
     }
 
-    async updateComment(commentDetails: { content: string }, mentions: string[], commentId: string, userId: string) {
+    async updateComment({ commentDetails, commentId, mentions, hashtags, userId, hasFollowersMention }: { commentDetails: { content: string }, hashtags: string[], mentions: string[], commentId: string, userId: string, hasFollowersMention?: boolean }) {
         const comment = await this.commentModel.findOneAndUpdate(
             {
                 _id: new Types.ObjectId(commentId),
@@ -464,29 +454,23 @@ export class CommentService {
             {
                 content: commentDetails.content,
                 mentions: mentions?.map(id => new Types.ObjectId(id)) || [],
+                hashtags
             },
             { new: true }
-        ).populate('user', 'firstname lastname username profile');
+        ).populate('user', '_id firstname lastname username profile');
 
         if (!comment) {
             throw new BadRequestException('Comment not found or you do not have permission to update it.');
         }
 
+        if (hasFollowersMention) {
+            const followers = await this.followersService.getRawFollowers(userId, 'user');
+            this.notificationService.sendBulkNotifications({ users: followers, targetId: comment.post.toString(), author: comment.user?.['_id'].toString(), type: 'comment', postType: 'post', targetType: 'user', value: "has mentioned you in a comment" });
+        }
+
 
         if (comment.mentions.length > 0) {
-            comment.mentions.forEach((userId) => {
-                this.notificationService.createNotification(
-                    {
-                        from: new Types.ObjectId(String(comment.user)),
-                        user: userId,
-                        targetId: new Types.ObjectId(String(comment.post)),
-                        type: 'comment',
-                        postType: 'post',
-                        targetType: 'post',
-                        value: 'has mentioned you in a comment'
-                    }
-                )
-            })
+            this.notificationService.sendBulkNotifications({ users: mentions, targetId: comment.post.toString(), author: comment.user?.['_id'].toString(), type: 'comment', postType: 'post', targetType: 'user', value: "has mentioned you in a comment" });
         }
 
         return {
@@ -496,7 +480,7 @@ export class CommentService {
         };
     }
 
-    async updateReply(replyDetails: { content: string }, mentions: string[], replyId: string, userId: string) {
+    async updateReply({ replyDetails, replyId, mentions, hashtags, userId, hasFollowersMention }: { replyDetails: { content: string }, hashtags: string[], mentions: string[], replyId: string, userId: string, hasFollowersMention?: boolean }) {
         const reply = await this.commentModel.findOneAndUpdate(
             {
                 _id: new Types.ObjectId(replyId),
@@ -505,6 +489,7 @@ export class CommentService {
             {
                 content: replyDetails.content,
                 mentions: mentions?.map(id => new Types.ObjectId(id)) || [],
+                hashtags
             },
             { new: true }
         ).populate('user', 'firstname lastname username profile');
@@ -513,20 +498,14 @@ export class CommentService {
             throw new BadRequestException('Reply not found or you do not have permission to update it.');
         }
 
+        if (hasFollowersMention) {
+            const followers = await this.followersService.getRawFollowers(userId, 'user');
+            this.notificationService.sendBulkNotifications({ users: followers, targetId: reply.post.toString(), author: reply.user?.['_id'].toString(), type: 'reply', postType: 'post', targetType: 'user', value: "has mentioned you in a reply" });
+        }
+
+
         if (reply.mentions.length > 0) {
-            reply.mentions.forEach((userId) => {
-                this.notificationService.createNotification(
-                    {
-                        from: new Types.ObjectId(String(reply.user)),
-                        user: userId,
-                        targetId: new Types.ObjectId(String(reply.post)),
-                        type: 'reply',
-                        postType: 'post',
-                        targetType: 'post',
-                        value: 'has mentioned you in a reply'
-                    }
-                )
-            })
+            this.notificationService.sendBulkNotifications({ users: mentions, targetId: reply.post.toString(), author: reply.user?.['_id'].toString(), type: 'reply', postType: 'post', targetType: 'user', value: "has mentioned you in a reply" });
         }
 
         return {

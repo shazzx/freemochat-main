@@ -9,5 +9,6 @@ import { JwtModule } from '@nestjs/jwt';
   imports: [JwtModule, MongooseModule.forFeature([{ name: Follower.name, schema: FollowerSchema }])],
   controllers: [FollowerController],
   providers: [FollowerService],
+  exports: [FollowerService]
 })
 export class FollowerModule { }

@@ -20,6 +20,7 @@ import Stripe from 'stripe';
 import { z } from 'zod';
 import { HashtagService } from 'src/hashtag/hashtagservice';
 import { NotificationService } from 'src/notification/notification.service';
+import { checkForSpecialMentions } from 'src/utils/global';
 
 @Controller('posts')
 export class PostsController {
@@ -255,9 +256,10 @@ export class PostsController {
             user: new Types.ObjectId(sub)
         } as ServerPostData
 
-        // Create the main post first
-        let uploadedPost = await this.postService.createPost(finalPostData);
-        this.hashtagService.processPostHashtags(uploadedPost._id, hashtags);
+        const hasFollowersMention = checkForSpecialMentions(createPostDTO?.content || '');
+
+        let uploadedPost = await this.postService.createPost(finalPostData, sub, hasFollowersMention);
+        this.hashtagService.processPostHashtags(String(uploadedPost._id), hashtags);
 
         // 🔧 NEW: Create EnvironmentalContribution document for environmental posts
         let environmentalContribution = null;
@@ -525,18 +527,22 @@ export class PostsController {
             hashtags = this.hashtagService.extractHashtags(reelData.content);
         }
 
-        const mentions = reelData?.mentions?.map(id => new Types.ObjectId(id)) || []
-        console.log('these are mentions')
+        const uniqueMentions = reelData?.mentions?.length > 0 ? (() => {
+            const existingMentionIds = post?.mentions?.map(mention => mention.toString()) || []
+            const allUniqueMentionIds = [...new Set([...existingMentionIds, ...reelData?.mentions])]
+            return allUniqueMentionIds.map(id => new Types.ObjectId(id))
+        })() : null
+
+        const hasFollowersMention = checkForSpecialMentions(reelData?.content || '');
+
 
         let updatedPost = await this.postService.updatePost(
             reelData.postId,
             {
                 ...(hashtags && { hashtags }),
-                mentions: [...post?.mentions, ...mentions],
+                ...(uniqueMentions && { mentions: uniqueMentions }),
                 content: reelData.content,
-            })
-
-        console.log(file, 'this is file')
+            }, sub, hasFollowersMention)
 
         if (file) {
             const fileType = getFileType(file.mimetype);
@@ -651,6 +657,8 @@ export class PostsController {
         const hashtags = this.hashtagService.extractHashtags(reelData.content);
         const mentions = reelData?.mentions?.map(id => new Types.ObjectId(id)) || []
 
+        const hasFollowersMention = checkForSpecialMentions(reelData?.content || '');
+
         let uploadedPost = await this.postService.createPost({
             ...reelData,
             isUploaded: false,
@@ -659,9 +667,9 @@ export class PostsController {
             postType: 'post',
             targetId,
             user: new Types.ObjectId(sub)
-        });
+        }, sub, hasFollowersMention);
 
-        this.hashtagService.processPostHashtags(uploadedPost._id, hashtags);
+        this.hashtagService.processPostHashtags(String(uploadedPost._id), hashtags);
 
         this.eventEmitter.emit("reel.upload", {
             uploadPromise,
@@ -705,8 +713,9 @@ export class PostsController {
         @Res() res: Response,
         @UploadedFiles()
         files: Express.Multer.File[]) {
-        const _postData = updatePostDto
 
+        const { sub } = req.user
+        const _postData = updatePostDto
         console.log(updatePostDto)
 
         const post = await this.postService._getPost(_postData.postId)
@@ -725,20 +734,23 @@ export class PostsController {
         }
 
 
-        const mentions = _postData?.mentions?.map(id => new Types.ObjectId(id)) || []
-        console.log('these are mentions')
+        const uniqueMentions = _postData?.mentions?.length > 0 ? (() => {
+            const existingMentionIds = post?.mentions?.map(mention => mention.toString()) || []
+            const allUniqueMentionIds = [...new Set([...existingMentionIds, ..._postData.mentions])]
+            return allUniqueMentionIds.map(id => new Types.ObjectId(id))
+        })() : null
+
+        const hasFollowersMention = checkForSpecialMentions(_postData?.content || '');
 
         let uploadedPost = await this.postService.updatePost(
             _postData.postId,
             {
                 ...updatePostDto,
                 ...(hashtags && { hashtags }),
-                mentions: [...post?.mentions, ...mentions],
+                ...(uniqueMentions && { mentions: uniqueMentions }),
                 isUploaded: files.length > 0 ? false : null,
-            })
+            }, sub, hasFollowersMention)
 
-
-        console.log("post uploaded")
         if (files.length > 0) {
 
             const uploadPromise = files.map((file) => {
