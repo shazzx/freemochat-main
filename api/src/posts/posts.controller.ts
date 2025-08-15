@@ -525,18 +525,19 @@ export class PostsController {
             hashtags = this.hashtagService.extractHashtags(reelData.content);
         }
 
-        const mentions = reelData?.mentions?.map(id => new Types.ObjectId(id)) || []
-        console.log('these are mentions')
+        const uniqueMentions = reelData?.mentions?.length > 0 ? (() => {
+            const existingMentionIds = post?.mentions?.map(mention => mention.toString()) || []
+            const allUniqueMentionIds = [...new Set([...existingMentionIds, ...reelData?.mentions])]
+            return allUniqueMentionIds.map(id => new Types.ObjectId(id))
+        })() : null
 
         let updatedPost = await this.postService.updatePost(
             reelData.postId,
             {
                 ...(hashtags && { hashtags }),
-                mentions: [...post?.mentions, ...mentions],
+                ...(uniqueMentions && { mentions: uniqueMentions }),
                 content: reelData.content,
             })
-
-        console.log(file, 'this is file')
 
         if (file) {
             const fileType = getFileType(file.mimetype);
@@ -725,20 +726,21 @@ export class PostsController {
         }
 
 
-        const mentions = _postData?.mentions?.map(id => new Types.ObjectId(id)) || []
-        console.log('these are mentions')
+        const uniqueMentions = _postData?.mentions?.length > 0 ? (() => {
+            const existingMentionIds = post?.mentions?.map(mention => mention.toString()) || []
+            const allUniqueMentionIds = [...new Set([...existingMentionIds, ..._postData.mentions])]
+            return allUniqueMentionIds.map(id => new Types.ObjectId(id))
+        })() : null
 
         let uploadedPost = await this.postService.updatePost(
             _postData.postId,
             {
                 ...updatePostDto,
                 ...(hashtags && { hashtags }),
-                mentions: [...post?.mentions, ...mentions],
+                ...(uniqueMentions && { mentions: uniqueMentions }),
                 isUploaded: files.length > 0 ? false : null,
             })
 
-
-        console.log("post uploaded")
         if (files.length > 0) {
 
             const uploadPromise = files.map((file) => {

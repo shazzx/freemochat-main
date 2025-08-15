@@ -1418,6 +1418,25 @@ export class PostsService {
                                 isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                             }
                         },
+                        {
+                            $lookup: {
+                                from: 'users',
+                                localField: 'mentions',
+                                foreignField: '_id',
+                                pipeline: [
+                                    {
+                                        $project: {
+                                            _id: 1,
+                                            username: 1,
+                                            firstname: 1,
+                                            lastname: 1,
+                                            profile: 1
+                                        }
+                                    }
+                                ],
+                                as: 'mentions'
+                            }
+                        },
                         // Project shared post fields
                         {
                             $project: {
@@ -1429,6 +1448,8 @@ export class PostsService {
                                 isUploaded: 1,
                                 target: 1,
                                 reaction: 1,
+                                mentions: 1,
+                                hashtags: 1,
                                 videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
                                 likesCount: { $ifNull: ['$likesCount.count', 0] },
                                 commentsCount: { $ifNull: ['$commentsCount.count', 0] },
@@ -1542,6 +1563,25 @@ export class PostsService {
                 },
             },
             {
+                $lookup: {
+                    from: 'users',
+                    localField: 'mentions',
+                    foreignField: '_id',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                username: 1,
+                                firstname: 1,
+                                lastname: 1,
+                                profile: 1
+                            }
+                        }
+                    ],
+                    as: 'mentions'
+                }
+            },
+            {
                 $project: {
                     _id: 1,
                     content: 1,
@@ -1549,6 +1589,8 @@ export class PostsService {
                     user: 1,
                     target: 1,
                     reaction: 1,
+                    mentions: 1,
+                    hashtags: 1,
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
                     commentsCount: { $ifNull: ['$commentsCount.count', 0] },
                     bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
@@ -4195,6 +4237,25 @@ export class PostsService {
             },
 
             {
+                $lookup: {
+                    from: 'users',
+                    localField: 'mentions',
+                    foreignField: '_id',
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                username: 1,
+                                firstname: 1,
+                                lastname: 1,
+                                profile: 1
+                            }
+                        }
+                    ],
+                    as: 'mentions'
+                }
+            },
+            {
                 $project: {
                     _id: 1,
                     content: 1,
@@ -4212,6 +4273,7 @@ export class PostsService {
                     target: 1,
                     reaction: 1,
                     postType: 1,
+                    mentions: 1,
                     videoViewsCount: { $ifNull: ['$videoViewsCount.count', 0] },
                     sharesCount: { $ifNull: ['$sharesCount.count', 0] },
                     likesCount: { $ifNull: ['$likesCount.count', 0] },
@@ -5490,7 +5552,7 @@ export class PostsService {
             {
                 $lookup: {
                     from: 'users',
-                    localField: 'mentions',
+                    localField: 'post.mentions',
                     foreignField: '_id',
                     pipeline: [
                         {
