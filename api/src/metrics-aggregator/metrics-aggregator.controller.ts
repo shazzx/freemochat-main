@@ -35,4 +35,20 @@ export class MetricsAggregatorController {
     const { name, targetId } = req.body
     res.json(await this.metricsAggregatorService.defaultCount(targetId || sub, name, 'user'))
   }
+
+
+  @Get("countries/search")
+  async searchCountries(
+    @Query('q') searchQuery: string,
+    @Res() res: Response
+  ) {
+
+    if (!searchQuery || searchQuery.trim().length < 1) {
+      return res.status(400).json({ error: 'Search query is required and must be at least 1 character long.' });
+    }
+    console.log(searchQuery.trim());
+
+    const result = await this.metricsAggregatorService.searchCountries(searchQuery.trim());
+    res.json(result);
+  }
 }

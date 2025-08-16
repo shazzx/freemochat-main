@@ -9,11 +9,19 @@ export class MetricsAggregatorService {
         @InjectModel(Counter.name) private readonly counterModel: Model<Counter>,
     ) { }
 
-    async incrementCount(targetId: Types.ObjectId, name: string, type: string, session?: any, customCount?: number) {
+    async incrementCount(targetId: Types.ObjectId, name: string, type: string, session?: any, customCount?: number, location?: {
+        latitude: number;
+        longitude: number;
+        address?: string;
+        country?: string;
+        city?: string;
+    }) {
         let counter = await this.counterModel.updateOne(
             { targetId, name, type },
             {
-                $setOnInsert: { targetId, name, type },
+                $setOnInsert: {
+                    targetId, name, type, ...(location && { location })
+                },
                 $inc: { count: customCount ?? 1 }
             },
             { upsert: true, session }
@@ -155,6 +163,82 @@ export class MetricsAggregatorService {
             throw new InternalServerErrorException('Failed to aggregate country contributions');
         }
     }
+
+    // Add this method to your metrics-aggregator.service.ts
+
+    async searchCountries(searchQuery: string) {
+        try {
+            // Get all country contribution documents
+            const rawData = await this.counterModel.find({
+                type: { $regex: /_country_contributions$/ }
+            }).lean();
+
+            const countriesMap = new Map();
+
+            rawData.forEach(doc => {
+                const countryName = doc.type.replace('_country_contributions', '');
+                const category = doc.name as string;
+                const count = doc.count || 0;
+                const location = doc.location || { latitude: null, longitude: null };
+
+                // Initialize country if not exists
+                if (!countriesMap.has(countryName)) {
+                    countriesMap.set(countryName, {
+                        country: countryName,
+                        displayName: countryName,
+                        totalContributions: 0,
+                        location,
+                        categories: {
+                            plantation: 0,
+                            garbage_collection: 0,
+                            water_ponds: 0,
+                            rain_water: 0
+                        }
+                    });
+                }
+
+                // Add to country data
+                const countryData = countriesMap.get(countryName);
+                countryData.totalContributions += count;
+
+                if (countryData.categories[category] !== undefined) {
+                    countryData.categories[category] += count;
+                }
+            });
+
+            // Convert to array
+            const allCountries = Array.from(countriesMap.values());
+
+            // Filter countries by search query using regex (case-insensitive)
+            const searchRegex = new RegExp(searchQuery, 'i');
+            const filteredCountries = allCountries.filter(country =>
+                searchRegex.test(country.country) || searchRegex.test(country.displayName)
+            );
+
+            // Sort by total contributions (descending)
+            filteredCountries.sort((a, b) => b.totalContributions - a.totalContributions);
+
+            return {
+                countries: filteredCountries,
+                totalFound: filteredCountries.length,
+                searchQuery: searchQuery,
+                success: true,
+                timestamp: new Date().toISOString()
+            };
+
+        } catch (error) {
+            console.error('Error searching countries:', error);
+            return {
+                countries: [],
+                totalFound: 0,
+                searchQuery: searchQuery,
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString()
+            };
+        }
+    }
+
 
     async userAndPageContributions(targetId: string) {
         let plantation = await this.counterModel.findOne(

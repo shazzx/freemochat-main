@@ -5795,7 +5795,7 @@ export class PostsService {
         return updatedProject
     }
 
-    async updatePost(postId: string, postDetails: any,  userId?: string, hasFollowersMention?: boolean) {
+    async updatePost(postId: string, postDetails: any, userId?: string, hasFollowersMention?: boolean) {
         console.log(postDetails, 'post data')
         const updatedPost = await this.postModel.findByIdAndUpdate(postId, { $set: { ...postDetails } }, { new: true })
 
@@ -6424,12 +6424,13 @@ export class PostsService {
 
     async createElement(targetId: string, postType: string, data: CreateEnvironmentalContributionDTO) {
         const environmentalContribution = await this.environmentalContributionModel.create({ ...data, postId: new Types.ObjectId(data.postId) })
-
+        console.log(environmentalContribution?.location, 'environmental contribution created')
         // global contributions
         Promise.all([
             this.metricsAggregatorService.incrementCount(null, "global_environmental_contributions", 'contributions'),
             this.metricsAggregatorService.incrementCount(null, postType, "contributions"),
-            this.metricsAggregatorService.incrementCount(null, postType, `${environmentalContribution.location.country}_country_contributions`),
+            this.metricsAggregatorService.incrementCount(null, postType, `${environmentalContribution.location.country}_country_contributions`, null, 1, environmentalContribution.location),
+            this.metricsAggregatorService.incrementCount(null, postType, `${environmentalContribution.location.city}_city_contributions`, null, 1, environmentalContribution.location),
 
             // user/page specific contributions
             this.metricsAggregatorService.incrementCount(new Types.ObjectId(targetId), postType, 'contributions')

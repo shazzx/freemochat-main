@@ -373,7 +373,6 @@ export class PostsController {
             throw new BadRequestException("Project not found")
         }
 
-        console.log(file, 'file')
         const fileType = getFileType(file.mimetype);
         const filename = uuidv4();
         const { url } = await this.uploadService.processAndUploadContent(
@@ -384,8 +383,6 @@ export class PostsController {
             // false,
             // post.postType as EnvironmentalContributionType
         )
-        console.log(url, 'url')
-        console.log(data, 'data')
 
         if (post?.postType == 'plantation') {
             const nextUpdateDue = new Date();
@@ -398,7 +395,6 @@ export class PostsController {
             String(post.postType),
             { ...data, media: [{ url, name: filename, type: 'image', capturedAt: data.media[0].capturedAt }] }
         )
-        console.log(environmentalContribution, 'saved data')
         res.json(environmentalContribution)
 
     }
