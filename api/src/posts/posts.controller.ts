@@ -440,8 +440,8 @@ export class PostsController {
             filename,
             fileType,
             file.originalname,
-            false,
-            post.postType as EnvironmentalContributionType
+            // false,
+            // post.postType as EnvironmentalContributionType
         )
         console.log(url, 'url')
         console.log(data, 'data')

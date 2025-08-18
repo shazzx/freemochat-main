@@ -130,7 +130,7 @@ export class MetricsAggregatorService {
                     categories[category] = categoryData.countries.map(country => ({
                         country: country.country,
                         count: country.count,
-                        displayName: country.country  // ✅ Just use the country name directly!
+                        displayName: country.country
                     }));
                     totals[category] = categoryData.total;
                 }
@@ -149,10 +149,10 @@ export class MetricsAggregatorService {
                     rain_water: categories.rain_water.length
                 },
                 totalUniqueCountries: new Set([
-                    ...categories.plantation.map(c => c.country),
-                    ...categories.garbage_collection.map(c => c.country),
-                    ...categories.water_ponds.map(c => c.country),
-                    ...categories.rain_water.map(c => c.country)
+                    ...categories.plantation.filter(c => c.count > 0).map(c => c.country),
+                    ...categories.garbage_collection.filter(c => c.count > 0).map(c => c.country),
+                    ...categories.water_ponds.filter(c => c.count > 0).map(c => c.country),
+                    ...categories.rain_water.filter(c => c.count > 0).map(c => c.country)
                 ]).size,
                 success: true,
                 timestamp: new Date().toISOString()
@@ -302,6 +302,14 @@ export class MetricsAggregatorService {
                 $setOnInsert: { targetId, name, type },
                 $inc: { count: customCount ? -customCount : -1 }
             },
+        )
+        return counter
+    }
+
+    async removeCounter(targetId: Types.ObjectId, name: string, type: string, customCount?: number) {
+        console.log(type, 'removing counter for', name, 'with customCount:', customCount);
+        let counter = await this.counterModel.deleteOne(
+            { targetId, name, type },
         )
         return counter
     }
