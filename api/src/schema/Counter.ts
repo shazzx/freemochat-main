@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Types } from 'mongoose'
+import { Location } from "./post";
 
 @Schema({ timestamps: true })
 export class Counter {
@@ -14,6 +15,9 @@ export class Counter {
 
     @Prop()
     count: Number
+
+    @Prop({ type: Location })
+    location?: Location;
 }
 
 const counterSchema = SchemaFactory.createForClass(Counter)

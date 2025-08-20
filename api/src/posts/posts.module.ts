@@ -23,6 +23,7 @@ import { PaymentModule } from 'src/payment/payment.module';
 import { LocationModule } from 'src/location/location.module';
 import { HashtagModule } from 'src/hashtag/hashtag.module';
 import { FollowerModule } from 'src/follower/follower.module';
+import { CommentModule } from 'src/comment/comment.module';
 
 @Module({
   imports: [UserModule, JwtModule,
@@ -48,7 +49,8 @@ import { FollowerModule } from 'src/follower/follower.module';
     NotificationModule,
     ChatModule,
     UploadModule,
-    HashtagModule
+    HashtagModule,
+    CommentModule
   ],
   providers: [PostsService],
   controllers: [PostsController],

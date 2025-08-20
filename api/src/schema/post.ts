@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { ObjectId, Types } from "mongoose";
 
-class Location {
+export class Location {
     @Prop({ type: Number, required: true })
     latitude: number;
 

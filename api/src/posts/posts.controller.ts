@@ -373,7 +373,6 @@ export class PostsController {
             throw new BadRequestException("Project not found")
         }
 
-        console.log(file, 'file')
         const fileType = getFileType(file.mimetype);
         const filename = uuidv4();
         const { url } = await this.uploadService.processAndUploadContent(
@@ -384,8 +383,6 @@ export class PostsController {
             // false,
             // post.postType as EnvironmentalContributionType
         )
-        console.log(url, 'url')
-        console.log(data, 'data')
 
         if (post?.postType == 'plantation') {
             const nextUpdateDue = new Date();
@@ -398,7 +395,6 @@ export class PostsController {
             String(post.postType),
             { ...data, media: [{ url, name: filename, type: 'image', capturedAt: data.media[0].capturedAt }] }
         )
-        console.log(environmentalContribution, 'saved data')
         res.json(environmentalContribution)
 
     }
@@ -444,8 +440,8 @@ export class PostsController {
             filename,
             fileType,
             file.originalname,
-            false,
-            post.postType as EnvironmentalContributionType
+            // false,
+            // post.postType as EnvironmentalContributionType
         )
         console.log(url, 'url')
         console.log(data, 'data')
@@ -742,6 +738,8 @@ export class PostsController {
 
         const hasFollowersMention = checkForSpecialMentions(_postData?.content || '');
 
+        const hashtagsToRemove = post.hashtags.filter(hashtag => !hashtags?.includes(hashtag));
+
         let uploadedPost = await this.postService.updatePost(
             _postData.postId,
             {
@@ -750,6 +748,11 @@ export class PostsController {
                 ...(uniqueMentions && { mentions: uniqueMentions }),
                 isUploaded: files.length > 0 ? false : null,
             }, sub, hasFollowersMention)
+
+        Promise.all([
+            this.hashtagService.removePostHashtags(String(uploadedPost._id), hashtagsToRemove),
+            this.hashtagService.processPostHashtags(String(uploadedPost._id), hashtags)
+        ])
 
         if (files.length > 0) {
 

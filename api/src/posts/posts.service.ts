@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
 import { Model, Types } from 'mongoose';
+import { CommentService } from 'src/comment/comment.service';
 import { FollowerService } from 'src/follower/follower.service';
 import { LocationService } from 'src/location/location.service';
 import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggregator.service';
@@ -20,6 +21,7 @@ import { ViewedPosts } from 'src/schema/viewedPosts';
 import { UploadService } from 'src/upload/upload.service';
 import { UserService } from 'src/user/user.service';
 import { CURRENCIES, PAYMENT_PROVIDERS, PAYMENT_STATES, POST_PROMOTION, ReachStatus } from 'src/utils/enums/global.c';
+import { extractFilename } from 'src/utils/global';
 import { SBulkViewPost, SPostPromotion, SViewPost } from 'src/utils/types/service/posts';
 
 
@@ -27,7 +29,6 @@ import { SBulkViewPost, SPostPromotion, SViewPost } from 'src/utils/types/servic
 export class PostsService {
     constructor(
         @InjectModel(Post.name) private readonly postModel: Model<Post>,
-        @InjectModel(Comment.name) private readonly commentModel: Model<Comment>,
         @InjectModel(Report.name) private readonly reportModel: Model<Report>,
         @InjectModel(Promotion.name) private readonly promotionModel: Model<Promotion>,
         @InjectModel(Like.name) private readonly likeModel: Model<Like>,
@@ -43,6 +44,7 @@ export class PostsService {
         private readonly locationService: LocationService,
         private readonly paymentService: PaymentService,
         private readonly followersService: FollowerService,
+        private readonly commentsService: CommentService,
     ) { }
 
     @Cron('0 9 * * *')
@@ -550,7 +552,8 @@ export class PostsService {
                                     $and: [
                                         { $eq: ['$targetId', '$$targetId'] },
                                         { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
-                                        { $eq: ['$type', 'contributions'] }
+                                        { $eq: ['$type', 'contributions'] },
+                                        { $gt: ['$count', 0] }  // ADD THIS LINE
                                     ]
                                 }
                             }
@@ -767,7 +770,8 @@ export class PostsService {
                                                 $and: [
                                                     { $eq: ['$targetId', '$$targetId'] },
                                                     { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
-                                                    { $eq: ['$type', 'contributions'] }
+                                                    { $eq: ['$type', 'contributions'] },
+                                                    { $gt: ['$count', 0] }  // ADD THIS LINE
                                                 ]
                                             }
                                         }
@@ -1900,7 +1904,8 @@ export class PostsService {
                                                 $and: [
                                                     { $eq: ['$targetId', '$$targetId'] },
                                                     { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
-                                                    { $eq: ['$type', 'contributions'] }
+                                                    { $eq: ['$type', 'contributions'] },
+                                                    { $gt: ['$count', 0] }  // ADD THIS LINE
                                                 ]
                                             }
                                         }
@@ -2190,7 +2195,8 @@ export class PostsService {
                                     $and: [
                                         { $eq: ['$targetId', '$$targetId'] },
                                         { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
-                                        { $eq: ['$type', 'contributions'] }
+                                        { $eq: ['$type', 'contributions'] },
+                                        { $gt: ['$count', 0] }  // ADD THIS LINE
                                     ]
                                 }
                             }
@@ -3159,7 +3165,8 @@ export class PostsService {
                                                 $and: [
                                                     { $eq: ['$targetId', '$$targetId'] },
                                                     { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
-                                                    { $eq: ['$type', 'contributions'] }
+                                                    { $eq: ['$type', 'contributions'] },
+                                                    { $gt: ['$count', 0] }  // ADD THIS LINE
                                                 ]
                                             }
                                         }
@@ -3433,7 +3440,8 @@ export class PostsService {
                                     $and: [
                                         { $eq: ['$targetId', '$$targetId'] },
                                         { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
-                                        { $eq: ['$type', 'contributions'] }
+                                        { $eq: ['$type', 'contributions'] },
+                                        { $gt: ['$count', 0] }  // ADD THIS LINE
                                     ]
                                 }
                             }
@@ -5795,7 +5803,7 @@ export class PostsService {
         return updatedProject
     }
 
-    async updatePost(postId: string, postDetails: any,  userId?: string, hasFollowersMention?: boolean) {
+    async updatePost(postId: string, postDetails: any, userId?: string, hasFollowersMention?: boolean) {
         console.log(postDetails, 'post data')
         const updatedPost = await this.postModel.findByIdAndUpdate(postId, { $set: { ...postDetails } }, { new: true })
 
@@ -5855,6 +5863,14 @@ export class PostsService {
 
     async deletePost(postId: any) {
         const post = await this.postModel.findByIdAndDelete(postId)
+
+        if (post.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(String(post.postType))) {
+            Promise.all([
+                this.metricsAggregatorService.decrementCount(null, `${String(post.postType)}_projects`, 'contributions'),
+                this.metricsAggregatorService.decrementCount(null, `projects`, 'contributions'),
+            ])
+        }
+        await this.commentsService.removeCommentsAndReplies(String(postId), String(post?.user))
         return post
     }
 
@@ -6424,12 +6440,13 @@ export class PostsService {
 
     async createElement(targetId: string, postType: string, data: CreateEnvironmentalContributionDTO) {
         const environmentalContribution = await this.environmentalContributionModel.create({ ...data, postId: new Types.ObjectId(data.postId) })
-
+        console.log(environmentalContribution?.location, 'environmental contribution created')
         // global contributions
         Promise.all([
             this.metricsAggregatorService.incrementCount(null, "global_environmental_contributions", 'contributions'),
             this.metricsAggregatorService.incrementCount(null, postType, "contributions"),
-            this.metricsAggregatorService.incrementCount(null, postType, `${environmentalContribution.location.country}_country_contributions`),
+            this.metricsAggregatorService.incrementCount(null, postType, `${environmentalContribution.location.country}_country_contributions`, null, 1, environmentalContribution.location),
+            this.metricsAggregatorService.incrementCount(null, postType, `${environmentalContribution.location.city}_city_contributions`, null, 1, environmentalContribution.location),
 
             // user/page specific contributions
             this.metricsAggregatorService.incrementCount(new Types.ObjectId(targetId), postType, 'contributions')
@@ -6496,6 +6513,15 @@ export class PostsService {
             return acc;
         }, {});
 
+
+        const cityCounts = elements.reduce((acc, element) => {
+            const city = element.location?.city;
+            if (city) {
+                acc[city] = (acc[city] || 0) + 1;
+            }
+            return acc;
+        }, {});
+
         return Promise.all([
             this.metricsAggregatorService.decrementCount(null, "global_environmental_contributions", 'contributions', elements.length),
             this.metricsAggregatorService.decrementCount(null, postType, "contributions", elements.length),
@@ -6503,9 +6529,13 @@ export class PostsService {
 
             ...Object.entries(countryCounts).map(([country, count]) =>
                 this.metricsAggregatorService.decrementCount(null, postType, `${country}_country_contributions`, count as number)
+            ),
+            ...Object.entries(cityCounts).map(([city, count]) =>
+                this.metricsAggregatorService.decrementCount(null, postType, `${city}_city_contributions`, count as number)
             )
         ]);
     }
+
     private async cleanupElementFiles(elements: any[]): Promise<void> {
         const filesToDelete = this.extractAllFilenames(elements);
 
@@ -6547,7 +6577,7 @@ export class PostsService {
             if (element.media?.length > 0) {
                 element.media.forEach(mediaItem => {
                     if (typeof mediaItem.url === 'string') {
-                        const filename = this.extractFilename(mediaItem.url);
+                        const filename = extractFilename(mediaItem.url);
                         if (filename) filesToDelete.push(filename);
                     }
                 });
@@ -6556,7 +6586,7 @@ export class PostsService {
             if (element?.updateHistory?.media?.length > 0) {
                 element.updateHistory.media.forEach(mediaItem => {
                     if (typeof mediaItem.url === 'string') {
-                        const filename = this.extractFilename(mediaItem.url);
+                        const filename = extractFilename(mediaItem.url);
                         if (filename) filesToDelete.push(filename);
                     }
                 });
@@ -6566,9 +6596,6 @@ export class PostsService {
         return filesToDelete;
     }
 
-    private extractFilename(url: string): string {
-        const parts = url.split("/");
-        return parts[parts.length - 1] || '';
-    }
+
 
 }

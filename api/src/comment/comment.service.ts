@@ -7,6 +7,7 @@ import { NotificationService } from 'src/notification/notification.service';
 import { Comment } from 'src/schema/comment';
 import { UploadService } from 'src/upload/upload.service';
 import { getFileType } from 'src/utils/getFileType';
+import { extractFilename } from 'src/utils/global';
 import { v4 as uuidv4 } from 'uuid'
 
 @Injectable()
@@ -533,4 +534,37 @@ export class CommentService {
         return deletedReply
 
     }
+
+    async removeCommentsAndReplies(postId: string, userId: string) {
+        const commentsToDelete = await this.commentModel.find({
+            post: postId,
+            user: new Types.ObjectId(userId)
+        }).lean();
+
+        if (!commentsToDelete || commentsToDelete.length === 0) {
+            return
+        }
+
+        const filesToDelete = commentsToDelete
+            .filter(comment => comment.audio && comment.audio.src)
+            .map(comment => extractFilename(comment.audio.src as string));
+
+        const deleted = await this.commentModel.deleteMany({
+            post: postId,
+            user: new Types.ObjectId(userId)
+        });
+
+        Promise.all([
+            this.metricsAggregatorService.removeCounter(new Types.ObjectId(postId), "post", "comments"),
+            ...commentsToDelete.map(comment =>
+                this.metricsAggregatorService.removeCounter(new Types.ObjectId(String(comment._id)), "comment", "replies")
+            ),
+            ...(filesToDelete.length > 0 ? [this.uploadService.deleteMultipleFromS3(filesToDelete)] : [])
+        ]).catch(error => {
+            console.error('Error during cleanup:', error);
+        });
+
+        return deleted;
+    }
+
 }

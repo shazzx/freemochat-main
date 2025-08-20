@@ -18,11 +18,12 @@ import { FollowerModule } from 'src/follower/follower.module';
     forwardRef(() => MetricsAggregatorModule),
     NotificationModule,
     HashtagModule,
-    PostsModule,
+    forwardRef(() => PostsModule),
     FollowerModule,
     MongooseModule.forFeature([{ name: Comment.name, schema: CommentSchema }])
   ],
   controllers: [CommentController],
   providers: [CommentService],
+  exports: [CommentService]
 })
 export class CommentModule { }
