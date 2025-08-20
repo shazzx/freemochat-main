@@ -738,6 +738,8 @@ export class PostsController {
 
         const hasFollowersMention = checkForSpecialMentions(_postData?.content || '');
 
+        const hashtagsToRemove = post.hashtags.filter(hashtag => !hashtags?.includes(hashtag));
+
         let uploadedPost = await this.postService.updatePost(
             _postData.postId,
             {
@@ -746,6 +748,11 @@ export class PostsController {
                 ...(uniqueMentions && { mentions: uniqueMentions }),
                 isUploaded: files.length > 0 ? false : null,
             }, sub, hasFollowersMention)
+
+        Promise.all([
+            this.hashtagService.removePostHashtags(String(uploadedPost._id), hashtagsToRemove),
+            this.hashtagService.processPostHashtags(String(uploadedPost._id), hashtags)
+        ])
 
         if (files.length > 0) {
 
