@@ -904,7 +904,7 @@ export class UploadService {
 
         try {
             // Default path is in assets directory relative to this file
-            const defaultImagePath = path.join(__dirname, '..', '..', 'assets', 'freedombook-logo.png');
+            const defaultImagePath = path.join(__dirname, '..', '..', 'assets', 'freemochat-logo.png');
             const watermarkImagePath = options.watermarkImagePath || defaultImagePath;
 
             const position = options.position || 'bottomRight';
@@ -919,7 +919,7 @@ export class UploadService {
                 console.log(`Full path attempted: ${path.resolve(watermarkImagePath)}`);
 
                 if (!options.text) {
-                    options.text = 'FreedomBook'; // Fallback text
+                    options.text = 'Freemochat'; // Fallback text
                 }
             } else {
                 console.log(`✅ Found watermark image at: ${watermarkImagePath}`);
@@ -950,7 +950,7 @@ export class UploadService {
             // First try with text watermark (works more consistently across FFmpeg versions)
             if (!imageExists || options.text) {
                 await new Promise<void>((resolve, reject) => {
-                    const text = options.text || 'FreedomBook';
+                    const text = options.text || 'Freemochat';
                     const fontSize = options.fontSize || 24;
                     const fontColor = options.fontColor || 'white';
 
@@ -1100,7 +1100,7 @@ export class UploadService {
                             .videoFilters({
                                 filter: 'drawtext',
                                 options: {
-                                    text: 'FreedomBook',
+                                    text: 'Freemochat',
                                     fontsize: 24,
                                     fontcolor: 'white',
                                     x: 'w-tw-10',

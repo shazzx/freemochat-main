@@ -121,8 +121,8 @@ export function Signup() {
     }, [errors])
 
     return (
-        <div className="p-8 flex flex-col gap-8 items-center justify-center overflow-auto">
-            <h1 className="text-2xl font-bold "><img className="sm:h-[72px] h-16" src={logo} alt="" /></h1>
+        <div className="p-8 flex flex-col gap-6 items-center justify-center overflow-auto">
+            <h1 className="text-2xl font-bold "><img className="sm:h-[112px] h-24" src={logo} alt="" /></h1>
             <Card className="mx-auto max-w-md">
                 <CardHeader>
                     <CardTitle className="text-2xl">Sign Up</CardTitle>

@@ -23,7 +23,7 @@ function BottomLinks() {
             </div>
             <div>
                 <span className="text-xs">
-                    Freedombook @ 2025
+                    Freemochat @ 2025
                 </span>
             </div>
             <div className='text-xs'>

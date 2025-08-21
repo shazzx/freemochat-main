@@ -80,8 +80,8 @@ export function LoginForm() {
     const [loginButtonState, setLoginButtonState] = useState(false)
 
     return (
-        <div className="flex items-center justify-center w-screen h-screen flex-col gap-10">
-            <h1 className="text-2xl font-bold "><img className="sm:h-[72px] h-16" src={logo} alt="" /></h1>
+        <div className="flex items-center justify-center w-screen h-screen flex-col gap-6">
+            <h1 className="text-2xl font-bold "><img className="sm:h-[112px] h-24" src={logo} alt="" /></h1>
             <LoginWrapper/>
             <BottomLinks />
         </div>

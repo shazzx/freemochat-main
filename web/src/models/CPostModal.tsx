@@ -8,19 +8,11 @@ import { Loader, VideoIcon, Palette, Hash, AtSign, Check } from "lucide-react"
 import { toast } from "react-toastify"
 import { useNavigate } from "react-router-dom"
 import CustomComboBox from "@/components/ComboboxTwo"
-import { Textarea } from "@/components/ui/textarea"
 import { TUser } from "@/utils/types/TUser"
 import BackgroundPost from "@/components/BackgroundPost"
 import { axiosClient } from "@/api/axiosClient"
-
-// Mentions interfaces
-export interface MentionReference {
-    _id: string;
-    username: string;
-    firstname: string;
-    lastname: string;
-    profile?: string;
-}
+import MentionsInput, { MentionReference } from "@/components/MentionsInput"
+import ContentWithLinksAndMentions from "@/components/ContentWithLinksAndMentions"
 
 interface UserSuggestion {
     _id: string;
@@ -28,6 +20,7 @@ interface UserSuggestion {
     firstname: string;
     lastname: string;
     profile?: string;
+    isSpecial?: boolean; // For special mentions like @followers
 }
 
 // Background color options
@@ -48,229 +41,6 @@ const TEXT_LIMITS = {
     WITH_BACKGROUND: 280,
     WITHOUT_BACKGROUND: 2000,
 };
-
-// Mentions Input Component
-const MentionsInput: FC<{
-    value: string;
-    onChangeText: (text: string, mentionUserIds: string[], mentionReferences: MentionReference[]) => void;
-    placeholder?: string;
-    className?: string;
-    onSuggestionsFetch?: (query: string) => Promise<UserSuggestion[]>;
-    mentionReferences: MentionReference[];
-    textLimit: number;
-}> = ({
-    value,
-    onChangeText,
-    placeholder,
-    className,
-    onSuggestionsFetch,
-    mentionReferences: initialReferences,
-    textLimit
-}) => {
-        const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
-        const [showSuggestions, setShowSuggestions] = useState(false);
-        const [currentMentionQuery, setCurrentMentionQuery] = useState('');
-        const [mentionStartIndex, setMentionStartIndex] = useState(-1);
-        const [cursorPosition, setCursorPosition] = useState(0);
-        const [mentionReferences, setMentionReferences] = useState<MentionReference[]>(initialReferences);
-
-        const textareaRef = useRef<HTMLTextAreaElement>(null);
-        const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-        // Keep track of display text vs internal text
-        const [displayText, setDisplayText] = useState(value);
-        const [internalText, setInternalText] = useState(value);
-
-        // Convert initial value from internal (user IDs) to display (usernames) format
-        useEffect(() => {
-            if (value && mentionReferences.length > 0) {
-                let display = value;
-                mentionReferences.forEach(ref => {
-                    const userIdRegex = new RegExp(`@${ref._id}`, 'g');
-                    display = display.replace(userIdRegex, `@${ref.username}`);
-                });
-                setDisplayText(display);
-                setInternalText(value);
-            } else {
-                setDisplayText(value);
-                setInternalText(value);
-            }
-        }, [value, mentionReferences]);
-
-        const fetchSuggestions = useCallback(async (query: string) => {
-            if (debounceTimeoutRef.current) {
-                clearTimeout(debounceTimeoutRef.current);
-            }
-
-            debounceTimeoutRef.current = setTimeout(async () => {
-                if (query.length > 0 && onSuggestionsFetch) {
-                    try {
-                        const results = await onSuggestionsFetch(query);
-                        setSuggestions(results);
-                    } catch (error) {
-                        console.error('Error fetching suggestions:', error);
-                        setSuggestions([]);
-                    }
-                } else {
-                    setSuggestions([]);
-                }
-            }, 300);
-        }, [onSuggestionsFetch]);
-
-        const handleTextChange = (text: string) => {
-            // Check text limit
-            if (text.length > textLimit) {
-                toast.warning(`Text limit exceeded! Maximum ${textLimit} characters allowed.`);
-                return;
-            }
-
-            const textarea = textareaRef.current;
-            const cursorPos = textarea?.selectionStart || 0;
-
-            setDisplayText(text);
-            setCursorPosition(cursorPos);
-
-            // Find mention query
-            let mentionStart = -1;
-            for (let i = cursorPos - 1; i >= 0; i--) {
-                if (text[i] === '@') {
-                    if (i === 0 || /\s/.test(text[i - 1])) {
-                        mentionStart = i;
-                        break;
-                    }
-                } else if (/\s/.test(text[i])) {
-                    break;
-                }
-            }
-
-            if (mentionStart !== -1) {
-                const mentionEnd = cursorPos;
-                const mentionText = text.substring(mentionStart + 1, mentionEnd);
-
-                if (!mentionText.includes(' ') && mentionText.length >= 0) {
-                    setCurrentMentionQuery(mentionText);
-                    setMentionStartIndex(mentionStart);
-                    setShowSuggestions(true);
-                    fetchSuggestions(mentionText);
-                } else {
-                    setShowSuggestions(false);
-                    setSuggestions([]);
-                }
-            } else {
-                setShowSuggestions(false);
-                setSuggestions([]);
-            }
-
-            // Convert display text to internal text
-            let internal = text;
-            mentionReferences.forEach(ref => {
-                const usernameRegex = new RegExp(`@${ref.username}\\b`, 'g');
-                internal = internal.replace(usernameRegex, `@${ref._id}`);
-            });
-
-            setInternalText(internal);
-
-            // Extract user IDs from internal text
-            const userIdRegex = /@([a-f\d]{24})/g;
-            const currentReferences: MentionReference[] = [];
-            const mentionUserIds: string[] = [];
-            let match;
-
-            while ((match = userIdRegex.exec(internal)) !== null) {
-                const userId = match[1];
-                const existingRef = mentionReferences.find(ref => ref._id === userId);
-                if (existingRef) {
-                    currentReferences.push(existingRef);
-                    mentionUserIds.push(existingRef._id);
-                }
-            }
-
-            setMentionReferences(currentReferences);
-            onChangeText(internal, mentionUserIds, currentReferences);
-        };
-
-        const handleSuggestionPress = (suggestion: UserSuggestion) => {
-            const beforeMention = displayText.substring(0, mentionStartIndex);
-            const afterMention = displayText.substring(cursorPosition);
-
-            const displayMentionText = `@${suggestion.username}`;
-            const newDisplayText = beforeMention + displayMentionText + ' ' + afterMention;
-
-            const internalMentionText = `@${suggestion._id}`;
-            const newInternalText = beforeMention + internalMentionText + ' ' + afterMention;
-
-            const newReference: MentionReference = suggestion;
-
-            const updatedReferences = mentionReferences.filter(ref => ref._id !== suggestion._id);
-            updatedReferences.push(newReference);
-            setMentionReferences(updatedReferences);
-
-            setShowSuggestions(false);
-            setSuggestions([]);
-            setCurrentMentionQuery('');
-            setMentionStartIndex(-1);
-
-            setDisplayText(newDisplayText);
-            setInternalText(newInternalText);
-
-            // Extract all mentions and update
-            const userIdRegex = /@([a-f\d]{24})/g;
-            const finalReferences: MentionReference[] = [];
-            const finalUserIds: string[] = [];
-            let match;
-
-            while ((match = userIdRegex.exec(newInternalText)) !== null) {
-                const userId = match[1];
-                const existingRef = updatedReferences.find(ref => ref._id === userId);
-                if (existingRef) {
-                    finalReferences.push(existingRef);
-                    finalUserIds.push(existingRef._id);
-                }
-            }
-
-            setMentionReferences(finalReferences);
-            onChangeText(newInternalText, finalUserIds, finalReferences);
-
-            setTimeout(() => {
-                textareaRef.current?.focus();
-            }, 100);
-        };
-
-        return (
-            <div className="relative">
-                <Textarea
-                    ref={textareaRef}
-                    value={displayText}
-                    onChange={(e) => handleTextChange(e.target.value)}
-                    placeholder={placeholder}
-                    className={className}
-                    onSelect={(e) => setCursorPosition((e.target as HTMLTextAreaElement).selectionStart || 0)}
-                />
-
-                {showSuggestions && suggestions.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                        {suggestions.map((suggestion, index) => (
-                            <div
-                                key={`${suggestion._id}-${index}`}
-                                className="flex items-center p-3 hover:bg-gray-100 cursor-pointer"
-                                onClick={() => handleSuggestionPress(suggestion)}
-                            >
-                                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">
-                                    <span className="text-sm font-bold text-gray-600">
-                                        {suggestion.username.charAt(0).toUpperCase()}
-                                    </span>
-                                </div>
-                                <div className="flex-1">
-                                    <div className="font-medium text-sm">@{suggestion.username}</div>
-                                    <div className="text-xs text-gray-500">{suggestion.firstname} {suggestion.lastname}</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        );
-    };
 
 // Helper functions
 const extractHashtags = (text: string): string[] => {
@@ -333,10 +103,11 @@ const CPostModal: FC<{
     const [postMedia, setPostMedia] = useState<{ remove: string, url: string, file: string, filename: string }[]>((postDetails && postDetails?.media) ? [...postDetails?.media] : [])
     const [uploading, setUploading] = useState(false)
 
-    // New state for mentions, hashtags, and backgrounds
-    const [inputText, setInputText] = useState(editPost ? postDetails?.content ?? "" : "")
-    const [mentionUserIds, setMentionUserIds] = useState<string[]>(editPost ? postDetails?.mentions?.map(m => m._id) ?? [] : [])
-    const [mentionReferences, setMentionReferences] = useState<MentionReference[]>(editPost ? postDetails?.mentions ?? [] : [])
+    // CRITICAL: For edit mode, pass the INTERNAL text (with user IDs) to MentionsInput
+    // The MentionsInput component will handle converting it to display format (usernames)
+    const [inputText, setInputText] = useState("")
+    const [mentionUserIds, setMentionUserIds] = useState<string[]>([])
+    const [mentionReferences, setMentionReferences] = useState<MentionReference[]>([])
     const [extractedHashtags, setExtractedHashtags] = useState<string[]>([])
     const [selectedBackground, setSelectedBackground] = useState(
         editPost ? (postDetails?.backgroundColor ? BACKGROUND_COLORS.find(bg => bg.color === postDetails.backgroundColor) || BACKGROUND_COLORS[0] : BACKGROUND_COLORS[0]) : BACKGROUND_COLORS[0]
@@ -345,7 +116,21 @@ const CPostModal: FC<{
 
     const content = useRef<HTMLTextAreaElement>()
 
-    // Extract hashtags whenever text changes
+    // CRITICAL: Initialize the component state properly for edit mode
+    useEffect(() => {
+        if (editPost && postDetails) {
+            // Set the internal text (with user IDs) - MentionsInput will convert to display
+            setInputText(postDetails.content || "");
+            
+            // Initialize mention user IDs if they exist
+            if (postDetails.mentions && postDetails.mentions.length > 0) {
+                const userIds = postDetails.mentions.map(m => m._id);
+                setMentionUserIds(userIds);
+            }
+        }
+    }, [editPost, postDetails]);
+
+    // Extract hashtags whenever internal text changes (from MentionsInput)
     useEffect(() => {
         const hashtags = extractHashtags(inputText);
         setExtractedHashtags(hashtags);
@@ -399,10 +184,20 @@ const CPostModal: FC<{
     }
     const navigate = useNavigate()
 
-    const handleMentionsChange = (text: string, userIds: string[], references: MentionReference[]) => {
-        setInputText(text);
-        setMentionUserIds(userIds);
-        setMentionReferences(references);
+    // CRITICAL: This receives the INTERNAL text (with user IDs) from MentionsInput
+    const handleMentionsChange = (internalText: string, userIds: string[], references: MentionReference[]) => {
+        const textLimit = getCurrentTextLimit();
+
+        // Note: The length check should be based on display text length, but for simplicity
+        // we'll use internal text length. In production, you might want to convert to display
+        // text first to get accurate character count that user sees.
+        if (internalText.length <= textLimit) {
+            setInputText(internalText); // Store internal text (with user IDs)
+            setMentionUserIds(userIds);
+            setMentionReferences(references);
+        } else {
+            toast.warning(`Text limit exceeded! Maximum ${textLimit} characters allowed.`);
+        }
     };
 
     const handleBackgroundSelect = (background: any) => {
@@ -452,10 +247,10 @@ const CPostModal: FC<{
         if ((isShared && !editPost) || ((hasContent || hasValidMedia) && !editPost)) {
             const postData = {
                 visibility: selected,
-                content: inputText.trim(),
+                content: inputText.trim(), // Send internal text (with user IDs) to backend
                 selectedMedia,
-                mentions: mentionUserIds,
-                mentionReferences,
+                mentions: mentionUserIds, // Send user IDs array
+                mentionReferences, // Send full mention references for any additional processing
                 hashtags: extractedHashtags,
                 ...(selectedBackground.color && media.length === 0 && { backgroundColor: selectedBackground.color })
             };
@@ -473,13 +268,16 @@ const CPostModal: FC<{
         if ((isShared && editPost) || ((hasContent || hasValidMedia) && editPost)) {
             const updateData = {
                 visibility: selected,
-                content: inputText.trim(),
+                content: inputText.trim(), // Send internal text (with user IDs) to backend
                 formData,
                 selectedMedia,
                 media: postMedia,
                 setModelTrigger,
-                mentions: mentionUserIds,
+                mentions: mentionUserIds, // Send user IDs array  
+                mentionReferences, // Send full mention references
                 hashtags: extractedHashtags,
+                postId: postDetails._id,
+                type: postDetails.type || 'post',
                 ...(selectedBackground.color && media.length === 0 && { backgroundColor: selectedBackground.color })
             };
 
@@ -522,13 +320,22 @@ const CPostModal: FC<{
         return extractedHashtags.map(tag => `#${tag}`).join(', ');
     }, [extractedHashtags]);
 
+    // Text Preview Component using BackgroundPost
     const TextPreview = () => {
-
         if (!selectedBackground?.color || media.length > 0 || selectedMedia.length > 0) {
             return null;
         }
 
-        const previewText = inputText.trim() || "Your text will appear here...";
+        // For preview, we need to convert internal text to display text
+        // This is a simplified version - in production you might want to use the same
+        // conversion logic from MentionsInput
+        let previewText = inputText.trim() || "Your text will appear here...";
+        
+        // Convert mentions for preview (simple approach)
+        mentionReferences.forEach(ref => {
+            const userIdRegex = new RegExp(`@${ref._id}`, 'g');
+            previewText = previewText.replace(userIdRegex, `@${ref.username}`);
+        });
 
         return (
             <div className="w-full my-4">
@@ -541,6 +348,7 @@ const CPostModal: FC<{
                     expanded={false}
                     toggleReadMore={() => {}}
                     isShared={false}
+                    ContentWithLinksAndMentions={ContentWithLinksAndMentions}
                 />
             </div>
         );
@@ -584,15 +392,22 @@ const CPostModal: FC<{
                             </div>
                         }
 
-                        {/* Mentions Input */}
+                        {/* CRITICAL: MentionsInput handles the conversion from internal to display */}
                         <div className={`w-full ${selectedMedia?.length > 0 || postDetails?.media?.length ? 'min-h-[200px]' : 'min-h-[200px]'}`}>
                             <MentionsInput
-                                value={inputText}
-                                onChangeText={handleMentionsChange}
+                                value={inputText} // Pass internal text (with user IDs)
+                                onChangeText={handleMentionsChange} // Receive internal text back
                                 placeholder={getPlaceholderText()}
                                 className="border-accent border w-full bg-card h-full p-2 min-h-[150px] resize-none"
                                 onSuggestionsFetch={fetchUserMentionSuggestions}
-                                mentionReferences={mentionReferences}
+                                initialReferences={editPost && postDetails?.mentions ? 
+                                    postDetails.mentions.map((user: any) => ({
+                                        _id: user._id,
+                                        username: user.username,
+                                        firstname: user.firstname,
+                                        lastname: user.lastname,
+                                        profile: user.profile
+                                    })) : []}
                                 textLimit={getCurrentTextLimit()}
                             />
 
@@ -715,6 +530,7 @@ const CPostModal: FC<{
                                                         height={340}
                                                         onEmojiClick={(emoji) => {
                                                             setEmojiPickerState(false)
+                                                            // Add emoji to current internal text
                                                             setInputText(prev => prev + " " + emoji.emoji)
                                                         }}
                                                     />

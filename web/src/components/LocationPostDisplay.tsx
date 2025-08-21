@@ -622,9 +622,9 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden">
+      <div className="bg-card overflow-hidden">
         {/* Header */}
-        <div className="p-4 cursor-pointer" onClick={onCardPress}>
+        {/* <div className="p-4 cursor-pointer" onClick={onCardPress}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <AvatarContainer
@@ -655,7 +655,6 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
               </div>
             </div>
 
-            {/* Menu */}
             <div className="relative">
               <button
                 onClick={(e) => {
@@ -713,7 +712,7 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
               )}
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Post Type Badge */}
         <div className="px-4">
