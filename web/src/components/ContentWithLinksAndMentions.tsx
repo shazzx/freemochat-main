@@ -1,4 +1,3 @@
-import { domain } from '@/config/domain';
 import React, { memo, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -198,7 +197,7 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
   }, [parsedContent, expanded, content.length, maxLength, showReadMore]);
 
   const handleMentionPress = useCallback((user) => {
-      navigate(`${domain}/user/${user.username}`);
+      navigate(`/user/${user.username}`, {replace: true});
   }, [navigation, navigate]);
 
   const handleHashtagPress = useCallback((hashtag) => {
