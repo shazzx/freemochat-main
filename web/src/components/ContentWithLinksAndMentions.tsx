@@ -1,3 +1,4 @@
+import { domain } from '@/config/domain';
 import React, { memo, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -197,14 +198,7 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
   }, [parsedContent, expanded, content.length, maxLength, showReadMore]);
 
   const handleMentionPress = useCallback((user) => {
-    if (navigation) {
-      // Use different navigation routes based on context
-      if (navigation.navigate) {
-        navigation.navigate('otherUser', { username: user.username });
-      }
-    } else if (navigate) {
-      navigate(`/user/${user.username}`);
-    }
+      navigate(`${domain}/user/${user.username}`);
   }, [navigation, navigate]);
 
   const handleHashtagPress = useCallback((hashtag) => {

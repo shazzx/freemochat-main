@@ -514,8 +514,7 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
                 ? `${domain}/page/${sharedPost.target.handle}`
                 : `${domain}/user/${sharedPost.target.username}`;
 
-        console.log(navigation, 'this is navigation')
-        // navigate(navigation);
+        navigate(navigation);
     };
 
     if (!sharedPost) return null;

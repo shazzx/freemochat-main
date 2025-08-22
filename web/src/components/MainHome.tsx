@@ -252,7 +252,7 @@ const MainHome = ({ children }: any) => {
                 <Link to="/">
                   {/* logo */}
                   <h1 className="text-2xl font-bold">
-                    <img className="h-16 w-auto object-contain flex-shrink-0 invert brightness-0" src={logo} alt="" />
+                    <img className="h-16 w-auto object-contain flex-shrink-0 dark:invert dark:brightness-0" src={logo} alt="" />
                   </h1>
                 </Link>
               </div>}
