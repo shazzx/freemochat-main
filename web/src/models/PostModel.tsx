@@ -3,9 +3,7 @@ import AudioRecorder from '@/components/MediaRecorder'
 import Post from '@/components/Post'
 import Comment from '@/components/Post/Comment'
 import Reply from '@/components/Post/Reply'
-import ScreenLoader from '@/components/ScreenLoader'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { useComments, useCreateComment, useReplies, useReplyOnComment, useUpdateComment } from '@/hooks/Post/useComments'
 import { ChevronLeft } from 'lucide-react'
 import React, { FormEvent, useEffect, useRef, useState } from 'react'
@@ -18,7 +16,6 @@ import { setClose } from '@/app/features/user/postModelSlice'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import MentionsInput, { MentionReference } from '@/components/MentionsInput'
 import { fetchUserMentionSuggestions } from '@/models/CPostModal'
-import ContentWithLinksAndMentions from '@/components/ContentWithLinksAndMentions'
 
 function PostModel({ params, postIndex, pageIndex, setModelTrigger, postId, postData, useLikePost, useBookmarkPost, type }: any) {
     const { user } = useAppSelector((data) => data.user)

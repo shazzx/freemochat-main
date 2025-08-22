@@ -23,7 +23,7 @@ interface MentionsInputProps {
   onChangeText: (text: string, mentionUserIds: string[], mentionReferences: MentionReference[]) => void;
   placeholder?: string;
   className?: string;
-  onSuggestionsFetch?: (query: string) => Promise<UserSuggestion[]>;
+  onSuggestionsFetch?: Function;
   initialReferences?: MentionReference[];
   textLimit?: number;
 }

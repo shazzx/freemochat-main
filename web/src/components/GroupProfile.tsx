@@ -55,11 +55,18 @@ function GroupProfile() {
 
     const createPost = useCreatePost('groupPosts', data?._id)
 
-    const _createPost = async ({ content, selectedMedia, formData, visibility }) => {
-        let postDetails = { content, media: data, type: "group", targetId: data?._id, visibility }
+    // const _createPost = async ({ content, selectedMedia, formData, visibility }) => {
+    //     let postDetails = { content, media: data, type: "group", targetId: data?._id, visibility }
+    //     formData.append("postData", JSON.stringify(postDetails))
+    //     let response = createPost.mutate({ content, formData, selectedMedia, type: "group", target: data })
+    //     console.log(response, 'uploaded')
+    //     setPostModal(false)
+    // }
+
+    const _createPost = async ({ visibility, content, selectedMedia, backgroundColor, mentions, mentionReferences, formData }) => {
+        let postDetails = { content, type: "group", postType: 'post', backgroundColor, mentions, targetId: data?._id, visibility }
         formData.append("postData", JSON.stringify(postDetails))
-        let response = createPost.mutate({ content, formData, selectedMedia, type: "group", target: data })
-        console.log(response, 'uploaded')
+        createPost.mutate({ content, formData, selectedMedia, mentions, mentionReferences, backgroundColor, postType: 'post', type: "group", target: data })
         setPostModal(false)
     }
 
