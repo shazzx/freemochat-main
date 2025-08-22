@@ -1,21 +1,24 @@
 import { useDeleteComment, useLikeComment } from '@/hooks/Post/useComments'
-import { FC, useEffect, useRef, useState } from 'react'
+import React, { FC, useEffect, useRef, useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
 import { EllipsisVertical } from 'lucide-react'
 import AudioPlayer from '@/AudioPlayer'
 import { toast } from 'react-toastify'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { domain } from '@/config/domain'
 import { reactions } from '@/lib/utils'
+import ContentWithLinksAndMentions from '@/components/ContentWithLinksAndMentions'
 
 const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentIndex, userId, ref, editCommentModelState, setEditCommentModelState, setCommentDetails, isParent }) => {
     const [showReactions, setShowReactions] = useState(false);
     const [selectedReaction, setSelectedReaction] = useState(null);
+    const [contentExpanded, setContentExpanded] = useState(false);
     const timeoutRef = useRef(null);
     const emojisRef = useRef(null);
     const { mutate } = useLikeComment(comment?.post);
     const deleteComment = useDeleteComment(comment?.post);
+    const navigate = useNavigate();
 
     let [likeParentComment, setLikeParentComment] = useState(comment?.isLikedByUser);
 
@@ -25,6 +28,14 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
             return reaction;
         }
     }) : -1;
+
+    const toggleReadMore = React.useCallback(() => {
+        setContentExpanded(prev => !prev);
+    }, []);
+
+    const handleHashtagPress = React.useCallback((hashtag: string) => {
+        navigate(`/hashtags-feed/${hashtag}`);
+    }, [navigate]);
 
     const handleMouseDown = (e) => {
         if (comment?.isLikedByUser) {
@@ -211,7 +222,16 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                                 <span className="font-medium">{comment?.user?.firstname} {comment?.user?.lastname}</span>
                             </Link>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-accent bg-card dark:bg-transparent text-sm rounded-lg ">
-                                <p>{comment?.content}</p>
+                                <div className="flex-1">
+                                    <ContentWithLinksAndMentions
+                                        content={comment?.content || ''}
+                                        mentions={comment?.populatedMentions || comment?.mentions || []}
+                                        onHashtagPress={handleHashtagPress}
+                                        expanded={contentExpanded}
+                                        toggleReadMore={toggleReadMore}
+                                        maxLength={200}
+                                    />
+                                </div>
                                 {comment.user?._id == userId &&
                                     < DropdownMenu >
                                         <DropdownMenuTrigger asChild className='cursor-pointer'>
@@ -220,7 +240,15 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                                         <DropdownMenuContent align="end" className='bg-card z-40 p-2 rounded-md'>
                                             <DropdownMenuItem className='cursor-pointer' onClick={async () => {
                                                 setEditCommentModelState(!editCommentModelState)
-                                                setCommentDetails({ content: comment.content, commentId: comment?._id, pageIndex, commentIndex })
+                                                
+                                                setCommentDetails({ 
+                                                    content: comment.content, 
+                                                    commentId: comment?._id, 
+                                                    pageIndex, 
+                                                    commentIndex,
+                                                    mentions: comment?.mentions || [], // Pass the mentions directly
+                                                    mentionReferences: comment?.mentionReferences || []
+                                                })
                                             }}>Edit</DropdownMenuItem>
                                             <DropdownMenuItem className='cursor-pointer' onClick={async () => {
                                                 deleteComment.mutate({ postId: comment.post, commentId: comment?._id, pageIndex, commentIndex })

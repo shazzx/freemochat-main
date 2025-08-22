@@ -829,7 +829,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
     const params = isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }
 
-    const isLocationPost = postData?.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(postData.postType);
+    const isLocationPost =false ||  postData?.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(postData.postType);
 
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} key={postData && postData._id}>

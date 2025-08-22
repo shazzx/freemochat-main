@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, X, TreePine, Trash2, Droplets, CloudRain, MapPin, Briefcase, Globe, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Search, X, TreePine, Trash2, Droplets, CloudRain, MapPin, Briefcase, Globe, ArrowRight, Loader2, AlertCircle, BarChart3 } from 'lucide-react';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 import { axiosClient } from '@/api/axiosClient';
 import ElementDetailsModal from '@/models/ElementDetailsModal';
+import CountryContributionsModal from './CountryContributionsModal';
+import { debouncedCountrySearch } from '@/lib/utils';
 
 // Interfaces
 interface MapData {
@@ -22,12 +24,15 @@ interface GlobalMapCounts {
 }
 
 interface SearchResult {
-  city: string;
   country: string;
   displayName: string;
   elementCount: number;
   projectCount: number;
-  center: {
+  location: {
+    city: string;
+    accuracy: number;
+    address: string;
+    country: string;
     latitude: number;
     longitude: number;
   };
@@ -79,6 +84,14 @@ interface MapRegion {
   longitudeDelta: number;
 }
 
+// Default fallback region - Pakistan
+const DEFAULT_REGION = {
+  latitude: 30.3753, // Pakistan center coordinates
+  longitude: 69.3451,
+  latitudeDelta: 8.0, // Larger delta to show more of Pakistan
+  longitudeDelta: 8.0,
+};
+
 // Google Maps configuration
 const mapContainerStyle = {
   width: '100%',
@@ -92,7 +105,6 @@ const mapOptions = {
   mapTypeControl: false,
   fullscreenControl: false,
 };
-
 
 // Helper Functions
 const getCategoryConfig = (category: string) => {
@@ -179,7 +191,7 @@ const FallbackMap: React.FC<{
               <IconComponent className="w-4 h-4 text-white" />
             </div>
             {element.count && element.count > 1 && (
-              <div className="absolute -bottom-2 -right-2 bg-card text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow">
+              <div className="absolute -bottom-2 -right-2 bg-white text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow">
                 {element.count}
               </div>
             )}
@@ -208,13 +220,10 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   onClose,
   googleMapsApiKey = 'AIzaSyDEz0n0ST4J3KYECJDx_-hTtnejV2A0-to'
 }) => {
-  // State - keeping your original state structure
-  const [currentRegion, setCurrentRegion] = useState<MapRegion>({
-    latitude: 37.7749,
-    longitude: -122.4194,
-    latitudeDelta: 0.5,
-    longitudeDelta: 0.5,
-  });
+  // Enhanced state management similar to mobile version
+  const [currentRegion, setCurrentRegion] = useState<MapRegion | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(true);
 
   const [mapCenter, setMapCenter] = useState({ lat: 37.7749, lng: -122.4194 });
   const [mapZoom, setMapZoom] = useState(10);
@@ -247,13 +256,72 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   const [mapLoadError, setMapLoadError] = useState<string | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
+  // NEW: Country contributions modal state
+  const [showCountryContributions, setShowCountryContributions] = useState(false);
+
   // Refs
   const searchTimeoutRef = useRef<NodeJS.Timeout>(null);
   const dataFetchTimeoutRef = useRef<NodeJS.Timeout>(null);
   const lastFetchedBoundsRef = useRef<string>('');
   const mapRef = useRef<google.maps.Map>(null);
 
-  // API Functions - keeping your original implementations
+  // Enhanced location initialization similar to mobile version
+  useEffect(() => {
+    const initializeLocation = async () => {
+      if (!visible) return;
+
+      setLocationLoading(true);
+      
+      try {
+        console.log('Requesting location permissions...');
+        
+        if ('geolocation' in navigator) {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              timeout: 10000,
+              enableHighAccuracy: true
+            });
+          });
+
+          const userRegion = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            latitudeDelta: 0.5,
+            longitudeDelta: 0.5,
+          };
+          
+          console.log('User location obtained:', userRegion);
+          setCurrentRegion(userRegion);
+          setMapCenter({ lat: position.coords.latitude, lng: position.coords.longitude });
+        } else {
+          console.log('Geolocation not supported, using default region');
+          setCurrentRegion(DEFAULT_REGION);
+          setMapCenter({ lat: DEFAULT_REGION.latitude, lng: DEFAULT_REGION.longitude });
+        }
+      } catch (error) {
+        console.error('Error getting location:', error);
+        console.log('Falling back to default region');
+        setCurrentRegion(DEFAULT_REGION);
+        setMapCenter({ lat: DEFAULT_REGION.latitude, lng: DEFAULT_REGION.longitude });
+      } finally {
+        setLocationLoading(false);
+      }
+    };
+
+    initializeLocation();
+    fetchGlobalCounts();
+  }, [visible]);
+
+  // Wait for both location and map to be ready before fetching data
+  useEffect(() => {
+    if (visible && currentRegion && isMapReady && isInitialLoad) {
+      console.log('Map is ready, fetching initial data...');
+      setIsInitialLoad(false);
+      fetchMapData();
+    }
+  }, [visible, currentRegion, isMapReady, selectedCategory, isInitialLoad]);
+
+  // API Functions with enhanced error handling
   const fetchGlobalCounts = useCallback(async () => {
     const defaultCounts = {
       totalPosts: 0,
@@ -283,15 +351,23 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     } catch (error) {
       console.error('Error fetching global counts:', error);
       setGlobalCounts(defaultCounts);
+      
+      if (error.response?.status >= 500) {
+        console.warn('Server error fetching global element counts');
+      }
     }
   }, []);
 
   const fetchMapData = useCallback(async () => {
-    if (!currentRegion) return;
+    if (!currentRegion) {
+      console.log('No current region available for fetching data');
+      return;
+    }
 
     const boundsString = `${currentRegion.latitude}_${currentRegion.longitude}_${currentRegion.latitudeDelta}_${currentRegion.longitudeDelta}_${selectedCategory}`;
 
     if (lastFetchedBoundsRef.current === boundsString && mapData) {
+      console.log('Data already fetched for current bounds and category');
       return;
     }
 
@@ -319,25 +395,25 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
       console.log('Fetching individual elements for map:', params);
       const { data, status } = await axiosClient.get('/posts/global-map/data', { params });
 
-      // if (status === 200) {
-      console.log('Individual elements received:', data);
-      setMapData(data);
-      lastFetchedBoundsRef.current = boundsString;
-      // } else {
-      // throw new Error(`API returned status: ${status}`);
-      // }
+      if (status === 200) {
+        console.log('Individual elements received:', data);
+        setMapData(data);
+        lastFetchedBoundsRef.current = boundsString;
+      } else {
+        throw new Error(`API returned status: ${status}`);
+      }
     } catch (error) {
       console.error('Error fetching map data:', error);
       setMapData({ type: 'clustered', data: [] });
 
-      if (error instanceof Error) {
-        if (error.message.includes('404')) {
-          console.log('No environmental elements found for this region');
-        } else if (error.message.includes('5')) {
-          alert('Server Error: Unable to load environmental data. Please try again later.');
-        } else {
-          alert('Network Error: Please check your internet connection.');
-        }
+      if (error.response?.status === 404) {
+        console.log('No environmental elements found for this region');
+      } else if (error.response?.status >= 500) {
+        alert('Server Error: Unable to load environmental data. Please try again later.');
+      } else if (!error.response) {
+        alert('Network Error: Please check your internet connection.');
+      } else {
+        alert('Error: Failed to load environmental data.');
       }
     } finally {
       setIsLoadingData(false);
@@ -350,21 +426,15 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     setSearchLoading(true);
     try {
       console.log('Searching environmental elements for:', searchQuery);
-      const params = {
-        query: searchQuery,
-        category: selectedCategory,
-        limit: 20
-      };
 
-      const { data, status } = await axiosClient.get('/posts/global-map/search', { params });
-
-      if (status === 200) {
-        console.log('Element search results received:', data);
-        setSearchResults(data.results || []);
-        setShowSearchResults(true);
-      } else {
-        throw new Error(`API returned status: ${status}`);
-      }
+      debouncedCountrySearch(
+        searchQuery,
+        (value) => {
+          setSearchResults(value?.countries || []);
+          setShowSearchResults(true);
+        },
+        console.error
+      );
     } catch (error) {
       console.error('Error searching locations:', error);
       setSearchResults([]);
@@ -428,13 +498,14 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   }, [activeMarker, fetchElementDetails]);
 
   const handleSearchResultSelect = useCallback((result: SearchResult) => {
-    const newCenter = { lat: result.center.latitude, lng: result.center.longitude };
+    console.log(result, 'search clicked');
+    const newCenter = { lat: result.location.latitude, lng: result.location.longitude };
     setMapCenter(newCenter);
     setMapZoom(12);
 
     setCurrentRegion({
-      latitude: result.center.latitude,
-      longitude: result.center.longitude,
+      latitude: result.location.latitude,
+      longitude: result.location.longitude,
       latitudeDelta: 0.1,
       longitudeDelta: 0.1,
     });
@@ -512,6 +583,51 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   };
 
   const getElementSpecificData = (element: any) => {
+    // Handle new optimized data structure with elementSummary
+    if (element.elementSummary && element.postType) {
+      if (element.postType === 'plantation') {
+        return {
+          type: 'Tree',
+          details: [
+            { label: 'Species', value: element.elementSummary.species || 'Unknown' },
+            { label: 'Type', value: element.elementSummary.type || 'Unknown' },
+            { label: 'Height', value: element.elementSummary.estimatedHeight ? `${element.elementSummary.estimatedHeight}m` : 'Unknown' },
+            { label: 'Status', value: element.elementSummary.isActive ? 'Active' : 'Inactive' }
+          ]
+        };
+      } else if (element.postType === 'garbage_collection') {
+        return {
+          type: 'Bin',
+          details: [
+            { label: 'Type', value: element.elementSummary.type || 'Unknown' },
+            { label: 'Capacity', value: element.elementSummary.capacity || 'Unknown' },
+            { label: 'Material', value: element.elementSummary.material || 'Unknown' }
+          ]
+        };
+      } else if (element.postType === 'water_ponds') {
+        return {
+          type: 'Pond',
+          details: [
+            { label: 'Type', value: element.elementSummary.type || 'Unknown' },
+            { label: 'Purpose', value: element.elementSummary.purpose || 'Unknown' },
+            { label: 'Capacity', value: element.elementSummary.capacity || 'Unknown' },
+            { label: 'Depth', value: element.elementSummary.estimatedDepth ? `${element.elementSummary.estimatedDepth}m` : 'Unknown' }
+          ]
+        };
+      } else if (element.postType === 'rain_water') {
+        return {
+          type: 'Harvester',
+          details: [
+            { label: 'Type', value: element.elementSummary.type || 'Unknown' },
+            { label: 'Capacity', value: element.elementSummary.capacity || 'Unknown' },
+            { label: 'Storage', value: element.elementSummary.storageMethod || 'Unknown' },
+            { label: 'Volume', value: element.elementSummary.estimatedVolume ? `${element.elementSummary.estimatedVolume}L` : 'Unknown' }
+          ]
+        };
+      }
+    }
+
+    // Fallback: Handle legacy data structure
     if (element.plantationData) {
       return {
         type: 'Tree',
@@ -552,6 +668,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
         ]
       };
     }
+
     return null;
   };
 
@@ -598,46 +715,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
   // Effects
   useEffect(() => {
-    const getCurrentLocation = async () => {
-      try {
-        if ('geolocation' in navigator) {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              timeout: 10000,
-              enableHighAccuracy: true
-            });
-          });
-
-          const newRegion = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            latitudeDelta: 0.5,
-            longitudeDelta: 0.5,
-          };
-
-          setCurrentRegion(newRegion);
-          setMapCenter({ lat: position.coords.latitude, lng: position.coords.longitude });
-        }
-      } catch (error) {
-        console.error('Error getting location:', error);
-      }
-    };
-
-    if (visible) {
-      getCurrentLocation();
-      fetchGlobalCounts();
-    }
-  }, [visible, fetchGlobalCounts]);
-
-  useEffect(() => {
-    if (visible && isInitialLoad) {
-      setIsInitialLoad(false);
-      fetchMapData();
-    }
-  }, [visible, currentRegion, selectedCategory, isInitialLoad, fetchMapData]);
-
-  useEffect(() => {
-    if (!isInitialLoad && visible) {
+    if (!isInitialLoad && visible && currentRegion) {
       if (dataFetchTimeoutRef.current) {
         clearTimeout(dataFetchTimeoutRef.current);
       }
@@ -681,49 +759,36 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
   if (!visible) return null;
 
+  // Enhanced loading screen similar to mobile version
+  if (locationLoading || !currentRegion) {
+    return (
+      <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
+        <div className="flex-1 flex flex-col items-center justify-center px-10">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-6" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            {locationLoading ? 'Getting your location...' : 'Initializing map...'}
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 text-center">
+            This will help us show environmental contributions near you
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const currentTotals = getCurrentCategoryTotals();
   const selectedConfig = getCategoryConfig(selectedCategory);
 
   if (!googleMapsApiKey) {
     return (
-      <div className="h-screen flex flex-col bg-card">
+      <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center p-8 max-w-md">
             <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-medium text-gray-700 mb-2">Google Maps API Key Required</h3>
-            <p className="text-sm text-gray-500 mb-4">
-              Please add your Google Maps API key to use the map:
+            <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Google Maps API Key Required</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Please add your Google Maps API key to use the map
             </p>
-            <div className="space-y-2 text-left">
-              <div className="bg-gray-100 rounded p-3">
-                <p className="text-xs text-gray-600 mb-1">Environment Variable:</p>
-                <code className="text-xs bg-gray-200 px-2 py-1 rounded block">
-                  REACT_APP_GOOGLE_MAPS_API_KEY=your_api_key_here
-                </code>
-              </div>
-              <div className="bg-gray-100 rounded p-3">
-                <p className="text-xs text-gray-600 mb-1">Or pass as prop:</p>
-                <code className="text-xs bg-gray-200 px-2 py-1 rounded block">
-                  googleMapsApiKey="your_key"
-                </code>
-              </div>
-            </div>
-            <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
-              <p className="text-xs text-blue-800 mb-2">
-                <strong>Need an API key?</strong> Get one from the{' '}
-                <a
-                  href="https://console.cloud.google.com/apis/credentials"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                >
-                  Google Cloud Console
-                </a>
-              </p>
-              <p className="text-xs text-blue-700">
-                Make sure to enable: <strong>Maps JavaScript API</strong> and <strong>Places API</strong>
-              </p>
-            </div>
           </div>
         </div>
       </div>
@@ -731,52 +796,49 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   }
 
   return (
-    <div className="h-screen flex flex-col bg-card">
+    <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
       {/* Header */}
       {onClose && (
-        <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-card">
-          <h1 className="text-xl font-bold text-gray-900">Global Environmental Map</h1>
+        <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Global Environmental Map</h1>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
       )}
 
       {/* Search Container */}
-      <div className="p-4 bg-card border-b border-gray-200">
+      <div className="p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="relative">
-          <div className="flex items-center bg-gray-100 dark:bg-background border border-accent rounded-lg px-3 py-2">
-            <Search className="w-5 h-5 text-gray-500 dark:text-foreground mr-2" />
+          <div className="flex items-center bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2">
+            <Search className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2" />
             <input
               type="text"
-              placeholder="Search cities, projects..."
+              placeholder="Search countries with contributions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-gray-900 dark:text-foreground placeholder-gray-500 dark:placeholder-foreground"
+              className="flex-1 bg-transparent outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             />
             {searchLoading && (
-              <Loader2 className="w-4 h-4 text-gray-500 animate-spin" />
+              <Loader2 className="w-4 h-4 text-gray-500 dark:text-gray-400 animate-spin" />
             )}
           </div>
 
           {/* Search Results */}
           {showSearchResults && searchResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 bg-card border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-50">
+            <div className="absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-50">
               {searchResults.map((result, index) => (
                 <button
                   key={`search-${index}`}
                   onClick={() => handleSearchResultSelect(result)}
-                  className="flex items-center w-full p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 text-left"
+                  className="flex items-center w-full p-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-600 last:border-b-0 text-left"
                 >
-                  <MapPin className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
+                  <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900">{result.displayName}</div>
-                    <div className="text-sm text-gray-500">
-                      {result.elementCount} elements in {result.projectCount} projects
-                    </div>
+                    <div className="font-medium text-gray-900 dark:text-white">{result?.displayName}</div>
                   </div>
                 </button>
               ))}
@@ -786,7 +848,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
       </div>
 
       {/* Category Filter */}
-      <div className="p-4 bg-card border-b border-gray-200">
+      <div className="p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="flex space-x-2 overflow-x-auto no-scrollbar pb-2">
           {(['plantation', 'water_ponds', 'rain_water', 'garbage_collection', 'all'] as const).map((category) => {
             const config = getCategoryConfig(category);
@@ -818,10 +880,11 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${isSelected
-                  ? 'text-white dark:text-foreground shadow-md'
-                  : 'bg-background border border-accent text-foreground hover:bg-card'
-                  }`}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                  isSelected
+                    ? 'text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
                 style={isSelected ? { backgroundColor: config.color } : {}}
               >
                 <IconComponent className="w-4 h-4" />
@@ -838,24 +901,11 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
       {/* Map Container */}
       <div className="flex-1 relative">
         {mapLoadError ? (
-          <div className="flex items-center justify-center h-full bg-gray-50">
+          <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-800">
             <div className="text-center p-8 max-w-md">
               <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-400" />
-              <h3 className="text-lg font-medium text-gray-700 mb-2">Map Loading Error</h3>
-              <p className="text-sm text-gray-500 mb-4">{mapLoadError}</p>
-              <div className="space-y-2 text-left text-xs text-gray-600">
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-                  <p className="font-medium text-yellow-800 mb-2">Common solutions:</p>
-                  <ul className="space-y-1 text-yellow-700">
-                    <li>• Check if your API key is valid</li>
-                    <li>• Enable "Maps JavaScript API" in Google Cloud Console</li>
-                    <li>• Enable "Places API" in Google Cloud Console</li>
-                    <li>• Set up billing in Google Cloud Console</li>
-                    <li>• Check domain restrictions on your API key</li>
-                    <li>• Ensure API key has no IP/referrer restrictions for localhost</li>
-                  </ul>
-                </div>
-              </div>
+              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Map Loading Error</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{mapLoadError}</p>
               <div className="mt-4 space-x-2">
                 <button
                   onClick={() => {
@@ -877,11 +927,11 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
           </div>
         ) : (
           <LoadScript
-            googleMapsApiKey={'AIzaSyDEz0n0ST4J3KYECJDx_-hTtnejV2A0-to'}
-            // libraries={libraries}
+            googleMapsApiKey={googleMapsApiKey}
             onLoad={() => {
               console.log('Google Maps loaded successfully');
               setIsMapLoaded(true);
+              setIsMapReady(true);
               setMapLoadError(null);
             }}
             onError={(error) => {
@@ -895,7 +945,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
                   <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-blue-500" />
-                  <p className="text-sm text-gray-600">Loading Google Maps...</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Loading Google Maps...</p>
                 </div>
               </div>
             }
@@ -931,7 +981,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
                         marginTop: '-60px'
                       }}
                     >
-                      {/* Close button */}
                       <button
                         onClick={() => setShowInfoWindow(false)}
                         className="absolute -top-2 -right-2 w-6 h-6 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600"
@@ -939,7 +988,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
                         <X className="w-3 h-3" />
                       </button>
 
-                      {/* Pointer arrow */}
                       <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white dark:bg-gray-800 border-b border-r border-gray-200 dark:border-gray-700 rotate-45"></div>
 
                       <div className="flex items-center space-x-2 mb-2">
@@ -949,7 +997,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
                           return <IconComponent className="w-5 h-5" style={{ color: config.color }} />;
                         })()}
                         <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-                          {activeMarker.projectDetails?.name || activeMarker.postId?.projectDetails?.name || 'Environmental Project'}
+                          {activeMarker.projectName || activeMarker.postId?.projectDetails?.name || 'Environmental Project'}
                         </h3>
                       </div>
 
@@ -980,7 +1028,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
                     </div>
                   </div>
                 )}
-
               </GoogleMap>
             ) : (
               <FallbackMap
@@ -995,7 +1042,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
         {/* Loading Indicator */}
         {isLoadingData && (
-          <div className="absolute top-4 right-4 bg-card bg-opacity-90 rounded-lg px-3 py-2 shadow-md flex items-center space-x-2 z-10">
+          <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 bg-opacity-90 rounded-lg px-3 py-2 shadow-md flex items-center space-x-2 z-10">
             <Loader2 className="w-4 h-4 animate-spin" style={{ color: selectedConfig.color }} />
             <span className="text-sm font-medium" style={{ color: selectedConfig.color }}>
               Loading {selectedConfig.name.toLowerCase()}...
@@ -1003,38 +1050,37 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
           </div>
         )}
 
-        {/* Element Details Modal */}
-        <ElementDetailsModal
-          visible={showElementModal}
-          element={selectedElement}
-          isLoading={isLoadingElementDetails}
-          onClose={() => setShowElementModal(false)}
-          // onEdit={handleEditElement}  // Optional: Add if you want edit functionality
-          // onDelete={handleDeleteElement}  // Optional: Add if you want delete functionality
-          // allowEdit={false}  // Set to true if you want edit/delete buttons
-        />
-
-        {/* Stats Card */}
+        {/* Enhanced Stats Card with Analytics Button */}
         {globalCounts && (
-          <div className="absolute bottom-4 left-4 right-4 bg-card rounded-lg shadow-lg p-4 z-10">
+          <div className="absolute bottom-4 left-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-10">
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">Environmental Impact</div>
+              <button
+                onClick={() => setShowCountryContributions(true)}
+                className="p-2 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-colors"
+              >
+                <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </button>
+            </div>
+            
             <div className="flex justify-around text-center">
               <div className="flex flex-col items-center">
                 {(() => {
                   const IconComponent = selectedConfig.icon;
-                  return <IconComponent className="w-6 h-6 mb-1 dark:text-foreground" />;
+                  return <IconComponent className="w-6 h-6 mb-1" style={{ color: selectedConfig.color }} />;
                 })()}
-                <div className="font-bold text-lg">{currentTotals.elements.toLocaleString()}</div>
-                <div className="text-xs text-gray-600 dark:text-foreground">{currentTotals.label}</div>
+                <div className="font-bold text-lg text-gray-900 dark:text-white">{currentTotals.elements.toLocaleString()}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">{currentTotals.label}</div>
               </div>
               <div className="flex flex-col items-center">
-                <Briefcase className="w-6 h-6 mb-1 text-gray-600 dark:text-foreground" />
-                <div className="font-bold text-lg">{currentTotals.posts.toLocaleString()}</div>
-                <div className="text-xs text-gray-600 dark:text-foreground">Projects</div>
+                <Briefcase className="w-6 h-6 mb-1 text-gray-600 dark:text-gray-400" />
+                <div className="font-bold text-lg text-gray-900 dark:text-white">{currentTotals.posts.toLocaleString()}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">Projects</div>
               </div>
               <div className="flex flex-col items-center">
-                <Globe className="w-6 h-6 mb-1 dark:text-foreground" />
-                <div className="font-bold text-lg text-foreground">{selectedCategory === 'all' ? 'Global' : 'Filtered'}</div>
-                <div className="text-xs text-gray-600 dark:text-foreground">View</div>
+                <Globe className="w-6 h-6 mb-1 text-blue-600 dark:text-blue-400" />
+                <div className="font-bold text-lg text-gray-900 dark:text-white">{selectedCategory === 'all' ? 'Global' : 'Filtered'}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">View</div>
               </div>
             </div>
           </div>
@@ -1042,20 +1088,34 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
         {/* No Data Message */}
         {mapData && mapData.data.length === 0 && !isLoadingData && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-card bg-opacity-90 rounded-lg p-6 text-center max-w-sm">
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 bg-opacity-90 rounded-lg p-6 text-center max-w-sm">
             {(() => {
               const IconComponent = selectedConfig.icon;
-              return <IconComponent className="w-12 h-12 mx-auto mb-3 text-gray-400" />;
+              return <IconComponent className="w-12 h-12 mx-auto mb-3 text-gray-400 dark:text-gray-500" />;
             })()}
-            <h3 className="font-medium text-gray-700 dark:text-foreground mb-2">
+            <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-2">
               No {selectedConfig.name.toLowerCase()} found in this area
             </h3>
-            <p className="text-sm text-gray-500 dark:text-foreground">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Try zooming out or changing the category filter to see more environmental elements
             </p>
           </div>
         )}
       </div>
+
+      {/* Element Details Modal */}
+      <ElementDetailsModal
+        visible={showElementModal}
+        element={selectedElement}
+        isLoading={isLoadingElementDetails}
+        onClose={() => setShowElementModal(false)}
+      />
+
+      {/* Country Contributions Modal */}
+      <CountryContributionsModal
+        visible={showCountryContributions}
+        onClose={() => setShowCountryContributions(false)}
+      />
     </div>
   );
 };

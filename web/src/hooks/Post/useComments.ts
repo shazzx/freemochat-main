@@ -4,6 +4,7 @@ import { useAppSelector } from '@/app/hooks';
 import { toast } from 'react-toastify';
 import { produce } from 'immer'
 import { CommentKeys } from '@/utils/enums/keys/main';
+import { MentionReference } from './usePost';
 
 interface CreateComment {
   postId: string,
@@ -12,6 +13,7 @@ interface CreateComment {
     username: string
     duration?: string
   },
+  mentionReferences?: MentionReference[]
   uuid: string,
   audio?: { src: string, duration: string }
   formData: FormData
@@ -24,8 +26,7 @@ interface UpdateComment {
   commentDetails: {
     content: string,
   },
-  formData: FormData
-
+  mentionReferences?: MentionReference[]
 }
 
 
@@ -150,7 +151,8 @@ export const useCreateComment = ({ type, targetId, postId, isReel, reelsKey }: a
           if (newComment.audio) {
             draft.pages[0].comments.unshift(
               {
-                content: newComment.commentDetails.content, audio: { ...newComment.audio, duration: newComment.commentDetails.duration }, post: newComment.postId, user: {
+                content: newComment.commentDetails.content,
+                audio: { ...newComment.audio, duration: newComment.commentDetails.duration }, post: newComment.postId, user: {
                   cover: user?.cover,
                   profile: user?.profile,
                   firstname: user.firstname,
@@ -164,7 +166,10 @@ export const useCreateComment = ({ type, targetId, postId, isReel, reelsKey }: a
           }
 
           draft.pages[0].comments.unshift({
-            content: newComment.commentDetails.content, post: newComment.postId, user: {
+            content: newComment.commentDetails.content,
+            post: newComment.postId,
+            mentions: newComment.mentionReferences,
+            user: {
               cover: user?.cover,
               profile: user?.profile,
               firstname: user.firstname,
@@ -217,27 +222,31 @@ export const useUpdateComment = (postId) => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate } = useMutation({
     mutationFn: (commentDetails: UpdateComment) => {
-      return updateComment(commentDetails.formData)
+      return updateComment(commentDetails?.commentDetails)
     },
-    onMutate: async ({ commentDetails, pageIndex, commentId, commentIndex }) => {
+
+    onMutate: async ({ commentDetails, commentId, mentionReferences }) => {
       await queryClient.cancelQueries({ queryKey: [CommentKeys.COMMENTS, postId] })
       const previousComments = queryClient.getQueryData([CommentKeys.COMMENTS, postId])
 
       queryClient.setQueryData([CommentKeys.COMMENTS, postId], (pages: any) => {
         const updatedComments = produce(pages, (draft: any) => {
+          // Find the comment by ID across all pages
+          for (let pageIndex = 0; pageIndex < draft.pages.length; pageIndex++) {
+            const commentIndex = draft.pages[pageIndex].comments.findIndex(comment => comment._id === commentId);
 
-          if (draft.pages[pageIndex].comments[commentIndex] && draft.pages[pageIndex].comments[commentIndex]._id == commentId) {
-            draft.pages[pageIndex].comments[commentIndex].content = commentDetails.content
-            return draft
+            if (commentIndex !== -1) {
+              draft.pages[pageIndex].comments[commentIndex].content = commentDetails.content
+              draft.pages[pageIndex].comments[commentIndex].mentions = mentionReferences  // Use mentionReferences for UI
+              return draft
+            }
           }
-
-          throw new Error()
+          throw new Error('Comment not found')
         })
         return updatedComments
       });
       return { previousComments }
     },
-
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
@@ -304,10 +313,10 @@ export const useReplyOnComment = () => {
   const { user } = useAppSelector((state) => state.user)
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutateAsync } = useMutation({
-    mutationFn: (replyData: { postId: string, commentId: string, replyDetails: { content: string, duration?: string }, audio?: { src: string, duration: string }, formData: FormData }) => {
+    mutationFn: (replyData: {mentionReferences: MentionReference[], postId: string, commentId: string, replyDetails: { content: string, duration?: string }, audio?: { src: string, duration: string }, formData: FormData }) => {
       return replyOnComment(replyData.formData)
     },
-    onMutate: async ({ replyDetails, commentId, postId, audio }) => {
+    onMutate: async ({ replyDetails, commentId, postId, audio, mentionReferences }) => {
       console.log(replyDetails, commentId, postId)
       await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
       const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES, commentId])
@@ -329,7 +338,11 @@ export const useReplyOnComment = () => {
           }
 
           draft.pages[0].replies.unshift({
-            content: replyDetails.content, post: postId, audio, user: {
+            content: replyDetails.content, 
+            post: postId, 
+            audio, 
+            mentions: mentionReferences,
+            user: {
               profile: user?.profile,
               cover: user?.cover,
               firstname: user?.firstname,
@@ -368,22 +381,27 @@ export const useReplyOnComment = () => {
 export const useUpdateReply = () => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate } = useMutation({
-    mutationFn: (replyDetails: { replyDetails, pageIndex: number, replyId: string, replyIndex: number, formData, commentId: string }) => {
-      return updateReply(replyDetails.formData)
+    mutationFn: (replyDetails: { replyDetails, pageIndex: number, replyId: string, mentionReferences: MentionReference, replyIndex: number, formData, commentId: string }) => {
+      return updateReply(replyDetails?.replyDetails)
     },
-    onMutate: async ({ replyDetails, pageIndex, replyId, replyIndex, commentId }) => {
+
+    onMutate: async ({ replyDetails, replyId, commentId, mentionReferences }) => {
       await queryClient.cancelQueries({ queryKey: [CommentKeys.REPLIES, commentId] })
       const previousReplies = queryClient.getQueryData([CommentKeys.REPLIES, commentId])
 
       queryClient.setQueryData([CommentKeys.REPLIES, commentId], (pages: any) => {
         const updatedReplies = produce(pages, (draft: any) => {
+          // Find the reply by ID across all pages
+          for (let pageIndex = 0; pageIndex < draft.pages.length; pageIndex++) {
+            const replyIndex = draft.pages[pageIndex].replies.findIndex(reply => reply._id === replyId);
 
-          if (draft.pages[pageIndex].replies[replyIndex] && draft.pages[pageIndex].replies[replyIndex]._id == replyId) {
-            draft.pages[pageIndex].replies[replyIndex].content = replyDetails.content
-            return draft
+            if (replyIndex !== -1) {
+              draft.pages[pageIndex].replies[replyIndex].content = replyDetails.content
+              draft.pages[pageIndex].replies[replyIndex].mentions = mentionReferences  // Use mentionReferences for UI
+              return draft
+            }
           }
-
-          throw new Error()
+          throw new Error('Reply not found')
         })
         return updatedReplies
       });
@@ -391,7 +409,7 @@ export const useUpdateReply = () => {
     },
 
     onError: (err, { commentId }, context) => {
-      console.log(err)
+      console.log(err,)
       toast.error("something went wrong")
       queryClient.setQueryData([CommentKeys.REPLIES, commentId], context.previousReplies)
     },

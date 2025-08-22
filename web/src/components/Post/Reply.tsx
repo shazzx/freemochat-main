@@ -1,20 +1,23 @@
-import { FC, useEffect, useRef, useState } from 'react'
+import React, { FC, useEffect, useRef, useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { useDeleteReply, useLikeReply } from '@/hooks/Post/useComments'
 import AudioPlayer from '@/AudioPlayer'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
 import { EllipsisVertical } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { domain } from '@/config/domain'
 import { useAppSelector } from '@/app/hooks'
 import { reactions } from '@/lib/utils'
 import { toast } from 'react-toastify'
+import ContentWithLinksAndMentions from '@/components/ContentWithLinksAndMentions'
 
 const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, setEditCommentModelState, editCommentModelState, setCommentDetails }) => {
     const [showReactions, setShowReactions] = useState(false);
     const [selectedReaction, setSelectedReaction] = useState(null);
+    const [contentExpanded, setContentExpanded] = useState(false);
     const timeoutRef = useRef(null);
     const emojisRef = useRef(null);
+    const navigate = useNavigate();
 
     const { mutate } = useLikeReply(reply?.parentId);
     const { user } = useAppSelector((state) => state.user);
@@ -26,6 +29,14 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
             return reaction;
         }
     }) : -1;
+
+    const toggleReadMore = React.useCallback(() => {
+        setContentExpanded(prev => !prev);
+    }, []);
+
+    const handleHashtagPress = React.useCallback((hashtag: string) => {
+        navigate(`/hashtags-feed/${hashtag}`);
+    }, [navigate]);
 
     const handleMouseDown = (e) => {
         if (reply?.isLikedByUser) {
@@ -159,6 +170,7 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
             </div>
         );
     };
+
     return (
         <div>
             {
@@ -167,7 +179,6 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                         <Link to={`${domain}/user/${reply.user.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
                                 <AvatarImage src={reply.user?.profile} alt="Avatar" />
-                                {/* <AvatarFallback>{reply.user.firstname && reply.user.firstname[0]?.toUpperCase()}</AvatarFallback> */}
                             </Avatar>
                         </Link>
                         <div className='flex flex-col'>
@@ -198,7 +209,6 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                         <Link to={`${domain}/user/${reply.user.username}`} className='cursor-pointer max-w-8 max-h-8 rounded-full bg-accent w-full flex items-center justify-center overflow-hidden'>
                             <Avatar >
                                 <AvatarImage src={reply.user?.profile} alt="Avatar" />
-                                {/* <AvatarFallback>{reply.user.firstname && reply.user.firstname[0]?.toUpperCase()}</AvatarFallback> */}
                             </Avatar>
                         </Link>
                         <div className='flex flex-col'>
@@ -206,7 +216,16 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                                 <span className="font-medium">{reply?.user?.firstname} {reply?.user?.lastname}</span>
                             </div>
                             <div className="max-w-80 w-full flex items-center gap-3 p-2 border border-muted text-sm rounded-lg ">
-                                <p>{reply?.content}</p>
+                                <div className="flex-1">
+                                    <ContentWithLinksAndMentions
+                                        content={reply?.content || ''}
+                                        mentions={reply?.populatedMentions || reply?.mentions || []}
+                                        onHashtagPress={handleHashtagPress}
+                                        expanded={contentExpanded}
+                                        toggleReadMore={toggleReadMore}
+                                        maxLength={150}
+                                    />
+                                </div>
                                 {user._id == reply?.user?._id &&
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild className='cursor-pointer'>
@@ -216,7 +235,16 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                                             <DropdownMenuItem className='cursor-pointer' onClick={async () => {
                                                 // same comment model is used for reply
                                                 setEditCommentModelState(!editCommentModelState)
-                                                setCommentDetails({ content: reply.content, replyId: reply._id, pageIndex, replyIndex })
+                                                
+                                                setCommentDetails({ 
+                                                    content: reply.content, 
+                                                    replyId: reply._id, 
+                                                    pageIndex, 
+                                                    replyIndex,
+                                                    mentions: reply?.mentions || [], // Pass the mentions directly
+                                                    mentionReferences: reply?.mentionReferences || [],
+                                                    commentId: reply.parentId // This is needed to identify this as a reply edit
+                                                })
                                             }}>Edit</DropdownMenuItem>
                                             <DropdownMenuItem className='cursor-pointer' onClick={async () => {
                                                 deleteReply.mutate({ replyId: reply._id, pageIndex, replyIndex, audio: reply.audio })

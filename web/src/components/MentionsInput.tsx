@@ -44,8 +44,10 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
   const [cursorPosition, setCursorPosition] = useState(0);
   const [mentionReferences, setMentionReferences] = useState<MentionReference[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [suggestionPosition, setSuggestionPosition] = useState({ top: 0, left: 0, width: 0 });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Key: Separate display text (usernames) and internal text (user IDs)
@@ -113,6 +115,22 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     return display;
   }, []);
 
+  // Function to calculate suggestion position
+  const calculateSuggestionPosition = useCallback(() => {
+    if (!textareaRef.current || !containerRef.current) return;
+
+    const textarea = textareaRef.current;
+    const container = containerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    
+    // Position suggestions above the textarea
+    setSuggestionPosition({
+      top: -200, // Fixed height above the input
+      left: 0,
+      width: containerRect.width
+    });
+  }, []);
+
   // CRITICAL: Initialize references FIRST, then convert text
   useEffect(() => {
     if (initialReferences.length > 0 && !isInitialized) {
@@ -154,6 +172,13 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
       }
     };
   }, []);
+
+  // Update position when suggestions are shown
+  useEffect(() => {
+    if (showSuggestions) {
+      calculateSuggestionPosition();
+    }
+  }, [showSuggestions, calculateSuggestionPosition]);
 
   // Fetch suggestions with debouncing
   const fetchSuggestions = useCallback(async (query: string) => {
@@ -404,22 +429,22 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
   };
 
   return (
-    <div className="relative">
-      <Textarea
-        ref={textareaRef}
-        value={displayText} // User always sees usernames
-        onChange={(e) => handleTextChange(e.target.value)}
-        placeholder={placeholder}
-        className={className}
-        onSelect={handleSelectionChange}
-      />
-
+    <div ref={containerRef} className="relative">
+      {/* Suggestions positioned above the input */}
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+        <div 
+          className="absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto"
+          style={{
+            top: suggestionPosition.top,
+            left: suggestionPosition.left,
+            width: suggestionPosition.width,
+            marginBottom: '8px'
+          }}
+        >
           {suggestions.map((suggestion, index) => (
             <div
               key={`${suggestion._id}-${index}`}
-              className="flex items-center p-3 hover:bg-gray-100 cursor-pointer"
+              className="flex items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
               onClick={() => handleSuggestionPress(suggestion)}
             >
               <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
@@ -433,12 +458,12 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
               </div>
               <div className="flex-1">
                 <div className={`font-medium text-sm ${
-                  suggestion.isSpecial ? 'text-blue-600 font-semibold' : ''
+                  suggestion.isSpecial ? 'text-blue-600 dark:text-blue-400 font-semibold' : 'text-gray-900 dark:text-gray-100'
                 }`}>
                   @{suggestion.username}
                 </div>
                 <div className={`text-xs ${
-                  suggestion.isSpecial ? 'text-blue-500 italic' : 'text-gray-500'
+                  suggestion.isSpecial ? 'text-blue-500 dark:text-blue-300 italic' : 'text-gray-500 dark:text-gray-400'
                 }`}>
                   {suggestion.isSpecial ? 'Mention all your followers' : `${suggestion.firstname} ${suggestion.lastname}`}
                 </div>
@@ -452,6 +477,15 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
           ))}
         </div>
       )}
+
+      <Textarea
+        ref={textareaRef}
+        value={displayText} // User always sees usernames
+        onChange={(e) => handleTextChange(e.target.value)}
+        placeholder={placeholder}
+        className={className}
+        onSelect={handleSelectionChange}
+      />
     </div>
   );
 };
