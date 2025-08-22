@@ -98,11 +98,18 @@ function PageProfile() {
     const createPost = useCreatePost('pagePosts', _pageData.data?._id)
 
 
-    const _createPost = async ({ content, selectedMedia, formData, visibility }) => {
-        let postDetails = { content, type: "page", targetId: _pageData.data._id, visibility }
+    // const _createPost = async ({ content, selectedMedia, formData, visibility }) => {
+    //     let postDetails = { content, type: "page", targetId: _pageData.data._id, visibility }
+    //     formData.append("postData", JSON.stringify(postDetails))
+    //     let response = createPost.mutate({ content, formData, selectedMedia, type: "page", target: _pageData?.data })
+    //     console.log(response, 'uploaded')
+    //     setPostModal(false)
+    // }
+
+    const _createPost = async ({ visibility, content, selectedMedia, backgroundColor, mentions, mentionReferences, formData }) => {
+        let postDetails = { content, type: "page", postType: 'post', backgroundColor, mentions, targetId: _pageData?.data?._id, visibility }
         formData.append("postData", JSON.stringify(postDetails))
-        let response = createPost.mutate({ content, formData, selectedMedia, type: "page", target: _pageData?.data })
-        console.log(response, 'uploaded')
+        createPost.mutate({ content, formData, selectedMedia, mentions, mentionReferences, backgroundColor, postType: 'post', type: "page", target: _pageData?.data })
         setPostModal(false)
     }
 

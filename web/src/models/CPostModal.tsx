@@ -87,6 +87,8 @@ const CPostModal: FC<{
         isShared: string,
         user: TUser,
         targetId: string,
+        type: string,
+        visibility: string,
         target: any,
         media: any,
         mentions?: MentionReference[],

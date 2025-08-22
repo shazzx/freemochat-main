@@ -967,7 +967,6 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
         element={selectedElement}
         isLoading={isLoadingElementDetails}
         onClose={() => setShowElementModal(false)}
-        theme={theme}
       />
 
       {/* Click outside to close menu */}
