@@ -217,12 +217,13 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, 
             return
         }
 
-        if (commentDetails?.commentId) {
+        if (commentDetails?.commentId && !commentDetails?.replyId) {
             // Editing a comment
             const commentData = {
                 ...commentDetails,
                 commentDetails: {
                     postId,
+                    commentId: commentDetails?.commentId,
                     content: editText,
                     mentions: editMentionUserIds
                 },

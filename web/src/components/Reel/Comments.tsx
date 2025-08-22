@@ -212,7 +212,7 @@ function CommetsSection({ params, pageIndex, postId, postData, isReel }) {
             return
         }
 
-        if (commentDetails?.commentId) {
+        if (commentDetails?.commentId && !commentDetails?.replyId) {
             // Editing a comment
             const commentData = {
                 ...commentDetails,

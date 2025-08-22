@@ -467,7 +467,7 @@ const CPostModal: FC<{
                         )}
 
                         {/* Mentions and Hashtags Info */}
-                        {mentionUserIds.length > 0 && (
+                        {/* {mentionUserIds.length > 0 && (
                             <div className="bg-blue-50 p-2 rounded-md">
                                 <div className="flex items-center gap-2">
                                     <AtSign size={14} className="text-blue-600" />
@@ -487,7 +487,7 @@ const CPostModal: FC<{
                                     </span>
                                 </div>
                             </div>
-                        )}
+                        )} */}
 
                         {!isShared &&
                             <>

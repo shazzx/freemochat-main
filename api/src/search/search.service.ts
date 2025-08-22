@@ -18,7 +18,6 @@ export class SearchService {
   ) { }
 
   async search(query: string, type = 'all', limit = 5, skip = 0) {
-    console.log(`Search request: query=${query}, type=${type}, limit=${limit}, skip=${skip}`);
 
     if (type !== 'all') {
       return this.searchByType(type, query, limit, skip);
@@ -31,14 +30,6 @@ export class SearchService {
       this.postModel.find({ content: { $regex: query, $options: 'i' } }).limit(limit).skip(skip).exec(),
       this.hashtagService.searchHashtags(query, limit, skip),
     ]);
-
-    console.log(`Search results count: ${JSON.stringify({
-      users: users.length,
-      groups: groups.length,
-      pages: pages.length,
-      posts: posts.length,
-      hashtags: hashtags.length
-    })}`);
 
     return { users, groups, pages, posts, hashtags };
   }
@@ -118,22 +109,19 @@ export class SearchService {
       .slice(0, 10);
   }
 
-  async searchMentionSuggestions(query: string) {
-    console.log(query, 'query')
+  async searchMentionSuggestions(query: string, username: string) {
     const regexPattern = new RegExp(query, 'i');
-    console.log(regexPattern, 'regex pattern')
 
     const users = await this.userModel.find({
       $and: [
         { isActive: true },
-        { username: { $regex: regexPattern } }
+        { username: { $regex: regexPattern } },
+        { username: { $ne: username } } 
       ]
     })
       .select('_id username firstname lastname profile')
       .sort({ username: 1 })
       .exec();
-
-    console.log(users, 'result')
 
     return users;
   }

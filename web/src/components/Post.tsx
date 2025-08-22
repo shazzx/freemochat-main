@@ -829,7 +829,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
     const params = isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }
 
-    const isLocationPost =false ||  postData?.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(postData.postType);
+    const isLocationPost = false || postData?.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(postData.postType);
 
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} key={postData && postData._id}>
@@ -927,30 +927,36 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                                             <h3 className='text-card-foreground flex gap-2 text-sm'>{(postData?.target?.firstname ? (postData?.target?.firstname + " " + postData?.target?.lastname) : postData?.target?.name)}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
 
-
-                                            <EnvironmentalContributorTag
-                                                data={{
-                                                    plantation: postData?.target?.environmentalProfile?.['plantation'] && 1,
-                                                    garbage_collection: postData?.target?.environmentalProfile?.['garbage_collection'] && 1,
-                                                    water_ponds: postData?.target?.environmentalProfile?.['water_ponds'] && 1,
-                                                    rain_water: postData?.target?.environmentalProfile?.['rain_water'] && 1,
-                                                }}
-                                                hideCount={true}
-                                            />
+                                            {
+                                                postData?.target?.environmentalProfile &&
+                                                <EnvironmentalContributorTag
+                                                    data={{
+                                                        plantation: postData?.target?.environmentalProfile?.['plantation'] && 1,
+                                                        garbage_collection: postData?.target?.environmentalProfile?.['garbage_collection'] && 1,
+                                                        water_ponds: postData?.target?.environmentalProfile?.['water_ponds'] && 1,
+                                                        rain_water: postData?.target?.environmentalProfile?.['rain_water'] && 1,
+                                                    }}
+                                                    hideCount={true}
+                                                />
+                                            }
                                         </Link>
                                         :
                                         <div className='flex gap-2'>
                                             <h3 className='text-card-foreground flex gap-2 text-sm'>{(postData?.target?.firstname ? (postData?.target?.firstname + " " + postData?.target?.lastname) : postData?.target?.name || 'Deleted')}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
 
-                                            <EnvironmentalContributorTag
-                                                data={{
-                                                    plantation: postData?.target?.environmentalProfile?.['plantation'] && 1,
-                                                    garbage_collection: postData?.target?.environmentalProfile?.['garbage_collection'] && 1,
-                                                    water_ponds: postData?.target?.environmentalProfile?.['water_ponds'] && 1,
-                                                    rain_water: postData?.target?.environmentalProfile?.['rain_water'] && 1,
-                                                }}
-                                                hideCount={true}
-                                            />
+                                            {
+                                                postData?.target?.environmentalProfile &&
+                                                <EnvironmentalContributorTag
+                                                    data={{
+                                                        plantation: postData?.target?.environmentalProfile?.['plantation'] && 1,
+                                                        garbage_collection: postData?.target?.environmentalProfile?.['garbage_collection'] && 1,
+                                                        water_ponds: postData?.target?.environmentalProfile?.['water_ponds'] && 1,
+                                                        rain_water: postData?.target?.environmentalProfile?.['rain_water'] && 1,
+                                                    }}
+                                                    hideCount={true}
+                                                />
+                                            }
+
                                         </div>
 
                                 }
@@ -1071,7 +1077,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 </div>
                             )}
                         </CardContent>
-
                     </>
 
                 }

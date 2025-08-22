@@ -31,7 +31,7 @@ import { Notifications } from "./Notifications"
 import { useAppDispatch, useAppSelector } from "@/app/hooks"
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 import FriendRequests from "@/models/FriendRequests"
-import profile from './../assets/logo.png'
+import logo from './../assets/logo.png'
 import { useSocket } from "@/hooks/useSocket"
 import AudioCallRecepient from "./Call/Audio/AudioCallRecepient"
 import Agora from "./Call/agora/AgoraRTC"
@@ -252,7 +252,7 @@ const MainHome = ({ children }: any) => {
                 <Link to="/">
                   {/* logo */}
                   <h1 className="text-2xl font-bold">
-                    <img className="h-16 w-auto object-contain flex-shrink-0" src={profile} alt="" />
+                    <img className="h-16 w-auto object-contain flex-shrink-0 invert brightness-0" src={logo} alt="" />
                   </h1>
                 </Link>
               </div>}
@@ -382,7 +382,7 @@ const MainHome = ({ children }: any) => {
             {friendRequestState &&
               <FriendRequests setFriendRequestState={setFriendRequestState} />
             }
-            <Link to={"environmental-contributions"}>
+            <Link to={`${domain}/environmental-contributions`}>
               <MdMap size="24px" cursor="pointer" />
             </Link>
             <div className="relative" onClick={() => {

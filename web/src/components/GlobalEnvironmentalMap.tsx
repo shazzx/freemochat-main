@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, X, TreePine, Trash2, Droplets, CloudRain, MapPin, Briefcase, Globe, ArrowRight, Loader2, AlertCircle, BarChart3 } from 'lucide-react';
+import { Search, X, TreePine, Trash2, Droplets, CloudRain, MapPin, Briefcase, Globe, ArrowRight, Loader2, AlertCircle, BarChart3, ChevronLeft } from 'lucide-react';
 import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
 import { axiosClient } from '@/api/axiosClient';
 import ElementDetailsModal from '@/models/ElementDetailsModal';
 import CountryContributionsModal from './CountryContributionsModal';
 import { debouncedCountrySearch } from '@/lib/utils';
+import { domain } from '@/config/domain';
+import { Link } from 'react-router-dom';
 
 // Interfaces
 interface MapData {
@@ -271,7 +273,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
     if (!checkGoogleMaps()) {
       console.log('Waiting for Google Maps to load...');
-      
+
       // Poll for Google Maps availability
       const interval = setInterval(() => {
         if (checkGoogleMaps()) {
@@ -286,7 +288,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
           console.error('Google Maps failed to load within 15 seconds');
         }
       }, 15000);
-      
+
       return () => {
         clearInterval(interval);
         clearTimeout(timeout);
@@ -300,10 +302,10 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
       if (!visible) return;
 
       setLocationLoading(true);
-      
+
       try {
         console.log('Requesting location permissions...');
-        
+
         if ('geolocation' in navigator) {
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -319,7 +321,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
             latitudeDelta: 0.5,
             longitudeDelta: 0.5,
           };
-          
+
           console.log('User location obtained:', userRegion);
           setCurrentRegion(userRegion);
           setMapCenter({ lat: position.coords.latitude, lng: position.coords.longitude });
@@ -381,7 +383,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     } catch (error) {
       console.error('Error fetching global counts:', error);
       setGlobalCounts(defaultCounts);
-      
+
       if (error.response?.status >= 500) {
         console.warn('Server error fetching global element counts');
       }
@@ -796,10 +798,10 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
         <div className="flex-1 flex flex-col items-center justify-center px-10">
           <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-6" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            {locationLoading 
-              ? 'Getting your location...' 
-              : !googleMapsReady 
-                ? 'Initializing map...' 
+            {locationLoading
+              ? 'Getting your location...'
+              : !googleMapsReady
+                ? 'Initializing map...'
                 : 'Loading...'}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 text-center">
@@ -830,8 +832,11 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
       {/* Search Container */}
       <div className="p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-        <div className="relative">
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2">
+        <div className="relative flex w-full items-center gap-2">
+          <Link to={domain}>
+            <ChevronLeft className="" />
+          </Link>
+          <div className="flex items-center bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 w-full">
             <Search className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2" />
             <input
               type="text"
@@ -898,11 +903,10 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                  isSelected
-                    ? 'text-white shadow-md'
-                    : 'bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${isSelected
+                  ? 'text-white shadow-md'
+                  : 'bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
                 style={isSelected ? { backgroundColor: config.color } : {}}
               >
                 <IconComponent className="w-4 h-4" />
@@ -1013,7 +1017,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
                 <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </button>
             </div>
-            
+
             <div className="flex justify-around text-center">
               <div className="flex flex-col items-center">
                 {(() => {

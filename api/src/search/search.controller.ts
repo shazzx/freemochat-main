@@ -34,15 +34,16 @@ export class SearchController {
     @Get('mention-suggestions')
     async mentionSuggestions(@Query() searchDTO: SearchDTO, @Req() req: Request, @Res() response: Response) {
         let { query } = searchDTO
+        const {username} = req.user;
 
-        const results = await this.searchService.searchMentionSuggestions(query)
+
+        const results = await this.searchService.searchMentionSuggestions(query, username)
         response.json(results)
     }
 
     @Get('trending-hashtags')
     async trendingHashtags(@Query('limit') limit: number = 5, @Res() response: Response) {
         const hashtags = await this.searchService.getTrendingHashtags(limit);
-        console.log(hashtags, 'hashtags controller result')
         response.json(hashtags);
     }
 
