@@ -116,6 +116,8 @@ export class CommentController {
     const { commentId, content, mentions, postId } = body;
     const { sub } = req.user as { sub: string };
 
+    console.log(body, 'this is body')
+
     const post = await this.postService._getPost(postId)
     if (!post) {
       throw new BadRequestException('Post not found')

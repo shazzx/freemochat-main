@@ -311,7 +311,7 @@ export const useCreatePost = (key: string, targetId?: string) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft?.pages && draft?.pages[0].posts) {
             console.log(pages, 'feed')
-            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, backgroundColor, mentions, mentionReferences, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, postType, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, backgroundColor, mentions: mentionReferences, isLikedByUser: false, content, createdAt: Date.now(), target: target, type, user: user._id, postType, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
             return draft
           }
 
@@ -333,7 +333,7 @@ export const useCreatePost = (key: string, targetId?: string) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft?.pages && draft?.pages[0].posts) {
 
-            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), mentions, mentionReferences, target, type, postType, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
+            draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), mentions: mentionReferences, target, type, postType, user: user._id, media: selectedMedia, isUploaded: selectedMedia.length > 0 ? false : null })
             return draft
           }
 
@@ -561,12 +561,12 @@ export const usePromotePost = () => {
 export const useUpdatePost = (key, id: string) => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
-    mutationFn: (postDetails: { postId: string, postIndex: number, pageIndex: number, content: string, media: { type: string, url: string | UrlObject, file?: File, remove?: boolean }[], selectedMedia: { file: File, type: string, url: UrlObject }[], formData: FormData }) => {
+    mutationFn: (postDetails: { postId: string, postIndex: number, pageIndex: number, content: string, media: { type: string, url: string | UrlObject, file?: File, remove?: boolean }[], mentions: Mentions[], mentionReferences: MentionReference, selectedMedia: { file: File, type: string, url: UrlObject }[], formData: FormData }) => {
       return updatePost(postDetails.formData)
     },
 
 
-    onMutate: async ({ postId, postIndex, pageIndex, content, media, selectedMedia }) => {
+    onMutate: async ({ postId, postIndex, pageIndex, content, media, mentionReferences}) => {
       await queryClient.cancelQueries({ queryKey: [key, id] })
       const previousPosts = queryClient.getQueryData([key, id])
 
@@ -574,6 +574,7 @@ export const useUpdatePost = (key, id: string) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft.pages[pageIndex] && draft.pages[pageIndex].posts[postIndex] && draft.pages[pageIndex].posts[postIndex]._id == postId) {
             draft.pages[pageIndex].posts[postIndex].content = content
+            draft.pages[pageIndex].posts[postIndex].mentions = mentionReferences
             let _media = media.map((media) => {
               if (!media.remove) {
                 return media

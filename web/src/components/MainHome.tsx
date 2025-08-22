@@ -251,7 +251,9 @@ const MainHome = ({ children }: any) => {
               <div className="block">
                 <Link to="/">
                   {/* logo */}
-                  <h1 className="text-2xl font-bold "><img className="h-10 sm:h-12" src={profile} alt="" /></h1>
+                  <h1 className="text-2xl font-bold">
+                    <img className="h-16 w-auto object-contain flex-shrink-0" src={profile} alt="" />
+                  </h1>
                 </Link>
               </div>}
             <div className="w-full flex-1">

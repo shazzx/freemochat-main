@@ -82,7 +82,7 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `freedombook-video-${sharedPost._id}.mp4`;
+      a.download = `freemochat-video-${sharedPost._id}.mp4`;
       document.body.appendChild(a);
       a.click();
 

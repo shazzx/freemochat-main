@@ -76,10 +76,10 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
     if (navigator.share) {
       navigator.share({
         title: "Check out this reel",
-        url: `https://www.freedombook.co/post/${sharedPost?._id}?type=${sharedPost?.type}`
+        url: `https://www.freemochat.com/post/${sharedPost?._id}?type=${sharedPost?.type}`
       });
     } else {
-      navigator.clipboard.writeText(`https://www.freedombook.co/post/${sharedPost?._id}?type=${sharedPost?.type}`);
+      navigator.clipboard.writeText(`https://www.freemochat.com/post/${sharedPost?._id}?type=${sharedPost?.type}`);
       toast.info("Link copied to clipboard!");
     }
   }, [sharedPost?._id, sharedPost?.type, isReel]);

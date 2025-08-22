@@ -3,7 +3,7 @@ const TermsAndConditions = () => {
     <div className="bg-gray-50 min-h-screen">
       <header className="bg-blue-600 text-white p-6">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold">Freedombook</h1>
+          <h1 className="text-3xl font-bold">Freemochat</h1>
           <p className="mt-2 text-xl">Terms and Conditions</p>
         </div>
       </header>
@@ -14,7 +14,7 @@ const TermsAndConditions = () => {
 
         <section className="mb-8">
           <h2 className="text-2xl font-bold text-blue-800 mb-4">1. Agreement to Terms</h2>
-          <p className="text-gray-700 leading-relaxed">By accessing or using Freedombook (freedombook.co) and our mobile application (collectively, the "Platform"), you agree to be bound by these Terms and Conditions.</p>
+          <p className="text-gray-700 leading-relaxed">By accessing or using Freemochat (freemochat.com) and our mobile application (collectively, the "Platform"), you agree to be bound by these Terms and Conditions.</p>
         </section>
 
         <section className="mb-8">
@@ -45,7 +45,7 @@ const TermsAndConditions = () => {
               <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
               <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
             </svg>
-            <a href="mailto:support@freedombook.com" className="hover:underline">support@freedombook.com</a>
+            <a href="mailto:support@freemochat.com" className="hover:underline">support@freemochat.com</a>
           </p>
         </section>
       </main>

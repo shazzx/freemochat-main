@@ -319,7 +319,7 @@ export class UserController {
             const authId = uuidv4()
 
             await this.cacheService.setForgetPassword(user._id, authId)
-            const link = `https://www.freedombook.co/reset-password/${authId}?username=${user.username}`
+            const link = `https://www.freemochat.com/reset-password/${authId}?username=${user.username}`
             const message = messageGenerator(user.firstname + " " + user.lastname, link, 'reset-password')
             // await this.twilioService.sendSMS(user.phone, message)
             await this.twilioService.sendEmail({

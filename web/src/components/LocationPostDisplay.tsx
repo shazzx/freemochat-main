@@ -24,7 +24,7 @@ import {
   Calendar,
   User
 } from 'lucide-react';
-import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
 import { format } from 'date-fns';
 import { axiosClient } from '@/api/axiosClient';
 import ElementDetailsModal from '@/models/ElementDetailsModal';
@@ -169,25 +169,6 @@ const mapOptions = {
   fullscreenControl: false,
 };
 
-// Global LoadScript wrapper to prevent multiple instances
-let isGoogleMapsLoaded = false;
-const googleMapsLoadPromise = new Promise<void>((resolve) => {
-  if (window.google && window.google.maps) {
-    isGoogleMapsLoaded = true;
-    resolve();
-  } else {
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDEz0n0ST4J3KYECJDx_-hTtnejV2A0-to&libraries=`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      isGoogleMapsLoaded = true;
-      resolve();
-    };
-    document.head.appendChild(script);
-  }
-});
-
 // Reusable Map Component
 interface ReusableMapProps {
   center: { lat: number; lng: number };
@@ -200,6 +181,7 @@ interface ReusableMapProps {
   }>;
   postType: string;
   onMarkerClick?: (marker: any) => void;
+  onViewMoreDetails?: (marker: any) => void;
   interactive?: boolean;
   showInfoWindow?: boolean;
   activeMarker?: any;
@@ -214,6 +196,7 @@ const ReusableMap: React.FC<ReusableMapProps> = ({
   markers,
   postType,
   onMarkerClick,
+  onViewMoreDetails,
   interactive = true,
   showInfoWindow = false,
   activeMarker,
@@ -221,8 +204,44 @@ const ReusableMap: React.FC<ReusableMapProps> = ({
   onMapClick,
   className = ""
 }) => {
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const [googleMapsReady, setGoogleMapsReady] = useState(false);
   const mapRef = useRef<google.maps.Map>(null);
+
+  // Check if Google Maps is loaded
+  useEffect(() => {
+    const checkGoogleMaps = () => {
+      if (window.google && window.google.maps) {
+        console.log('Google Maps is available for LocationPostDisplay');
+        setGoogleMapsReady(true);
+        return true;
+      }
+      return false;
+    };
+
+    if (!checkGoogleMaps()) {
+      console.log('Waiting for Google Maps to load...');
+      
+      // Poll for Google Maps availability
+      const interval = setInterval(() => {
+        if (checkGoogleMaps()) {
+          clearInterval(interval);
+        }
+      }, 100);
+
+      // Cleanup interval after 15 seconds
+      const timeout = setTimeout(() => {
+        clearInterval(interval);
+        if (!window.google || !window.google.maps) {
+          console.error('Google Maps failed to load within 15 seconds');
+        }
+      }, 15000);
+      
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    }
+  }, []);
 
   const getPostTypeConfig = (type: string) => {
     switch (type) {
@@ -286,13 +305,7 @@ const ReusableMap: React.FC<ReusableMapProps> = ({
   const typeConfig = getPostTypeConfig(postType);
   const IconComponent = typeConfig.icon;
 
-  useEffect(() => {
-    googleMapsLoadPromise.then(() => {
-      setMapLoaded(true);
-    });
-  }, []);
-
-  if (!mapLoaded) {
+  if (!googleMapsReady) {
     return (
       <div className={`${className} flex items-center justify-center bg-gray-100 dark:bg-gray-700`}>
         <div className="text-center">
@@ -325,11 +338,13 @@ const ReusableMap: React.FC<ReusableMapProps> = ({
           <Marker
             key={marker.id}
             position={marker.position}
-            icon={{
-              url: createCustomMarkerIcon(postType, marker.index),
-              scaledSize: new window.google.maps.Size(interactive ? 50 : 40, interactive ? 50 : 40),
-              anchor: new window.google.maps.Point(interactive ? 25 : 20, interactive ? 25 : 20),
-            }}
+            icon={
+              window.google ? {
+                url: createCustomMarkerIcon(postType, marker.index),
+                scaledSize: new window.google.maps.Size(interactive ? 50 : 40, interactive ? 50 : 40),
+                anchor: new window.google.maps.Point(interactive ? 25 : 20, interactive ? 25 : 20),
+              } : undefined
+            }
             onClick={() => onMarkerClick?.(marker.data)}
           />
         ))}
@@ -370,12 +385,7 @@ const ReusableMap: React.FC<ReusableMapProps> = ({
               )}
 
               <button
-                onClick={() => {
-                  // This will be handled by parent component
-                  if (window.handleViewMoreDetails) {
-                    window.handleViewMoreDetails(activeMarker);
-                  }
-                }}
+                onClick={() => onViewMoreDetails?.(activeMarker)}
                 className="w-full text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded px-2 py-1 hover:bg-blue-100 transition-colors flex items-center justify-center space-x-1"
               >
                 <span>View More Details</span>
@@ -622,9 +632,9 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden">
+      <div className="bg-card overflow-hidden">
         {/* Header */}
-        <div className="p-4 cursor-pointer" onClick={onCardPress}>
+        {/* <div className="p-4 cursor-pointer" onClick={onCardPress}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <AvatarContainer
@@ -655,7 +665,6 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
               </div>
             </div>
 
-            {/* Menu */}
             <div className="relative">
               <button
                 onClick={(e) => {
@@ -713,7 +722,7 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
               )}
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Post Type Badge */}
         <div className="px-4">
@@ -805,6 +814,7 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
               markers={mapMarkers}
               postType={post.postType}
               onMarkerClick={() => setMapModalVisible(true)} // Always open modal on marker click in preview
+              onViewMoreDetails={handleViewMore}
               interactive={false}
               className="w-full h-full"
             />
@@ -874,6 +884,7 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
                 markers={mapMarkers}
                 postType={post.postType}
                 onMarkerClick={handleMarkerClick}
+                onViewMoreDetails={handleViewMore}
                 interactive={true}
                 showInfoWindow={showInfoWindow}
                 activeMarker={activeMarker}

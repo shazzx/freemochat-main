@@ -9,7 +9,7 @@ export const useTargetContributions = (targetId: string) => {
     const { data, isLoading, isError, isFetched, isSuccess } = useQuery({
         queryKey: ['contributions', targetId],
         queryFn: () => {
-            return fetchTargetContributions()
+            return fetchTargetContributions(targetId)
         },
 
     })

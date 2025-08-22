@@ -110,13 +110,19 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     }
 
     // post upload
-    const _createPost = async ({ content, selectedMedia, formData, visibility }) => {
-        let data;
-        let postDetails = { content, media: data, type: "user", visibility }
+    const _createPost = async ({ visibility, content, selectedMedia, backgroundColor, mentions, mentionReferences, formData }) => {
+        let postDetails = { content, type: "user", postType: 'post', backgroundColor, mentions, targetId: user?._id, visibility }
         formData.append("postData", JSON.stringify(postDetails))
-        createPost.mutate({ content, formData, selectedMedia, type: "user", target: user, isUploaded: false, postType: 'post' })
+        createPost.mutate({ content, formData, selectedMedia, mentions, mentionReferences, backgroundColor, postType: 'post', type: "user", target: user })
         setPostModal(false)
     }
+    // const _createPost = async ({ content, selectedMedia, formData, visibility }) => {
+    //     let data;
+    //     let postDetails = { content, media: data, type: "user", visibility }
+    //     formData.append("postData", JSON.stringify(postDetails))
+    //     createPost.mutate({ content, formData, selectedMedia, type: "user", target: user, isUploaded: false, postType: 'post' })
+    //     setPostModal(false)
+    // }
 
     let removePost = (id) => {
         let _postIndex = posts.findIndex((post) => {

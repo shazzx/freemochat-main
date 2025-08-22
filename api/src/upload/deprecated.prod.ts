@@ -292,7 +292,7 @@ export class UploadService {
 
         try {
             // Default path is in assets directory relative to this file
-            const defaultImagePath = path.join(__dirname, '..', '..', 'assets', 'freedombook-logo.png');
+            const defaultImagePath = path.join(__dirname, '..', '..', 'assets', 'freemochat-logo.png');
             const watermarkImagePath = options.watermarkImagePath || defaultImagePath;
 
             const position = options.position || 'bottomRight';

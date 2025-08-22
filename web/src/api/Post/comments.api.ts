@@ -32,8 +32,8 @@ export async function createComment(formData: FormData): Promise<CreateCommentRe
   return response.data;
 }
 
-export async function updateComment(formData: FormData) {
-  const response = await axiosClient.put(COMMENT_ROUTES.COMMENT,  formData, { headers: { 'Content-Type': HTTP_CONTENT_TYPES.MULTIPART_FORM_DATA } });
+export async function updateComment(data) {
+  const response = await axiosClient.put(COMMENT_ROUTES.COMMENT,  data);
   return response.data;
 }
 
@@ -47,8 +47,8 @@ export async function replyOnComment(formData): Promise<CreateCommentResponse> {
   return response.data;
 }
 
-export async function updateReply(formData): Promise<CreateCommentResponse> {
-  const response = await axiosClient.put<CreateCommentResponse>(COMMENT_ROUTES.REPLY, formData, { headers: { 'Content-Type': HTTP_CONTENT_TYPES.MULTIPART_FORM_DATA } });
+export async function updateReply(data): Promise<CreateCommentResponse> {
+  const response = await axiosClient.put<CreateCommentResponse>(COMMENT_ROUTES.REPLY, data);
   return response.data;
 }
 

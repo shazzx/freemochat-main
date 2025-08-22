@@ -5511,15 +5511,73 @@ export class PostsService {
                 }
             },
             {
+                $lookup: {
+                    from: 'counters',
+                    let: { targetId: '$targetId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$targetId', '$$targetId'] },
+                                        { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
+                                        { $eq: ['$type', 'contributions'] },
+                                        { $gt: ['$count', 0] }  // ADD THIS LINE
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                contributionTypes: { $addToSet: '$name' }
+                            }
+                        }
+                    ],
+                    as: 'targetEnvironmentalContributions'
+                }
+            },
+            {
                 $addFields: {
                     target: {
-                        $switch: {
-                            branches: [
-                                { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-                                { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-                                { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-                            ],
-                            default: null
+                        $let: {
+                            vars: {
+                                targetObj: {
+                                    $switch: {
+                                        branches: [
+                                            { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
+                                            { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
+                                            { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
+                                        ],
+                                        default: null
+                                    }
+                                },
+                                envContributions: { $arrayElemAt: ['$targetEnvironmentalContributions.contributionTypes', 0] }
+                            },
+                            in: {
+                                $cond: {
+                                    if: {
+                                        $and: [
+                                            { $ne: ['$$targetObj', null] },
+                                            { $ne: ['$$targetObj.type', 'group'] }
+                                        ]
+                                    },
+                                    then: {
+                                        $mergeObjects: [
+                                            '$$targetObj',
+                                            {
+                                                environmentalProfile: {
+                                                    plantation: { $in: ['plantation', { $ifNull: ['$$envContributions', []] }] },
+                                                    garbage_collection: { $in: ['garbage_collection', { $ifNull: ['$$envContributions', []] }] },
+                                                    water_ponds: { $in: ['water_ponds', { $ifNull: ['$$envContributions', []] }] },
+                                                    rain_water: { $in: ['rain_water', { $ifNull: ['$$envContributions', []] }] }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    else: '$$targetObj'
+                                }
+                            }
                         }
                     },
                     "likesCount": {

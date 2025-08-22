@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { memo } from 'react';
+import ContentWithLinksAndMentions from '@/components/ContentWithLinksAndMentions';
 
 // Define the mention user interface
 interface MentionUser {
@@ -31,7 +31,10 @@ interface ContentWithLinksAndMentionsProps {
   expanded: boolean;
   toggleReadMore: () => void;
   mentions: MentionUser[];
+  navigation?: any;
   onHashtagPress: (hashtag: string) => void;
+  maxLength?: number;
+  showReadMore?: boolean;
 }
 
 // Define the main component props
@@ -42,6 +45,7 @@ interface BackgroundPostProps {
   theme?: Theme;
   onPress?: () => void;
   mentions?: MentionUser[];
+  navigation?: any;
   onHashtagPress: (hashtag: string) => void;
   isShared?: boolean;
   ContentWithLinksAndMentions?: React.ComponentType<ContentWithLinksAndMentionsProps>;
@@ -50,294 +54,19 @@ interface BackgroundPostProps {
   className?: string;
 }
 
-// Regex patterns for parsing content
-const URL_REGEX = /(?:(?:https?|ftp):\/\/)?(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi;
-const MENTION_REGEX = /@(\w+)/g;
-const HASHTAG_REGEX = /#([a-zA-Z0-9_]+)/g;
-const MAX_CONTENT_LENGTH = 360;
+// Use the separate ContentWithLinksAndMentions component
 
-interface ContentPart {
-  type: 'text' | 'link' | 'mention' | 'hashtag';
-  content: string;
-  user?: MentionUser;
-  hashtag?: string;
-  style?: React.CSSProperties;
-}
-
-// Default ContentWithLinksAndMentions component
-const DefaultContentWithLinksAndMentions: React.FC<ContentWithLinksAndMentionsProps> = ({
-  content,
-  hasBackground = false,
-  expanded,
-  toggleReadMore,
-  mentions = [],
-  onHashtagPress,
-}) => {
-  const navigate = useNavigate();
-
-  const parsedContent = useMemo(() => {
-    if (!content) return [];
-
-    let displayContent = content;
-
-    // Replace user IDs with usernames
-    const userIdRegex = /@([a-f\d]{24})/g;
-    let match;
-    const processedIds = new Set<string>();
-
-    while ((match = userIdRegex.exec(content)) !== null) {
-      const userId = match[1];
-      if (!processedIds.has(userId)) {
-        processedIds.add(userId);
-        const user = mentions.find(u => u._id === userId);
-
-        if (user) {
-          const idRegex = new RegExp(`@${userId}`, 'g');
-          displayContent = displayContent.replace(idRegex, `@${user.username}`);
-        } else {
-          const idRegex = new RegExp(`@${userId}`, 'g');
-          displayContent = displayContent.replace(idRegex, '@deleted-user');
-        }
-      }
-    }
-
-    const parts: ContentPart[] = [];
-    let lastIndex = 0;
-
-    const patterns = [
-      { type: 'url' as const, regex: URL_REGEX },
-      { type: 'mention' as const, regex: MENTION_REGEX },
-      { type: 'hashtag' as const, regex: HASHTAG_REGEX }
-    ];
-
-    const matches: Array<{
-      type: 'url' | 'mention' | 'hashtag';
-      content: string;
-      index: number;
-      length: number;
-      groups: RegExpExecArray;
-    }> = [];
-
-    patterns.forEach(pattern => {
-      const regex = new RegExp(pattern.regex.source, 'gi');
-      let match: RegExpExecArray | null;
-
-      while ((match = regex.exec(displayContent)) !== null) {
-        matches.push({
-          type: pattern.type,
-          content: match[0],
-          index: match.index,
-          length: match[0].length,
-          groups: match
-        });
-      }
-    });
-
-    matches.sort((a, b) => a.index - b.index);
-
-    matches.forEach(match => {
-      if (match.index > lastIndex) {
-        parts.push({
-          type: 'text',
-          content: displayContent.slice(lastIndex, match.index)
-        });
-      }
-
-      if (match.type === 'url') {
-        parts.push({
-          type: 'link',
-          content: match.content
-        });
-      } else if (match.type === 'mention') {
-        const username = match.content.slice(1);
-
-        if (username === 'deleted-user') {
-          parts.push({
-            type: 'text',
-            content: match.content,
-            style: { color: '#999', fontStyle: 'italic' }
-          });
-        } else {
-          const mentionedUser = mentions.find(user => user.username === username);
-
-          if (mentionedUser) {
-            parts.push({
-              type: 'mention',
-              content: match.content,
-              user: mentionedUser
-            });
-          } else {
-            parts.push({
-              type: 'text',
-              content: match.content
-            });
-          }
-        }
-      } else if (match.type === 'hashtag') {
-        const hashtagName = match.content.slice(1);
-        parts.push({
-          type: 'hashtag',
-          content: match.content,
-          hashtag: hashtagName
-        });
-      }
-
-      lastIndex = match.index + match.length;
-    });
-
-    if (lastIndex < displayContent.length) {
-      parts.push({
-        type: 'text',
-        content: displayContent.slice(lastIndex)
-      });
-    }
-
-    return parts;
-  }, [content, mentions]);
-
-  const displayContent = useMemo(() => {
-    if (expanded || content.length <= MAX_CONTENT_LENGTH) {
-      return parsedContent;
-    } else {
-      let totalLength = 0;
-      let cutoffIndex = 0;
-
-      for (let i = 0; i < parsedContent.length; i++) {
-        totalLength += parsedContent[i].content.length;
-        if (totalLength >= MAX_CONTENT_LENGTH) {
-          cutoffIndex = i;
-          break;
-        }
-      }
-
-      const truncated = parsedContent.slice(0, cutoffIndex + 1);
-
-      if (truncated.length > 0 && truncated[cutoffIndex].type === 'text') {
-        const lastItem = { ...truncated[cutoffIndex] };
-        const remainingLength = MAX_CONTENT_LENGTH - (totalLength - lastItem.content.length);
-        lastItem.content = lastItem.content.substring(0, remainingLength) + '...';
-        truncated[cutoffIndex] = lastItem;
-      }
-
-      return truncated;
-    }
-  }, [parsedContent, expanded, content.length]);
-
-  const handleMentionPress = React.useCallback((user: MentionUser) => {
-    navigate(`/user/${user.username}`);
-  }, [navigate]);
-
-  const handleHashtagPress = React.useCallback((hashtag: string) => {
-    onHashtagPress(hashtag);
-  }, [onHashtagPress]);
-
-  const baseTextStyle: React.CSSProperties = hasBackground ? {
-    color: 'white',
-    fontWeight: 700,
-    fontSize: '18px'
-  } : {
-    color: 'var(--card-foreground)'
-  };
-
-  const linkStyle: React.CSSProperties = {
-    ...baseTextStyle,
-    color: hasBackground ? 'white' : 'var(--primary)',
-    textDecoration: 'underline',
-    cursor: 'pointer'
-  };
-
-  const mentionStyle: React.CSSProperties = {
-    ...baseTextStyle,
-    color: hasBackground ? 'white' : 'var(--primary)',
-    fontWeight: hasBackground ? 700 : 500,
-    cursor: 'pointer'
-  };
-
-  const hashtagStyle: React.CSSProperties = {
-    ...baseTextStyle,
-    color: hasBackground ? 'white' : 'var(--primary)',
-    fontWeight: hasBackground ? 700 : 500,
-    textDecoration: 'underline',
-    cursor: 'pointer'
-  };
-
-  return (
-    <div style={hasBackground ? { textAlign: 'center', width: '100%' } : {}}>
-      {displayContent.map((item, index) => {
-        if (item.type === 'link') {
-          return (
-            <span
-              key={index}
-              style={linkStyle}
-              onClick={() => {
-                const url = item.content.startsWith('http') ? item.content : `https://${item.content}`;
-                window.open(url, '_blank');
-              }}
-            >
-              {item.content}
-            </span>
-          );
-        } else if (item.type === 'mention') {
-          return (
-            <span
-              key={index}
-              style={mentionStyle}
-              onClick={() => handleMentionPress(item.user!)}
-            >
-              {item.content}
-            </span>
-          );
-        } else if (item.type === 'hashtag') {
-          return (
-            <span
-              key={index}
-              style={hashtagStyle}
-              onClick={() => handleHashtagPress(item.hashtag!)}
-            >
-              {item.content}
-            </span>
-          );
-        } else {
-          return (
-            <span
-              key={index}
-              style={{ ...baseTextStyle, ...item.style }}
-            >
-              {item.content}
-            </span>
-          );
-        }
-      })}
-
-      {content.length > MAX_CONTENT_LENGTH && (
-        <div style={{ marginTop: '8px' }}>
-          <span
-            style={{
-              color: hasBackground ? 'white' : 'var(--primary)',
-              cursor: 'pointer',
-              fontWeight: hasBackground ? 700 : 500,
-              fontSize: hasBackground ? '18px' : '14px'
-            }}
-            onClick={toggleReadMore}
-          >
-            {expanded ? 'Show less' : 'Read more'}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const BackgroundPost: React.FC<BackgroundPostProps> = ({
+const BackgroundPost: React.FC<BackgroundPostProps> = memo(({
   content,
   backgroundColor,
   containerWidth = 500,
   theme,
   onPress,
   mentions = [],
+  navigation,
   onHashtagPress,
   isShared = false,
-  ContentWithLinksAndMentions = DefaultContentWithLinksAndMentions,
+  ContentWithLinksAndMentions: CustomContentComponent,
   expanded = false,
   toggleReadMore = () => {},
   className = ''
@@ -346,6 +75,9 @@ const BackgroundPost: React.FC<BackgroundPostProps> = ({
   if (!backgroundColor || !content?.trim()) {
     return null;
   }
+
+  // Use the imported ContentWithLinksAndMentions as default
+  const ContentComponent = CustomContentComponent || ContentWithLinksAndMentions;
 
   const getTextStyle = (): React.CSSProperties => {
     const textLength: number = content.length;
@@ -367,15 +99,15 @@ const BackgroundPost: React.FC<BackgroundPostProps> = ({
   };
 
   const textStyle = getTextStyle();
-  const postHeight = Math.min(Math.max(200, parseInt(textStyle.fontSize!) * 8), 400);
+  const postHeight = Math.min(Math.max(200, parseInt(textStyle.fontSize! as string) * 8), 400);
 
   const containerStyle: React.CSSProperties = {
     backgroundColor: backgroundColor,
     height: `${postHeight}px`,
     marginLeft: isShared ? '10px' : '0',
     marginRight: isShared ? '10px' : '0',
-    marginTop: isShared ? '8px' : '10px',
-    marginBottom: isShared ? '8px' : '10px',
+    marginTop: isShared ? '8px' : '6px',
+    marginBottom: isShared ? '8px' : '6px',
     position: 'relative',
     display: 'flex',
     justifyContent: 'center',
@@ -404,6 +136,7 @@ const BackgroundPost: React.FC<BackgroundPostProps> = ({
     zIndex: 2,
     width: '100%',
     padding: '20px',
+    position: 'relative',
   };
 
   return (
@@ -413,13 +146,14 @@ const BackgroundPost: React.FC<BackgroundPostProps> = ({
       onClick={onPress}
     >
       <div style={contentContainerStyle}>
-        <ContentWithLinksAndMentions
+        <ContentComponent
           content={content}
           hasBackground={true}
           theme={theme}
           expanded={expanded}
           toggleReadMore={toggleReadMore}
           mentions={mentions}
+          navigation={navigation}
           onHashtagPress={onHashtagPress}
         />
       </div>
@@ -427,7 +161,7 @@ const BackgroundPost: React.FC<BackgroundPostProps> = ({
       <div style={gradientStyle} />
     </div>
   );
-};
+});
 
 // Add display name for better debugging
 BackgroundPost.displayName = 'BackgroundPost';

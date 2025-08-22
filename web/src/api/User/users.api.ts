@@ -113,8 +113,8 @@ export const fetchUserMetrics = async () => {
     return data
 }
 
-export const fetchTargetContributions = async () => {
-    const { data } = await axiosClient.get("metrics-aggregator/contributions")
+export const fetchTargetContributions = async (targetId: string) => {
+    const { data } = await axiosClient.get(`metrics-aggregator/contributions/${targetId}`)
     return data
 }
 

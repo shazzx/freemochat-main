@@ -726,16 +726,18 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         toast.success("Post deleted")
     }
 
-    const _updatePost = async ({ visibility, content, selectedMedia, formData, media, setModelTrigger }) => {
+    const _updatePost = async ({ visibility, content, selectedMedia, formData, media, setModelTrigger, mentions, mentionReferences, hashtags }) => {
         let _media = media.filter((media) => {
             if (!media?.file) {
                 return media
             }
         })
 
-        let postDetails = { visibility, content, media: _media, type, postId: postData._id }
+        console.log(mentions)
+
+        let postDetails = { visibility, content, media: _media, type, postId: postData._id, mentions }
         formData.append("postData", JSON.stringify(postDetails))
-        updatePost.mutate({ content, formData, selectedMedia, pageIndex, postIndex, postId: postData?._id, media })
+        updatePost.mutate({ content, formData, selectedMedia, pageIndex, postIndex, postId: postData?._id, media, mentions, mentionReferences })
         setModelTrigger(false)
     }
 
@@ -827,7 +829,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
     const params = isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }
 
-    const isLocationPost = postData?.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(postData.postType);
+    const isLocationPost =false ||  postData?.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(postData.postType);
 
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} key={postData && postData._id}>
@@ -857,6 +859,113 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 <BottomComments pageIndex={pageIndex} params={params} postData={postData} postId={postData?._id} isOpen={bottomCommentsState} setOpen={setBottomCommentsState} />
             }
             <Card className="w-full border-muted" ref={scrollRef}>
+                <CardHeader className='p-3' >
+                    <div className='flex items-center justify-between'>
+                        <div className='flex gap-2'>
+                            {postData.type == 'group'
+                                ?
+                                <div className='relative'>
+                                    <Link to={navigation && `${domain}/${postData?.type}/${navigation}`}>
+                                        <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
+                                            <Avatar >
+                                                <AvatarImage src={_profile} alt="Avatar" />
+                                                <AvatarFallback>{(postData?.target?.name ? (postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
+                                            </Avatar>
+                                        </div>
+                                    </Link>
+                                    <Link to={postData?.user?.username && `${domain}/user/${postData?.user?.username}`}>
+                                        <div className='absolute -bottom-1 border border-accent -right-1 bg-accent w-8 h-8 flex items-center justify-center rounded-full overflow-hidden'>
+                                            <Avatar >
+                                                <AvatarImage src={postData.user.profile} alt="Avatar" />
+                                                <AvatarFallback>{(postData?.user?.firstname ? postData?.user?.firstname[0]?.toUpperCase() : "D")}</AvatarFallback>
+                                            </Avatar>
+                                        </div>
+                                    </Link>
+                                </div>
+                                :
+                                <Link to={navigation && `${domain}/${postData?.type}/${navigation}`}>
+
+                                    <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
+                                        {postData?.type !== 'user' ?
+                                            <Avatar>
+                                                <AvatarImage src={_profile} alt="Avatar" />
+                                                <AvatarFallback>{(postData?.target?.name ? (postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
+                                            </Avatar>
+                                            :
+                                            <>
+                                                {self ?
+                                                    <Avatar >
+                                                        <AvatarImage src={profile} alt="Avatar" />
+                                                        <AvatarFallback>{(postData?.target?.firstname ? (postData?.target?.firstname[0]?.toUpperCase()) + (postData?.target?.lastname && postData?.target?.lastname[0]?.toUpperCase()) : "D")}</AvatarFallback>
+                                                    </Avatar> :
+                                                    <Avatar >
+                                                        <AvatarImage src={_profile} alt="Avatar" />
+                                                        <AvatarFallback>{(postData?.target?.firstname ? (postData?.target?.firstname[0]?.toUpperCase()) + (postData?.target?.lastname && postData?.target?.lastname[0]?.toUpperCase()) : "D")}</AvatarFallback>
+                                                    </Avatar>
+                                                }
+                                            </>
+
+                                        }
+                                    </div>
+                                </Link>
+
+                            }
+
+                            <div className='flex flex-col gap-1'>
+                                {postData.type == 'group' ?
+                                    <h3 className='text-card-foreground flex gap-2 text-sm'>
+                                        <Link to={postData?.user?.username && `${domain}/user/${postData?.user?.username}`}>
+                                            {postData?.user?.firstname + " " + postData?.user?.lastname}
+                                        </Link>
+                                        <Link to={navigation && `${domain}/${postData?.type}/${navigation}`}>
+                                            ({postData?.target?.name || "Deleted"})
+                                        </Link>
+                                    </h3>
+                                    :
+                                    navigation ?
+                                        <Link className='flex gap-2 items-center' to={`${domain}/${postData?.type}/${navigation}`}>
+
+                                            <h3 className='text-card-foreground flex gap-2 text-sm'>{(postData?.target?.firstname ? (postData?.target?.firstname + " " + postData?.target?.lastname) : postData?.target?.name)}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
+
+
+                                            <EnvironmentalContributorTag
+                                                data={{
+                                                    plantation: postData?.target?.environmentalProfile?.['plantation'] && 1,
+                                                    garbage_collection: postData?.target?.environmentalProfile?.['garbage_collection'] && 1,
+                                                    water_ponds: postData?.target?.environmentalProfile?.['water_ponds'] && 1,
+                                                    rain_water: postData?.target?.environmentalProfile?.['rain_water'] && 1,
+                                                }}
+                                                hideCount={true}
+                                            />
+                                        </Link>
+                                        :
+                                        <div className='flex gap-2'>
+                                            <h3 className='text-card-foreground flex gap-2 text-sm'>{(postData?.target?.firstname ? (postData?.target?.firstname + " " + postData?.target?.lastname) : postData?.target?.name || 'Deleted')}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
+
+                                            <EnvironmentalContributorTag
+                                                data={{
+                                                    plantation: postData?.target?.environmentalProfile?.['plantation'] && 1,
+                                                    garbage_collection: postData?.target?.environmentalProfile?.['garbage_collection'] && 1,
+                                                    water_ponds: postData?.target?.environmentalProfile?.['water_ponds'] && 1,
+                                                    rain_water: postData?.target?.environmentalProfile?.['rain_water'] && 1,
+                                                }}
+                                                hideCount={true}
+                                            />
+                                        </div>
+
+                                }
+                                <span className='text-muted-foreground text-xs'>{postData?.promotion?.length > 0 ? "sponsored" : date}</span>
+                            </div>
+                        </div>
+                        {
+                            !isLocationPost &&
+                            <DropdownMenuMain deletePost={deletePost} setConfirmModelState={setConfirmModelState} setReportModelState={setReportModelState} reportModelState={reportModelState} postPromotion={postPromotion} setPostPromotion={setPostPromotion} setEditPostModelState={setEditPostModelState} postBy={postData?.user == user._id || postData?.user?._id == user._id} copyPost={() => {
+                                navigator.clipboard.writeText(postData.content);
+                                toast.info("Post Copied")
+                            }} />
+                        }
+                    </div>
+                </CardHeader>
                 {isLocationPost ? (
                     <LocationPostDisplay
                         post={postData}
@@ -878,110 +987,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 )
                     :
                     <>
-                        <CardHeader className='p-3' >
-                            <div className='flex items-center justify-between'>
-                                <div className='flex gap-2'>
-                                    {postData.type == 'group'
-                                        ?
-                                        <div className='relative'>
-                                            <Link to={navigation && `${domain}/${postData?.type}/${navigation}`}>
-                                                <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
-                                                    <Avatar >
-                                                        <AvatarImage src={_profile} alt="Avatar" />
-                                                        <AvatarFallback>{(postData?.target?.name ? (postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
-                                                    </Avatar>
-                                                </div>
-                                            </Link>
-                                            <Link to={postData?.user?.username && `${domain}/user/${postData?.user?.username}`}>
-                                                <div className='absolute -bottom-1 border border-accent -right-1 bg-accent w-8 h-8 flex items-center justify-center rounded-full overflow-hidden'>
-                                                    <Avatar >
-                                                        <AvatarImage src={postData.user.profile} alt="Avatar" />
-                                                        <AvatarFallback>{(postData?.user?.firstname ? postData?.user?.firstname[0]?.toUpperCase() : "D")}</AvatarFallback>
-                                                    </Avatar>
-                                                </div>
-                                            </Link>
-                                        </div>
-                                        :
-                                        <Link to={navigation && `${domain}/${postData?.type}/${navigation}`}>
-
-                                            <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
-                                                {postData?.type !== 'user' ?
-                                                    <Avatar>
-                                                        <AvatarImage src={_profile} alt="Avatar" />
-                                                        <AvatarFallback>{(postData?.target?.name ? (postData?.target?.name[0]?.toUpperCase()) + postData?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
-                                                    </Avatar>
-                                                    :
-                                                    <>
-                                                        {self ?
-                                                            <Avatar >
-                                                                <AvatarImage src={profile} alt="Avatar" />
-                                                                <AvatarFallback>{(postData?.target?.firstname ? (postData?.target?.firstname[0]?.toUpperCase()) + (postData?.target?.lastname && postData?.target?.lastname[0]?.toUpperCase()) : "D")}</AvatarFallback>
-                                                            </Avatar> :
-                                                            <Avatar >
-                                                                <AvatarImage src={_profile} alt="Avatar" />
-                                                                <AvatarFallback>{(postData?.target?.firstname ? (postData?.target?.firstname[0]?.toUpperCase()) + (postData?.target?.lastname && postData?.target?.lastname[0]?.toUpperCase()) : "D")}</AvatarFallback>
-                                                            </Avatar>
-                                                        }
-                                                    </>
-
-                                                }
-                                            </div>
-                                        </Link>
-
-                                    }
-
-                                    <div className='flex flex-col gap-1'>
-                                        {postData.type == 'group' ?
-                                            <h3 className='text-card-foreground flex gap-2 text-sm'>
-                                                <Link to={postData?.user?.username && `${domain}/user/${postData?.user?.username}`}>
-                                                    {postData?.user?.firstname + " " + postData?.user?.lastname}
-                                                </Link>
-                                                <Link to={navigation && `${domain}/${postData?.type}/${navigation}`}>
-                                                    ({postData?.target?.name || "Deleted"})
-                                                </Link>
-                                            </h3>
-                                            :
-                                            navigation ?
-                                                <Link className='flex gap-2 items-center' to={`${domain}/${postData?.type}/${navigation}`}>
-
-                                                    <h3 className='text-card-foreground flex gap-2 text-sm'>{(postData?.target?.firstname ? (postData?.target?.firstname + " " + postData?.target?.lastname) : postData?.target?.name)}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
-
-
-                                                    <EnvironmentalContributorTag
-                                                        data={{
-                                                            plantation: postData?.target?.environmentalProfile?.['plantation'] && 1,
-                                                            garbage_collection: postData?.target?.environmentalProfile?.['garbage_collection'] && 1,
-                                                            water_ponds: postData?.target?.environmentalProfile?.['water_ponds'] && 1,
-                                                            rain_water: postData?.target?.environmentalProfile?.['rain_water'] && 1,
-                                                        }}
-                                                        hideCount={true}
-                                                    />
-                                                </Link>
-                                                :
-                                                <div className='flex gap-2'>
-                                                    <h3 className='text-card-foreground flex gap-2 text-sm'>{(postData?.target?.firstname ? (postData?.target?.firstname + " " + postData?.target?.lastname) : postData?.target?.name || 'Deleted')}{isAdmin && <div className='p-1  bg-primary rounded-md text-xs text-white'>admin</div>}</h3>
-
-                                                    <EnvironmentalContributorTag
-                                                        data={{
-                                                            plantation: postData?.target?.environmentalProfile?.['plantation'] && 1,
-                                                            garbage_collection: postData?.target?.environmentalProfile?.['garbage_collection'] && 1,
-                                                            water_ponds: postData?.target?.environmentalProfile?.['water_ponds'] && 1,
-                                                            rain_water: postData?.target?.environmentalProfile?.['rain_water'] && 1,
-                                                        }}
-                                                        hideCount={true}
-                                                    />
-                                                </div>
-
-                                        }
-                                        <span className='text-muted-foreground text-xs'>{postData?.promotion?.length > 0 ? "sponsored" : date}</span>
-                                    </div>
-                                </div>
-                                <DropdownMenuMain deletePost={deletePost} setConfirmModelState={setConfirmModelState} setReportModelState={setReportModelState} reportModelState={reportModelState} postPromotion={postPromotion} setPostPromotion={setPostPromotion} setEditPostModelState={setEditPostModelState} postBy={postData?.user == user._id || postData?.user?._id == user._id} copyPost={() => {
-                                    navigator.clipboard.writeText(postData.content);
-                                    toast.info("Post Copied")
-                                }} />
-                            </div>
-                        </CardHeader>
                         <CardContent className="flex flex-col gap-2 text-2xl p-0 sm:px-3 font-bold">
                             <div className='text-sm font-normal px-2 sm:px-0'>
                                 {/* Background post rendering */}
@@ -1066,126 +1071,127 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 </div>
                             )}
                         </CardContent>
-                        <CardFooter className='py-2 gap-2 px-3 md:p-4 select-none flex flex-col'>
-                            {postData?.media?.length > 1 &&
-                                <div className='flex gap-2 p-2'>
-                                    {postData?.media.map((_, index) => (
-                                        <div key={index} className='w-[6px] h-[6px] sm:w-2 sm:h-2 rounded-full bg-foreground'>
-                                        </div>
-                                    ))}
-                                </div>
-                            }
-                            <div className='flex  w-full justify-between'>
-                                <div className='flex gap-2 items-center w-full'>
-                                    {postData?.likesCount > 0 && <span className='text-sm cursor-pointer' onClick={() => {
-                                        setLikesModelState(true)
-                                    }}>
-                                        {"Likes " + postData?.likesCount}
-                                    </span>}
-                                    {postData?.commentsCount > 0 && <span onClick={() => {
-                                        if (!model && width > 540) {
-                                            dispatch(setOpen({ click: '', id: postData._id }))
-                                            navigate("?model=post")
-                                            setModelTrigger(true)
-                                            return
-                                        }
-                                        setBottomCommentsState(true)
-                                    }} className='text-sm cursor-pointer'>
-                                        {"Comments " + postData?.commentsCount}
-                                    </span >}
-                                </div>
-                                <div className='flex gap-2'>
-                                    {
-                                        postData?.sharesCount > 0 &&
-                                        <span className='relative text-sm whitespace-nowrap cursor-pointer'>
-                                            {"Shares " + postData?.sharesCount}
-                                        </span >
-                                    }
-                                    {
-                                        postData?.videoViewsCount > 0 &&
-                                        <span className='relative text-sm whitespace-nowrap cursor-pointer'>
-                                            {"Views " + postData?.videoViewsCount}
-                                        </span >
-                                    }
-                                </div>
-                            </div>
-                            <div className='flex items-center justify-between w-full'>
-                                <LikeButton mutate={mutate} pageIndex={pageIndex} postIndex={postIndex} postData={postData} />
 
-                                <div className='flex gap-0 items-center cursor-pointer' onClick={() => {
-                                    if (!model && width > 540) {
-                                        dispatch(setOpen({ click: '', id: postData._id }))
-                                        navigate("?model=post")
-                                        setModelTrigger(true)
-                                        return
-                                    }
-                                    setBottomCommentsState(true)
-
-                                }}>
-                                    <div className='flex flex-col items-center justify-center sm:flex-row'>
-                                        <svg className="w-[28px] h-[28px] sm:w-[34px] sm:h-[34px] stroke-foreground dark:stroke-foreground" viewBox="0 0 39 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path fillRule="evenodd" clipRule="evenodd" d="M13.8829 7.91666H24.4517C27.6778 7.94105 30.2735 10.5758 30.2498 13.8019V20.9475C30.2612 22.497 29.6566 23.9876 28.5689 25.0913C27.4812 26.195 25.9996 26.8214 24.4501 26.8327H13.8829L8.08317 30.0833V13.8019C8.07179 12.2524 8.67645 10.7618 9.76412 9.65807C10.8518 8.55436 12.3334 7.92795 13.8829 7.91666Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-
-                                        <span className='text-xs sm:text-sm'>Comment</span>
-
-                                    </div>
-                                </div>
-                                <div className='flex gap-0 items-center cursor-pointer' onClick={async () => {
-                                    bookmarkMutation.mutate({ postId: postData._id, pageIndex, postIndex, targetId: postData?.targetId, type })
-                                }}>
-                                    <div className='flex flex-col sm:flex-row items-center justify-center'>
-
-                                        <svg className={`w-[28px] h-[28px] sm:w-[34px] sm:h-[34px] ${postData?.isBookmarkedByUser ? " fill-black dark:fill-white" : "stroke-foreground"} dark:stroke-foreground`} viewBox="0 0 39 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path fillRule="evenodd" clipRule="evenodd" d="M29.3447 28.1251V8.54816C29.3518 7.79031 29.0222 7.06097 28.4283 6.52057C27.8345 5.98018 27.025 5.67302 26.178 5.66666H13.5113C12.6643 5.67302 11.8548 5.98018 11.261 6.52057C10.6671 7.06097 10.3375 7.79031 10.3447 8.54816V28.1251C10.2694 28.6903 10.5796 29.241 11.1322 29.5231C11.6847 29.8053 12.3724 29.764 12.878 29.4185L18.8947 24.7704C19.437 24.3324 20.2618 24.3324 20.8042 24.7704L26.8113 29.4199C27.3172 29.7657 28.0053 29.8069 28.558 29.5244C29.1108 29.2418 29.4207 28.6906 29.3447 28.1251Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-
-                                        <span className='text-xs sm:text-sm'>Bookmark</span>
-                                    </div>
-                                </div>
-
-                                <div className='relative flex gap-0 items-center cursor-pointer'>
-                                    <div className='flex flex-col gap-[2px] sm:gap-1 sm:flex-row items-center justify-center' onClick={() => {
-                                        console.log('share clicked')
-                                        if (!shareState) {
-                                            setShareState(true)
-                                        }
-                                    }}>
-                                        <PiShareFatLight className='size-[24px] sm:size-[32px]' strokeWidth={1.2} />
-
-                                        <span className='text-xs sm:text-sm' >Share</span>
-                                    </div>
-                                    {shareState && width < 640 &&
-                                        <ShareBottomSheet
-                                            isReel={false}
-                                            key={'user' + "Posts"}
-                                            isOpen={true}
-                                            sharedPost={postData}
-                                            postId={postData._id}
-                                            postType={postData.type}
-                                            // handleDownload={downloadVideo}
-                                            onClose={() => setShareState(false)}
-                                        />
-                                    }
-
-                                    {shareState && width >= 640 &&
-                                        <ShareModal
-                                            isReel={false}
-                                            key={'user' + "Posts"}
-                                            isOpen={true}
-                                            sharedPost={postData}
-                                            postId={postData._id}
-                                            postType={postData.type}
-                                            // handleDownload={downloadVideo}
-                                            onClose={() => setShareState(false)}
-                                        />
-                                    }
-                                </div>
-                            </div>
-                        </CardFooter>
                     </>
 
                 }
+                <CardFooter className='py-2 gap-2 px-3 md:p-4 select-none flex flex-col'>
+                    {postData?.media?.length > 1 &&
+                        <div className='flex gap-2 p-2'>
+                            {postData?.media.map((_, index) => (
+                                <div key={index} className='w-[6px] h-[6px] sm:w-2 sm:h-2 rounded-full bg-foreground'>
+                                </div>
+                            ))}
+                        </div>
+                    }
+                    <div className='flex  w-full justify-between'>
+                        <div className='flex gap-2 items-center w-full'>
+                            {postData?.likesCount > 0 && <span className='text-sm cursor-pointer' onClick={() => {
+                                setLikesModelState(true)
+                            }}>
+                                {"Likes " + postData?.likesCount}
+                            </span>}
+                            {postData?.commentsCount > 0 && <span onClick={() => {
+                                if (!model && width > 540) {
+                                    dispatch(setOpen({ click: '', id: postData._id }))
+                                    navigate("?model=post")
+                                    setModelTrigger(true)
+                                    return
+                                }
+                                setBottomCommentsState(true)
+                            }} className='text-sm cursor-pointer'>
+                                {"Comments " + postData?.commentsCount}
+                            </span >}
+                        </div>
+                        <div className='flex gap-2'>
+                            {
+                                postData?.sharesCount > 0 &&
+                                <span className='relative text-sm whitespace-nowrap cursor-pointer'>
+                                    {"Shares " + postData?.sharesCount}
+                                </span >
+                            }
+                            {
+                                postData?.videoViewsCount > 0 &&
+                                <span className='relative text-sm whitespace-nowrap cursor-pointer'>
+                                    {"Views " + postData?.videoViewsCount}
+                                </span >
+                            }
+                        </div>
+                    </div>
+                    <div className='flex items-center justify-between w-full'>
+                        <LikeButton mutate={mutate} pageIndex={pageIndex} postIndex={postIndex} postData={postData} />
+
+                        <div className='flex gap-0 items-center cursor-pointer' onClick={() => {
+                            if (!model && width > 540) {
+                                dispatch(setOpen({ click: '', id: postData._id }))
+                                navigate("?model=post")
+                                setModelTrigger(true)
+                                return
+                            }
+                            setBottomCommentsState(true)
+
+                        }}>
+                            <div className='flex flex-col items-center justify-center sm:flex-row'>
+                                <svg className="w-[28px] h-[28px] sm:w-[34px] sm:h-[34px] stroke-foreground dark:stroke-foreground" viewBox="0 0 39 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M13.8829 7.91666H24.4517C27.6778 7.94105 30.2735 10.5758 30.2498 13.8019V20.9475C30.2612 22.497 29.6566 23.9876 28.5689 25.0913C27.4812 26.195 25.9996 26.8214 24.4501 26.8327H13.8829L8.08317 30.0833V13.8019C8.07179 12.2524 8.67645 10.7618 9.76412 9.65807C10.8518 8.55436 12.3334 7.92795 13.8829 7.91666Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+
+                                <span className='text-xs sm:text-sm'>Comment</span>
+
+                            </div>
+                        </div>
+                        <div className='flex gap-0 items-center cursor-pointer' onClick={async () => {
+                            bookmarkMutation.mutate({ postId: postData._id, pageIndex, postIndex, targetId: postData?.targetId, type })
+                        }}>
+                            <div className='flex flex-col sm:flex-row items-center justify-center'>
+
+                                <svg className={`w-[28px] h-[28px] sm:w-[34px] sm:h-[34px] ${postData?.isBookmarkedByUser ? " fill-black dark:fill-white" : "stroke-foreground"} dark:stroke-foreground`} viewBox="0 0 39 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M29.3447 28.1251V8.54816C29.3518 7.79031 29.0222 7.06097 28.4283 6.52057C27.8345 5.98018 27.025 5.67302 26.178 5.66666H13.5113C12.6643 5.67302 11.8548 5.98018 11.261 6.52057C10.6671 7.06097 10.3375 7.79031 10.3447 8.54816V28.1251C10.2694 28.6903 10.5796 29.241 11.1322 29.5231C11.6847 29.8053 12.3724 29.764 12.878 29.4185L18.8947 24.7704C19.437 24.3324 20.2618 24.3324 20.8042 24.7704L26.8113 29.4199C27.3172 29.7657 28.0053 29.8069 28.558 29.5244C29.1108 29.2418 29.4207 28.6906 29.3447 28.1251Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+
+                                <span className='text-xs sm:text-sm'>Bookmark</span>
+                            </div>
+                        </div>
+
+                        <div className='relative flex gap-0 items-center cursor-pointer'>
+                            <div className='flex flex-col gap-[2px] sm:gap-1 sm:flex-row items-center justify-center' onClick={() => {
+                                console.log('share clicked')
+                                if (!shareState) {
+                                    setShareState(true)
+                                }
+                            }}>
+                                <PiShareFatLight className='size-[24px] sm:size-[32px]' strokeWidth={1.2} />
+
+                                <span className='text-xs sm:text-sm' >Share</span>
+                            </div>
+                            {shareState && width < 640 &&
+                                <ShareBottomSheet
+                                    isReel={false}
+                                    key={'user' + "Posts"}
+                                    isOpen={true}
+                                    sharedPost={postData}
+                                    postId={postData._id}
+                                    postType={postData.type}
+                                    // handleDownload={downloadVideo}
+                                    onClose={() => setShareState(false)}
+                                />
+                            }
+
+                            {shareState && width >= 640 &&
+                                <ShareModal
+                                    isReel={false}
+                                    key={'user' + "Posts"}
+                                    isOpen={true}
+                                    sharedPost={postData}
+                                    postId={postData._id}
+                                    postType={postData.type}
+                                    // handleDownload={downloadVideo}
+                                    onClose={() => setShareState(false)}
+                                />
+                            }
+                        </div>
+                    </div>
+                </CardFooter>
             </Card>
         </div >
     )
