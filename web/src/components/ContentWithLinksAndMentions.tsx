@@ -197,7 +197,8 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
   }, [parsedContent, expanded, content.length, maxLength, showReadMore]);
 
   const handleMentionPress = useCallback((user) => {
-      navigate(`/user/${user.username}`, {replace: true});
+      // navigate(`/user/${user.username}`);
+      window.location.href = `/user/${user.username}`;
   }, [navigation, navigate]);
 
   const handleHashtagPress = useCallback((hashtag) => {

@@ -111,7 +111,19 @@ export const router = createBrowserRouter([
             {
                 path: "/reels/:reelId",
                 element: < ReelsContainer />
-            }
+            },
+            {
+                path: "/privacy",
+                element: <PrivacyPolicy />,
+            },
+            {
+                path: "/children-privacy",
+                element: <ChildSafetyPolicy />,
+            },
+            {
+                path: "/terms",
+                element: <TermsAndConditions />,
+            },
         ]
     },
     {

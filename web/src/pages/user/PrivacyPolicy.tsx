@@ -51,7 +51,7 @@ const PrivacyPolicy = () => {
         </section>
         <section className="mb-8">
           <h2 className="text-2xl font-bold text-blue-800 mb-4">3 Contact & Support</h2>
-          <p className="text-gray-700 mb-2">For safety concerns or policy-related inquiries, contact us at:</p>
+          <p className="text-gray-700 mb-2">For safety concerns, policy-related inquiries or account deletion, contact us at:</p>
           <p className="flex items-center text-blue-600">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
