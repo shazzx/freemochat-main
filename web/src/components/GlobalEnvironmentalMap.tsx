@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, X, TreePine, Trash2, Droplets, CloudRain, MapPin, Briefcase, Globe, ArrowRight, Loader2, AlertCircle, BarChart3 } from 'lucide-react';
-import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
 import { axiosClient } from '@/api/axiosClient';
 import ElementDetailsModal from '@/models/ElementDetailsModal';
 import CountryContributionsModal from './CountryContributionsModal';
@@ -74,7 +74,6 @@ interface SelectedElement {
 interface GlobalEnvironmentalMapProps {
   visible?: boolean;
   onClose?: () => void;
-  googleMapsApiKey?: string;
 }
 
 interface MapRegion {
@@ -86,9 +85,9 @@ interface MapRegion {
 
 // Default fallback region - Pakistan
 const DEFAULT_REGION = {
-  latitude: 30.3753, // Pakistan center coordinates
+  latitude: 30.3753,
   longitude: 69.3451,
-  latitudeDelta: 8.0, // Larger delta to show more of Pakistan
+  latitudeDelta: 8.0,
   longitudeDelta: 8.0,
 };
 
@@ -217,14 +216,12 @@ const FallbackMap: React.FC<{
 
 const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   visible = true,
-  onClose,
-  googleMapsApiKey = 'AIzaSyDEz0n0ST4J3KYECJDx_-hTtnejV2A0-to'
+  onClose
 }) => {
-  // Enhanced state management similar to mobile version
+  // State management
   const [currentRegion, setCurrentRegion] = useState<MapRegion | null>(null);
-  const [isMapReady, setIsMapReady] = useState(false);
   const [locationLoading, setLocationLoading] = useState(true);
-
+  const [googleMapsReady, setGoogleMapsReady] = useState(false);
   const [mapCenter, setMapCenter] = useState({ lat: 37.7749, lng: -122.4194 });
   const [mapZoom, setMapZoom] = useState(10);
 
@@ -253,10 +250,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   const [activeMarker, setActiveMarker] = useState<any>(null);
   const [showInfoWindow, setShowInfoWindow] = useState(false);
   const [isLoadingElementDetails, setIsLoadingElementDetails] = useState(false);
-  const [mapLoadError, setMapLoadError] = useState<string | null>(null);
-  const [isMapLoaded, setIsMapLoaded] = useState(false);
-
-  // NEW: Country contributions modal state
   const [showCountryContributions, setShowCountryContributions] = useState(false);
 
   // Refs
@@ -265,7 +258,43 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   const lastFetchedBoundsRef = useRef<string>('');
   const mapRef = useRef<google.maps.Map>(null);
 
-  // Enhanced location initialization similar to mobile version
+  // Check if Google Maps is loaded
+  useEffect(() => {
+    const checkGoogleMaps = () => {
+      if (window.google && window.google.maps) {
+        console.log('Google Maps is available');
+        setGoogleMapsReady(true);
+        return true;
+      }
+      return false;
+    };
+
+    if (!checkGoogleMaps()) {
+      console.log('Waiting for Google Maps to load...');
+      
+      // Poll for Google Maps availability
+      const interval = setInterval(() => {
+        if (checkGoogleMaps()) {
+          clearInterval(interval);
+        }
+      }, 100);
+
+      // Cleanup interval after 15 seconds
+      const timeout = setTimeout(() => {
+        clearInterval(interval);
+        if (!window.google || !window.google.maps) {
+          console.error('Google Maps failed to load within 15 seconds');
+        }
+      }, 15000);
+      
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    }
+  }, []);
+
+  // Initialize location
   useEffect(() => {
     const initializeLocation = async () => {
       if (!visible) return;
@@ -278,8 +307,9 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
         if ('geolocation' in navigator) {
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
-              timeout: 10000,
-              enableHighAccuracy: true
+              timeout: 5000,
+              enableHighAccuracy: false,
+              maximumAge: 300000 // Use cached location if available
             });
           });
 
@@ -312,16 +342,16 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     fetchGlobalCounts();
   }, [visible]);
 
-  // Wait for both location and map to be ready before fetching data
+  // Fetch data when everything is ready
   useEffect(() => {
-    if (visible && currentRegion && isMapReady && isInitialLoad) {
-      console.log('Map is ready, fetching initial data...');
+    if (visible && currentRegion && googleMapsReady && isInitialLoad) {
+      console.log('Everything ready, fetching initial data...');
       setIsInitialLoad(false);
       fetchMapData();
     }
-  }, [visible, currentRegion, isMapReady, selectedCategory, isInitialLoad]);
+  }, [visible, currentRegion, googleMapsReady, selectedCategory, isInitialLoad]);
 
-  // API Functions with enhanced error handling
+  // API Functions
   const fetchGlobalCounts = useCallback(async () => {
     const defaultCounts = {
       totalPosts: 0,
@@ -673,7 +703,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   };
 
   const renderMarkers = () => {
-    if (!mapData?.data || mapData.data.length === 0 || !isMapLoaded) return null;
+    if (!mapData?.data || mapData.data.length === 0 || !googleMapsReady) return null;
 
     try {
       if (mapData.type === 'clustered') {
@@ -713,9 +743,9 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     }
   };
 
-  // Effects
+  // Effects for data fetching
   useEffect(() => {
-    if (!isInitialLoad && visible && currentRegion) {
+    if (!isInitialLoad && visible && currentRegion && googleMapsReady) {
       if (dataFetchTimeoutRef.current) {
         clearTimeout(dataFetchTimeoutRef.current);
       }
@@ -734,7 +764,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
         clearTimeout(dataFetchTimeoutRef.current);
       }
     };
-  }, [currentRegion, selectedCategory, visible, isInitialLoad, fetchMapData]);
+  }, [currentRegion, selectedCategory, visible, isInitialLoad, googleMapsReady, fetchMapData]);
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
@@ -759,14 +789,18 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
   if (!visible) return null;
 
-  // Enhanced loading screen similar to mobile version
-  if (locationLoading || !currentRegion) {
+  // Single loading condition
+  if (locationLoading || !currentRegion || !googleMapsReady) {
     return (
       <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
         <div className="flex-1 flex flex-col items-center justify-center px-10">
           <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-6" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            {locationLoading ? 'Getting your location...' : 'Initializing map...'}
+            {locationLoading 
+              ? 'Getting your location...' 
+              : !googleMapsReady 
+                ? 'Initializing map...' 
+                : 'Loading...'}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 text-center">
             This will help us show environmental contributions near you
@@ -778,22 +812,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
   const currentTotals = getCurrentCategoryTotals();
   const selectedConfig = getCategoryConfig(selectedCategory);
-
-  if (!googleMapsApiKey) {
-    return (
-      <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center p-8 max-w-md">
-            <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Google Maps API Key Required</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Please add your Google Maps API key to use the map
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
@@ -900,144 +918,77 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
       {/* Map Container */}
       <div className="flex-1 relative">
-        {mapLoadError ? (
-          <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-800">
-            <div className="text-center p-8 max-w-md">
-              <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-400" />
-              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Map Loading Error</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{mapLoadError}</p>
-              <div className="mt-4 space-x-2">
-                <button
-                  onClick={() => {
-                    setMapLoadError(null);
-                    window.location.reload();
-                  }}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                >
-                  Retry
-                </button>
-                <button
-                  onClick={() => setMapLoadError(null)}
-                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
-                >
-                  Use Fallback Map
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <LoadScript
-            googleMapsApiKey={googleMapsApiKey}
-            onLoad={() => {
-              console.log('Google Maps loaded successfully');
-              setIsMapLoaded(true);
-              setIsMapReady(true);
-              setMapLoadError(null);
+        {window.google && window.google.maps ? (
+          <GoogleMap
+            mapContainerStyle={mapContainerStyle}
+            center={mapCenter}
+            zoom={mapZoom}
+            options={mapOptions}
+            onLoad={(map) => {
+              mapRef.current = map;
+              console.log('Map instance loaded');
             }}
-            onError={(error) => {
-              console.error('Google Maps load error:', error);
-              setMapLoadError(
-                'Failed to load Google Maps. Please check your API key and internet connection.'
-              );
-              setIsMapLoaded(false);
-            }}
-            loadingElement={
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-blue-500" />
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Loading Google Maps...</p>
-                </div>
-              </div>
-            }
+            onIdle={handleMapIdle}
+            onClick={() => setShowInfoWindow(false)}
           >
-            {isMapLoaded ? (
-              <GoogleMap
-                mapContainerStyle={mapContainerStyle}
-                center={mapCenter}
-                zoom={mapZoom}
-                options={mapOptions}
-                onLoad={(map) => {
-                  mapRef.current = map;
-                  console.log('Map instance loaded');
+            {renderMarkers()}
+
+            {/* Info Window */}
+            {showInfoWindow && activeMarker && (
+              <InfoWindow
+                position={{
+                  lat: activeMarker.location.latitude,
+                  lng: activeMarker.location.longitude
                 }}
-                onError={(error) => {
-                  console.error('Google Map component error:', error);
-                  setMapLoadError('Map rendering error occurred');
-                }}
-                onIdle={handleMapIdle}
-                onClick={() => setShowInfoWindow(false)}
+                onCloseClick={() => setShowInfoWindow(false)}
               >
-                {renderMarkers()}
-
-                {/* Info Window */}
-                {showInfoWindow && activeMarker && (
-                  <div className="fixed inset-0 pointer-events-none z-20">
-                    <div
-                      className="absolute bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 max-w-xs pointer-events-auto"
-                      style={{
-                        left: '50%',
-                        top: '50%',
-                        transform: 'translate(-50%, -100%)',
-                        marginTop: '-60px'
-                      }}
-                    >
-                      <button
-                        onClick={() => setShowInfoWindow(false)}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-
-                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white dark:bg-gray-800 border-b border-r border-gray-200 dark:border-gray-700 rotate-45"></div>
-
-                      <div className="flex items-center space-x-2 mb-2">
-                        {(() => {
-                          const config = getCategoryConfig(activeMarker.postType);
-                          const IconComponent = config.icon;
-                          return <IconComponent className="w-5 h-5" style={{ color: config.color }} />;
-                        })()}
-                        <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-                          {activeMarker.projectName || activeMarker.postId?.projectDetails?.name || 'Environmental Project'}
-                        </h3>
-                      </div>
-
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                        {activeMarker.location.address || `${activeMarker.location.city}, ${activeMarker.location.country}`}
-                      </p>
-
-                      {getElementSpecificData(activeMarker) && (
-                        <div className="mb-2">
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            {getElementSpecificData(activeMarker)?.type} Details
-                          </p>
-                          {getElementSpecificData(activeMarker)?.details.slice(0, 2).map((detail, index) => (
-                            <div key={index} className="flex justify-between text-xs">
-                              <span className="text-gray-600 dark:text-gray-400">{detail.label}:</span>
-                              <span className="font-medium text-gray-900 dark:text-gray-100">{detail.value}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <button
-                        onClick={handleViewMore}
-                        className="w-full text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded px-2 py-1 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-                      >
-                        View More Details
-                      </button>
-                    </div>
+                <div className="p-3 max-w-xs">
+                  <div className="flex items-center space-x-2 mb-2">
+                    {(() => {
+                      const config = getCategoryConfig(activeMarker.postType);
+                      const IconComponent = config.icon;
+                      return <IconComponent className="w-5 h-5" style={{ color: config.color }} />;
+                    })()}
+                    <h3 className="font-semibold text-sm text-gray-900">
+                      {activeMarker.projectName || activeMarker.postId?.projectDetails?.name || 'Environmental Project'}
+                    </h3>
                   </div>
-                )}
-              </GoogleMap>
-            ) : (
-              <FallbackMap
-                currentRegion={currentRegion}
-                mapData={mapData}
-                onMarkerClick={handleMarkerClick}
-                selectedConfig={selectedConfig}
-              />
+
+                  <p className="text-xs text-gray-600 mb-2">
+                    {activeMarker.location.address || `${activeMarker.location.city}, ${activeMarker.location.country}`}
+                  </p>
+
+                  {getElementSpecificData(activeMarker) && (
+                    <div className="mb-2">
+                      <p className="text-xs font-medium text-gray-700 mb-1">
+                        {getElementSpecificData(activeMarker)?.type} Details
+                      </p>
+                      {getElementSpecificData(activeMarker)?.details.slice(0, 2).map((detail, index) => (
+                        <div key={index} className="flex justify-between text-xs">
+                          <span className="text-gray-600">{detail.label}:</span>
+                          <span className="font-medium text-gray-900">{detail.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleViewMore}
+                    className="w-full text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded px-2 py-1 hover:bg-blue-100 transition-colors"
+                  >
+                    View More Details
+                  </button>
+                </div>
+              </InfoWindow>
             )}
-          </LoadScript>
+          </GoogleMap>
+        ) : (
+          <FallbackMap
+            currentRegion={currentRegion}
+            mapData={mapData}
+            onMarkerClick={handleMarkerClick}
+            selectedConfig={selectedConfig}
+          />
         )}
 
         {/* Loading Indicator */}
@@ -1050,7 +1001,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
           </div>
         )}
 
-        {/* Enhanced Stats Card with Analytics Button */}
+        {/* Stats Card */}
         {globalCounts && (
           <div className="absolute bottom-4 left-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-10">
             <div className="flex justify-between items-center mb-3">

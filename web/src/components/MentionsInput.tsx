@@ -44,7 +44,12 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
   const [cursorPosition, setCursorPosition] = useState(0);
   const [mentionReferences, setMentionReferences] = useState<MentionReference[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [suggestionPosition, setSuggestionPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [suggestionPosition, setSuggestionPosition] = useState({ 
+    top: 0, 
+    left: 0, 
+    width: 0, 
+    showAbove: false 
+  });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -115,7 +120,7 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     return display;
   }, []);
 
-  // Function to calculate suggestion position
+  // Function to calculate suggestion position with auto-positioning
   const calculateSuggestionPosition = useCallback(() => {
     if (!textareaRef.current || !containerRef.current) return;
 
@@ -123,12 +128,37 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     const container = containerRef.current;
     const containerRect = container.getBoundingClientRect();
     
-    // Position suggestions above the textarea
-    setSuggestionPosition({
-      top: -200, // Fixed height above the input
-      left: 0,
-      width: containerRect.width
-    });
+    // Get viewport dimensions
+    const viewportHeight = window.innerHeight;
+    
+    // Calculate available space above and below the textarea
+    const spaceAbove = containerRect.top;
+    const spaceBelow = viewportHeight - containerRect.bottom;
+    
+    // Suggestion box estimated height (max-height is 12rem = 192px, plus some padding)
+    const suggestionBoxHeight = 200;
+    
+    // Determine whether to show above or below
+    const showAbove = spaceAbove > suggestionBoxHeight && spaceAbove > spaceBelow;
+    
+    // Calculate position
+    if (showAbove) {
+      // Position above the textarea
+      setSuggestionPosition({
+        top: -suggestionBoxHeight - 8, // Add some margin
+        left: 0,
+        width: containerRect.width,
+        showAbove: true
+      });
+    } else {
+      // Position below the textarea
+      setSuggestionPosition({
+        top: containerRect.height + 8, // Add some margin
+        left: 0,
+        width: containerRect.width,
+        showAbove: false
+      });
+    }
   }, []);
 
   // CRITICAL: Initialize references FIRST, then convert text
@@ -173,11 +203,23 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     };
   }, []);
 
-  // Update position when suggestions are shown
+  // Update position when suggestions are shown or window is resized
   useEffect(() => {
     if (showSuggestions) {
       calculateSuggestionPosition();
     }
+  }, [showSuggestions, calculateSuggestionPosition]);
+
+  // Recalculate position on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (showSuggestions) {
+        calculateSuggestionPosition();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [showSuggestions, calculateSuggestionPosition]);
 
   // Fetch suggestions with debouncing
@@ -430,15 +472,18 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
 
   return (
     <div ref={containerRef} className="relative">
-      {/* Suggestions positioned above the input */}
+      {/* Suggestions positioned dynamically above or below the input */}
       {showSuggestions && suggestions.length > 0 && (
         <div 
-          className="absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto"
+          className={`absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto ${
+            suggestionPosition.showAbove 
+              ? 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]' // Shadow above when positioned above
+              : 'shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)]'   // Shadow below when positioned below
+          }`}
           style={{
             top: suggestionPosition.top,
             left: suggestionPosition.left,
-            width: suggestionPosition.width,
-            marginBottom: '8px'
+            width: suggestionPosition.width
           }}
         >
           {suggestions.map((suggestion, index) => (
