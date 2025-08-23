@@ -19,23 +19,8 @@ import { Link } from "react-router-dom"
 import { domain } from "@/config/domain"
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 import { useAppSelector } from "@/app/hooks"
-import { useUserDefaultMetric } from "@/hooks/User/useUser"
+import { useReadAllUserNotifications, useReadUserNotification, useUserDefaultMetric } from "@/hooks/User/useUser"
 import { format } from "date-fns"
-
-const notifications = [
-    {
-        title: "Your call has been confirmed.",
-        description: "1 hour ago",
-    },
-    {
-        title: "You have a new message!",
-        description: "1 hour ago",
-    },
-    {
-        title: "Your subscription is expiring soon!",
-        description: "2 hours ago",
-    },
-]
 
 const getTarget = (targetType, targetId, handle, type) => {
     if (targetType == 'page') {
@@ -58,6 +43,9 @@ export function Notifications({ setNotificationsState }) {
     const [notifications, setNotifications] = useState([])
     const { notification } = useAppSelector((state) => state.notification)
     const defaultMetric = useUserDefaultMetric()
+    const readAllUserNotifications = useReadAllUserNotifications()
+    const readUserNotification = useReadUserNotification()
+
 
     useEffect(() => {
         const getNotifications = async () => {
@@ -80,14 +68,14 @@ export function Notifications({ setNotificationsState }) {
                     {notifications?.length > 0 &&
                         <div className="flex gap-2 items-center">
                             <Button onClick={() => {
-                                defaultMetric.mutate('notification')
+                                readAllUserNotifications.mutate()
                             }}>Mark as Read</Button>
                         </div>
                     }
                     {/* <CardDescription>{notifications?.length > 0 ? "You have " + notifications?.length + " unread messages." : " You have no notifications"} </CardDescription> */}
                 </CardHeader>
                 <CardContent className="grid gap-4 p-1 ">
-                    <div>
+                    <div className="flex flex-col gap-1">
                         {notifications && notifications.length == 0 &&
                             <div className="text-center">No Notifications</div>
                         }
@@ -96,7 +84,16 @@ export function Notifications({ setNotificationsState }) {
                                 return (
                                     <div
                                         key={index}
-                                        className="flex gap-2 p-2 hover:bg-accent rounded-md cursor-pointer active:bg-muted"
+                                        className={cn(
+                                            "flex gap-2 p-2 hover:bg-accent rounded-md cursor-pointer active:bg-muted relative",
+                                            !notification?.isRead && "bg-muted border-l-4 border-l-blue-500"
+                                        )}
+                                        onClick={() => {
+                                            if (!notification?.isRead) {
+                                                readUserNotification.mutate(notification?._id as string);
+                                            }
+
+                                        }}
                                     >
                                         <div className='w-14 h-14 flex flex-col items-center justify-center rounded-lg border-primary border-2 bg-card overflow-hidden'>
                                             {notification?.sender ? <Link onClick={() => setNotificationsState(false)} to={domain + "/user/" + notification?.sender?.username}>
@@ -136,6 +133,11 @@ export function Notifications({ setNotificationsState }) {
                                             }
 
                                         </div>
+                                        
+                                        {/* Unread indicator dot */}
+                                        {!notification?.isRead && (
+                                            <div className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full"></div>
+                                        )}
                                     </div>)
                             }
 

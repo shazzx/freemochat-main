@@ -123,3 +123,13 @@ export const defaultMetric = async (name, targetId?: string) => {
     const { data } = await axiosClient.post("metrics-aggregator/user/metrics/default", { name, targetId })
     return data
 }
+
+export const readUserNotification = async (notificationId: string) => {
+    const { data } = await axiosClient.post(`notification/read/${notificationId}`)
+    return data
+}
+
+export const readAllUserNotifications = async () => {
+    const { data } = await axiosClient.post("notification/read-all")
+    return data
+}

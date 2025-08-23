@@ -234,7 +234,7 @@ export function useFeed(reelsCursorRef = { current: null }) {
 
 export function usePost(postId: string, type: string): any {
 
-  const { data, isLoading, isFetching, isSuccess, error } = useQuery({
+  const { data, isLoading, isFetching, isSuccess, error, refetch } = useQuery({
     queryKey: ['post'],
     queryFn: () => fetchPost(postId, type),
     staleTime: 0,
@@ -248,6 +248,7 @@ export function usePost(postId: string, type: string): any {
     isLoading,
     isSuccess,
     isFetching,
+    refetch,
     error,
   };
 }

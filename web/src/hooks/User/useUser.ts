@@ -1,4 +1,4 @@
-import { acceptFriendRequest, defaultMetric, fetchTargetContributions, fetchUser, fetchUserMetrics, fetchUserOnlineStatus, fetchUserStories, fetchUserStoryViews, followUserToggle, rejectFriendRequest, removeFriend, removeStory, sendFriendRequest, uploadStory, userFollowers, userFriendRequests, userFriends } from "@/api/User/users.api"
+import { acceptFriendRequest, defaultMetric, fetchTargetContributions, fetchUser, fetchUserMetrics, fetchUserOnlineStatus, fetchUserStories, fetchUserStoryViews, followUserToggle, readAllUserNotifications, readUserNotification, rejectFriendRequest, removeFriend, removeStory, sendFriendRequest, uploadStory, userFollowers, userFriendRequests, userFriends } from "@/api/User/users.api"
 import { useAppSelector } from "@/app/hooks"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { produce } from "immer"
@@ -112,12 +112,67 @@ export const useUserDefaultMetric = () => {
         },
 
         onError: (err) => {
-            console.log(err)
             toast.error("something went wrong")
             queryClient.invalidateQueries({ queryKey: ['metrics'] })
         },
         onSettled: (e) => {
             console.log(e)
+            queryClient.invalidateQueries({ queryKey: ['metrics'] })
+        }
+    })
+
+    return {
+        data,
+        isPending,
+        isSuccess,
+        mutateAsync,
+        mutate
+    }
+}
+
+export const useReadAllUserNotifications = () => {
+    const queryClient = useQueryClient()
+    const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+        mutationFn: () => {
+            return readAllUserNotifications()
+        },
+
+
+        onMutate: async () => {
+        },
+
+        onError: (err) => {
+            toast.error("something went wrong")
+            queryClient.invalidateQueries({ queryKey: ['notifications'] })
+        },
+        onSettled: (e) => {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] })
+            queryClient.invalidateQueries({ queryKey: ['metrics'] })
+        }
+    })
+
+    return {
+        data,
+        isPending,
+        isSuccess,
+        mutateAsync,
+        mutate
+    }
+}
+
+export const useReadUserNotification = () => {
+    const queryClient = useQueryClient()
+    const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
+        mutationFn: (notificationId: string) => {
+            return readUserNotification(notificationId)
+        },
+
+        onError: (err) => {
+            toast.error("something went wrong")
+            queryClient.invalidateQueries({ queryKey: ['notifications'] })
+        },
+        onSettled: (e) => {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] })
             queryClient.invalidateQueries({ queryKey: ['metrics'] })
         }
     })
