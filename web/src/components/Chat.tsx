@@ -28,6 +28,7 @@ import MessageActionsDropdown from "./MessageActionsDropDown";
 import { v4 as uuidv4 } from 'uuid';
 import { domain } from "@/config/domain";
 import { MediaOpenModel } from "./MediaOpenModel";
+import ContentWithLinksAndMentions from "./ContentWithLinksAndMentions";
 
 function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, isRecording, chatlistDetails, setIsRecording }: any) {
     const [emojiPickerState, setEmojiPickerState] = useState(false)
@@ -251,13 +252,13 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
 
 
 
-    const [selectedMessageId, setSelectedMessageId] = useState(null);
+    const [selectedMessageId, setSelectedMessage] = useState(null);
     const longPressTimer = useRef(null);
     const longPressDuration = 500;
 
-    const handleTouchStart = useCallback((id) => {
+    const handleTouchStart = useCallback((data) => {
         longPressTimer.current = setTimeout(() => {
-            setSelectedMessageId(id);
+            setSelectedMessage(data);
         }, longPressDuration);
     }, []);
 
@@ -270,7 +271,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
     const deleteSelectedMessage = (invalidate?) => {
         if (selectedMessageId !== null) {
             deleteMessage(selectedMessageId)
-            setSelectedMessageId(null);
+            setSelectedMessage(null);
             if (invalidate) {
                 queryClient.invalidateQueries({ queryKey: ['messages', recepientDetails.userId] })
             }
@@ -356,8 +357,8 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
     }, [])
 
     // chat method
-    const deleteMessage = async (messageId) => {
-        const { data } = await axiosClient.post("/messages/remove", { messageId })
+    const deleteMessage = async (message) => {
+        const { data } = await axiosClient.post("/messages/remove", { messageId: message.messageId, senderId: message.senderId, recepientId: message.recepientId })
         // console.log(data)
     }
     // const lastMessage = userMessages.data[userMessages.data.length - 1].messages[userMessages.data[userMessages.data.length - 1].messages.length - 1].content
@@ -656,10 +657,10 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                         <p className="py-1 text-xs" >{formatDistanceToNow(message?.createdAt ?? Date.now(), { addSuffix: true })}</p>
 
 
-                                        <div className={`flex items-center justify-center relative ${!message?.media ? selectedMessageId == message._id ? "bg-primary p-2 pr-3" : "p-2 pr-3 bg-primary" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
-                                            onTouchStart={() => handleTouchStart(message._id)}
+                                        <div className={`flex items-center justify-center relative ${!message?.media ? selectedMessageId?.messageId == message._id ? "bg-primary p-2 pr-3" : "p-2 pr-3 bg-primary" : "p-0"} ${selectedMessageId?.messageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
+                                            onTouchStart={() => handleTouchStart({ messageId: message._id, senderId: message.sender?._id || message.sender, recepientId: recepientDetails?.userId })}
                                             onTouchEnd={handleTouchEnd}
-                                            onMouseDown={() => handleTouchStart(message._id)}
+                                            onMouseDown={() => handleTouchStart({ messageId: message._id, senderId: message.sender?._id || message.sender, recepientId: recepientDetails?.userId })}
                                             onMouseUp={handleTouchEnd}
                                             onMouseLeave={handleTouchEnd}
                                         // onMouseEnter={() => {
@@ -725,7 +726,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
 
                                                     </div>
                                                 </div>}
-                                            {message?.media && message.media.type == "video" &&
+                                            {message?.media && (isDeleted?.[0]?.userId !== user._id) && message.media.type == "video" &&
                                                 <div className="aspect-auto max-w-64 ">
                                                     <video src={message.media.url} controls />
                                                 </div>
@@ -735,19 +736,22 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                 :
 
                                                 <p className="cursor-pointer" onClick={() => {
-                                                    console.log(message)
-                                                    setSelectedMessageId(message._id)
-                                                }}>{message?.content}</p>
+                                                    setSelectedMessage({ messageId: message._id, senderId: message.sender?._id || message.sender, recepientId: recepientDetails?.userId })
+                                                }}>
+                                                    <ContentWithLinksAndMentions
+                                                        content={message?.content}
+                                                    />
+                                                </p>
 
                                             }
-                                            {(message._id && (selectedMessageId == message._id)) && <MessageActionsDropdown onDelete={() => {
+                                            {(message._id && (selectedMessageId?.messageId == message._id)) && <MessageActionsDropdown onDelete={() => {
                                                 try {
                                                     message?.deletedFor?.push({ userId: user?._id })
                                                     deleteSelectedMessage(false)
                                                 } catch (error) {
                                                     deleteSelectedMessage(true)
                                                 }
-                                            }} setSelectedMessageId={setSelectedMessageId} />}
+                                            }} setSelectedMessage={setSelectedMessage} />}
                                             {/* {
                                                 (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) &&
                                                 <div className="cursor-pointer absolute top-0 -right-2" onClick={() => {
@@ -812,7 +816,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                             <p className="py-1 text-xs" >{formatDistanceToNow(message?.createdAt ?? Date.now(), { addSuffix: true })}</p>
 
                                             {/* <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p> */}
-                                            <div className={`flex items-center justify-center relative ${!message?.media ? selectedMessageId == message._id ? "bg-card p-2 pr-3" : "p-2 pr-3 bg-card" : "p-0"} ${selectedMessageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
+                                            <div className={`flex items-center justify-center relative ${!message?.media ? selectedMessageId?.messageId == message._id ? "bg-card p-2 pr-3" : "p-2 pr-3 bg-card" : "p-0"} ${selectedMessageId?.messageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
                                                 onMouseEnter={() => {
                                                     setDropDownMessageIndex(messageIndex)
                                                     setDropDownMessagePageIndex(pageIndex)
@@ -859,7 +863,9 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
 
                                                         </div>
                                                     </div>}
-                                                {message?.media && message.media.type == "video" &&
+
+
+                                                {message?.media && (isDeleted?.[0]?.userId !== user._id) && message.media.type == "video" &&
                                                     <div className="aspect-auto max-w-64 ">
                                                         <video src={message.media.url} controls />
                                                     </div>
@@ -868,13 +874,17 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                     <p className="">message deleted</p>
                                                     :
                                                     <p className="cursor-pointer text-foreground" onClick={() => {
-                                                        setSelectedMessageId(message._id)
-                                                    }}>{message?.content}</p>
+                                                        setSelectedMessage({ messageId: message._id, senderId: message.sender?._id || message.sender, recepientId: recepientDetails?.userId })
+                                                    }}>
+                                                        <ContentWithLinksAndMentions
+                                                            content={message?.content}
+                                                        />
+                                                    </p>
                                                 }
-                                                {(selectedMessageId == message._id) && <MessageActionsDropdown onDelete={() => {
+                                                {(selectedMessageId?.messageId == message._id) && <MessageActionsDropdown onDelete={() => {
                                                     message?.deletedFor.push({ userId: message?.sender?._id })
                                                     deleteSelectedMessage()
-                                                }} setSelectedMessageId={setSelectedMessageId} />}
+                                                }} setSelectedMessage={setSelectedMessage} />}
                                                 {/* {
                                                     (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) &&
                                                     <div className="cursor-pointer absolute top-0 -right-2" onClick={() => {
@@ -953,7 +963,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                     return
                                 }
                                 const formData = new FormData()
-                                const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, messageType: "PDF", type: recepientDetails?.type, mediaDetails: { type: "pdf", } }
+                                const messageData = { recepient: recepientDetails?.type == "ChatGroup" ? recepientDetails.groupId : recepientDetails.userId, sender: user?._id, content: inputValue, messageType: "File", type: recepientDetails?.type, mediaDetails: { type: "pdf", } }
                                 formData.append("messageData", JSON.stringify(messageData))
                                 formData.append("file", file, 'pdf')
 

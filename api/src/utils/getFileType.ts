@@ -9,5 +9,9 @@ export const getFileType = (mimetype: string) => {
         return 'video'
     }
 
+    if (mimetype.includes("pdf")) {
+        return 'pdf'
+    }
+
     return 'unsupported'
 }

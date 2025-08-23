@@ -201,7 +201,7 @@ function FeedSection() {
             )}
 
             <div className='max-w-xl w-full flex flex-col gap-2'>
-                <div className='w-full flex items-center border border-muted p-2 bg-card'>
+                <div className='w-full flex items-center border border-muted bg-card'>
                     <Stories />
                 </div>
 

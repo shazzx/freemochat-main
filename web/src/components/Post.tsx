@@ -327,7 +327,7 @@ const ContentWithLinksAndMentions: React.FC<{
     }, [parsedContent, expanded, content.length]);
 
     const handleMentionPress = React.useCallback((user: MentionUser) => {
-        navigate(`${domain}/user/${user.username}`);
+        navigate(`/user/${user.username}`);
     }, [navigate]);
 
     const handleHashtagPress = React.useCallback((hashtag: string) => {

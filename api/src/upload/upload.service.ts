@@ -470,11 +470,11 @@ export class UploadService {
 
             } else if (contentType === 'pdf') {
                 processedContent = file;
-                moderationResult = await this.moderatePdf(file);
+                // moderationResult = await this.moderatePdf(file);
 
-                if (!moderationResult.isSafe) {
-                    throw new Error('Content violates moderation policies');
-                }
+                // if (!moderationResult.isSafe) {
+                //     throw new Error('Content violates moderation policies');
+                // }
 
                 const uploadResult = await this.uploadToS3(file, fileName, 'application/pdf');
                 return { url: uploadResult, fileName, fileType: contentType, originalname };

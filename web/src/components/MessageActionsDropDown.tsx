@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MoreVertical, Trash, Reply, Smile } from 'lucide-react';
 
-const MessageActionsDropdown = ({onDelete,  setSelectedMessageId }) => {
+const MessageActionsDropdown = ({onDelete,  setSelectedMessage }) => {
   const [isOpen, setIsOpen] = useState(true);
   const dropdownRef = useRef(null);
 
@@ -12,7 +12,7 @@ const MessageActionsDropdown = ({onDelete,  setSelectedMessageId }) => {
   const handleClickOutside = (event) => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
       setIsOpen(false);
-      setSelectedMessageId(null)
+      setSelectedMessage(null)
     }
   };
 
@@ -30,7 +30,7 @@ const MessageActionsDropdown = ({onDelete,  setSelectedMessageId }) => {
         onDelete();
         break;
     }
-    setSelectedMessageId(null)
+    setSelectedMessage(null)
 
   };
 

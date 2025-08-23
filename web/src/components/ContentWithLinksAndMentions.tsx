@@ -197,17 +197,14 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
   }, [parsedContent, expanded, content.length, maxLength, showReadMore]);
 
   const handleMentionPress = useCallback((user) => {
-      // navigate(`/user/${user.username}`);
-      window.location.href = `/user/${user.username}`;
+    navigate(`/user/${user.username}`);
   }, [navigation, navigate]);
 
   const handleHashtagPress = useCallback((hashtag) => {
     if (onHashtagPress) {
       onHashtagPress(hashtag);
-    } else if (navigation?.navigate) {
-      navigation.navigate('hashtags-feed', { hashtag });
-    } else if (navigate) {
-      navigate(`/hashtag/${hashtag}`);
+    } else {
+      navigate(`/hashtags-feed/${hashtag}`);
     }
   }, [onHashtagPress, navigation, navigate]);
 
@@ -220,8 +217,8 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
   }, []);
 
   // Dynamic styles based on hasBackground prop
-  const hasBackgroundTextStyles = hasBackground ? { 
-    fontSize: '18px', 
+  const hasBackgroundTextStyles = hasBackground ? {
+    fontSize: '18px',
     fontWeight: 700,
     color: 'white',
     textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)'
@@ -314,9 +311,9 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
       {showReadMore && content.length > maxLength && toggleReadMore && (
         <div style={{ marginTop: '8px' }}>
           <span
-            style={{ 
-              color: primaryColor, 
-              cursor: 'pointer', 
+            style={{
+              color: primaryColor,
+              cursor: 'pointer',
               fontWeight: hasBackground ? 700 : 500,
               fontSize: hasBackground ? '18px' : '14px'
             }}

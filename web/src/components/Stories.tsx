@@ -128,7 +128,7 @@ function Stories() {
 
     return (
         <div className="w-full bg-card w-full bg-black">
-            <div className='flex gap-2 overflow-hidden overflow-x-auto px-2 z-50 scrollbar-hide'>
+            <div className='flex gap-2 overflow-hidden overflow-x-auto p-2 z-50 scrollbar-hide'>
                 {stories && openStory && openedStoryIndex >= 0 && storyViewIndex >= 0 && stories?.length > 0 &&
                     <div className="z-50 fixed top-0 left-0 justify-center items-center w-full h-screen flex bg-black" onClick={() => {
                         clearInterval(storyTimeRef.current)
@@ -234,7 +234,7 @@ function Stories() {
                                     <div className="story-gradient" />
 
                                     {/* User Avatar */}
-                                    <div className="story-avatar">
+                                    <div className='story-avatar w-14 h-14 bg-accent flex items-center justify-center rounded-full overflow-hidden border-2 border-primary-active'>
                                         <Avatar className="flex">
                                             <AvatarImage src={profile} alt="Avatar" />
                                             <AvatarFallback>{firstname[0]?.toUpperCase() + lastname[0]?.toUpperCase()}</AvatarFallback>
@@ -264,7 +264,7 @@ function Stories() {
                                         </div>
 
                                         {/* User Avatar */}
-                                        <div className="story-avatar">
+                                        <div className='story-avatar w-14 h-14 bg-accent flex items-center justify-center rounded-full overflow-hidden border-2 border-primary-active'>
                                             <Avatar className="flex">
                                                 <AvatarImage src={profile} alt="Avatar" />
                                                 <AvatarFallback>{firstname[0]?.toUpperCase() + lastname[0]?.toUpperCase()}</AvatarFallback>
@@ -329,7 +329,7 @@ function Stories() {
                                         <div className="story-gradient" />
 
                                         {/* User Avatar */}
-                                        <div className="story-avatar">
+                                        <div className='story-avatar w-14 h-14 bg-accent flex items-center justify-center rounded-full overflow-hidden border-2 border-primary-active'>
                                             <Avatar className="flex">
                                                 <AvatarImage src={storyMain?.user?.profile} alt="Avatar" />
                                                 <AvatarFallback>

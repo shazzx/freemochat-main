@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import twilio from 'twilio';
 import SendGrid from '@sendgrid/mail';
-import { MessageInstance } from 'twilio/lib/rest/api/v2010/account/message';
 import { CacheService } from 'src/cache/cache.service';
 
 @Injectable()
@@ -47,13 +46,11 @@ export class TwilioService {
       await this.cacheService.incrementOtpCount(to);
       return message;
     } catch (error) {
-      console.error('Failed to send SMS:', error);
       throw new Error(error.name);
     }
   }
   async sendEmail(mail: SendGrid.MailDataRequired) {
     const transport = await SendGrid.send(mail);
-    console.log(`Email successfully dispatched to ${mail.to}`);
     return transport;
   }
 }
