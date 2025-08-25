@@ -285,8 +285,8 @@ const ElementDetailsModal: React.FC<{
                 </button>
               )}
             </div>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
             >
               <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -326,42 +326,27 @@ const ElementDetailsModal: React.FC<{
                   )}
                 </div>
 
-                {/* Element Information */}
-                {elementData && (
-                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3">
-                      {elementData.type} Information
-                    </h4>
-                    <div className="space-y-2">
-                      {elementData.details.map((detail, index) => (
-                        <div key={index} className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-600 last:border-b-0">
-                          <span className="text-gray-600 dark:text-gray-400">{detail.label}</span>
-                          <span className="font-medium text-gray-900 dark:text-white">{detail.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
-                {/* Media Gallery */}
+
+                {/* Media Gallery - UPDATED with centering for single images */}
                 {allMedia.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3">
                       Media Gallery ({allMedia.length})
                     </h4>
-                    <div className="flex space-x-3 overflow-x-auto pb-2">
+                    <div className={`flex pb-2 ${allMedia.length > 1 ? 'space-x-3 overflow-x-auto' : 'justify-center'}`}>
                       {allMedia.map((mediaItem, index) => (
                         <div
                           key={index}
-                          className="relative flex-shrink-0 cursor-pointer group"
+                          className={`relative cursor-pointer group ${allMedia.length > 1 ? 'flex-shrink-0' : ''}`}
                           onClick={() => handleImagePress(index)}
                         >
                           <img
                             src={mediaItem.url}
                             alt={`Media ${index + 1}`}
-                            className="w-24 h-24 object-cover rounded-lg group-hover:opacity-80 transition-opacity"
+                            className="w-64 h-64 object-cover rounded-lg group-hover:opacity-80 transition-opacity"
                           />
-                          <div 
+                          <div
                             className="absolute top-1 left-1 px-2 py-1 rounded text-xs text-white font-medium"
                             style={{ backgroundColor: mediaItem.source === 'main' ? categoryConfig.color : '#666' }}
                           >
@@ -373,7 +358,7 @@ const ElementDetailsModal: React.FC<{
                   </div>
                 )}
 
-                {/* Update History */}
+                {/* Update History - UPDATED with centering for single images */}
                 {element.updateHistory && element.updateHistory.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3">
@@ -394,13 +379,13 @@ const ElementDetailsModal: React.FC<{
                             </p>
                           )}
                           {update.media && update.media.length > 0 && (
-                            <div className="flex space-x-2 overflow-x-auto">
+                            <div className={`flex ${update.media.length > 1 ? 'space-x-2 overflow-x-auto' : 'justify-center'}`}>
                               {update.media.map((mediaItem, mediaIndex) => (
                                 <img
                                   key={mediaIndex}
                                   src={mediaItem.url}
                                   alt={`Update ${mediaIndex + 1}`}
-                                  className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80"
+                                  className="w-64 h-64 object-cover rounded cursor-pointer hover:opacity-80"
                                   onClick={() => {
                                     const mediaItemIndex = allMedia.findIndex(m =>
                                       m.source === 'update' && m.sourceIndex === index && m.url === mediaItem.url
@@ -413,6 +398,23 @@ const ElementDetailsModal: React.FC<{
                               ))}
                             </div>
                           )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Element Information */}
+                {elementData && (
+                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3">
+                      {elementData.type} Information
+                    </h4>
+                    <div className="space-y-2">
+                      {elementData.details.map((detail, index) => (
+                        <div key={index} className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-600 last:border-b-0">
+                          <span className="text-gray-600 dark:text-gray-400">{detail.label}</span>
+                          <span className="font-medium text-gray-900 dark:text-white">{detail.value}</span>
                         </div>
                       ))}
                     </div>

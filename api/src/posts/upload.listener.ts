@@ -458,4 +458,16 @@ export class UploadListener {
             await this.messageService.removeMessage(messageDetails.recepient.toString(), userId, messageId, messageDetails.sender.toString())
         }
     }
+
+    @OnEvent("files.delete")
+    async handleDeleteMultipleFiles({ filenames }: { filenames: string[] }) {
+        for (const filename of filenames) {
+            try {
+                await this.uploadService.deleteFromS3(filename);
+                console.log(`✅ Deleted: ${filename}`);
+            } catch (error) {
+                console.error(`❌ Delete failed: ${filename}`, error.message);
+            }
+        }
+    }
 }

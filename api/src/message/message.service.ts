@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { UserChatListService } from 'src/chatlist/chatlist.service';
 import { MessageSoftDelete } from 'src/schema/chatsoftdelete';
 import { Message } from 'src/schema/message';
-import { getTime } from 'src/utils/getTime';
+import { extractFilename } from 'src/utils/global';
 
 @Injectable()
 export class MessageService {
@@ -12,6 +13,7 @@ export class MessageService {
     @InjectModel(Message.name) private readonly messageModel: Model<Message>,
     @InjectModel(MessageSoftDelete.name) private messageSoftDelete: Model<MessageSoftDelete>,
     private readonly chatlistService: UserChatListService,
+    private eventEmitter: EventEmitter2,
   ) { }
 
   async createMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number, isUploaded: boolean }, gateway?: boolean, isGroup?: boolean, removeUser?: boolean, removeChat?: boolean }) {
@@ -23,7 +25,6 @@ export class MessageService {
     return message
   }
 
-
   async updateMessage(messageId: string, messageDetails: { type?: string, content?: string, messageType?: string, media?: { url: string, type?: string, duration?: number, isUploaded: boolean } }) {
     // console.log(messageDetails, messageId)
     // let updatedUser = this.userModel.findByIdAndUpdate(userId, { $set: { ...updatedDetails } }, { returnOriginal: false })
@@ -32,7 +33,6 @@ export class MessageService {
     const message = await this.messageModel.findByIdAndUpdate(messageId, { $set: { media: messageDetails.media } }, { new: true })
     return message
   }
-
 
   async getMessages(cursor: string, userId: string, recepientId: string, isChatGroup?: number) {
     const limit = 15
@@ -155,22 +155,33 @@ export class MessageService {
     // return messages
   }
 
-  async deleteChat(userId, recepient) {
-
-  }
-
-
   async removeMessage(recepientId: string, userId: string, messageId: string, senderId: string) {
-    const message = 'you deleted this message'
-    const deletedMessage = await this.messageModel.updateOne(
-      { _id: messageId },
-      { $push: { deletedFor: { userId, deletedAt: Date.now() } }, content: message, media: null }
-    )
+    const message = await this.messageModel.findById(messageId)
 
-    if (deletedMessage.acknowledged) {
-      await this.chatlistService.updateChatlistLastMessage(recepientId, userId, {encryptedContent: message, messageId: new Types.ObjectId(messageId), sender: senderId})
+    if (message?.media && !message?.media?.isUploaded) {
+      throw new BadRequestException("This message is not uploaded, so it cannot be deleted");
     }
 
-    return deletedMessage
+    if (!message) {
+      throw new BadRequestException("Message not found");
+    }
+
+    if (message?.media) {
+      const filename = extractFilename(String(message.media.url))
+      this.eventEmitter.emit('files.delete', {
+        filenames: [filename]
+      });
+    }
+
+    const updated = await this.messageModel.findByIdAndUpdate(messageId,
+      { $push: { deletedFor: { userId, deletedAt: Date.now() } }, media: null }
+    )
+
+
+    if (updated) {
+      await this.chatlistService.updateChatlistLastMessage(recepientId, userId, { encryptedContent: 'message deleted', messageId: new Types.ObjectId(messageId), sender: senderId })
+    }
+
+    return updated
   }
 }

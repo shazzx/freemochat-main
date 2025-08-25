@@ -1,28 +1,17 @@
 import React, { useState, useCallback, memo, useRef, useEffect } from 'react';
-import { 
-  Search, 
-  X, 
-  TreePine, 
-  Trash2, 
-  Droplets, 
-  CloudRain, 
-  MapPin, 
+import {
+  Search,
+  X,
+  TreePine,
+  Trash2,
+  Droplets,
+  CloudRain,
+  MapPin,
   ExternalLink,
-  MoreHorizontal,
-  Heart,
-  MessageCircle,
-  Share2,
-  Bookmark,
-  Edit,
-  Trash,
-  Flag,
-  Clock,
   Earth,
   ChevronLeft,
   ChevronRight,
   Loader2,
-  Calendar,
-  User
 } from 'lucide-react';
 import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
 import { format } from 'date-fns';
@@ -30,7 +19,6 @@ import { axiosClient } from '@/api/axiosClient';
 import ElementDetailsModal from '@/models/ElementDetailsModal';
 
 
-// Interfaces
 interface SelectedElement {
   _id: string;
   postId: {
@@ -123,13 +111,11 @@ interface LocationPostDisplayProps {
     isBookmarkedByUser?: boolean;
   };
   setEditModalVisible?: (value: boolean) => void;
-  handleDeletePress?: (type: string) => void;
-  onCardPress?: () => void;
-  currentUser?: any;
+  setMapModalVisible?: (value: boolean) => void;
+  mapModalVisible?: boolean;
   theme?: any;
 }
 
-// Custom marker creation for Google Maps
 const createCustomMarkerIcon = (postType: string, index: number): string => {
   const getConfig = (type: string) => {
     const configs = {
@@ -142,7 +128,7 @@ const createCustomMarkerIcon = (postType: string, index: number): string => {
   };
 
   const config = getConfig(postType);
-  
+
   const svg = `
     <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
       <circle cx="20" cy="20" r="18" fill="${config.color}" stroke="white" stroke-width="3"/>
@@ -155,7 +141,6 @@ const createCustomMarkerIcon = (postType: string, index: number): string => {
   return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
 };
 
-// Google Maps configuration
 const mapContainerStyle = {
   width: '100%',
   height: '100%'
@@ -169,7 +154,6 @@ const mapOptions = {
   fullscreenControl: false,
 };
 
-// Reusable Map Component
 interface ReusableMapProps {
   center: { lat: number; lng: number };
   zoom: number;
@@ -207,7 +191,6 @@ const ReusableMap: React.FC<ReusableMapProps> = ({
   const [googleMapsReady, setGoogleMapsReady] = useState(false);
   const mapRef = useRef<google.maps.Map>(null);
 
-  // Check if Google Maps is loaded
   useEffect(() => {
     const checkGoogleMaps = () => {
       if (window.google && window.google.maps) {
@@ -220,22 +203,20 @@ const ReusableMap: React.FC<ReusableMapProps> = ({
 
     if (!checkGoogleMaps()) {
       console.log('Waiting for Google Maps to load...');
-      
-      // Poll for Google Maps availability
+
       const interval = setInterval(() => {
         if (checkGoogleMaps()) {
           clearInterval(interval);
         }
       }, 100);
 
-      // Cleanup interval after 15 seconds
       const timeout = setTimeout(() => {
         clearInterval(interval);
         if (!window.google || !window.google.maps) {
           console.error('Google Maps failed to load within 15 seconds');
         }
       }, 15000);
-      
+
       return () => {
         clearInterval(interval);
         clearTimeout(timeout);
@@ -349,7 +330,6 @@ const ReusableMap: React.FC<ReusableMapProps> = ({
           />
         ))}
 
-        {/* Info Window */}
         {showInfoWindow && activeMarker && interactive && (
           <InfoWindow
             position={{
@@ -399,52 +379,12 @@ const ReusableMap: React.FC<ReusableMapProps> = ({
   );
 };
 
-const EnvironmentalContributorTag: React.FC<{
-  data: any;
-  hideCount?: boolean;
-  theme?: any;
-}> = ({ data, hideCount = false, theme }) => {
-  const hasContributions = Object.values(data).some(value => value);
-  
-  if (!hasContributions) return null;
-
-  return (
-    <div className="flex items-center space-x-1 ml-2">
-      {data.plantation && <TreePine className="w-3 h-3 text-green-500" />}
-      {data.garbage_collection && <Trash2 className="w-3 h-3 text-orange-500" />}
-      {data.water_ponds && <Droplets className="w-3 h-3 text-blue-500" />}
-      {data.rain_water && <CloudRain className="w-3 h-3 text-cyan-500" />}
-    </div>
-  );
-};
-
-// Avatar Component
-const AvatarContainer: React.FC<{ name: string; uri?: string }> = ({ name, uri }) => {
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
-  return (
-    <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium text-sm overflow-hidden">
-      {uri ? (
-        <img src={uri} alt={name} className="w-full h-full object-cover" />
-      ) : (
-        getInitials(name)
-      )}
-    </div>
-  );
-};
-
-// Main Component
 const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
   post,
-  onCardPress,
-  setEditModalVisible,
-  handleDeletePress,
-  currentUser,
+  setMapModalVisible,
+  mapModalVisible = false,
   theme = { colors: { text: '#000', card: '#fff', primary: '#007bff', surfaceVariant: '#f5f5f5', onSurfaceVariant: '#666' } }
 }) => {
-  const [mapModalVisible, setMapModalVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
@@ -454,7 +394,6 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
   const [activeMarker, setActiveMarker] = useState<any>(null);
   const [showInfoWindow, setShowInfoWindow] = useState(false);
 
-  // API Functions
   const fetchElementDetails = useCallback(async (elementId: string) => {
     if (!elementId) {
       console.error('No element ID provided');
@@ -633,100 +572,8 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
   return (
     <>
       <div className="bg-card overflow-hidden">
-        {/* Header */}
-        {/* <div className="p-4 cursor-pointer" onClick={onCardPress}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <AvatarContainer
-                name={post?.target?.firstname || post?.target?.name || 'User'}
-                uri={post?.target?.profile}
-              />
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                    {post?.type === "group"
-                      ? `${post?.user?.firstname} ${post?.user?.lastname} (${post?.target?.name})`
-                      : (post?.target?.name || `${post?.target?.firstname} ${post?.target?.lastname}`)}
-                  </h3>
-                  <EnvironmentalContributorTag
-                    data={{
-                      plantation: post?.target?.environmentalProfile?.['plantation'] && 1,
-                      garbage_collection: post?.target?.environmentalProfile?.['garbage_collection'] && 1,
-                      water_ponds: post?.target?.environmentalProfile?.['water_ponds'] && 1,
-                      rain_water: post?.target?.environmentalProfile?.['rain_water'] && 1,
-                    }}
-                    hideCount={true}
-                    theme={theme}
-                  />
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {format(new Date(post?.createdAt), 'MMM d, yyyy h:mm a')}
-                </p>
-              </div>
-            </div>
-
-            <div className="relative">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowMenu(!showMenu);
-                }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-              >
-                <MoreHorizontal className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
-
-              {showMenu && (
-                <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-10 min-w-[120px]">
-                  {(post.user === currentUser?._id || post.user?._id === currentUser?._id) ? (
-                    <>
-                      {setEditModalVisible && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditModalVisible(true);
-                            setShowMenu(false);
-                          }}
-                          className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                        >
-                          <Edit className="w-4 h-4" />
-                          <span>Manage Project</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeletePress?.('Project');
-                          setShowMenu(false);
-                        }}
-                        className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600"
-                      >
-                        <Trash className="w-4 h-4" />
-                        <span>Delete Project</span>
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Handle report
-                        setShowMenu(false);
-                      }}
-                      className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                    >
-                      <Flag className="w-4 h-4" />
-                      <span>Report</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div> */}
-
-        {/* Post Type Badge */}
         <div className="px-4">
-          <div 
+          <div
             className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-white text-sm font-medium"
             style={{ backgroundColor: typeConfig.color }}
           >
@@ -735,7 +582,6 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
           </div>
         </div>
 
-        {/* Stats Container */}
         <div className="p-4">
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
             <div className="flex items-center justify-around">
@@ -762,26 +608,26 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
           </div>
         </div>
 
-        {/* Media Gallery */}
+        {/* Media Gallery - UPDATED with centering for single images */}
         {allMedia.length > 0 && (
           <div className="p-4">
             <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
               {typeConfig.title} Locations
             </h4>
-            <div className="flex space-x-3 overflow-x-auto pb-2">
+            <div className={`flex pb-2 ${allMedia.length > 1 ? 'space-x-3 overflow-x-auto' : 'justify-center'}`}>
               {allMedia.map((mediaItem, index) => (
                 <div
                   key={`${mediaItem.contributionId}-${index}`}
-                  className="relative flex-shrink-0 cursor-pointer group"
+                  className={`relative cursor-pointer group ${allMedia.length > 1 ? 'flex-shrink-0' : ''}`}
                   onClick={() => handleImagePress(index)}
                 >
                   <img
                     src={mediaItem.url}
                     alt={`${typeConfig.title} ${index + 1}`}
-                    className="w-24 h-20 object-cover rounded-lg"
+                    className="w-80 h-64 object-cover rounded-lg"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg" />
-                  <div 
+                  <div
                     className="absolute bottom-1 left-1 px-2 py-1 rounded-full text-white text-xs font-bold"
                     style={{ backgroundColor: typeConfig.color }}
                   >
@@ -799,38 +645,7 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
           </div>
         )}
 
-        {/* Interactive Map Preview */}
-        <div className="p-4">
-          <div 
-            className="relative h-40 rounded-lg overflow-hidden cursor-pointer group"
-            onClick={() => setMapModalVisible(true)}
-          >
-            <ReusableMap
-              center={{
-                lat: post.location.latitude,
-                lng: post.location.longitude,
-              }}
-              zoom={14}
-              markers={mapMarkers}
-              postType={post.postType}
-              onMarkerClick={() => setMapModalVisible(true)} // Always open modal on marker click in preview
-              onViewMoreDetails={handleViewMore}
-              interactive={false}
-              className="w-full h-full"
-            />
-            
-            {/* Map Overlay */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity pointer-events-none" />
-            <div className="absolute top-3 left-3 right-3 bg-white bg-opacity-90 rounded-lg px-3 py-2 flex items-center justify-between pointer-events-none">
-              <span className="text-sm font-medium text-gray-800">
-                {totalElements} {totalElements === 1 ? typeConfig.itemName : typeConfig.itemsName} • Tap to explore
-              </span>
-              <ExternalLink className="w-4 h-4 text-gray-600" />
-            </div>
-          </div>
-        </div>
 
-        {/* Engagement Stats */}
         {(post.likesCount > 0 || post.commentsCount > 0 || post.sharesCount > 0) && (
           <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
@@ -847,11 +662,10 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
           </div>
         )}
 
-        {/* Location Info */}
         <div className="px-4 pb-4 flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
           <MapPin className="w-4 h-4" />
           <span>
-            {currentUser?.address?.country || `${post.location.latitude.toFixed(4)}, ${post.location.longitude.toFixed(4)}`}
+            {`${post?.location?.country}, ${post?.location?.city}` || `${post.location.latitude.toFixed(4)}, ${post.location.longitude.toFixed(4)}`}
           </span>
         </div>
       </div>
@@ -935,7 +749,7 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
                   alt={`${typeConfig.title} ${selectedImageIndex + 1}`}
                   className="max-w-full max-h-full object-contain"
                 />
-                
+
                 {/* Image Info */}
                 <div className="absolute bottom-4 left-4 right-4 bg-black bg-opacity-70 text-white rounded-lg p-4">
                   <h3 className="font-semibold mb-1">
@@ -971,7 +785,7 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
 
       {/* Click outside to close menu */}
       {showMenu && (
-        <div 
+        <div
           className="fixed inset-0 z-0"
           onClick={() => setShowMenu(false)}
         />

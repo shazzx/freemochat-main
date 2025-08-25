@@ -268,13 +268,15 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
         }
     }, []);
 
-    const deleteSelectedMessage = (invalidate?) => {
+    const deleteSelectedMessage = async (invalidate?) => {
         if (selectedMessageId !== null) {
-            deleteMessage(selectedMessageId)
+            const isDeleted = await deleteMessage(selectedMessageId)
             setSelectedMessage(null);
             if (invalidate) {
                 queryClient.invalidateQueries({ queryKey: ['messages', recepientDetails.userId] })
             }
+
+            return isDeleted
         }
     };
 
@@ -358,8 +360,13 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
 
     // chat method
     const deleteMessage = async (message) => {
-        const { data } = await axiosClient.post("/messages/remove", { messageId: message.messageId, senderId: message.senderId, recepientId: message.recepientId })
-        // console.log(data)
+        try {
+            const { data } = await axiosClient.post("/messages/remove", { messageId: message.messageId, senderId: message.senderId, recepientId: message.recepientId })
+            return true
+        } catch (error) {
+            toast.error(error.message)
+            return false
+        }
     }
     // const lastMessage = userMessages.data[userMessages.data.length - 1].messages[userMessages.data[userMessages.data.length - 1].messages.length - 1].content
     // console.log(lastMessage.includes("removed"))
@@ -673,13 +680,13 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                         // setDropDownMessageId(null)
                                         // }}
                                         >
-                                            {message?.media && message.media.type == "audio" &&
+                                            {message?.media && (isDeleted?.[0]?.userId !== user._id) && message.media.type == "audio" &&
                                                 <AudioPlayer src={message.media.url} duration={message.media.duration} />
                                             }
                                             {mediaOpenModel &&
                                                 <MediaOpenModel mediaOpenDetails={mediaOpenDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                                             }
-                                            {message?.media && message.media.type == "image" &&
+                                            {message?.media && (isDeleted?.[0]?.userId !== user._id) && message.media.type == "image" &&
 
                                                 <div className="relative aspect-auto max-w-64 sm:max-w-96" onClick={() => {
                                                     setMediaOpenModel(true)
@@ -705,7 +712,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                 </div>
 
                                             }
-                                            {message?.media && message.media.type == "pdf" &&
+                                            {message?.media && (isDeleted?.[0]?.userId !== user._id) && message.media.type == "pdf" &&
                                                 <div className="aspect-auto cursor-pointer p-3 max-w-64 ">
                                                     <a href={message.media.url} download className="flex">
                                                         <FaFilePdf className="text-red-500 text-2xl mr-3" />
@@ -744,10 +751,12 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                 </p>
 
                                             }
-                                            {(message._id && (selectedMessageId?.messageId == message._id)) && <MessageActionsDropdown onDelete={() => {
+                                            {(message._id && (selectedMessageId?.messageId == message._id)) && <MessageActionsDropdown onDelete={async() => {
                                                 try {
-                                                    message?.deletedFor?.push({ userId: user?._id })
-                                                    deleteSelectedMessage(false)
+                                                    const isDeleted = await deleteSelectedMessage(false)
+                                                    if (isDeleted) {
+                                                        message?.deletedFor?.push({ userId: user?._id })
+                                                    }
                                                 } catch (error) {
                                                     deleteSelectedMessage(true)
                                                 }
@@ -827,10 +836,10 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                     setDropDownMessageId(null)
                                                 }}
                                             >
-                                                {message?.media && message.media.type == "audio" &&
+                                                {message?.media && (isDeleted?.[0]?.userId !== recepientDetails?.userId) && message.media.type == "audio" &&
                                                     <AudioPlayer src={message.media.url} duration={message.media.duration} />
                                                 }
-                                                {message?.media && message.media.type == "image" &&
+                                                {message?.media && (isDeleted?.[0]?.userId !== recepientDetails?.userId) && message.media.type == "image" &&
                                                     <div className="aspect-auto max-w-64 sm:max-w-96" onClick={() => {
                                                         setMediaOpenModel(true)
                                                         setMediaOpenDetails({ url: message.media.url, type: "image" })
@@ -842,7 +851,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                     </div>
                                                 }
 
-                                                {message?.media && message.media.type == "pdf" &&
+                                                {message?.media && (isDeleted?.[0]?.userId !== recepientDetails?.userId) && message.media.type == "pdf" &&
                                                     <div className="aspect-auto cursor-pointer p-3 max-w-64 ">
                                                         <a href={message.media.url} download className="flex">
                                                             <FaFilePdf className="text-red-500 text-2xl mr-3" />
@@ -865,12 +874,12 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                     </div>}
 
 
-                                                {message?.media && (isDeleted?.[0]?.userId !== user._id) && message.media.type == "video" &&
+                                                {message?.media && (isDeleted?.[0]?.userId !== recepientDetails?.userId) && message.media.type == "video" &&
                                                     <div className="aspect-auto max-w-64 ">
                                                         <video src={message.media.url} controls />
                                                     </div>
                                                 }
-                                                {isDeleted?.[0]?.userId == user._id ?
+                                                {isDeleted?.[0]?.userId == recepientDetails?.userId ?
                                                     <p className="">message deleted</p>
                                                     :
                                                     <p className="cursor-pointer text-foreground" onClick={() => {

@@ -16,7 +16,7 @@ import { domain } from '@/config/domain'
 import { toast } from 'react-toastify'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { PostMediaCarousel } from './Post/PostMediaCarousel'
-import { Copy, FilmIcon, Share2 } from 'lucide-react'
+import { Copy, FilmIcon, MapPin, Share2 } from 'lucide-react'
 import { useDispatch } from 'react-redux'
 import { insertViewedPost } from '@/app/features/user/viewPostSlice'
 import { setOpen } from '@/app/features/user/postModelSlice'
@@ -829,6 +829,9 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
     const params = isSearch ? { ...query, postId: postData?._id } : { type: type + "Posts", targetId: postData?.targetId, postId: postData?._id }
 
     const isLocationPost = false || postData?.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(postData.postType);
+    const [mapModalVisible, setMapModalVisible] = useState(false);
+    const showMapModalVisible = React.useCallback(() => setMapModalVisible(true), []);
+
 
     return (
         <div className='max-w-xl w-full sm:min-w-[420px]' ref={ref} key={postData && postData._id}>
@@ -974,27 +977,15 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                 {isLocationPost ? (
                     <LocationPostDisplay
                         post={postData}
-                        currentUser={user}
-                        onCardPress={() => {
-                            if (postData.type === "group") {
-                                const { handle } = postData.target;
-                                window.open(`${domain}/group/${handle}`, '_blank');
-                            } else if (postData.type === "page") {
-                                const { handle } = postData.target;
-                                window.open(`${domain}/page/${handle}`, '_blank');
-                            } else if (postData.type === "user") {
-                                window.open(`${domain}/user/${postData.target.username}`, '_blank');
-                            }
-                        }}
+                        mapModalVisible={mapModalVisible}
+                        setMapModalVisible={setMapModalVisible}
                         setEditModalVisible={setEditPostModelState}
-                        handleDeletePress={(type) => deletePost()}
                     />
                 )
                     :
                     <>
                         <CardContent className="flex flex-col gap-2 text-2xl p-0 sm:px-3 font-bold">
                             <div className='text-sm font-normal px-2 sm:px-0'>
-                                {/* Background post rendering */}
                                 {postData?.backgroundColor ? (
                                     <BackgroundPost
                                         content={postData.content}
@@ -1144,18 +1135,28 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
                             </div>
                         </div>
-                        <div className='flex gap-0 items-center cursor-pointer' onClick={async () => {
-                            bookmarkMutation.mutate({ postId: postData._id, pageIndex, postIndex, targetId: postData?.targetId, type })
-                        }}>
-                            <div className='flex flex-col sm:flex-row items-center justify-center'>
-
-                                <svg className={`w-[28px] h-[28px] sm:w-[34px] sm:h-[34px] ${postData?.isBookmarkedByUser ? " fill-black dark:fill-white" : "stroke-foreground"} dark:stroke-foreground`} viewBox="0 0 39 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path fillRule="evenodd" clipRule="evenodd" d="M29.3447 28.1251V8.54816C29.3518 7.79031 29.0222 7.06097 28.4283 6.52057C27.8345 5.98018 27.025 5.67302 26.178 5.66666H13.5113C12.6643 5.67302 11.8548 5.98018 11.261 6.52057C10.6671 7.06097 10.3375 7.79031 10.3447 8.54816V28.1251C10.2694 28.6903 10.5796 29.241 11.1322 29.5231C11.6847 29.8053 12.3724 29.764 12.878 29.4185L18.8947 24.7704C19.437 24.3324 20.2618 24.3324 20.8042 24.7704L26.8113 29.4199C27.3172 29.7657 28.0053 29.8069 28.558 29.5244C29.1108 29.2418 29.4207 28.6906 29.3447 28.1251Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-
-                                <span className='text-xs sm:text-sm'>Bookmark</span>
+                        {isLocationPost
+                            ?
+                            <div className='flex gap-0 items-center cursor-pointer' onClick={showMapModalVisible}>
+                                <div className='flex flex-col sm:flex-row items-center justify-center gap-1'>
+                                    <MapPin className="w-6 h-6" />
+                                    <span className='text-xs sm:text-sm'>Location</span>
+                                </div>
                             </div>
-                        </div>
+                            :
+                            <div className='flex gap-0 items-center cursor-pointer' onClick={async () => {
+                                bookmarkMutation.mutate({ postId: postData._id, pageIndex, postIndex, targetId: postData?.targetId, type })
+                            }}>
+                                <div className='flex flex-col sm:flex-row items-center justify-center'>
+
+                                    <svg className={`w-[28px] h-[28px] sm:w-[34px] sm:h-[34px] ${postData?.isBookmarkedByUser ? " fill-black dark:fill-white" : "stroke-foreground"} dark:stroke-foreground`} viewBox="0 0 39 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path fillRule="evenodd" clipRule="evenodd" d="M29.3447 28.1251V8.54816C29.3518 7.79031 29.0222 7.06097 28.4283 6.52057C27.8345 5.98018 27.025 5.67302 26.178 5.66666H13.5113C12.6643 5.67302 11.8548 5.98018 11.261 6.52057C10.6671 7.06097 10.3375 7.79031 10.3447 8.54816V28.1251C10.2694 28.6903 10.5796 29.241 11.1322 29.5231C11.6847 29.8053 12.3724 29.764 12.878 29.4185L18.8947 24.7704C19.437 24.3324 20.2618 24.3324 20.8042 24.7704L26.8113 29.4199C27.3172 29.7657 28.0053 29.8069 28.558 29.5244C29.1108 29.2418 29.4207 28.6906 29.3447 28.1251Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+
+                                    <span className='text-xs sm:text-sm'>Bookmark</span>
+                                </div>
+                            </div>
+                        }
 
                         <div className='relative flex gap-0 items-center cursor-pointer'>
                             <div className='flex flex-col gap-[2px] sm:gap-1 sm:flex-row items-center justify-center' onClick={() => {
