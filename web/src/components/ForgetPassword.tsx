@@ -1,13 +1,14 @@
 import { axiosClient } from '@/api/axiosClient'
 import { useState } from 'react'
 import { Label } from '@radix-ui/react-dropdown-menu'
-import { Card } from '@/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { InputOTPForm } from '@/components/Auth/OTPInput'
 import { toast } from 'react-toastify'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button } from './ui/button'
+import PasswordInput from './PasswordInput'
 
 function ForgetPassword() {
     const [confirmPassword, setConfirmPassword] = useState(null)
@@ -113,7 +114,15 @@ function ForgetPassword() {
         <div className='fixed inset-0 z-50  w-screen overflow-hidden h-screen flex items-center justify-center top-0 right-0'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
             }}></div>
-            <Card className='z-10 p-6 border border-accent'>
+            <Card className='z-10 p-4 border border-accent'>
+                <CardHeader className="text-center space-y-2 p-1 mb-4">
+                    <CardTitle className="text-2xl font-semibold text-foreground">
+                        Reset Password
+                    </CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground">
+                        Create a new secure password for your account
+                    </CardDescription>
+                </CardHeader>
                 <form action="" onSubmit={(e) => {
                     e.preventDefault()
                 }}>
@@ -124,12 +133,10 @@ function ForgetPassword() {
                                 <Label >
                                     New Password
                                 </Label>
-                                <Input
+                                <PasswordInput
                                     placeholder="Enter new secure password"
-                                    // ref={newPasswordRef}
                                     id="new-password"
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    type="password"
                                     className="max-w-96 w-full"
                                 />
                             </div>
@@ -137,12 +144,10 @@ function ForgetPassword() {
                                 <Label >
                                     Confirm Password
                                 </Label>
-                                <Input
+                                <PasswordInput
                                     placeholder="Confirm Password"
-                                    // ref={newPasswordRef}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     id="confirm-password"
-                                    type="password"
                                     className="max-w-96 w-full"
                                 />
                             </div>

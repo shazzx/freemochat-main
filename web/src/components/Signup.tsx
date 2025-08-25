@@ -24,6 +24,7 @@ import logo from './../assets/logo.png'
 import { toast } from "react-toastify"
 import BottomLinks from "./BottomLinks"
 import { validatePhone } from "@/lib/utils"
+import PasswordInput from "./PasswordInput"
 
 
 export function Signup() {
@@ -250,8 +251,7 @@ export function Signup() {
 
                             <div className="grid gap-2">
                                 <Label htmlFor="password">Password</Label>
-                                <Input
-                                    type="password"
+                                <PasswordInput
                                     placeholder="password"
                                     name="password"
                                     {...register("password")}
@@ -263,8 +263,7 @@ export function Signup() {
 
                             <div className="grid gap-2">
                                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                                <Input
-                                    type="password"
+                                <PasswordInput
                                     placeholder="confirm password"
                                     name="confirmPassword"
                                     {...register("confirmPassword")}

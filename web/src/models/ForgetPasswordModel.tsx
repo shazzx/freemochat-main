@@ -2,12 +2,12 @@ import { axiosClient } from '@/api/axiosClient'
 import { useState } from 'react'
 import { Label } from '@radix-ui/react-dropdown-menu'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { InputOTPForm } from '@/components/Auth/OTPInput'
 import { toast } from 'react-toastify'
-import { useAppDispatch, useAppSelector } from '@/app/hooks'
+import { useAppSelector } from '@/app/hooks'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
+import PasswordInput from '@/components/PasswordInput'
 
 function ForgetPasswordModel({ setModelTrigger }) {
 
@@ -143,12 +143,10 @@ function ForgetPasswordModel({ setModelTrigger }) {
                                 <Label >
                                     New Password
                                 </Label>
-                                <Input
+                                <PasswordInput
                                     placeholder="Enter new secure password"
-                                    // ref={newPasswordRef}
                                     id="new-password"
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    type="password"
                                     className="max-w-96 w-full"
                                 />
                             </div>
@@ -156,12 +154,10 @@ function ForgetPasswordModel({ setModelTrigger }) {
                                 <Label >
                                     Confirm Password
                                 </Label>
-                                <Input
+                                <PasswordInput
                                     placeholder="Confirm Password"
-                                    // ref={newPasswordRef}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     id="confirm-password"
-                                    type="password"
                                     className="max-w-96 w-full"
                                 />
                             </div>
