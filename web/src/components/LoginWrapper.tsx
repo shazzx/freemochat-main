@@ -40,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// Import the new PasswordInput component
+
 import PasswordInput from "@/components/PasswordInput";
 
 export function LoginWrapper() {

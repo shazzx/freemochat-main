@@ -5,32 +5,24 @@ const AudioPlayer = ({ src, duration }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  // const [duration, setDuration] = useState(0);
 
   useEffect(() => {
     const audio = audioRef.current;
-    // audio.addEventListener('loadedmetadata', onLoadedMetadata);
     audio.addEventListener('timeupdate', onTimeUpdate);
     audio.addEventListener('end', () => {
       console.log('end')
     })
     return () => {
-      // audio.removeEventListener('loadedmetadata', onLoadedMetadata);
       audio.removeEventListener('timeupdate', onTimeUpdate);
     };
   }, []);
 
   useEffect(() => {
-    console.log(currentTime, duration)
     if((currentTime > duration) || (currentTime > (duration - 0.05))){
       setCurrentTime(0)
       setIsPlaying(false)
     }
   },[currentTime])
-
-  // const onLoadedMetadata = () => {
-  //   setDuration(audioRef.current.duration);
-  // };
 
   const onTimeUpdate = () => {
     setCurrentTime(audioRef.current.currentTime);

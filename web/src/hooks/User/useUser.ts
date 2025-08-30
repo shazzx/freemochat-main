@@ -196,22 +196,22 @@ export const useUploadStory = (userId: string) => {
 
 
         onMutate: async () => {
-            // await queryClient.cancelQueries({ queryKey: ['user', username] })
-            // const previousUser = queryClient.getQueryData(['user', username])
+            
+            
 
-            // queryClient.setQueryData(['user', username], (user: any) => {
-            //     const updatedUser = produce(user, (draft: any) => {
-            //         draft.friendRequest.isSentByUser = !draft.friendRequest.isSentByUser
-            //         if (draft.friendRequest.isSentByUser) {
-            //             toast.success('Friend request sent')
-            //         }
-            //         return draft
+            
+            
+            
+            
+            
+            
+            
 
-            //     })
-            //     return updatedUser
-            // });
+            
+            
+            
 
-            // return { previousUser };
+            
         },
 
         onError: (err, newComment, context) => {
@@ -223,8 +223,8 @@ export const useUploadStory = (userId: string) => {
             console.log(e)
 
             queryClient.invalidateQueries({ queryKey: ['stories', userId] })
-            // uncommeting this will refetch the comments again from the server to be in sync
-            // queryClient.invalidateQueries({ queryKey: ["comments"] })
+            
+            
         }
     })
 
@@ -329,13 +329,13 @@ export function useUserFollowers(userId?: string): any {
     };
 }
 
-// groupId can be of community group or chat group id. it's an optional id when provided an extra field will be returned with user object which is isGroupMember.
+
 export function useUserFriends(userId?: string, groupId?: string): any {
-    // console.log(userId, groupId, 'fetchn friend')
+    
     const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
         queryKey: ['userFriends', userId],
         queryFn: ({ pageParam, }) => userFriends(pageParam, userId, groupId),
-        // enabled: !!groupId,
+        
         refetchInterval: false,
         refetchOnWindowFocus: false,
         refetchOnMount: true,
@@ -444,8 +444,8 @@ export const useFriendRequestToggle = (username) => {
         },
         onSettled: (e) => {
             console.log(e)
-            // uncommeting this will refetch the comments again from the server to be in sync
-            // queryClient.invalidateQueries({ queryKey: ["comments"] })
+            
+            
         }
     })
 
@@ -501,7 +501,7 @@ export const useAcceptFriendRequest = () => {
 
                             if (sender._id == recepientId) {
                                 console.log(userRequests.pages[pageIndex].friendRequests.splice(requestIndex, 1))
-                                // draft.pages[pageIndex].friendRequests.splice(requestIndex, 1)
+                                
                                 return
                             }
                         })
@@ -523,9 +523,9 @@ export const useAcceptFriendRequest = () => {
             console.log(data)
             toast.success("You're friends now")
             queryClient.invalidateQueries({ queryKey: ['userRequests', user._id] })
-            // uncommeting this will refetch the data again from the server to be in sync
-            // queryClient.invalidateQueries({ queryKey: ['userRequests', user._id] })
-            // queryClient.invalidateQueries({ queryKey: ['user'] })
+            
+            
+            
         }
     })
 
@@ -567,8 +567,8 @@ export const useRejectFriendRequest = () => {
         },
         onSettled: (e) => {
             console.log(e)
-            // uncommeting this will refetch the comments again from the server to be in sync
-            // queryClient.invalidateQueries({ queryKey: ["comments"] })
+            
+            
         }
     })
 
@@ -631,20 +631,20 @@ export const useRemoveFriend = (username: string, userId) => {
             });
 
 
-            // queryClient.setQueryData(['userFriends', recepientId], (friends: any) => {
-            //     const updatedUser = produce(friends, (draft: any) => {
-            //         draft?.pages?.forEach(((page, pageIndex) => (
-            //             page.friends.forEach(({ friend }, friendIndex) => {
-            //                 if (friend._id == recepientId) {
-            //                     console.log(friends.pages[pageIndex].friends)
-            //                     friends.pages[pageIndex].friends.splice(friendIndex, 1)
-            //                     return
-            //                 }
-            //             })
-            //         )))
-            //         return draft
-            //     })
-            // });
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
 
 
             return { previousUser };
@@ -657,9 +657,9 @@ export const useRemoveFriend = (username: string, userId) => {
         },
         onSettled: (data, err, { recepientId }) => {
             console.log(data)
-            // queryClient.invalidateQueries({queryKey: ['userFriends', recepientId]})
-            // uncommeting this will refetch the comments again from the server to be in sync
-            // queryClient.invalidateQueries({ queryKey: ["user", username] })
+            
+            
+            
         }
     })
 
@@ -736,8 +736,8 @@ export const useFollowUserToggle = (username: string, userId: string) => {
         },
         onSettled: (e) => {
             console.log(e)
-            // uncommeting this will refetch the comments again from the server to be in sync
-            // queryClient.invalidateQueries({ queryKey: ["userFollowers", userId] })
+            
+            
         }
     })
 

@@ -1,10 +1,3 @@
-// Add these indexes to your Post schema for better performance:
-// PostSchema.index({ "location.country": 1, postType: 1 });
-// PostSchema.index({ "location.city": 1, postType: 1 });
-// PostSchema.index({ postType: 1, visibility: 1, createdAt: -1 });
-// PostSchema.index({ "location.latitude": 1, "location.longitude": 1, postType: 1 });
-
-
 import { z } from 'zod'
 import { Cursor, ValidMongoId } from './global'
 import { Types } from 'mongoose';
@@ -42,10 +35,9 @@ const MediaSchema = z.object({
     capturedAt: z.string().optional()
 });
 
-// Environmental Contribution Data Schemas (for separate EnvironmentalContribution document)
 const PlantationDataSchema = z.object({
-    type: z.string().optional(), // matches schema field name
-    species: z.string().optional(), // matches schema field name
+    type: z.string().optional(),
+    species: z.string().optional(),
     estimatedHeight: z.number().positive().optional(),
     lastUpdateDate: z.date().optional(),
     nextUpdateDue: z.date().optional(),
@@ -53,20 +45,20 @@ const PlantationDataSchema = z.object({
 });
 
 const GarbageCollectionDataSchema = z.object({
-    type: z.string().optional(), // Recycling, Organic, General, etc.
+    type: z.string().optional(),
     capacity: z.string().optional(),
     material: z.string().optional()
 });
 
 const WaterPondsDataSchema = z.object({
-    type: z.string().optional(), // Storage, Decorative, Irrigation, etc.
+    type: z.string().optional(),
     capacity: z.string().optional(),
     purpose: z.string().optional(),
     estimatedDepth: z.number().positive().optional()
 });
 
 const RainWaterDataSchema = z.object({
-    type: z.string().optional(), // Rooftop, Ground catchment, etc.
+    type: z.string().optional(),
     capacity: z.string().optional(),
     storageMethod: z.string().optional(),
     estimatedVolume: z.number().positive().optional()
@@ -78,7 +70,6 @@ const UpdateHistoryItemSchema = z.object({
     notes: z.string().optional()
 });
 
-// Updated Post Schema - simplified, no environmental data
 export const CreatePost = z.object({
     targetId: ValidMongoId.optional(),
     username: z.string().optional(),
@@ -92,7 +83,6 @@ export const CreatePost = z.object({
     projectDetails: ProjectDetailsSchema.optional(),
     hashtags: z.array(z.string()).optional().default([])
 }).refine((data) => {
-    // If it's an environmental post type, require projectDetails
     const isEnvironmentalPost = ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(data.postType);
 
     if (isEnvironmentalPost && !data.projectDetails) {
@@ -104,7 +94,6 @@ export const CreatePost = z.object({
     message: "Project details are required for environmental contribution posts"
 });
 
-// Separate Environmental Contribution Schema
 export const CreateEnvironmentalContribution = z.object({
     elementId: ValidMongoId.optional(),
     postId: ValidMongoId,
@@ -114,9 +103,7 @@ export const CreateEnvironmentalContribution = z.object({
     garbageCollectionData: GarbageCollectionDataSchema.optional(),
     waterPondsData: WaterPondsDataSchema.optional(),
     rainWaterData: RainWaterDataSchema.optional(),
-    // updateHistory: z.array(UpdateHistoryItemSchema).optional().default([])
 }).refine((data) => {
-    // Ensure at least one environmental data type is provided
     const hasEnvironmentalData = !!(
         data.plantationData ||
         data.garbageCollectionData ||
@@ -129,12 +116,9 @@ export const CreateEnvironmentalContribution = z.object({
     message: "At least one environmental data type must be provided"
 });
 
-// Update Environmental Contribution Schema
 export const UpdateEnvironmentalContribution = z.object({
     elementId: ValidMongoId,
     postId: ValidMongoId,
-    // media: z.array(MediaSchema).optional(),
-    // location: LocationSchema.optional(),
     plantationData: PlantationDataSchema.optional(),
     garbageCollectionData: GarbageCollectionDataSchema.optional(),
     waterPondsData: WaterPondsDataSchema.optional(),
@@ -142,7 +126,6 @@ export const UpdateEnvironmentalContribution = z.object({
     updateHistory: z.array(UpdateHistoryItemSchema).optional().default([])
 });
 
-// Existing schemas (updated where necessary)
 export const CreateSharedPost = z.object({
     sharedPostId: ValidMongoId,
     content: z.string().optional(),
@@ -261,7 +244,6 @@ export const PromotionActivation = z.object({
     postId: ValidMongoId,
 });
 
-// Map-related schemas
 const BoundingBoxSchema = z.object({
     northEast: z.object({
         latitude: z.coerce.number().min(-90).max(90),
@@ -293,7 +275,6 @@ export const SearchGlobalMapLocations = z.object({
     limit: z.coerce.number().min(1).max(50).default(20)
 });
 
-// Type exports
 export type CreatePostDTO = z.infer<typeof CreatePost>;
 export type CreateEnvironmentalContributionDTO = z.infer<typeof CreateEnvironmentalContribution>;
 export type UpdateEnvironmentalContributionDTO = z.infer<typeof UpdateEnvironmentalContribution>;
@@ -319,7 +300,6 @@ export type GetGlobalMapDataDTO = z.infer<typeof GetGlobalMapData>;
 export type GetGlobalMapCountsDTO = z.infer<typeof GetGlobalMapCounts>;
 export type SearchGlobalMapLocationsDTO = z.infer<typeof SearchGlobalMapLocations>;
 
-// Server-side interfaces for enhanced data
 export interface MediaWithLocation {
     name?: string;
     url: string;
@@ -335,7 +315,6 @@ export interface UpdateHistoryItem {
     notes?: string;
 }
 
-// Server-enhanced Post data type
 export interface ServerPostData {
     targetId?: Types.ObjectId;
     username?: string;
@@ -364,7 +343,6 @@ export interface ServerPostData {
     createdAt?: Date;
 }
 
-// Server-enhanced Environmental Contribution data type
 export interface ServerEnvironmentalContributionData {
     postId: Types.ObjectId;
     media?: MediaWithLocation[];

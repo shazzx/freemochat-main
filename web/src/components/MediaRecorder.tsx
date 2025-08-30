@@ -36,53 +36,8 @@ const AudioRecorder = ({ stopRecordingRef, onRecordingComplete, setIsRecordingMa
         }
     }, [])
 
-    // const startRecording = async () => {
-    //     try {
-    //         const stream = await navigator.mediaDevices.getUserMedia(
-    //             { audio: true }
-    //         );
-    //         mediaStream.current = stream;
-    //         mediaRecorder.current = new MediaRecorder(stream);
-    //         mediaRecorder.current.ondataavailable = (e) => {
-    //             if (e.data.size > 0) {
-    //                 chunks.current.push(e.data);
-    //             }
-    //         };
-    //         mediaRecorder.current.onstop = async () => {
-    //             const recordedBlob = new Blob(
-    //                 chunks.current, { type: 'audio/webm' }
-    //             );
-    //             chunks.current = [];
-    //             setRecordedAudio(recordedBlob)
-    //             onRecordingComplete(recordedBlob, uploadState.current, recordingTime.current)
-    //             setRecordingTime(0)
-    //         };
-    //         mediaRecorder.current.start();
-    //         setIsRecording(true)
-    //         setIsRecordingMain(true)
-    //         recordingTime.current = 0;
-
-    //         timer.current = setInterval(() => {
-    //             recordingTime.current = recordingTime.current + 1
-    //             setRecordingTime((prev) => prev + 1)
-
-    //             console.log('stop recording')
-    //             if (recordingTime.current >= 30) {
-    //                 uploadState.current = false
-    //                 recordingTime.current = 0;
-    //                 setRecordingTime(0)
-    //                 stopRecording()
-    //                 toast.info("voice message must not exceed 30 seconds")
-    //             }
-    //         }, 1000);
-    //     } catch (error) {
-    //         console.error('Error accessing microphone:', error);
-    //     }
-    // };
-
     const startRecording = async () => {
         try {
-            console.log('Requesting microphone access...');
 
             if (!window.MediaRecorder) {
                 toast.error('Your browser does not support audio recording');
@@ -91,7 +46,6 @@ const AudioRecorder = ({ stopRecordingRef, onRecordingComplete, setIsRecordingMa
             }
 
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log('Microphone access granted');
 
             mediaStream.current = stream;
             mediaRecorder.current = new MediaRecorder(stream);
@@ -121,7 +75,6 @@ const AudioRecorder = ({ stopRecordingRef, onRecordingComplete, setIsRecordingMa
                 recordingTime.current = recordingTime.current + 1
                 setRecordingTime((prev) => prev + 1)
 
-                console.log('stop recording')
                 if (recordingTime.current >= 30) {
                     uploadState.current = false
                     recordingTime.current = 0;

@@ -95,7 +95,6 @@ function YourAccount() {
                                 </Label>
                                 <Input
                                     placeholder="Enter Username"
-                                    // ref={newPasswordRef}
                                     id="new-password"
                                     onChange={(e) => setUsernameOrEmail(e.target.value)}
                                     type="text"

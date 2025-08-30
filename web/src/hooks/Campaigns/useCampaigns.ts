@@ -15,12 +15,12 @@ export const useCampaigns = (reverse) => {
         getNextPageParam: (lastPage) => lastPage.nextCursor
     })
 
-    // const flattenData = useMemo(() =>
-    //     data?.pages.flatMap((page) => page.map((page) => page.promotions)[0]) ?? [],
-    //     [data]
-    // )
+    
+    
+    
+    
 
-    // console.log(flattenData)
+    
 
     return {
         data: data?.pages ?? [],
@@ -54,11 +54,11 @@ export const useCampaignsActivationToggle = () => {
 
         onError: (err, newComment, context) => {
             toast.error("something went wrong")
-            // queryClient.setQueryData(['campaigns'], context.previousComments)
+            
         },
         onSettled: (e) => {
-            // uncommeting this will refetch the comments again from the server to be in sync
-            // queryClient.invalidateQueries({ queryKey: ["comments"] })
+            
+            
         }
     })
 

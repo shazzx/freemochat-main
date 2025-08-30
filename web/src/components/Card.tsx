@@ -1,5 +1,3 @@
-// @ts-ignore
-
 import {
     Card,
     CardContent,
@@ -12,7 +10,6 @@ export function SimpleCard({ title, content }) {
         <Card className="w-full border-primary">
             <CardHeader>
                 <CardTitle className="text-base font-medium">{title}</CardTitle>
-                {/* <CardDescription>Deploy your new project in one-click.</CardDescription> */}
             </CardHeader>
             <CardContent className="text-2xl font-bold">
                 {content}

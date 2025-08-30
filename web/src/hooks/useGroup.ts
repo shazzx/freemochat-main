@@ -53,14 +53,14 @@ export const useCreateGroup = () => {
       await queryClient.cancelQueries({ queryKey: ['groups'] })
       const previousGroups = queryClient.getQueryData(['groups'])
 
-      // queryClient.setQueryData(['groups'], (pages: any) => {
-      //   const updatedGroups = produce(pages, (draft: any) => {
-      //     return [{ ...groupDetails, images, followers: 0, isUploaded: images.length > 0 ? false : null,  createdAt: Date.now(), totalPosts: 0 }, ...pages]
+      
+      
+      
 
-      //     // throw new Error()
-      //   })
-      //   return updatedGroups
-      // });
+      
+      
+      
+      
 
       return { previousGroups };
     },
@@ -68,13 +68,13 @@ export const useCreateGroup = () => {
     onError: (err, newGroup, context) => {
       console.log(err)
       toast.error("something went wrong")
-      // queryClient.setQueryData(['groups'], context.previousGroups)
+      
     },
     onSettled: (e) => {
       queryClient.invalidateQueries({ queryKey: ['groups'] })
 
-      // uncommeting this will refetch the comments again from the server to be in sync
-      // queryClient.invalidateQueries({ queryKey: ["comments"] })
+      
+      
     }
   })
 
@@ -157,7 +157,7 @@ export const useRemoveGroup = () => {
           console.log('not')
 
 
-          // throw new Error()
+          
         })
         return updatedGroups
       });
@@ -171,7 +171,7 @@ export const useRemoveGroup = () => {
       queryClient.setQueryData(['groups'], context.previousGroups)
     },
     onSettled: (e) => {
-      // this will refetch the pages again from the server to be in sync
+      
       queryClient.invalidateQueries({ queryKey: ["groups"] })
     }
   })
@@ -210,7 +210,7 @@ export function useGroupMembers(groupId: string): any {
 }
 
 
-// will handle join and remove
+
 export const useJoinGroup = () => {
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
@@ -252,8 +252,8 @@ export const useJoinGroup = () => {
     },
     onSettled: (e) => {
       console.log(e)
-      // uncommeting this will refetch the comments again from the server to be in sync
-      // queryClient.invalidateQueries({ queryKey: ["page"] })
+      
+      
     }
   })
 
@@ -267,7 +267,7 @@ export const useJoinGroup = () => {
 }
 
 export const useToggleAdmin = () => {
-  // const { user } = useAppSelector((state) => state.user)
+  
   const queryClient = useQueryClient()
   const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
     mutationFn: (groupDetails: { groupId: string, user: any, isAdmin?: boolean, index?: number, isChatGroup?: boolean }) => {
@@ -275,56 +275,56 @@ export const useToggleAdmin = () => {
     },
     onMutate: async ({ groupId, user, isAdmin, index }) => {
       console.log(groupId, user, isAdmin, index)
-      // await queryClient.cancelQueries({ queryKey: ['group'] })
-      // const previousPage = queryClient.getQueryData(['group'])
-      // if (isAdmin) {
-      //   queryClient.setQueryData(['group'], (group: any) => {
-      //     const updatedPage = produce(group, (draft: any) => {
-      //       console.log(group.admins[index])
-      //       if (group.admins[index].isAdmin) {
-      //         group.admins[index].isAdmin = false
-      //       } else {
-      //         group.admins[index].isAdmin = true
-      //       }
-      //       return draft
-      //     })
-      //     return updatedPage
-      //   })
-      // } else {
-      //   queryClient.setQueryData(['groupMembers'], (data: any) => {
-      //     const updatedPage = produce(data, (draft: any) => {
-      //       draft?.pages.forEach((page, pageIndex) => {
-      //         page.members.forEach((_data, i) => {
-      //           if (_data.user._id == user?._id && _data.isAdmin == 0) {
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
                   
-      //             _data.isAdmin = 1
-      //             console.log(data.pages[pageIndex].members[i])
-      //           }
-      //           if (_data.user._id == user?._id && _data.isAdmin == 1) {
-      //             console.log('not admin')
-      //             _data.isAdmin = 0
-      //           }
-      //           console.log(data)
-      //         })
-      //       })
-      //       return draft
-      //     })
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
 
-      //     return updatedPage
-      //   });
-      // }
+      
+      
+      
 
-      // return { previousPage };
+      
     },
 
     onError: (err) => {
       console.log(err)
       toast.error("something went wrong")
-      // queryClient.setQueryData(['group'], context.previousPage)
+      
     },
     onSettled: (e) => {
       console.log(e)
-      // uncommeting this will refetch the comments again from the server to be in sync
+      
       queryClient.invalidateQueries({ queryKey: ["group"] })
       queryClient.invalidateQueries({ queryKey: ["chatgroup"] })
       queryClient.invalidateQueries({ queryKey: ["groupMembers"] })

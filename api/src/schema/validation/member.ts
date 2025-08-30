@@ -15,7 +15,6 @@ export const JoinGroup = z.object({
 export const ToggleAdmin = z.object({
     groupId: z.string(),
     userId: z.string(),
-    // isChatGroup: z.boolean()
 })
 
 export const RemoveMember = z.object({

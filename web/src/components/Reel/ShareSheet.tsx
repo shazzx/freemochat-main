@@ -1,4 +1,4 @@
-// ShareSheet.tsx
+
 import React from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -20,13 +20,13 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
   isReel = true
 }) => {
 
-  // Generate post URL
+  
   const getPostUrl = () => {
     const baseUrl = window.location.origin;
     return `${baseUrl}/${isReel ? 'reels' : 'posts'}/${sharedPost?._id}`;
   };
 
-  // Copy link to clipboard
+  
   const copyLink = () => {
     const url = getPostUrl();
     navigator.clipboard.writeText(url)
@@ -39,7 +39,7 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
       });
   };
 
-  // Share via platforms
+  
   const shareViaPlatform = (platform: string) => {
     const url = encodeURIComponent(getPostUrl());
     const text = encodeURIComponent(`Check out this ${isReel ? 'reel' : 'post'} on Freedom Book!`);
@@ -63,7 +63,7 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
     window.open(shareUrl, '_blank', 'width=600,height=400');
   };
 
-  // Download video
+  
   const downloadVideo = async () => {
     console.log('Downloading video for post:', sharedPost?._id);
     if (!sharedPost?.media || !sharedPost.media[0]?.watermarkUrl || !sharedPost.media[0]?.url) {
@@ -78,7 +78,7 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
 
       const blob = await response.blob();
 
-      // Create download link
+      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -86,7 +86,7 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
       document.body.appendChild(a);
       a.click();
 
-      // Cleanup
+      
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
@@ -105,7 +105,6 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
           <SheetTitle className="text-center">Share</SheetTitle>
         </SheetHeader>
 
-        {/* Post preview */}
         {sharedPost && (
           <div className="p-4 border-b flex items-center space-x-3">
             <Avatar className="h-10 w-10">
@@ -126,10 +125,8 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
           </div>
         )}
 
-        {/* Share options */}
         <div className="flex-1 p-4 overflow-y-auto">
           <div className="grid grid-cols-4 gap-4">
-            {/* Share via messaging */}
             <Button
               variant="outline"
               className="flex flex-col items-center h-auto p-3 gap-1"
@@ -139,7 +136,6 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
               <span className="text-xs">Message</span>
             </Button>
 
-            {/* Share to Facebook */}
             <Button
               variant="outline"
               className="flex flex-col items-center h-auto p-3 gap-1"
@@ -149,7 +145,6 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
               <span className="text-xs">Facebook</span>
             </Button>
 
-            {/* Share to Twitter */}
             <Button
               variant="outline"
               className="flex flex-col items-center h-auto p-3 gap-1"
@@ -159,7 +154,6 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
               <span className="text-xs">Twitter</span>
             </Button>
 
-            {/* Copy link */}
             <Button
               variant="outline"
               className="flex flex-col items-center h-auto p-3 gap-1"
@@ -170,7 +164,6 @@ const ShareSheet: React.FC<ShareSheetProps> = ({
             </Button>
           </div>
 
-          {/* Download option (only for videos/reels) */}
           {isReel && (
             <Button
               variant="outline"

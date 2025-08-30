@@ -6,11 +6,9 @@ export class Notification {
     @Prop()
     value: String;
 
-    // type can be like/comment/follow/request/join
     @Prop()
     type: String;
 
-    // type can be user/page/group
     @Prop()
     targetType: String;
 

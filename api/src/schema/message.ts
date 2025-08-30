@@ -32,8 +32,6 @@ export class Message {
 
     @Prop({ type: [{ userId: Types.ObjectId, deletedAt: Date }] })
     deletedFor: Array<{ userId: ObjectId, deletedAt: Date }>
-    // @Prop({ type: Date, default: Date.now })
-    // createdAt: Date;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message)

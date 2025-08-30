@@ -8,7 +8,6 @@ const callSlice = createSlice({
     name: "online",
     initialState,
     reducers: {
-        // caller
         setOnline(state, action) {
             state.isOnline[action.payload] = true
         },

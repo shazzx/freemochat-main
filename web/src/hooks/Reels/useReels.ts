@@ -23,7 +23,7 @@ export function useReelsFeed(initialReelId = null) {
         error,
         hasNextPage
     } = useInfiniteQuery({
-        queryKey: ['reelsFeed', initialReelId], // Include initialReelId in query key
+        queryKey: ['reelsFeed', initialReelId], 
         queryFn: ({ pageParam }) => fetchReelsFeed(pageParam, initialReelId),
         staleTime: 1000 * 60 * 5,
         gcTime: 1000 * 60 * 10,
@@ -65,7 +65,7 @@ export function useVideosFeed(initialReelId) {
         error,
         hasNextPage
     } = useInfiniteQuery({
-        queryKey: ['videosFeed', initialReelId], // Include initialReelId in the query key
+        queryKey: ['videosFeed', initialReelId], 
         queryFn: ({ pageParam }) => fetchVideosFeed(pageParam, initialReelId),
         staleTime: 1000 * 60 * 5,
         gcTime: 1000 * 60 * 10,
@@ -153,8 +153,8 @@ export const getQueryKeyForMode = (mode, params: QueryParams = {}) => {
     }
 };
 
-// FIXED: useReelsDataSource function that adds suggested reel to first page
-// instead of creating a separate page
+
+
 
 export const useCreateReel = () => {
     const dispatch = useAppDispatch()
@@ -190,17 +190,17 @@ export const useCreateReel = () => {
 export const useReelsDataSource = (mode = 'feed', params: QueryParams = {}) => {
     const queryClient = useQueryClient();
 
-    // Track if initial data is already prepared
+    
     const [dataInitialized, setDataInitialized] = useState(false);
-    // Track the merged data we'll use for the entire session
+    
     const [mergedData, setMergedData] = useState([]);
-    // Track if we need to load more
+    
     const [hasMorePages, setHasMorePages] = useState(true);
-    // Track loading states
+    
     const [isLoading, setIsLoading] = useState(true);
     const [isFetchingNext, setIsFetchingNext] = useState(false);
 
-    // References to original queries based on mode
+    
     let sourceQuery;
 
     console.log(`[ReelsData] Using mode: ${mode}, initialReelId: ${params.initialReelId}`, params);
@@ -212,15 +212,15 @@ export const useReelsDataSource = (mode = 'feed', params: QueryParams = {}) => {
         sourceQuery = useBookamrks();
     }
     else if (mode === 'videosFeed') {
-        // Pass initialReelId to videosFeed query
+        
         sourceQuery = useVideosFeed(params?.initialReelId);
     }
     else {
-        // Pass initialReelId to reelsFeed query
+        
         sourceQuery = useReelsFeed(params?.initialReelId);
     }
 
-    // 1. First useEffect - handle the initial data fetch
+    
     useEffect(() => {
         const fetchInitialData = async () => {
             if (!sourceQuery.data || sourceQuery.data.length === 0) {
@@ -237,7 +237,7 @@ export const useReelsDataSource = (mode = 'feed', params: QueryParams = {}) => {
         fetchInitialData();
     }, [mode, sourceQuery.refetch]);
 
-    // 2. Second useEffect - used for logging and state tracking
+    
     useEffect(() => {
         console.log(`[ReelsData] Source data updated for ${mode}:`, {
             hasSourceData: !!sourceQuery.data && sourceQuery.data.length > 0,
@@ -245,7 +245,7 @@ export const useReelsDataSource = (mode = 'feed', params: QueryParams = {}) => {
             sourceDataLength: sourceQuery.data?.length || 0
         });
 
-        // When data is loaded, update loading state
+        
         if (sourceQuery.data && sourceQuery.data.length > 0 && !sourceQuery.isLoading) {
             setIsLoading(false);
             setHasMorePages(!!sourceQuery.hasNextPage);
@@ -253,9 +253,9 @@ export const useReelsDataSource = (mode = 'feed', params: QueryParams = {}) => {
         }
     }, [mode, sourceQuery.data, sourceQuery.isLoading, sourceQuery.hasNextPage]);
 
-    // Create a direct data fallback in case merged data is empty
+    
     const getFallbackData = useCallback(() => {
-        // if (mergedData.length > 0) return mergedData;
+        
 
         let fallbackData = [];
 
@@ -285,8 +285,8 @@ export const useReelsDataSource = (mode = 'feed', params: QueryParams = {}) => {
                 );
             }
             else {
-                // For feed and videosFeed modes - no filtering needed
-                // The server now returns data in the correct order
+                
+                
                 fallbackData = sourceQuery.data.flatMap(page =>
                     page?.posts?.map((reel, idx) => ({
                         ...reel,
@@ -302,7 +302,7 @@ export const useReelsDataSource = (mode = 'feed', params: QueryParams = {}) => {
         return fallbackData.length > 0 ? fallbackData : [];
     }, [sourceQuery.data, mode]);
 
-    // Return with fallback mechanism
+    
     const finalData = getFallbackData();
 
     console.log(`[ReelsData] Returning ${finalData.length} items (${sourceQuery.data?.length || 0} source pages)`);
@@ -326,8 +326,8 @@ export const useUpdateReel = () => {
     const userId = user?._id || null;
 
     return useMutation({
-        // We'll assume there's an editReelPost API function that needs to be imported
-        // You'll need to import this function from your API: import { editReelPost } from "@/api/Post/reels";
+        
+        
         mutationFn: (postDetails: { postId: string, content: string }) => {
             return updateReelPost({
                 postId: postDetails.postId,
@@ -338,22 +338,22 @@ export const useUpdateReel = () => {
         onMutate: async ({ postId, content }) => {
             console.log(`Editing reel: postId=${postId}, userId=${userId}`);
 
-            // For profile mode only
+            
             const queryKey = ['userReels', userId];
 
-            // Cancel any outgoing refetches for that query
+            
             await queryClient.cancelQueries({ queryKey });
 
-            // Get the previous data
+            
             const previousData = queryClient.getQueryData(queryKey);
 
             try {
-                // Update data in cache
+                
                 queryClient.setQueryData(queryKey, (oldData: any) => {
                     if (!oldData) return oldData;
 
                     return produce(oldData, (draft) => {
-                        // Find and update the post in all pages
+                        
                         for (let i = 0; i < draft.pages.length; i++) {
                             const page = draft.pages[i];
                             if (!page.posts) continue;
@@ -361,15 +361,15 @@ export const useUpdateReel = () => {
                             for (let j = 0; j < page.posts.length; j++) {
                                 const post = page.posts[j];
                                 if (post._id === postId) {
-                                    // Update the content
+                                    
                                     post.content = content;
-                                    post.isEdited = true; // Mark as edited
-                                    return; // Successfully updated
+                                    post.isEdited = true; 
+                                    return; 
                                 }
                             }
                         }
 
-                        // If we reach here, we couldn't find the post
+                        
                         console.warn(`Could not find reel with ID ${postId} in cache`);
                     });
                 });
@@ -385,7 +385,7 @@ export const useUpdateReel = () => {
             console.error("Error editing post:", err);
             toast.error("Something went wrong when editing the post");
 
-            // Restore the previous data
+            
             const queryKey = ['userReels', variables['userId']];
             if (context?.previousData) {
                 queryClient.setQueryData(queryKey, context.previousData);
@@ -404,8 +404,8 @@ export const useDeleteReel = () => {
     const userId = user?._id || null;
 
     return useMutation({
-        // We'll assume there's a deleteReelPost API function that needs to be imported
-        // You'll need to import this function from your API: import { deleteReelPost } from "@/api/Post/reels";
+        
+        
         mutationFn: ({ postId }: { postId: string }) => {
             return deleteReelPost({
                 postId
@@ -415,37 +415,37 @@ export const useDeleteReel = () => {
         onMutate: async ({ postId }) => {
             console.log(`Deleting reel: postId=${postId}, userId=${userId}`);
 
-            // For profile mode only
+            
             const queryKey = ['userReels', userId];
 
-            // Cancel any outgoing refetches for that query
+            
             await queryClient.cancelQueries({ queryKey });
 
-            // Get the previous data
+            
             const previousData = queryClient.getQueryData(queryKey);
 
             try {
-                // Update data in cache
+                
                 queryClient.setQueryData(queryKey, (oldData: any) => {
                     if (!oldData) return oldData;
 
                     return produce(oldData, (draft) => {
-                        // Handle for each page
+                        
                         for (let i = 0; i < draft.pages.length; i++) {
                             const page = draft.pages[i];
                             if (!page.posts) continue;
 
-                            // Find the post index
+                            
                             const postIndex = page.posts.findIndex(post => post._id === postId);
 
                             if (postIndex !== -1) {
-                                // Remove the post from the array
+                                
                                 page.posts.splice(postIndex, 1);
-                                return; // Successfully removed
+                                return; 
                             }
                         }
 
-                        // If we reach here, we couldn't find the post
+                        
                         console.warn(`Could not find reel with ID ${postId} in cache`);
                     });
                 });
@@ -461,7 +461,7 @@ export const useDeleteReel = () => {
             console.error("Error deleting post:", err);
             toast.error("Something went wrong when deleting the post");
 
-            // Restore the previous data
+            
             const queryKey = ['userReels', variables['userId']];
             if (context?.previousData) {
                 queryClient.setQueryData(queryKey, context.previousData);
@@ -492,24 +492,24 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
         onMutate: async ({ postId, postIndex, pageIndex, reaction, type, targetId }) => {
             console.log(`Liking reel: postId=${postId}, pageIndex=${pageIndex}, postIndex=${postIndex}, sourceMode=${sourceMode}`);
 
-            // Determine the query key based on the source mode
+            
             const queryKey = getQueryKeyForMode(sourceMode, { userId: targetId, initialReelId });
 
-            // Cancel any outgoing refetches for that query
+            
             await queryClient.cancelQueries({ queryKey });
 
-            // Get the previous data
+            
             const previousData = queryClient.getQueryData(queryKey);
 
             try {
-                // Update data in cache
+                
                 queryClient.setQueryData(queryKey, (pages: any) => {
                     if (!pages) return pages;
 
                     return produce(pages, (draft) => {
-                        // Special handling for bookmarks mode
+                        
                         if (sourceMode === 'bookmarks') {
-                            // In bookmarks, the structure is different - we need to find the bookmark with this post
+                            
                             for (let i = 0; i < draft.pages.length; i++) {
                                 const page = draft.pages[i];
                                 if (!page.bookmarks) continue;
@@ -517,7 +517,7 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                                 for (let j = 0; j < page.bookmarks.length; j++) {
                                     const bookmark = page.bookmarks[j];
                                     if (bookmark.post && bookmark.post._id === postId) {
-                                        // Found the post in bookmarks
+                                        
                                         if (bookmark.post.isLikedByUser) {
                                             bookmark.post.isLikedByUser = false;
                                             bookmark.post.likesCount = Math.max(0, bookmark.post.likesCount - 1);
@@ -527,14 +527,14 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                                             bookmark.post.likesCount = (bookmark.post.likesCount || 0) + 1;
                                             bookmark.post.reaction = reaction || 'like';
                                         }
-                                        return; // Successfully updated
+                                        return; 
                                     }
                                 }
                             }
                         }
-                        // For profile mode, structure might be different
+                        
                         else if (sourceMode === 'profile') {
-                            // Try first with provided indices
+                            
                             if (draft.pages[pageIndex]?.posts?.[postIndex]?._id === postId) {
                                 const post = draft.pages[pageIndex].posts[postIndex];
 
@@ -547,10 +547,10 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                                     post.likesCount = (post.likesCount || 0) + 1;
                                     post.reaction = reaction || 'like';
                                 }
-                                return; // Successfully updated
+                                return; 
                             }
 
-                            // Search by ID in all pages
+                            
                             for (let i = 0; i < draft.pages.length; i++) {
                                 const page = draft.pages[i];
                                 if (!page.posts) continue;
@@ -567,16 +567,16 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                                             post.likesCount = (post.likesCount || 0) + 1;
                                             post.reaction = reaction || 'like';
                                         }
-                                        return; // Successfully updated
+                                        return; 
                                     }
                                 }
                             }
                         }
-                        // For suggested reels and feed mode
+                        
                         else {
-                            // Check if this is a suggested reel (first page in feed mode)
+                            
                             const isSuggested = draft.pages[pageIndex]?.isSuggested === true;
-                            // Try with provided indices first
+                            
                             if (draft.pages[pageIndex]?.posts?.[postIndex]?._id === postId) {
                                 const post = draft.pages[pageIndex].posts[postIndex];
 
@@ -589,10 +589,10 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                                     post.likesCount = (post.likesCount || 0) + 1;
                                     post.reaction = reaction || 'like';
                                 }
-                                return; // Successfully updated
+                                return; 
                             }
 
-                            // If not found, search by ID in all pages
+                            
                             for (let i = 0; i < draft.pages.length; i++) {
                                 const page = draft.pages[i];
                                 if (!page.posts) continue;
@@ -609,21 +609,21 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                                             post.likesCount = (post.likesCount || 0) + 1;
                                             post.reaction = reaction || 'like';
                                         }
-                                        return; // Successfully updated
+                                        return; 
                                     }
                                 }
                             }
                         }
 
-                        // If we reach here, we couldn't find the post
+                        
                         console.warn(`Could not find reel with ID ${postId} in cache`);
                     });
                 });
 
-                // ALSO update the reel in other caches if they exist
-                // This ensures consistency across different views
+                
+                
 
-                // 1. Update in main feed if liked from profile or bookmarks
+                
                 if (sourceMode === 'profile' || sourceMode === 'bookmarks') {
                     const feedData = queryClient.getQueryData(['reelsFeed']);
                     if (feedData) {
@@ -635,7 +635,7 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                                 for (let j = 0; j < page.posts.length; j++) {
                                     const post = page.posts[j];
                                     if (post._id === postId) {
-                                        // Toggle like status
+                                        
                                         if (post.isLikedByUser) {
                                             post.isLikedByUser = false;
                                             post.likesCount = Math.max(0, post.likesCount - 1);
@@ -653,7 +653,7 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                     }
                 }
 
-                // 2. Update in profile if liked from feed or bookmarks
+                
                 if ((sourceMode === 'feed' || sourceMode === 'bookmarks') && targetId) {
                     const profileKey = ['userReels', targetId];
                     const profileData = queryClient.getQueryData(profileKey);
@@ -666,7 +666,7 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                                 for (let j = 0; j < page.posts.length; j++) {
                                     const post = page.posts[j];
                                     if (post._id === postId) {
-                                        // Toggle like status
+                                        
                                         if (post.isLikedByUser) {
                                             post.isLikedByUser = false;
                                             post.likesCount = Math.max(0, post.likesCount - 1);
@@ -684,7 +684,7 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                     }
                 }
 
-                // 3. Update in bookmarks if liked from feed or profile
+                
                 if (sourceMode === 'feed' || sourceMode === 'profile') {
                     const bookmarksData = queryClient.getQueryData(['userBookmarks', 'reel']);
                     if (bookmarksData) {
@@ -696,7 +696,7 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
                                 for (let j = 0; j < page.bookmarks.length; j++) {
                                     const bookmark = page.bookmarks[j];
                                     if (bookmark.post && bookmark.post._id === postId) {
-                                        // Toggle like status
+                                        
                                         if (bookmark.post.isLikedByUser) {
                                             bookmark.post.isLikedByUser = false;
                                             bookmark.post.likesCount = Math.max(0, bookmark.post.likesCount - 1);
@@ -725,7 +725,7 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
             console.error("Error liking post:", err);
             toast.error("Something went wrong when liking the post");
 
-            // Restore the previous data
+            
             const queryKey = getQueryKeyForMode(sourceMode, { userId: variables.targetId });
             if (context?.previousData) {
                 queryClient.setQueryData(queryKey, context.previousData);
@@ -733,21 +733,15 @@ export const useLikeReelPost = (sourceMode = 'feed', initialReelId = null) => {
         },
 
         onSettled: (data, error, variables) => {
-            // We don't invalidate queries here to prevent losing scroll position
-            // If we refetch, the scroll position might reset
+            
+            
 
-            // If needed, you can uncomment this to refresh data from server
-            // But be aware it may cause UI flicker and reset scroll position
-            /*
-            if (!error) {
-              const queryKey = getQueryKeyForMode(sourceMode, { userId: variables.targetId });
-              queryClient.invalidateQueries({ queryKey });
-            }
-            */
+            
+            
         }
     });
 };
-// FIXED: Rewritten bookmark function for reels
+
 export const useBookmarkReelPost = (sourceMode = 'feed', initialReelId = null) => {
     const queryClient = useQueryClient();
 
@@ -764,24 +758,24 @@ export const useBookmarkReelPost = (sourceMode = 'feed', initialReelId = null) =
         onMutate: async ({ postId, pageIndex, postIndex, targetId, type }) => {
             console.log(`Bookmarking reel: postId=${postId}, pageIndex=${pageIndex}, postIndex=${postIndex}, sourceMode=${sourceMode}`);
 
-            // Determine the query key based on the source mode
+            
             const queryKey = getQueryKeyForMode(sourceMode, { userId: targetId, initialReelId });
 
-            // Cancel any outgoing refetches for that query
+            
             await queryClient.cancelQueries({ queryKey });
 
-            // Get the previous data
+            
             const previousData = queryClient.getQueryData(queryKey);
 
             try {
-                // Update data in cache
+                
                 queryClient.setQueryData(queryKey, (pages) => {
                     if (!pages) return pages;
 
                     return produce(pages, (draft: any) => {
-                        // Special handling for bookmarks mode
+                        
                         if (sourceMode === 'bookmarks') {
-                            // In bookmarks mode, we need to find the bookmark with this post
+                            
                             for (let i = 0; i < draft.pages.length; i++) {
                                 const page = draft.pages[i];
                                 if (!page.bookmarks) continue;
@@ -789,23 +783,23 @@ export const useBookmarkReelPost = (sourceMode = 'feed', initialReelId = null) =
                                 for (let j = 0; j < page.bookmarks.length; j++) {
                                     const bookmark = page.bookmarks[j];
                                     if (bookmark.post && bookmark.post._id === postId) {
-                                        // Found the post in bookmarks
+                                        
                                         bookmark.post.isBookmarkedByUser = !bookmark.post.isBookmarkedByUser;
-                                        return; // Successfully updated
+                                        return; 
                                     }
                                 }
                             }
                         }
-                        // For all other modes
+                        
                         else {
-                            // First try with provided indices
+                            
                             if (draft.pages[pageIndex]?.posts?.[postIndex]?._id === postId) {
                                 const post = draft.pages[pageIndex].posts[postIndex];
                                 post.isBookmarkedByUser = !post.isBookmarkedByUser;
-                                return; // Successfully updated
+                                return; 
                             }
 
-                            // If not found, search by ID in all pages
+                            
                             for (let i = 0; i < draft.pages.length; i++) {
                                 const page = draft.pages[i];
                                 if (!page.posts) continue;
@@ -815,21 +809,21 @@ export const useBookmarkReelPost = (sourceMode = 'feed', initialReelId = null) =
                                     if (post._id === postId) {
                                         post.isBookmarkedByUser = !post.isBookmarkedByUser;
                                         console.log(`Updated bookmark status for postId ${postId} in cache`);
-                                        return; // Successfully updated
+                                        return; 
                                     }
                                 }
                             }
                         }
 
-                        // If we reach here, we couldn't find the post
+                        
                         console.warn(`Could not find reel with ID ${postId} in cache`);
                     });
                 });
 
-                // ALSO update the reel in other caches if they exist
-                // This ensures consistency across different views
+                
+                
 
-                // 1. Update in main feed if bookmarked from profile or bookmarks
+                
                 if (sourceMode === 'profile' || sourceMode === 'bookmarks') {
                     const feedData = queryClient.getQueryData(['reelsFeed']);
                     if (feedData) {
@@ -850,7 +844,7 @@ export const useBookmarkReelPost = (sourceMode = 'feed', initialReelId = null) =
                     }
                 }
 
-                // 2. Update in profile if bookmarked from feed or bookmarks
+                
                 if ((sourceMode === 'feed' || sourceMode === 'bookmarks') && targetId) {
                     const profileKey = ['userReels', targetId];
                     const profileData = queryClient.getQueryData(profileKey);
@@ -883,7 +877,7 @@ export const useBookmarkReelPost = (sourceMode = 'feed', initialReelId = null) =
             console.error("Error bookmarking post:", err);
             toast.error("Something went wrong when bookmarking the post");
 
-            // Restore the previous data
+            
             const queryKey = getQueryKeyForMode(sourceMode, { userId: variables['targetId'] });
             if (context?.previousData) {
                 queryClient.setQueryData(queryKey, context.previousData);
@@ -891,12 +885,12 @@ export const useBookmarkReelPost = (sourceMode = 'feed', initialReelId = null) =
         },
 
         onSettled: (data, error, variables) => {
-            // We don't invalidate queries here to prevent losing scroll position
+            
         }
     });
 };
 
-// Wrapper functions for different sources to maintain backward compatibility
+
 export const useLikeReelsFeedPost = (initialReelId = null) => {
     return useLikeReelPost('feed', initialReelId);
 };
@@ -914,7 +908,7 @@ export const useLikeBookmarkedReelPost = () => {
     return useLikeReelPost('bookmarks');
 };
 
-// FIXED: Wrapper functions for bookmarking
+
 export const useBookmarkReelsFeedPost = (initialReelId = null) => {
     return useBookmarkReelPost('feed', initialReelId);
 };

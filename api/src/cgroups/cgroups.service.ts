@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UserChatListService } from 'src/chatlist/chatlist.service';
@@ -17,9 +17,7 @@ export class CGroupsService {
     ) { }
 
     async getGroups(userId) {
-        // console.log(userId)
         let groups = await this.chatGroupModel.find({$or: [{ user: new Types.ObjectId(userId)}, {admins: new Types.ObjectId(userId) }]})
-        // console.log('founded groups', groups)
         return groups
     }
 
@@ -124,19 +122,15 @@ export class CGroupsService {
     }
 
     async createGroup(userId, groupDetails: any) {
-        console.log(userId)
         let _userId = new Types.ObjectId(userId)
         try {
             let group = await this.chatGroupModel.create({ admins: [_userId], user: _userId, ...groupDetails })
             let message = await this.messageService.createMessage({ type: 'ChatGroup', sender: new Types.ObjectId(userId), recepient: group._id, content: "group created", messageType: "Info", isGroup: true })
-            // console.log(message, 'message')
-            // console.log(group, 'group')
             await this.metricsAggregatorService.incrementCount(group._id, "members", "group")
 
             return group
         } catch (error) {
-            console.log(error)
-            // throw new InternalServerErrorException()
+            throw new InternalServerErrorException()
         }
     }
 

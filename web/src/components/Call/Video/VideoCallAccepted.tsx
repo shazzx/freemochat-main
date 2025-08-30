@@ -32,36 +32,17 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
         })
     })
 
-  const appId = '07c0c67268b84af3a73d5ccc109fd264'
+    const appId = '07c0c67268b84af3a73d5ccc109fd264'
 
 
     const remoteUsers = useRemoteUsers();
-
-    // useEffect(() => {
-    //     if (remoteUsers.length == 0) {
-    //         cancelCall()
-    //     }
-    //     return () => {
-    //         console.log('ending calll there here')
-    //         // cancelCall("VIDEO")
-    //     };
-    // }, [remoteUsers])
-
-    // set the connection state
     const [activeConnection, setActiveConnection] = useState(true);
 
-    // track the mic/video state - Turn on Mic and Camera On
     const [micOn, setMic] = useState(true);
     const [cameraOn, setCamera] = useState(true);
 
-    // get local video and mic tracks
     const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
     const { localCameraTrack } = useLocalCameraTrack(cameraOn);
-
-    const muteAudio = async () => {
-        // Update UI to show muted state
-    };
-    console.log(callDetails)
 
     useJoin(
         {
@@ -74,9 +55,7 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
 
     usePublish([localMicrophoneTrack, localCameraTrack]);
 
-    //remote users
     const { audioTracks } = useRemoteAudioTracks(remoteUsers);
-    // play the remote user audio tracks
     audioTracks.forEach((track) => track.play());
 
     useEffect(() => {
@@ -125,7 +104,7 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
             isMobile
         })
     }
-    console.log(callDetails?.recepientDetails.username, user.username)
+
     return (
         <div className="mainContainer absolute left-0 top-0 overflow-hidden flex items-center justify-center z-50">
             {recepientState == 'ACCEPTED' || callDetails?.recepientDetails.username !== user.username ?
@@ -150,11 +129,8 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
                         <MdPhone size={32} color="white" />
                     </button>
 
-                    {/* 
-                    <button className="rounded-full p-[14px] bg-red-500" onClick={() => setMic(a => !a)}>
-                        <Mic color="white" size={32} />
-                    </button> */}
-                </div> :
+                </div>
+                :
                 <div className="flex gap-12 absolute bottom-20 z-10">
                     <Button type="button" className="rounded-full p-4 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={callDecline}>
                         <MdPhone size={32} color="white" />
@@ -167,7 +143,6 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
             }
             <div className="remoteVideoContainer">
                 {
-                    // Initialize each remote stream using RemoteUser component
                     remoteUsers.map((user) => {
                         return (
                             <div key={user.uid} className={isMobile ? "remote-video-container-mobile" : "remote-video-container"}>
@@ -207,24 +182,6 @@ const VideoCallAccepted = ({ channel, _callDetails, cancelCall }) => {
                     className=''
                 />
                 <div>
-
-                    {/* media-controls toolbar component - UI controling mic, camera, & connection state  */}
-                    {/* <div id="controlsToolbar">
-            <div id="mediaControls">
-              <button className="btn" onClick={() => setMic(a => !a)}>
-                Mic
-              </button>
-              <button className="btn" onClick={() => setCamera(a => !a)}>
-                Camera
-              </button>
-            </div>
-            <button id="endConnection"
-                onClick={() => {
-                  setActiveConnection(false)
-                  navigate('/')
-                }}> Disconnect
-            </button>
-          </div> */}
                 </div>
             </div>
         </div>

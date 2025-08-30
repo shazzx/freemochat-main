@@ -20,105 +20,105 @@ import ShareBottomSheet from '@/models/ShareBottomSheet';
 import ReportModel from '@/models/ReportModel';
 import EditReel from '@/models/EditReelModal';
 import EditReelBottomSheet from '@/models/EditReelSheet';
-// import ReportModal from './ReportModal';
 
 
-// const VideoTrackingDebug: React.FC<{
-//   isVisible: boolean;
-//   currentVideoId: string | null;
-//   autoScrollSettings: any;
-// }> = ({ isVisible, currentVideoId, autoScrollSettings }) => {
-//   const [stats, setStats] = useState<any>(null);
-//   const [refreshKey, setRefreshKey] = useState(0);
 
-//   useEffect(() => {
-//     if (!isVisible) return;
 
-//     const interval = setInterval(() => {
-//       const newStats = videoViewTracker.getStats();
-//       setStats(newStats);
-//       setRefreshKey(prev => prev + 1);
-//     }, 1000);
 
-//     return () => clearInterval(interval);
-//   }, [isVisible, refreshKey]);
 
-//   if (!isVisible || !stats) return null;
 
-//   return (
-//     <div className="fixed top-4 right-4 z-[9999] bg-black/90 text-white p-4 rounded-lg text-xs max-w-xs border border-gray-600">
-//       <div className="flex justify-between items-center mb-2">
-//         <h4 className="font-bold text-green-400">Video Tracking Debug</h4>
-//         <div className="text-xs text-gray-400">#{refreshKey}</div>
-//       </div>
 
-//       <div className="space-y-1">
-//         <div className="flex justify-between">
-//           <span>User ID Set:</span>
-//           <span className={stats.userIdSet ? 'text-green-400' : 'text-red-400'}>
-//             {stats.userIdSet ? '✓' : '✗'}
-//           </span>
-//         </div>
 
-//         <div className="flex justify-between">
-//           <span>Periodic Check:</span>
-//           <span className={stats.isPeriodicChecking ? 'text-green-400' : 'text-red-400'}>
-//             {stats.isPeriodicChecking ? '✓' : '✗'}
-//           </span>
-//         </div>
 
-//         <div className="flex justify-between">
-//           <span>Active Tracking:</span>
-//           <span className="text-blue-400">{stats.activeTrackingCount}</span>
-//         </div>
 
-//         <div className="flex justify-between">
-//           <span>Pending Views:</span>
-//           <span className="text-yellow-400">{stats.pendingViews}/{stats.batchSize}</span>
-//         </div>
 
-//         <div className="flex justify-between">
-//           <span>Processing:</span>
-//           <span className="text-orange-400">{stats.processingViews}</span>
-//         </div>
 
-//         <div className="flex justify-between">
-//           <span>Total Sent:</span>
-//           <span className="text-green-400">{stats.totalSentViews}</span>
-//         </div>
 
-//         {stats.lastBatchTime && (
-//           <div className="text-xs text-gray-400">
-//             Last Batch: {new Date(stats.lastBatchTime).toLocaleTimeString()}
-//           </div>
-//         )}
 
-//         {stats.lastError && (
-//           <div className="text-xs text-red-400 mt-2 p-2 bg-red-900/20 rounded">
-//             Error: {stats.lastError.message}
-//           </div>
-//         )}
 
-//         <hr className="border-gray-600 my-2" />
 
-//         <div className="text-xs text-gray-400">
-//           <div>Current Video: {currentVideoId || 'None'}</div>
-//           <div>Auto-scroll: {autoScrollSettings.autoScroll ? '✓' : '✗'}</div>
-//           <div>Delay: {autoScrollSettings.autoScrollDelay || 'Video End'}</div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const ReelsContainer: React.FC = () => {
-  // Routing
+
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
   const queryClient = useQueryClient();
 
-  // Refs
+
   const containerRef = useRef<HTMLDivElement>(null);
   const isComponentMounted = useRef(true);
   const prefetchingInProgressRef = useRef(false);
@@ -129,15 +129,15 @@ const ReelsContainer: React.FC = () => {
   const observer = useRef<IntersectionObserver | null>(null);
   const initialScrollPerformedRef = useRef(false);
 
-  // State
+
   const [currentReelId, setCurrentReelId] = useState<string | null>(null);
   const [sharedReel, setSharedReel] = useState(null);
   const [isScreenFocused, setIsScreenFocused] = useState(true);
-  // const [isRefreshing, setIsRefreshing] = useState(false);
+
   const [activeReelIndex, setActiveReelIndex] = useState(0);
   const [prefetchedVideos, setPrefetchedVideos] = useState(new Set());
-  // const [showPerformanceDebug, setShowPerformanceDebug] = useState(false);
-  // const [shareReelIndex, setShareReelIndex] = useState(null);
+
+
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
   const [activeSheet, setActiveSheet] = useState<null | 'comments' | 'share' | 'options'>(null);
@@ -154,9 +154,9 @@ const ReelsContainer: React.FC = () => {
   const [showDebug, setShowDebug] = useState(false);
 
 
-  // Get source mode from URL params
+
   const sourceMode = useMemo(() => {
-    // Check if source mode is explicitly passed in location state (from feed suggestions)
+
     if (location.state?.sourceMode) {
       return location.state.sourceMode;
     }
@@ -173,13 +173,13 @@ const ReelsContainer: React.FC = () => {
       userId: location?.state?.userId,
       reelData: location.state?.reelData,
       profileType: location.state?.profileType,
-      initialReelId: location.state?.initialReelId || params.reelId, // Try state first, then params
+      initialReelId: location.state?.initialReelId || params.reelId,
       isSuggested: location.state?.reelData?.isSuggested || false
     };
   }, [params, location.state]);
-  // Auto-scroll settings
 
-  // Initialize mutation hooks
+
+
   const profileLikeMutation = useLikeProfileReelPost(user?._id);
   const profileBookmarkMutation = useBookmarkProfileReelPost(user?._id);
 
@@ -216,7 +216,7 @@ const ReelsContainer: React.FC = () => {
   const isMobile = useScreenSize();
   const [updateReelActive, setUpdateReelActive] = useState(false)
 
-  // Fetch reels data
+
   const {
     data,
     isLoading,
@@ -229,12 +229,12 @@ const ReelsContainer: React.FC = () => {
 
   const updateReel = useUpdateReel()
 
-  // Flatten the data
+
   const flattenedData = useMemo(() => {
     return data || [];
   }, [data]);
 
-  // Find initial reel index
+
   const initialReelIndex = useMemo(() => {
     if (!flattenedData || flattenedData.length === 0) {
       return 0;
@@ -257,51 +257,51 @@ const ReelsContainer: React.FC = () => {
     return 0;
   }, [flattenedData, sourceParams.initialReelId]);
 
-  // Scroll to initial reel without smooth scrolling for profile or bookmark modes
+
   useEffect(() => {
     if (!flattenedData || flattenedData.length === 0 || isLoading || initialScrollPerformedRef.current) {
       return;
     }
 
-    // Check if we need to scroll to a specific reel
+
     if (initialReelIndex > 0 && sourceParams.initialReelId && (sourceMode === 'profile' || sourceMode === 'bookmark' || sourceMode === 'bookmarks')) {
       console.log(`Scrolling directly to reel at index ${initialReelIndex} without smooth scrolling`);
 
-      // Find the target element
+
       const targetElement = document.querySelector(`[data-index="${initialReelIndex}"]`);
       if (targetElement && containerRef.current) {
-        // Use instant scroll with auto behavior (no smooth scrolling)
+
         targetElement.scrollIntoView({
           behavior: 'auto',
           block: 'start'
         });
 
-        // Mark that we've performed the initial scroll
+
         initialScrollPerformedRef.current = true;
       }
     }
   }, [flattenedData, initialReelIndex, sourceParams.initialReelId, sourceMode, isLoading]);
 
-  // Auto-scroll functionality
+
   const handleAutoScroll = useCallback((isFromLongPress = false) => {
     if (bottomSheetOpen) {
       console.log('Auto-scroll prevented: bottom sheet is open');
       return;
     }
 
-    // FIXED: Enhanced logic for different interaction modes
+
     if (!isFromLongPress) {
-      // Not from long press - follow normal rules
+
       if (!autoScrollReels.autoScroll) {
         console.log('Auto-scroll disabled by settings');
         return;
       }
     } else {
-      // From long press - always allow if long press was active
+
       console.log('Auto-scrolling triggered by long press + video completion');
     }
 
-    // Don't auto-scroll if we're at the last video
+
     if (activeReelIndex >= flattenedData.length - 1) {
       console.log('Already at last video, not scrolling');
       return;
@@ -309,13 +309,13 @@ const ReelsContainer: React.FC = () => {
 
     console.log('Auto-scrolling to next reel');
 
-    // Clear any existing timer since we're now scrolling
+
     if (autoScrollTimeoutRef.current) {
       clearTimeout(autoScrollTimeoutRef.current);
       autoScrollTimeoutRef.current = null;
     }
 
-    // Scroll to the next reel
+
     const nextReelElement = document.querySelector(`[data-index="${activeReelIndex + 1}"]`);
     if (nextReelElement) {
       nextReelElement.scrollIntoView({
@@ -325,61 +325,61 @@ const ReelsContainer: React.FC = () => {
     }
   }, [autoScrollReels.autoScroll, activeReelIndex, flattenedData, bottomSheetOpen, sourceMode]);
 
-  // REPLACE the startAutoScrollTimer function in ReelsContainer.tsx (around line 200)
-  // WITH this improved version:
+
+
 
   const startAutoScrollTimer = useCallback(() => {
-    // Clear any existing timeout
+
     if (autoScrollTimeoutRef.current) {
       clearTimeout(autoScrollTimeoutRef.current);
       autoScrollTimeoutRef.current = null;
     }
 
-    // If auto-scroll is disabled, exit
+
     if (!autoScrollReels.autoScroll) return;
 
-    // If a bottom sheet is open, don't start the timer
+
     if (bottomSheetOpen) {
       console.log('Auto-scroll timer not started: bottom sheet is open');
       return;
     }
 
-    // FIXED: If long press is active, completely bypass timer - rely ONLY on video completion
+
     if (longPressActive) {
       console.log('Long press active: bypassing timer, will auto-scroll ONLY on video completion');
       return;
     }
 
-    // FIXED: If user has interacted with video via single tap, rely on video completion
+
     if (userInteracted) {
       console.log('User interacted with video, relying on video completion for auto-scroll');
       return;
     }
 
-    // If delay is null, we'll rely on video completion (handled in ReelItem)
+
     if (autoScrollReels.autoScrollDelay === null) {
       console.log('Auto-scroll using video completion mode, not timer');
       return;
     }
 
-    // If delay is 0 or not a positive number, exit
+
     if (!autoScrollReels.autoScrollDelay || autoScrollReels.autoScrollDelay <= 0) {
       console.log('Invalid delay value:', autoScrollReels.autoScrollDelay);
       return;
     }
 
-    // Set the timeout for auto-scrolling
-    const delayMs = autoScrollReels.autoScrollDelay * 1000; // Convert to milliseconds
+
+    const delayMs = autoScrollReels.autoScrollDelay * 1000;
     console.log(`Starting auto-scroll timer for ${delayMs}ms`);
 
     autoScrollTimeoutRef.current = setTimeout(() => {
-      // FIXED: Double-check long press state before executing
+
       if (longPressActive) {
         console.log('Auto-scroll timer fired but long press is active - canceling');
         return;
       }
 
-      handleAutoScroll(false); // Pass false to indicate it's not from long press
+      handleAutoScroll(false);
     }, delayMs);
 
     return () => {
@@ -390,18 +390,18 @@ const ReelsContainer: React.FC = () => {
     };
   }, [autoScrollReels, handleAutoScroll, bottomSheetOpen, longPressActive, userInteracted]);
 
-  // REPLACE the updateVideoPlaybackState function in ReelsContainer.tsx (around line 350)
-  // WITH this improved version:
+
+
 
   const updateVideoPlaybackState = useCallback((videoId, isPlaying) => {
     if (!videoId) return;
 
     console.log(`Updating playback state for video ${videoId}: ${isPlaying ? 'playing' : 'paused'}`);
 
-    // Update video tracker as before
+
     videoViewTracker.updatePlaybackState(videoId, isPlaying);
 
-    // Only start auto-scroll timer if video is playing for the first time
+
     if (isPlaying && !hasVideoPlayedOnceRef.current) {
       console.log('Video played for the first time, autoScroll:', autoScrollReels.autoScroll,
         'autoScrollDelay:', autoScrollReels.autoScrollDelay, 'longPressActive:', longPressActive,
@@ -410,96 +410,96 @@ const ReelsContainer: React.FC = () => {
       hasVideoPlayedOnceRef.current = true;
       videoPlayStartTimeRef.current = Date.now();
 
-      // FIXED: Determine auto-scroll behavior based on user interaction and settings
+
       if (autoScrollReels.autoScroll) {
         if (longPressActive) {
-          // Long press active: ONLY rely on video completion, NO timer
+
           console.log('Long press active: will auto-scroll ONLY on video completion (no timer)');
-          // Explicitly clear any existing timer to be safe
+
           if (autoScrollTimeoutRef.current) {
             clearTimeout(autoScrollTimeoutRef.current);
             autoScrollTimeoutRef.current = null;
           }
         } else if (userInteracted) {
-          // User tapped once: ignore delay, only scroll on video completion
+
           console.log('User interacted: ignoring delay, will auto-scroll ONLY on video completion');
-          // Explicitly clear any existing timer
+
           if (autoScrollTimeoutRef.current) {
             clearTimeout(autoScrollTimeoutRef.current);
             autoScrollTimeoutRef.current = null;
           }
         } else if (autoScrollReels.autoScrollDelay !== null && autoScrollReels.autoScrollDelay > 0) {
-          // Normal auto-scroll with delay
+
           console.log('Starting auto-scroll timer with delay:', autoScrollReels.autoScrollDelay);
           startAutoScrollTimer();
         } else {
-          // Auto-scroll on video completion (delay is null)
+
           console.log('Auto-scroll on video completion mode');
         }
       }
     }
   }, [startAutoScrollTimer, autoScrollReels, longPressActive, userInteracted, sourceMode]);
 
-  // REPLACE the handleAutoScroll function in ReelsContainer.tsx (around line 150)
-  // WITH this improved version:
 
 
-  // REPLACE THIS ENTIRE useEffect in ReelsContainer.tsx (Component cleanup section):
 
-  // useEffect(() => {
-  //   // Set user ID for video view tracking when component mounts
-  //   if (user?._id) {
-  //     videoViewTracker.setUserId(user._id);
-  //     videoViewTracker.startPeriodicChecking();
-  //     videoViewTracker.setDebug(process.env.NODE_ENV === 'development'); // Enable debug in dev mode
-  //     console.log('Video view tracking initialized for user:', user._id);
-  //   }
 
-  //   return () => {
-  //     isComponentMounted.current = false;
 
-  //     // Make sure to stop tracking the active video first
-  //     if (activeVideoRef.current) {
-  //       // Stop tracking and ensure playback is set to false
 
-  //       videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
-  //       videoViewTracker.stopTracking(activeVideoRef.current);
-  //       activeVideoRef.current = null;
-  //     }
 
-  //     // Force send all pending views
-  //     videoViewTracker.sendBatchToServer(true);
 
-  //     // Full cleanup
-  //     videoViewTracker.cleanup().catch(err => {
-  //       console.error('Error during videoViewTracker cleanup:', err);
-  //     });
 
-  //     // Clear timeouts
-  //     if (autoScrollTimeoutRef.current) {
-  //       clearTimeout(autoScrollTimeoutRef.current);
-  //     }
-  //   };
-  // }, [user, sourceMode]);
 
-  // REPLACE the intersection observer useEffect in ReelsContainer.tsx (around line 280)
-  // FROM the existing intersection observer setup
-  // TO this optimized version:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   useEffect(() => {
     if (!containerRef.current || !flattenedData?.length) return;
 
-    // Create intersection observer with mobile-optimized settings
+
     observer.current = new IntersectionObserver((entries) => {
-      // Use requestAnimationFrame to batch DOM updates
+
       requestAnimationFrame(() => {
         entries.forEach(entry => {
           const reelId = entry.target.getAttribute('data-reel-id');
           const reelIndex = parseInt(entry.target.getAttribute('data-index') || '0');
 
-          // FIXED: Allow re-activation of same reel and use lower threshold for mobile
+
           if (entry.isIntersecting && reelId) {
-            // Only skip if it's already the active reel AND it's currently playing
+
             const isAlreadyActiveAndPlaying = reelIndex === activeReelIndex &&
               flattenedData[reelIndex] &&
               !VideoPlaybackManager.isVideoManuallyPaused(`reel-${flattenedData[reelIndex].id}`);
@@ -508,14 +508,14 @@ const ReelsContainer: React.FC = () => {
               console.log(`Video ${reelIndex} became active (was ${activeReelIndex})`);
               setActiveReelIndex(reelIndex);
 
-              // Stop tracking previous video
+
               if (activeVideoRef.current) {
                 videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
                 videoViewTracker.stopTracking(activeVideoRef.current);
                 activeVideoRef.current = null;
               }
 
-              // Start tracking new video
+
               const currentVideo = flattenedData[reelIndex];
               if (currentVideo?.id) {
                 videoViewTracker.startTracking({
@@ -525,7 +525,7 @@ const ReelsContainer: React.FC = () => {
                 activeVideoRef.current = currentVideo.id;
               }
 
-              // Start playing the active video
+
               if (currentVideo) {
                 const videoId = `reel-${currentVideo.id}`;
                 VideoPlaybackManager.setCurrentlyPlaying(videoId, {
@@ -537,27 +537,27 @@ const ReelsContainer: React.FC = () => {
                   loadNextPage: hasNextPage ? () => fetchNextPage() : null
                 });
 
-                // Reset auto-scroll state
+
                 hasVideoPlayedOnceRef.current = false;
                 videoPlayStartTimeRef.current = null;
                 setUserInteracted(false);
                 setLongPressActive(false);
 
-                // Clear any existing timeout
+
                 if (autoScrollTimeoutRef.current) {
                   clearTimeout(autoScrollTimeoutRef.current);
                   autoScrollTimeoutRef.current = null;
                 }
 
-                // Defer prefetching to avoid blocking main thread
+
                 setTimeout(() => prefetchVideosAround(reelIndex), 200);
               }
             }
           } else if (!entry.isIntersecting && reelIndex === activeReelIndex) {
-            // FIXED: Properly handle video going out of view
+
             console.log(`Video ${reelIndex} went out of view`);
 
-            // Stop the video that went out of view
+
             const currentVideo = flattenedData[reelIndex];
             if (currentVideo) {
               const videoId = `reel-${currentVideo.id}`;
@@ -568,11 +568,11 @@ const ReelsContainer: React.FC = () => {
       });
     }, {
       root: containerRef.current,
-      threshold: [0.4, 0.6, 0.8], // Multiple thresholds for better mobile detection
-      rootMargin: '-60px 0px -60px 0px' // Fixed pixels instead of % for mobile UI
+      threshold: [0.4, 0.6, 0.8],
+      rootMargin: '-60px 0px -60px 0px'
     });
 
-    // Observe all reel items
+
     const reelElements = containerRef.current.querySelectorAll('.reel-item');
     reelElements.forEach(el => {
       observer.current?.observe(el);
@@ -581,52 +581,52 @@ const ReelsContainer: React.FC = () => {
     return () => {
       observer.current?.disconnect();
     };
-  }, [flattenedData?.length, hasNextPage, fetchNextPage, sourceMode, activeReelIndex]); // Added activeReelIndex dependency
-  // Prefetch videos around the active index
+  }, [flattenedData?.length, hasNextPage, fetchNextPage, sourceMode, activeReelIndex]);
+
   const prefetchVideosAround = useCallback((index, extraRange = 0) => {
-    // Prefetching logic similar to original but adapted for web cache
+
     if (prefetchingInProgressRef.current || !flattenedData?.length) return;
     prefetchingInProgressRef.current = true;
 
-    // Rest of prefetching implementation...
-    // (Similar logic to the original but using WebCacheManager)
+
+
 
     prefetchingInProgressRef.current = false;
   }, [flattenedData, prefetchedVideos]);
 
-  // Handle page visibility changes (equivalent to AppState in RN)
+
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // Page is hidden (equivalent to app going to background)
+
         if (autoScrollTimeoutRef.current) {
           clearTimeout(autoScrollTimeoutRef.current);
           autoScrollTimeoutRef.current = null;
         }
 
-        // Pause videos
+
         VideoPlaybackManager.pauseCurrentlyPlaying();
 
-        // Stop tracking current video and force send any pending batches
+
         if (activeVideoRef.current) {
           videoViewTracker.stopTracking(activeVideoRef.current);
         }
 
-        // Send pending view batches
+
         videoViewTracker.sendBatchToServer(true);
       } else {
-        // Page is visible again (equivalent to app coming to foreground)
+
         if (autoScrollReels.autoScroll && autoScrollReels.autoScrollDelay && hasVideoPlayedOnceRef.current) {
           startAutoScrollTimer();
         }
 
-        // Resume playing the active video
+
         if (isScreenFocused && flattenedData[activeReelIndex]) {
           const currentVideo = flattenedData[activeReelIndex];
           if (currentVideo) {
             const videoId = `reel-${currentVideo.id}`;
 
-            // Forced play with prefetch
+
             VideoPlaybackManager.setCurrentlyPlaying(videoId, {
               force: true,
               prefetchAdjacent: true,
@@ -634,7 +634,7 @@ const ReelsContainer: React.FC = () => {
               currentIndex: activeReelIndex
             });
 
-            // Resume tracking
+
             if (currentVideo.id) {
               videoViewTracker.startTracking({
                 videoId: currentVideo.id,
@@ -644,14 +644,14 @@ const ReelsContainer: React.FC = () => {
               activeVideoRef.current = currentVideo.id;
             }
 
-            // Prefetch videos
+
             prefetchVideosAround(activeReelIndex);
           }
         }
       }
     };
 
-    // Listen for visibility changes
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
@@ -662,67 +662,67 @@ const ReelsContainer: React.FC = () => {
 
 
 
-  // const updateVideoPlaybackState = useCallback((videoId, isPlaying) => {
-  //   if (!videoId) return;
-
-  //   console.log(`Updating playback state for video ${videoId}: ${isPlaying ? 'playing' : 'paused'}`);
-
-  //   // Update video tracker as before
-  //    videoViewTracker.updatePlaybackState(videoId, isPlaying);
-
-  //   // Only start auto-scroll timer if video is playing for the first time
-  //   // AND we're not in long press mode
-  //   if (isPlaying && !hasVideoPlayedOnceRef.current) {
-  //     console.log('Video played for the first time, autoScroll:', autoScrollReels.autoScroll,
-  //       'autoScrollDelay:', autoScrollReels.autoScrollDelay, 'longPressActive:', longPressActive);
-
-  //     hasVideoPlayedOnceRef.current = true;
-  //     videoPlayStartTimeRef.current = Date.now();
-
-  //     // Only start auto-scroll timer if we're not in long press mode
-  //     if (!longPressActive && autoScrollReels.autoScroll && autoScrollReels.autoScrollDelay !== null) {
-  //       console.log('Starting auto-scroll timer');
-  //       startAutoScrollTimer();
-  //     } else if (longPressActive) {
-  //       console.log('Not starting timer due to active long press');
-  //     }
-  //   }
-  // }, [startAutoScrollTimer, autoScrollReels, longPressActive]);
 
 
 
-  // Component cleanup
 
 
 
-  // useEffect(() => {
-  //   return () => {
-  //     isComponentMounted.current = false;
 
-  //     // Make sure to stop tracking the active video first
-  //     if (activeVideoRef.current) {
-  //       // Stop tracking and ensure playback is set to false
-  //       videoViewTracker.updatePlaybackState(activeVideoRef.current, false);
-  //       videoViewTracker.stopTracking(activeVideoRef.current);
-  //       activeVideoRef.current = null;
-  //     }
 
-  //     // Force send all pending views
-  //     videoViewTracker.sendBatchToServer(true);
 
-  //     // Full cleanup
-  //     videoViewTracker.cleanup().catch(err => {
-  //       console.error('Error during videoViewTracker cleanup:', err);
-  //     });
 
-  //     // Clear timeouts
-  //     if (autoScrollTimeoutRef.current) {
-  //       clearTimeout(autoScrollTimeoutRef.current);
-  //     }
-  //   };
-  // }, [user, sourceMode]);
 
-  // Handle user video interaction
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const handleUserVideoInteraction = useCallback(() => {
     setUserInteracted(true);
 
@@ -740,7 +740,7 @@ const ReelsContainer: React.FC = () => {
     });
   }, [activeReelIndex, sourceMode]);
 
-  // Bottom sheet handlers
+
   const handleCommentsOpen = useCallback((reelId) => {
     setCurrentReelId(reelId);
     setBottomSheetOpen(true);
@@ -759,7 +759,7 @@ const ReelsContainer: React.FC = () => {
     setActiveSheet('options');
   }, []);
 
-  // Close active sheet
+
   const closeSheet = useCallback(() => {
     setBottomSheetOpen(false);
     setActiveSheet(null);
@@ -779,7 +779,7 @@ const ReelsContainer: React.FC = () => {
 
       const blob = await response.blob();
 
-      // Create download link
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -787,7 +787,7 @@ const ReelsContainer: React.FC = () => {
       document.body.appendChild(a);
       a.click();
 
-      // Cleanup
+
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
@@ -800,8 +800,8 @@ const ReelsContainer: React.FC = () => {
   };
 
 
-  // Render each reel item
-  // Render each reel item
+
+
   const renderReels = useMemo(() => {
     if (!flattenedData || flattenedData.length === 0) {
       return (
@@ -825,10 +825,9 @@ const ReelsContainer: React.FC = () => {
     return flattenedData.map((reel, index) => {
       const isActive = index === activeReelIndex && isScreenFocused;
 
-      // Check if this is a suggested reel
       const isSuggested = !!reel.isSuggested;
 
-      // Determine appropriate like and bookmark functions based on source
+      
       let likeMutationHook;
       let bookmarkMutationHook;
 
@@ -845,37 +844,37 @@ const ReelsContainer: React.FC = () => {
         bookmarkMutationHook = videosFeedBookmarkMutation;
       }
       else if (isSuggested) {
-        // For suggested reels, use the feed hooks
+        
         likeMutationHook = feedLikeMutation;
         bookmarkMutationHook = feedBookmarkMutation;
       }
       else {
-        // Default feed mode
+        
         likeMutationHook = feedLikeMutation;
         bookmarkMutationHook = feedBookmarkMutation;
       }
 
-      // Normalize the reel data with better defaults
+      
       const normalizedReel = {
         ...reel,
-        // Ensure targetId is present
+        
         targetId: reel.targetId || (reel.target && reel.target._id) || '',
-        // Normalize type with a default
+        
         type: reel.type || 'user',
         postType: reel.postType || 'post',
-        // Handle counts with defaults to prevent NaN
+        
         likesCount: typeof reel.likesCount === 'number' ? reel.likesCount : 0,
         commentsCount: typeof reel.commentsCount === 'number' ? reel.commentsCount : 0,
         sharesCount: typeof reel.sharesCount === 'number' ? reel.sharesCount : 0,
         videoViewsCount: typeof reel.videoViewsCount === 'number' ? reel.videoViewsCount : 0,
-        // Set boolean flags safely
+        
         isLikedByUser: !!reel.isLikedByUser,
         isBookmarkedByUser: !!reel.isBookmarkedByUser,
-        // Ensure media exists
+        
         media: reel.media || [],
-        // Ensure target exists
+        
         target: reel.target || {},
-        // Add debugging info
+        
         _isSuggested: isSuggested,
         _sourceMode: sourceMode
       };
@@ -891,7 +890,7 @@ const ReelsContainer: React.FC = () => {
           handleCommentsOpen={handleCommentsOpen}
           handleShareOpen={handleShareOpen}
           handleOptionsOpen={handleOptionsOpen}
-          // Pass the mutation hooks
+          
           useLikeReel={likeMutationHook}
           useBookmarkReel={bookmarkMutationHook}
           onPlaybackStateChange={updateVideoPlaybackState}
@@ -943,15 +942,14 @@ const ReelsContainer: React.FC = () => {
     );
   }
 
-  // REPLACE the main container div in ReelsContainer.tsx (around line 650)
-  // FROM:
-  //   <div className="relative h-screen w-full bg-black overflow-hidden">
-  //     <div ref={containerRef} className="h-full w-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-  // TO this mobile-optimized version:
+  
+  
+  
+  
+  
 
   return (
     <div className='flex'>
-      {/* Debug controls remain the same */}
       {showDebug && (
         <div className="fixed bottom-4 right-4 z-[9998] flex flex-col gap-2">
           <button
@@ -979,17 +977,15 @@ const ReelsContainer: React.FC = () => {
         </div>
       )}
 
-      {/* FIXED: Mobile-optimized container with dynamic viewport height */}
       <div
         className="relative w-full bg-black overflow-hidden"
         style={{
-          // Use dynamic viewport height for mobile compatibility
-          height: 'calc(100dvh)', // Dynamic viewport height
-          minHeight: 'calc(100vh)', // Fallback for older browsers
-          maxHeight: 'calc(100dvh)', // Ensure it doesn't exceed
+          
+          height: 'calc(100dvh)', 
+          minHeight: 'calc(100vh)', 
+          maxHeight: 'calc(100dvh)', 
         }}
       >
-        {/* Main Reels Container with Snap Scroll - FIXED */}
         <div
           ref={containerRef}
           className="w-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory reels-scrollbar-hide"
@@ -998,8 +994,8 @@ const ReelsContainer: React.FC = () => {
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
             WebkitOverflowScrolling: 'touch',
-            touchAction: 'pan-y', // Better mobile scrolling
-            overscrollBehavior: 'contain', // Prevent bounce
+            touchAction: 'pan-y', 
+            overscrollBehavior: 'contain', 
           }}
         >
           <style>{`
@@ -1010,7 +1006,6 @@ const ReelsContainer: React.FC = () => {
           {renderReels}
         </div>
 
-        {/* Back Button - FIXED positioning for mobile */}
         <button
           onClick={() => navigate(-1)}
           className="absolute flex items-center justify-center gap-2 top-4 left-4 z-30"
@@ -1025,8 +1020,6 @@ const ReelsContainer: React.FC = () => {
           }
         </button>
 
-        {/* Rest of the component remains the same... */}
-        {/* Auto-scroll Controls */}
         {showAutoScrollControls && (
           <AutoScrollControls
             autoScrollSettings={autoScrollReels}
@@ -1065,7 +1058,6 @@ const ReelsContainer: React.FC = () => {
         }
 
 
-        {/* Bottom Sheets and other components remain unchanged */}
         {activeSheet === 'comments' && isMobile && (
           <BottomComments
             isReel={false}
@@ -1083,7 +1075,6 @@ const ReelsContainer: React.FC = () => {
           />
         )}
 
-        {/* there is reel true because of link share  */}
         {activeSheet === 'share' && !isMobile && (
           <ShareModal
             isReel={true}
@@ -1145,7 +1136,6 @@ const ReelsContainer: React.FC = () => {
         )}
       </div>
 
-      {/* Desktop comments section remains the same */}
       {!isMobile && (
         <Comments
           isReel={false}

@@ -59,12 +59,6 @@ export class StoriesController {
         res.json(await this.storiesService.getStoryLikes(storyId))
     }
 
-    // @Post("update")
-    // async updateStory(@Body(new ZodValidationPipe(UpdateStory)) updateStoryDTO: UpdateStoryDTO, @Req() req) {
-    //     const { userDetails, storyDetails } = req.body
-    //     return await this.storiesService.updateStory(userDetails.username, storyDetails)
-    // }
-
     @Post("delete")
     async deleteStory(@Body(new ZodValidationPipe(DeleteStory)) deleteStoryDTO: DeleteStoryDTO, @Req() req: Request, @Res() res: Response) {
         const { sub } = req.user as { sub: string }

@@ -14,14 +14,10 @@ export const validatePhone = (_phone: string, country? :string) => {
 }
 
 export function detectCountryFromNumber(phoneNumber) {
-  console.log(phoneNumber.username)
   try {
     const parsedNumber = parsePhoneNumberFromString("+913122734021");
-    // const regionCode = parsedNumber.country;
-    console.log(parsedNumber)
-    // return regionCode;
   } catch (error) {
-    // Handle invalid phone number format.
+    
     console.log(error)
     return null;
   }
@@ -29,7 +25,7 @@ export function detectCountryFromNumber(phoneNumber) {
 
 export const reactions = [
   { emoji: '👍', name: 'Thumbs up' },
-  // { emoji: '❤️', name: 'Love' },
+  
   { emoji: '😆', name: 'Haha' },
   { emoji: '🤩', name: 'Wow' },
   { emoji: '😢', name: 'Sad' },
@@ -48,22 +44,22 @@ export const debouncedCountrySearch = (
     onError?: (error: string) => void,
     delay: number = 300
 ) => {
-    // Clear previous timeout
+    
     if (searchTimeout) {
         clearTimeout(searchTimeout);
     }
 
-    // Clear results if query is too short
+    
     if (query.length < 2) {
         onResult(null);
         onLoading?.(false);
         return;
     }
 
-    // Set loading state
+    
     onLoading?.(true);
 
-    // Set new timeout
+    
     searchTimeout = setTimeout(async () => {
         try {
             console.log('Searching countries for:', query);
@@ -83,7 +79,7 @@ export const debouncedCountrySearch = (
     }, delay);
 };
 
-// Even simpler version - just returns promise
+
 export const searchCountries = (query: string): Promise<any> => {
     return new Promise((resolve, reject) => {
         if (searchTimeout) {

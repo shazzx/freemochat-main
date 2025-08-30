@@ -25,10 +25,6 @@ export const UpdatePage = z.object({
     }),
     pageId: z.string(),
     images: z.object({profile: z.string().optional(), cover: z.string().optional()}).optional(),
-    // images: z.object({
-    //     url: z.string(),
-    //     fileName: z.string().optional()
-    // }).optional(),
 })
 
 

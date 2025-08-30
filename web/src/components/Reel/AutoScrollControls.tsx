@@ -19,21 +19,13 @@ interface AutoScrollControlsProps {
   setIsVisible: (visible: boolean) => void;
 }
 
-/**
- * AutoScrollControls - A component to display and control auto-scroll settings
- * 
- * @param {object} autoScrollSettings - The current auto-scroll settings object
- * @param {function} onSettingsChange - Callback when settings are changed
- * @param {boolean} isVisible - Whether the controls are visible
- * @param {function} setIsVisible - Function to set visibility
- */
 const AutoScrollControls: React.FC<AutoScrollControlsProps> = ({ 
   autoScrollSettings, 
   onSettingsChange, 
   isVisible = true, 
   setIsVisible 
 }) => {
-  // Create a deep copy of autoScrollSettings for local state
+  
   const [newSettings, setNewSettings] = useState<AutoScrollSettings>({
     autoScroll: autoScrollSettings?.autoScroll || false,
     autoScrollDelay: autoScrollSettings?.autoScrollDelay || null,
@@ -42,7 +34,7 @@ const AutoScrollControls: React.FC<AutoScrollControlsProps> = ({
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(state => state.user);
 
-  // Sync local state with props when autoScrollSettings changes
+  
   useEffect(() => {
     setNewSettings({
       autoScroll: autoScrollSettings?.autoScroll || false,
@@ -50,7 +42,7 @@ const AutoScrollControls: React.FC<AutoScrollControlsProps> = ({
     });
   }, [autoScrollSettings]);
 
-  // Toggle auto-scroll on/off
+  
   const toggleAutoScroll = useCallback(() => {
     setNewSettings(prev => ({
       ...prev,
@@ -80,7 +72,7 @@ const AutoScrollControls: React.FC<AutoScrollControlsProps> = ({
     }));
   }, [newSettings.autoScrollDelay]);
 
-  // Format the delay text
+  
   const getDelayText = useCallback(() => {
     if (newSettings.autoScrollDelay === null) {
       return 'On Video End';
@@ -89,39 +81,39 @@ const AutoScrollControls: React.FC<AutoScrollControlsProps> = ({
     }
   }, [newSettings.autoScrollDelay]);
 
-  // Save settings callback
+  
   const saveAutoScrollSettings = useCallback(async () => {
     try {
-      // Create a proper FormData object
+      
       const formData = new FormData();
 
-      // Convert the settings object to a string since FormData can't handle JSON directly
+      
       const updatedData = JSON.stringify({ autoScrollSettings: newSettings });
       formData.append('userData', updatedData);
 
-      // Log what's being sent
+      
       console.log("Sending settings:", updatedData);
 
       const { data, status } = await axiosClient.post("/user/update", formData, {
         headers: { "Content-Type": 'multipart/form-data' }
       });
 
-      // Log response for debugging
+      
       console.log("API response:", data, status);
 
-      // Update Redux store with new settings
+      
       dispatch(updateUser({ ...user, autoScrollSettings: newSettings }));
 
-      // Notify parent component of change
+      
       onSettingsChange(newSettings);
 
-      // Show success message
+      
       toast.success("AutoScroll settings saved successfully");
       setTimeout(() => {
         toast.success("Changes will take effect from next reel");
       }, 2000);
 
-      // Close the controls
+      
       setIsVisible(false);
     } catch (error) {
       console.log("Error saving AutoScroll settings:", error);
@@ -130,7 +122,7 @@ const AutoScrollControls: React.FC<AutoScrollControlsProps> = ({
     }
   }, [dispatch, user, newSettings, onSettingsChange, setIsVisible]);
 
-  // If not visible at all, return null
+  
   if (!isVisible) return null;
 
   return (
@@ -138,7 +130,6 @@ const AutoScrollControls: React.FC<AutoScrollControlsProps> = ({
       className={`fixed bottom-1/3 left-2 max-w-sm mx-auto right-2 bg-black/70 rounded-xl overflow-hidden z-40 border border-white/20
                  transition-all duration-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-24 opacity-0'}`}
     >
-      {/* Compact view - always visible */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center flex-1 ml-2">
           <div 

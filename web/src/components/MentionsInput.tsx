@@ -2,20 +2,20 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 
 export interface MentionReference {
-  _id: string;       // User ID from backend
-  username: string;  // Username
+  _id: string;       
+  username: string;  
   firstname: string;
   lastname: string;
   profile: string;
 }
 
 interface UserSuggestion {
-  _id: string;       // User ID from backend
-  username: string;  // Username
+  _id: string;       
+  username: string;  
   firstname: string;
   lastname: string;
   profile: string;
-  isSpecial?: boolean; // For special mentions like @followers
+  isSpecial?: boolean; 
 }
 
 interface MentionsInputProps {
@@ -55,18 +55,18 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Key: Separate display text (usernames) and internal text (user IDs)
+  
   const [displayText, setDisplayText] = useState('');
   const [internalText, setInternalText] = useState('');
 
-  // Helper function to map position from display text to internal text (CRITICAL)
+  
   const mapDisplayToInternalPosition = useCallback((displayPos: number): number => {
     if (mentionReferences.length === 0) return displayPos;
 
     let internalPos = displayPos;
     let displayOffset = 0;
 
-    // Sort references by their position in display text
+    
     const sortedRefs = [...mentionReferences].sort((a, b) => {
       const aPos = displayText.indexOf(`@${a.username}`, displayOffset);
       const bPos = displayText.indexOf(`@${b.username}`, displayOffset);
@@ -89,15 +89,15 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     return internalPos;
   }, [displayText, mentionReferences]);
 
-  // Helper function to convert display text to internal text
+  
   const convertDisplayToInternal = useCallback((display: string, references: MentionReference[]): string => {
     let internal = display;
     
-    // Sort references by position to avoid overlapping replacements
+    
     const sortedRefs = [...references].sort((a, b) => {
       const aPos = display.indexOf(`@${a.username}`);
       const bPos = display.indexOf(`@${b.username}`);
-      return bPos - aPos; // Reverse order to replace from end to start
+      return bPos - aPos; 
     });
 
     for (const ref of sortedRefs) {
@@ -108,7 +108,7 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     return internal;
   }, []);
 
-  // Helper function to convert internal text to display text
+  
   const convertInternalToDisplay = useCallback((internal: string, references: MentionReference[]): string => {
     let display = internal;
     
@@ -120,7 +120,7 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     return display;
   }, []);
 
-  // Function to calculate suggestion position with auto-positioning
+  
   const calculateSuggestionPosition = useCallback(() => {
     if (!textareaRef.current || !containerRef.current) return;
 
@@ -128,32 +128,32 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     const container = containerRef.current;
     const containerRect = container.getBoundingClientRect();
     
-    // Get viewport dimensions
+    
     const viewportHeight = window.innerHeight;
     
-    // Calculate available space above and below the textarea
+    
     const spaceAbove = containerRect.top;
     const spaceBelow = viewportHeight - containerRect.bottom;
     
-    // Suggestion box estimated height (max-height is 12rem = 192px, plus some padding)
+    
     const suggestionBoxHeight = 200;
     
-    // Determine whether to show above or below
+    
     const showAbove = spaceAbove > suggestionBoxHeight && spaceAbove > spaceBelow;
     
-    // Calculate position
+    
     if (showAbove) {
-      // Position above the textarea
+      
       setSuggestionPosition({
-        top: -suggestionBoxHeight - 8, // Add some margin
+        top: -suggestionBoxHeight - 8, 
         left: 0,
         width: containerRect.width,
         showAbove: true
       });
     } else {
-      // Position below the textarea
+      
       setSuggestionPosition({
-        top: containerRect.height + 8, // Add some margin
+        top: containerRect.height + 8, 
         left: 0,
         width: containerRect.width,
         showAbove: false
@@ -161,7 +161,7 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     }
   }, []);
 
-  // CRITICAL: Initialize references FIRST, then convert text
+  
   useEffect(() => {
     if (initialReferences.length > 0 && !isInitialized) {
       setMentionReferences(initialReferences);
@@ -169,11 +169,11 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     }
   }, [initialReferences, isInitialized]);
 
-  // CRITICAL: Convert initial value from internal (user IDs) to display (usernames) format
+  
   useEffect(() => {
-    // Only run after references are initialized OR if no initial references
+    
     if (!isInitialized && initialReferences.length > 0) {
-      return; // Wait for references to be set first
+      return; 
     }
 
     if (value !== undefined) {
@@ -184,12 +184,12 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
         setDisplayText(display);
         setInternalText(value);
       } else {
-        // No references, treat as plain text
+        
         setDisplayText(value);
         setInternalText(value);
       }
     } else {
-      // Handle empty/undefined value
+      
       setDisplayText('');
       setInternalText('');
     }
@@ -203,14 +203,14 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     };
   }, []);
 
-  // Update position when suggestions are shown or window is resized
+  
   useEffect(() => {
     if (showSuggestions) {
       calculateSuggestionPosition();
     }
   }, [showSuggestions, calculateSuggestionPosition]);
 
-  // Recalculate position on window resize
+  
   useEffect(() => {
     const handleResize = () => {
       if (showSuggestions) {
@@ -222,7 +222,7 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [showSuggestions, calculateSuggestionPosition]);
 
-  // Fetch suggestions with debouncing
+  
   const fetchSuggestions = useCallback(async (query: string) => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -233,7 +233,7 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
         try {
           const userResults = await onSuggestionsFetch(query);
           
-          // Always add @followers as the first suggestion
+          
           const followersOption: UserSuggestion = {
             _id: 'followers',
             username: 'followers',
@@ -243,7 +243,7 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
             isSpecial: true
           };
 
-          // If query is empty or "followers" matches the query, show followers option
+          
           const shouldShowFollowers = query === '' || 'followers'.toLowerCase().includes(query.toLowerCase());
           
           const allSuggestions = shouldShowFollowers 
@@ -253,7 +253,7 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
           setSuggestions(allSuggestions);
         } catch (error) {
           console.error('Error fetching suggestions:', error);
-          // Still show followers option even if user fetch fails
+          
           const followersOption: UserSuggestion = {
             _id: 'followers',
             username: 'followers',
@@ -274,7 +274,7 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
 
   const handleTextChange = (text: string) => {
     if (text.length > textLimit) {
-      return; // Check text limit properly
+      return; 
     }
 
     setDisplayText(text);
@@ -283,7 +283,7 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     const cursorPos = textarea?.selectionStart || 0;
     setCursorPosition(cursorPos);
 
-    // Find the last @ symbol before cursor position for suggestions
+    
     let mentionStart = -1;
     for (let i = cursorPos - 1; i >= 0; i--) {
       if (text[i] === '@') {
@@ -314,26 +314,26 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
       setSuggestions([]);
     }
 
-    // Convert display text to internal text and extract active references
+    
     let updatedReferences = [...mentionReferences];
     
-    // Check which mentions are still in the text
+    
     const activeMentions = updatedReferences.filter(ref => {
       return text.includes(`@${ref.username}`);
     });
 
-    // Update references if they changed
+    
     if (activeMentions.length !== mentionReferences.length) {
       setMentionReferences(activeMentions);
       updatedReferences = activeMentions;
     }
 
-    // Convert to internal text
+    
     const internal = convertDisplayToInternal(text, updatedReferences);
     setInternalText(internal);
 
-    // Extract user IDs from internal text for mentions array
-    const userIdRegex = /@([a-f\d]{24}|followers)/g; // Include 'followers' as valid ID
+    
+    const userIdRegex = /@([a-f\d]{24}|followers)/g; 
     const foundUserIds: string[] = [];
     let match;
 
@@ -348,9 +348,9 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
   };
 
   const handleSuggestionPress = (suggestion: UserSuggestion) => {
-    // Handle special mentions (like @followers) differently
+    
     if (suggestion.isSpecial) {
-      // For special mentions, just insert the text as-is without user ID conversion
+      
       const mentionText = `@${suggestion.username}`;
       const beforeMention = displayText.substring(0, mentionStartIndex);
       const afterMention = displayText.substring(cursorPosition);
@@ -364,17 +364,17 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
       const newCursorPosition = beforeMention.length + mentionText.length + 1;
       setCursorPosition(newCursorPosition);
 
-      // Update both display and internal text to the same value for special mentions
+      
       setDisplayText(newText);
       setInternalText(newText);
 
-      // Extract user IDs from internal text (excluding special mentions for references)
+      
       const userIdRegex = /@([a-f\d]{24})/g;
       const foundUserIds: string[] = [];
       const activeReferences: MentionReference[] = [];
       let match;
 
-      // Add 'followers' to foundUserIds but not to references
+      
       const allUserIds = ['followers'];
       
       while ((match = userIdRegex.exec(newText)) !== null) {
@@ -399,25 +399,25 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
       return;
     }
 
-    // Regular user mention handling
+    
     const internalMentionStartIndex = mapDisplayToInternalPosition(mentionStartIndex);
     const internalCursorPosition = mapDisplayToInternalPosition(cursorPosition);
 
-    // Extract before and after from INTERNAL text
+    
     const beforeMention = internalText.substring(0, internalMentionStartIndex);
     const afterMention = internalText.substring(internalCursorPosition);
 
-    // For display: show username
+    
     const displayMentionText = `@${suggestion.username}`;
     const beforeMentionDisplay = displayText.substring(0, mentionStartIndex);
     const afterMentionDisplay = displayText.substring(cursorPosition);
     const newDisplayText = beforeMentionDisplay + displayMentionText + ' ' + afterMentionDisplay;
 
-    // For internal: store user ID  
+    
     const internalMentionText = `@${suggestion._id}`;
     const newInternalText = beforeMention + internalMentionText + ' ' + afterMention;
 
-    // Create mention reference
+    
     const newReference: MentionReference = {
       _id: suggestion._id,
       username: suggestion.username,
@@ -426,7 +426,7 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
       profile: suggestion.profile
     };
 
-    // Add to references if not already present
+    
     const updatedReferences = mentionReferences.filter(ref => ref._id !== suggestion._id);
     updatedReferences.push(newReference);
 
@@ -438,12 +438,12 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
     const newCursorPosition = beforeMentionDisplay.length + displayMentionText.length + 1;
     setCursorPosition(newCursorPosition);
 
-    // CRITICAL: Update references FIRST, then texts
+    
     setMentionReferences(updatedReferences);
     setDisplayText(newDisplayText);
     setInternalText(newInternalText);
 
-    // Extract all mentions from the final internal text
+    
     const userIdRegex = /@([a-f\d]{24}|followers)/g;
     const finalUserIds: string[] = [];
     let match;
@@ -472,13 +472,12 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
 
   return (
     <div ref={containerRef} className="relative">
-      {/* Suggestions positioned dynamically above or below the input */}
       {showSuggestions && suggestions.length > 0 && (
         <div 
           className={`absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto ${
             suggestionPosition.showAbove 
-              ? 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]' // Shadow above when positioned above
-              : 'shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)]'   // Shadow below when positioned below
+              ? 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]' 
+              : 'shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)]'   
           }`}
           style={{
             top: suggestionPosition.top,
@@ -525,7 +524,7 @@ const MentionsInput: React.FC<MentionsInputProps> = ({
 
       <Textarea
         ref={textareaRef}
-        value={displayText} // User always sees usernames
+        value={displayText} 
         onChange={(e) => handleTextChange(e.target.value)}
         placeholder={placeholder}
         className={className}

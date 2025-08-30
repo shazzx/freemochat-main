@@ -35,7 +35,7 @@ export const PageCreateSchema = yup.object().shape({
           return response.data;
         } catch (error) {
           console.error('Error checking handle availability:', error);
-          return true; // Assume available in case of error
+          return true; 
         }
       }
       return true;
@@ -72,39 +72,39 @@ export const UserSchema = yup.object().shape({
           return response.data.success;
         } catch (error) {
           console.error('Error checking handle availability:', error);
-          return false; // Assume available in case of error
+          return false; 
         }
       }
       return false;
     })
     .required('username is required'),
-  // .matches(/^[a-z0-9_]+$/, 'Handle must contain only lowercase letters, numbers, and underscores')
-  // .test('unique-handle', 'This handle is already taken', async (value) => {
-  //   if (value && value.length >= 6) {
-  //     try {
-  //       const response = await axiosClient.get(`page/handleExists?handle=${value}`);
-  //       console.log(response.data)
-  //       return response.data;
-  //     } catch (error) {
-  //       console.error('Error checking handle availability:', error);
-  //       return true; // Assume available in case of error
-  //     }
-  //   }
-  //   return true;
-  // })
-  // .required('Handle is required'),
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   email: yup
     .string().email(),
-  // .required('emai is required'),
-  // phone: yup.number().required('phone no is required'),
-  // address: yup.object({
-  // country: yup.string().required("country is required"),
-  // city: yup.string().required('city is required'),
-  // area: yup.string().required('area is required')
-  // }),
+  
+  
+  
+  
+  
+  
+  
   bio: yup.string().max(160, "bio should not exceed 160 characters"),
-  // password: yup.string().min(8, "password atleast be 8 characters long"),
-  // confirmPassword: yup.string().required().oneOf([yup.ref('password'), null], "Passwords Must Match")
+  
+  
 });
 
 export const UpdateUserSchema = yup.object().shape({
@@ -127,10 +127,10 @@ export const UpdateUserSchema = yup.object().shape({
           return response.data.success;
         } catch (error) {
           console.error('Error checking handle availability:', error);
-          return false; // Assume available in case of error
+          return false; 
         }
       }
-      return true; // Skip validation if less than 6 characters
+      return true; 
     })
     .optional(),
   email: yup
@@ -189,37 +189,37 @@ export const SignupSchema = yup.object().shape({
     .max(20, 'Username cannot exceed 20 characters')
     .matches(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores')
     .test('no-email', 'Username cannot be in an email format', (value) => {
-      if (!value) return true; // Handle empty values
+      if (!value) return true; 
 
-      // Prevent '@' symbol
+      
       if (value.includes('@')) return false;
 
-      // Prevent email-like patterns
+      
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return !emailPattern.test(value);
     })
-    // .matches(/^[a-z0-9_]+$/, 'Handle must contain only lowercase letters, numbers, and underscores')
-    // .test('unique-handle', 'This handle is already taken', async (value) => {
-    //   if (value && value.length >= 6) {
-    //     try {
-    //       const response = await axiosClient.get(`page/handleExists?handle=${value}`);
-    //       console.log(response.data)
-    //       return response.data;
-    //     } catch (error) {
-    //       console.error('Error checking handle availability:', error);
-    //       return true; // Assume available in case of error
-    //     }
-    //   }
-    //   return true;
-    // })
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     .required('username is required'),
   email: yup
     .string().email()
     .required('emai is required'),
   phone: yup.string().required('phone no is required'),
   address: yup.object({
-    // country: yup.string().required("country is required"),
-    // city: yup.string().required('city is required'),
+    
+    
     area: yup.string().required("area is required")
   }),
   bio: yup.string().max(160, "bio should not exceed 160 characters").optional(),
@@ -246,7 +246,7 @@ export const GroupCreateSchema = yup.object().shape({
           return response.data;
         } catch (error) {
           console.error('Error checking handle availability:', error);
-          return true; // Assume available in case of error
+          return true; 
         }
       }
       return true;

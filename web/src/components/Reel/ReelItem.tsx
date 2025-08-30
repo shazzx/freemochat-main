@@ -1,4 +1,4 @@
-// ReelItem.tsx
+
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import VideoPlaybackManager from './VideoPlaybackManager';
@@ -48,7 +48,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
   ...props
 }) => {
 
-  // Refs
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const isComponentMounted = useRef(true);
   const lastTapTime = useRef(0);
@@ -59,13 +59,13 @@ const ReelItem: React.FC<ReelItemProps> = ({
   const longPressTimeout = useRef<number | null>(null);
   const isLongPressActiveRef = useRef(false);
 
-  // Generate a unique ID for this reel
+  
   const reelInstanceId = useMemo(() => `reel-${reel._id}`, [reel._id]);
 
   const likeMutation = useLikeReel;
   const bookmarkMutation = useBookmarkReel;
 
-  // State
+  
   const [videoState, setVideoState] = useState({
     isLoading: true,
     isBuffering: false,
@@ -86,9 +86,9 @@ const ReelItem: React.FC<ReelItemProps> = ({
 
   const [contentExpanded, setContentExpanded] = useState(false);
 
-  // Mutations for interactions
+  
 
-  // Normalize reel data
+  
   const memoizedReel = useMemo(() => ({
     _id: reel._id,
     mediaUrl: reel?.media?.[0]?.url || '',
@@ -106,7 +106,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
     content: reel.content || '',
     target: reel.target || {}
   }), [
-    // PERFORMANCE: Only depend on specific properties that actually matter
+    
     reel._id,
     reel.media?.[0]?.url,
     reel.isLikedByUser,
@@ -119,14 +119,14 @@ const ReelItem: React.FC<ReelItemProps> = ({
     reel.content
   ]);
 
-  // Register video with VideoPlaybackManager
+  
   useEffect(() => {
     if (!videoRef.current) return;
 
-    // Register video ref with manager
+    
     const unregister = VideoPlaybackManager.registerVideo(reelInstanceId, videoRef);
 
-    // Mark as visible
+    
     VideoPlaybackManager.setVideoVisible(reelInstanceId, true, {
       uri: memoizedReel.mediaUrl,
       index: index,
@@ -139,7 +139,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
     };
   }, [reelInstanceId, memoizedReel.mediaUrl, index]);
 
-  // Video metadata loading
+  
   const handleVideoMetadata = useCallback(() => {
     if (!videoRef.current) return;
 
@@ -149,13 +149,13 @@ const ReelItem: React.FC<ReelItemProps> = ({
       isLoading: false,
     }));
 
-    // If this is the active video and not manually paused, play it
+    
     if (isActive && !manuallyPaused.current) {
       videoRef.current.play().catch(err => console.log('Error auto-playing video:', err));
     }
   }, [isActive]);
 
-  // REPLACE THESE FUNCTIONS in ReelItem.tsx:
+  
 
   const handleTimeUpdate = useCallback(() => {
     if (!videoRef.current || !isActive) return;
@@ -164,12 +164,12 @@ const ReelItem: React.FC<ReelItemProps> = ({
     const duration = videoRef.current.duration;
     const progress = duration ? currentTime / duration : 0;
 
-    // PERFORMANCE: Only update state if there's a meaningful change
+    
     setVideoState(prev => {
       const newPosition = currentTime * 1000;
       const positionDiff = Math.abs(newPosition - prev.position);
 
-      // Only update if position changed by more than 100ms or progress changed significantly
+      
       if (positionDiff > 100 || Math.abs(progress - prev.progress) > 0.01) {
         return {
           ...prev,
@@ -180,12 +180,12 @@ const ReelItem: React.FC<ReelItemProps> = ({
       return prev;
     });
 
-    // Check for video completion (using onEnded is more reliable, but keep this as backup)
+    
     if (progress > 0.99 && !hasCompletedRef.current) {
       hasCompletedRef.current = true;
       console.log('Video completed via timeUpdate. AutoScrollEnabled:', autoScrollEnabled);
 
-      // Handle auto-scroll if enabled and video completed
+      
       if (autoScrollEnabled && onVideoComplete) {
         if (isLongPressActiveRef.current) {
           console.log('Video completed during long press, triggering auto-scroll');
@@ -195,22 +195,22 @@ const ReelItem: React.FC<ReelItemProps> = ({
           onVideoComplete(false);
         }
       }
-      // Note: Looping is now handled in onEnded for better reliability
+      
     }
   }, [isActive, autoScrollEnabled, onVideoComplete]);
-  // Handle context menu (right-click) to support desktop long press
+  
 
 
 
-  // REPLACE the long press handling functions in ReelItem.tsx (around line 160)
-  // WITH these improved versions:
+  
+  
 
-  // Handle long press start - FIXED for both mobile and desktop
+  
   const handleLongPressStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     console.log(e)
 
-    // Clear any existing timeout
+    
     if (longPressTimeout.current) {
       clearTimeout(longPressTimeout.current);
       longPressTimeout.current = null;
@@ -222,14 +222,14 @@ const ReelItem: React.FC<ReelItemProps> = ({
       if (!isLongPressActiveRef.current) {
         isLongPressActiveRef.current = true;
 
-        // If video is paused, play it
+        
         if (!videoState.isPlaying && videoRef.current) {
           manuallyPaused.current = false;
           VideoPlaybackManager.clearManualPauseState(reelInstanceId);
           videoRef.current.play().catch(err => console.log('Error playing video on long press:', err));
         }
 
-        // Notify parent component about long press
+        
         onLongPressStateChange(true, memoizedReel._id);
 
         console.log('Long press activated on video:', memoizedReel._id);
@@ -237,47 +237,47 @@ const ReelItem: React.FC<ReelItemProps> = ({
     }, 500) as unknown as number;
   }, [memoizedReel._id, videoState.isPlaying, onLongPressStateChange, reelInstanceId]);
 
-  // Handle long press end - FIXED
-  // const handleLongPressEnd = useCallback(() => {
-  //   // Clear timeout if still pending
-  //   if (longPressTimeout.current) {
-  //     clearTimeout(longPressTimeout.current);
-  //     longPressTimeout.current = null;
-  //   }
+  
+  
+  
+  
+  
+  
+  
 
-  //   // If long press was active, deactivate it
-  //   if (isLongPressActiveRef.current) {
-  //     isLongPressActiveRef.current = false;
+  
+  
+  
 
-  //     // Notify parent component about long press end
-  //     onLongPressStateChange(false, memoizedReel._id);
+  
+  
 
-  //     console.log('Long press deactivated on video:', memoizedReel._id);
-  //   }
-  // }, [memoizedReel._id, onLongPressStateChange]);
+  
+  
+  
 
-  // FIXED: Enhanced context menu handling for desktop right-click long press simulation
+  
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent context menu
+    e.preventDefault(); 
 
-    // For desktop, simulate long press with right-click
+    
     if (!isLongPressActiveRef.current) {
       console.log('Desktop right-click long press simulation');
 
-      // Immediately activate long press (no delay for right-click)
+      
       isLongPressActiveRef.current = true;
 
-      // If video is paused, play it
+      
       if (!videoState.isPlaying && videoRef.current) {
         manuallyPaused.current = false;
         VideoPlaybackManager.clearManualPauseState(reelInstanceId);
         videoRef.current.play().catch(err => console.log('Error playing video on right-click:', err));
       }
 
-      // Notify parent component
+      
       onLongPressStateChange(true, memoizedReel._id);
 
-      // Auto-deactivate after 3 seconds (or until video ends)
+      
       setTimeout(() => {
         if (isLongPressActiveRef.current) {
           isLongPressActiveRef.current = false;
@@ -288,8 +288,8 @@ const ReelItem: React.FC<ReelItemProps> = ({
     }
   }, [videoState.isPlaying, onLongPressStateChange, memoizedReel._id, reelInstanceId]);
 
-  // REPLACE the handleVideoClick function in ReelItem.tsx (around line 250)
-  // WITH this improved version that handles single tap for "play till end":
+  
+  
 
   const togglePlayPause = useCallback(() => {
     if (!videoRef.current) return;
@@ -297,19 +297,19 @@ const ReelItem: React.FC<ReelItemProps> = ({
     const videoId = `reel-${memoizedReel._id}`;
 
     if (videoState.isPlaying) {
-      // Pausing
+      
       videoRef.current.pause();
       manuallyPaused.current = true;
       VideoPlaybackManager.notifyVideoPaused(videoId);
       console.log(`User manually paused video: ${videoId}`);
     } else {
-      // Playing
+      
       manuallyPaused.current = false;
       VideoPlaybackManager.clearManualPauseState(videoId);
       videoRef.current.play().catch(err => {
         console.log('Error playing video:', err);
 
-        // Handle autoplay restrictions
+        
         if (err.name === 'NotAllowedError') {
           videoRef.current!.muted = true;
           setVideoState(prev => ({ ...prev, isMuted: true }));
@@ -324,13 +324,13 @@ const ReelItem: React.FC<ReelItemProps> = ({
     const now = Date.now();
     const { clientX, clientY } = e;
 
-    // Check for double tap (like)
+    
     if (now - lastTapTime.current < 300) {
-      // Prevent duplicate double taps
+      
       if (now - lastDoubleTapTime.current > 1000) {
         lastDoubleTapTime.current = now;
 
-        // Like the reel if not already liked
+        
         if (!memoizedReel.isLiked) {
           likeMutation.mutate({
             postId: memoizedReel._id,
@@ -342,14 +342,14 @@ const ReelItem: React.FC<ReelItemProps> = ({
           });
         }
 
-        // Show heart animation
+        
         setUiState(prev => ({
           ...prev,
           showLikeAnimation: true,
           doubleTapCoordinates: { x: clientX, y: clientY }
         }));
 
-        // Hide animation after 1 second
+        
         setTimeout(() => {
           if (isComponentMounted.current) {
             setUiState(prev => ({ ...prev, showLikeAnimation: false }));
@@ -357,17 +357,17 @@ const ReelItem: React.FC<ReelItemProps> = ({
         }, 1000);
       }
     } else {
-      // Single tap - toggle controls and play/pause
+      
       setUiState(prev => ({ ...prev, showControls: !prev.showControls }));
 
-      // Toggle play/pause
+      
       togglePlayPause();
 
-      // FIXED: Notify parent that user has interacted (this enables "play till end" mode)
+      
       onUserInteraction();
       console.log('Single tap detected - enabled play till end mode');
 
-      // Auto-hide controls after 3 seconds if they're now showing
+      
       if (!uiState.showControls) {
         setTimeout(() => {
           if (isComponentMounted.current) {
@@ -380,7 +380,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
     lastTapTime.current = now;
   }, [likeMutation, pageIndex, reelIndex, memoizedReel, togglePlayPause, uiState.showControls, onUserInteraction]);
 
-  // Video play/pause state changes
+  
   const handlePlayPause = useCallback((isPlaying: boolean) => {
     setVideoState(prev => ({
       ...prev,
@@ -388,24 +388,24 @@ const ReelItem: React.FC<ReelItemProps> = ({
       isPaused: !isPlaying
     }));
 
-    // Update tracker and notify parent
+    
     if (isActive) {
       onPlaybackStateChange(memoizedReel._id, isPlaying);
     }
   }, [isActive, memoizedReel._id, onPlaybackStateChange]);
 
-  // Video play event handler
+  
   const handlePlay = useCallback(() => {
     handlePlayPause(true);
   }, [handlePlayPause]);
 
-  // Video pause event handler
+  
   const handlePause = useCallback(() => {
     handlePlayPause(false);
   }, [handlePlayPause]);
 
 
-  // Toggle mute
+  
   const toggleMute = useCallback(() => {
     if (!videoRef.current) return;
 
@@ -423,41 +423,41 @@ const ReelItem: React.FC<ReelItemProps> = ({
     if (!videoRef.current) return;
 
     const currentTime = videoRef.current.currentTime;
-    const newTime = Math.max(0, currentTime - 5); // Don't go below 0
+    const newTime = Math.max(0, currentTime - 5); 
     videoRef.current.currentTime = newTime;
 
-    // Update state immediately for smooth UI feedback
+    
     setVideoState(prev => ({
       ...prev,
       position: newTime * 1000,
       progress: videoState.duration ? newTime / videoState.duration : 0
     }));
 
-    // Auto-play the video after seeking
+    
     if (videoRef.current.paused) {
       manuallyPaused.current = false;
       videoRef.current.play().catch(err => console.log('Error auto-playing after backward skip:', err));
     }
   }, [videoState.duration]);
 
-  // Skip forward 5 seconds
+  
   const skipForward = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (!videoRef.current) return;
 
     const currentTime = videoRef.current.currentTime;
     const duration = videoRef.current.duration;
-    const newTime = Math.min(duration, currentTime + 5); // Don't exceed video duration
+    const newTime = Math.min(duration, currentTime + 5); 
     videoRef.current.currentTime = newTime;
 
-    // Update state immediately for smooth UI feedback
+    
     setVideoState(prev => ({
       ...prev,
       position: newTime * 1000,
       progress: duration ? newTime / duration : 0
     }));
 
-    // Auto-play the video after seeking
+    
     if (videoRef.current.paused) {
       manuallyPaused.current = false;
       videoRef.current.play().catch(err => console.log('Error auto-playing after forward skip:', err));
@@ -465,7 +465,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
   }, []);
 
 
-  // Handle like action
+  
   const handleLike = useCallback(() => {
 
     likeMutation.mutate({
@@ -479,7 +479,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
     });
   }, [likeMutation, pageIndex, reelIndex, memoizedReel]);
 
-  // Handle bookmark action
+  
   const handleBookmark = useCallback(() => {
     bookmarkMutation.mutate({
       postId: memoizedReel._id,
@@ -492,9 +492,9 @@ const ReelItem: React.FC<ReelItemProps> = ({
   }, [bookmarkMutation, pageIndex, reelIndex, memoizedReel]);
 
 
-  // REPLACE the video playback control useEffect in ReelItem.tsx (around line 380)
-  // FROM the existing useEffect that handles isActive
-  // TO this improved version:
+  
+  
+  
 
   useEffect(() => {
     if (!videoRef.current) return;
@@ -502,10 +502,10 @@ const ReelItem: React.FC<ReelItemProps> = ({
     if (isActive) {
       hasEverBeenActive.current = true;
 
-      // Reset completion flag when becoming active
+      
       hasCompletedRef.current = false;
 
-      // FIXED: Only play if not manually paused AND the video manager allows it
+      
       const videoId = `reel-${memoizedReel._id}`;
       const isManuallyPaused = VideoPlaybackManager.isVideoManuallyPaused(videoId);
 
@@ -514,7 +514,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
         videoRef.current.play().catch(err => {
           console.log('Error playing active video:', err);
 
-          // Handle autoplay policy - try muted playback
+          
           if (err.name === 'NotAllowedError') {
             console.log('Attempting muted playback due to autoplay policy');
             videoRef.current!.muted = true;
@@ -526,26 +526,26 @@ const ReelItem: React.FC<ReelItemProps> = ({
         console.log(`Video ${videoId} is manually paused, not auto-playing`);
       }
     } else {
-      // FIXED: When not active, always pause and mark as manually paused if it was playing
+      
       if (videoRef.current && !videoRef.current.paused) {
         console.log(`Pausing video ${memoizedReel._id} - no longer active`);
         videoRef.current.pause();
 
-        // If it was playing, this counts as a manual pause to prevent auto-resume
+        
         const videoId = `reel-${memoizedReel._id}`;
         VideoPlaybackManager.notifyVideoPaused(videoId);
       }
 
-      // Reset manual pause state when scrolling away (for next time it becomes active)
+      
       manuallyPaused.current = false;
     }
   }, [isActive, memoizedReel._id]);
 
-  // REPLACE the togglePlayPause function in ReelItem.tsx
-  // TO this improved version:
+  
+  
 
 
-  // Cleanup on unmount
+  
   useEffect(() => {
     return () => {
       isComponentMounted.current = false;
@@ -556,14 +556,14 @@ const ReelItem: React.FC<ReelItemProps> = ({
         clearTimeout(longPressTimeout.current);
       }
 
-      // Update view tracker
+      
       if (memoizedReel._id) {
         videoViewTracker.updatePlaybackState(memoizedReel._id, false);
       }
     };
   }, [memoizedReel._id]);
 
-  // Derived display data
+  
   const displayData = useMemo(() => ({
     progressBarWidth: `${videoState.progress * 100}%`,
     username: memoizedReel.type === "user"
@@ -588,20 +588,18 @@ const ReelItem: React.FC<ReelItemProps> = ({
       className={`relative bg-black ${className}`}
       {...props}
     >
-      {/* Video container */}
 
       <div
         className="relative w-full h-full flex items-center justify-center"
-        // onMouseDown={handleLongPressStart}  // Desktop long press start
-        // onMouseUp={handleLongPressEnd}      // Desktop long press end
-        // onMouseLeave={handleLongPressEnd}   // Desktop - end if mouse leaves
-        onTouchStart={handleLongPressStart} // Mobile long press start
-        // onTouchEnd={handleLongPressEnd}     // Mobile long press end
-        // onTouchCancel={handleLongPressEnd}  // Mobile - end if touch is canceled
-        onContextMenu={handleContextMenu}   // Desktop right-click simulation
-        onClick={handleVideoClick}          // Single/double tap handling
+        
+        
+        
+        onTouchStart={handleLongPressStart} 
+        
+        
+        onContextMenu={handleContextMenu}   
+        onClick={handleVideoClick}          
       >
-        {/* Video element */}
         <video
           ref={videoRef}
           src={memoizedReel.mediaUrl}
@@ -617,11 +615,11 @@ const ReelItem: React.FC<ReelItemProps> = ({
             console.log('Video ended event fired');
             hasCompletedRef.current = true;
 
-            // FIXED: Handle auto-scroll with proper long press detection
+            
             if (autoScrollEnabled && onVideoComplete) {
               if (isLongPressActiveRef.current) {
                 console.log('Video ended during long press, triggering auto-scroll');
-                // End the long press state since video completed
+                
                 isLongPressActiveRef.current = false;
                 onLongPressStateChange(false, memoizedReel._id);
                 onVideoComplete(true);
@@ -630,7 +628,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
                 onVideoComplete(false);
               }
             } else {
-              // Loop the video if auto-scroll is disabled
+              
               console.log('Video ended, looping since auto-scroll is disabled');
               if (isActive && !manuallyPaused.current) {
                 requestAnimationFrame(() => {
@@ -653,21 +651,18 @@ const ReelItem: React.FC<ReelItemProps> = ({
           onError={() => setVideoState(prev => ({ ...prev, error: true, isLoading: false }))}
         />
 
-        {/* Loading overlay */}
         {videoState.isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-10">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
           </div>
         )}
 
-        {/* Buffering indicator */}
         {videoState.isBuffering && videoState.isPlaying && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/50 rounded-full p-3 z-10">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-white"></div>
           </div>
         )}
 
-        {/* Error overlay */}
         {videoState.error && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -686,7 +681,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
           </div>
         )}
 
-        {/* Heart animation on double tap */}
         {uiState.showLikeAnimation && (
           <div
             className="absolute z-20 transform -translate-x-1/2 -translate-y-1/2 animate-scale-up"
@@ -701,7 +695,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
           </div>
         )}
 
-        {/* Progress bar */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gray-600/50 z-10">
           <div
             className="h-full bg-pink-600"
@@ -709,11 +702,9 @@ const ReelItem: React.FC<ReelItemProps> = ({
           />
         </div>
 
-        {/* Playback controls (when visible) */}
         {uiState.showControls && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-10">
             <div className="flex items-center space-x-8">
-              {/* Rewind button */}
               <button
                 className="p-3 bg-black/60 rounded-full flex flex-col items-center"
                 onClick={skipBackward}
@@ -724,7 +715,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
                 <span className="text-xs text-white mt-1">5s</span>
               </button>
 
-              {/* Play/Pause button */}
               <button className="p-4 bg-black/60 rounded-full">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
@@ -739,7 +729,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
                 </svg>
               </button>
 
-              {/* Forward button */}
               <button
                 className="p-3 bg-black/60 rounded-full flex flex-col items-center"
                 onClick={skipForward}
@@ -755,12 +744,9 @@ const ReelItem: React.FC<ReelItemProps> = ({
         )}
       </div>
 
-      {/* Bottom gradient for text readability */}
       <div className="absolute bottom-0 left-0 right-0 h-56 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
 
-      {/* Right side action buttons */}
       <div className="absolute right-4 bottom-20 flex flex-col items-center space-y-6 z-20">
-        {/* Like button */}
         <button
           onClick={handleLike}
           className="flex flex-col items-center"
@@ -782,7 +768,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
           <span className="text-white text-xs mt-1">{memoizedReel.likesCount}</span>
         </button>
 
-        {/* Comment button */}
         <button
           onClick={() => handleCommentsOpen(memoizedReel._id)}
           className="flex flex-col items-center"
@@ -793,7 +778,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
           <span className="text-white text-xs mt-1">{memoizedReel.commentsCount}</span>
         </button>
 
-        {/* Share button */}
         <button
           onClick={() => handleShareOpen(memoizedReel)}
           className="flex flex-col items-center"
@@ -804,7 +788,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
           <span className="text-white text-xs mt-1">{memoizedReel.sharesCount}</span>
         </button>
 
-        {/* Views counter */}
         <div className="flex flex-col items-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -813,7 +796,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
           <span className="text-white text-xs mt-1">{memoizedReel.videoViewsCount}</span>
         </div>
 
-        {/* Bookmark button */}
         <button
           onClick={handleBookmark}
           className="flex flex-col items-center"
@@ -829,7 +811,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
           </svg>
         </button>
 
-        {/* Mute/unmute button */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -850,7 +831,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
           </svg>
         </button>
 
-        {/* Options button */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -864,9 +844,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
         </button>
       </div>
 
-      {/* User info and caption */}
       <div className="absolute bottom-8 left-4 right-20 z-20">
-        {/* User row */}
         <Link to={`${domain}/user/${memoizedReel.target?.username}`} className="flex items-center mb-3">
           <Avatar className="">
             <AvatarImage src={memoizedReel.target?.profile} alt="Avatar" />
@@ -878,7 +856,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
           </div>
         </Link>
 
-        {/* Caption */}
         {memoizedReel.content && (
           <div className="mt-2">
             <p className={`text-white ${contentExpanded ? '' : 'line-clamp-2'}`}>

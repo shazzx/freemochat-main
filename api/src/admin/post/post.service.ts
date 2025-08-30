@@ -18,11 +18,6 @@ export class PostService {
     let limit = 50
     const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
 
-
-    // const query = search
-    //   ? { _id: new Types.ObjectId(search), ..._cursor }
-    //   : _cursor;
-
     try {
 
       const query: any = search

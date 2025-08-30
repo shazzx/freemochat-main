@@ -85,17 +85,11 @@ function ChangePasswordModel({ setModelTrigger, setForgetPasswordModel }) {
 
 
     const changePassword = async () => {
-        // if (!otp || otp.length !== 6) {
-        //     toast.info("Please complete the otp")
-        //     return
-        // }
-
 
         if (!currentPassword) {
             toast.info("Current password can't be empty")
             return
         }
-        console.log(currentPassword.length)
 
         if (currentPassword.length < 7) {
             toast.info("Current password must be of 8 characters long")
@@ -159,7 +153,6 @@ function ChangePasswordModel({ setModelTrigger, setForgetPasswordModel }) {
 
                                 <Input
                                     placeholder="Enter your current password"
-                                    // ref={currentPasswordRef}
                                     onChange={(e) => setCurrentPassword(e.target.value)}
                                     id="current-password"
                                     type="password"
@@ -178,7 +171,6 @@ function ChangePasswordModel({ setModelTrigger, setForgetPasswordModel }) {
                                 </Label>
                                 <Input
                                     placeholder="Enter new secure password"
-                                    // ref={newPasswordRef}
                                     id="new-password"
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     type="password"
@@ -191,7 +183,6 @@ function ChangePasswordModel({ setModelTrigger, setForgetPasswordModel }) {
                                 </Label>
                                 <Input
                                     placeholder="Confirm Password"
-                                    // ref={newPasswordRef}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     id="confirm-password"
                                     type="password"

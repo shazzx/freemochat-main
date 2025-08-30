@@ -15,7 +15,7 @@ export function useBookamrks(): any {
         fetchStatus, 
         isSuccess, 
         isFetchingNextPage, 
-        hasNextPage,  // Add this line - it's automatically provided by useInfiniteQuery
+        hasNextPage,  
         error 
     } = useInfiniteQuery({
         queryKey: ['userBookmarks'],
@@ -38,7 +38,7 @@ export function useBookamrks(): any {
         isFetchingNextPage,
         fetchStatus,
         fetchNextPage,
-        hasNextPage,  // Add this line
+        hasNextPage,  
         error,
     };
 }
@@ -90,8 +90,8 @@ export const useLikeBookmarkedPost = () => {
         },
         onSettled: (e) => {
             console.log(e)
-            // uncommeting this will refetch the comments again from the server to be in sync
-            // queryClient.invalidateQueries({ queryKey: ["comments"] })
+            
+            
         }
     })
 
@@ -143,8 +143,8 @@ export const useBookmarkPost = () => {
             queryClient.setQueryData(['userBookmarks'], context.previousComments)
         },
         onSettled: (e) => {
-            // uncommeting this will refetch the comments again from the server to be in sync
-            // queryClient.invalidateQueries({ queryKey: ["feed"] })
+            
+            
         }
     })
 

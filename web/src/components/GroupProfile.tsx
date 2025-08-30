@@ -55,14 +55,6 @@ function GroupProfile() {
 
     const createPost = useCreatePost('groupPosts', data?._id)
 
-    // const _createPost = async ({ content, selectedMedia, formData, visibility }) => {
-    //     let postDetails = { content, media: data, type: "group", targetId: data?._id, visibility }
-    //     formData.append("postData", JSON.stringify(postDetails))
-    //     let response = createPost.mutate({ content, formData, selectedMedia, type: "group", target: data })
-    //     console.log(response, 'uploaded')
-    //     setPostModal(false)
-    // }
-
     const _createPost = async ({ visibility, content, selectedMedia, backgroundColor, mentions, mentionReferences, formData }) => {
         let postDetails = { content, type: "group", postType: 'post', backgroundColor, mentions, targetId: data?._id, visibility }
         formData.append("postData", JSON.stringify(postDetails))
@@ -183,33 +175,7 @@ function GroupProfile() {
                                                     </form>
                                                 </div>
                                             </div>}
-                                            {/* <div className="w-full flex-1">
-                                            <form onSubmit={async (e) => {
-                                                e.preventDefault()
-                                                // mutation.mutate({ title: 'shazz', content: postContent.current.value })
-                                                // console.log(mutation.data)
-                                            }}>
-                                                <div className="relative flex gap-2">
-                                                    <div className='w-12'>
-                                                        <div className='w-10 h-10 rounded-full overflow-hidden'>
-                                                            <Avatar className="hidden  sm:flex">
-                                                                <AvatarImage src={images?.profile} alt="Avatar" />
-                                                                <AvatarFallback>{firstname[0]?.toUpperCase() + lastname[0]?.toUpperCase()}</AvatarFallback>
-                                                            </Avatar>
-                                                        </div>
-                                                    </div>
-                                                    <Input
-                                                        onClick={() => {
-                                                            setPostModal(true)
-                                                        }}
-                                                        ref={postContent}
-                                                        type="text"
-                                                        placeholder="Start writing a post"
-                                                        className="max-w-2xl appearance-none bg-background shadow-none"
-                                                    />
-                                                </div>
-                                            </form>
-                                        </div> */}
+                                            
                                             <div className='flex w-full items-center flex-col gap-2 '>
                                                 {!isLoading && groupPosts.data.length > 0 ? groupPosts.data?.map((page, pageIndex) => {
                                                     return page.posts.map((post, postIndex) => (
@@ -279,31 +245,6 @@ function GroupProfile() {
                                                                         <div className='text-gray-400 text-sm'>@{admin?.username}</div>
                                                                     </div>
                                                                 </div>
-                                                                {/* 
-                                                        {data?.isSuperAdmin && admin?._id !== data?.user &&
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" className="h-8 w-8 bg-card p-2 rounded-md">
-                                                                        <span className="sr-only">Open menu</span>
-                                                                        <EllipsisVertical className="h-4 w-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md' >
-                                                                    <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center'>
-                                                                        <RiUserUnfollowLine size={22} />
-                                                                        <span>Remove</span>
-                                                                    </DropdownMenuItem>
-
-                                                                    <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' onClick={() => {
-
-                                                                        groupAdminToggle.mutate({ user: admin, groupId: data?._id, isAdmin: true, index: i })
-                                                                    }}>
-                                                                        <RiUserUnfollowLine size={22} />
-                                                                        <span>Remove as admin</span>
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
-                                                        } */}
                                                             </div>
                                                         </div>
                                                         )
@@ -329,31 +270,6 @@ function GroupProfile() {
 
                                                                         </div>
                                                                     </div>
-                                                                    {/* 
-                                                            {data?.isSuperAdmin &&
-                                                                <DropdownMenu>
-                                                                    <DropdownMenuTrigger asChild>
-                                                                        <Button variant="ghost" className="h-8 w-8 bg-card p-2 rounded-md">
-                                                                            <span className="sr-only">Open menu</span>
-                                                                            <EllipsisVertical className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </DropdownMenuTrigger>
-                                                                    <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md'>
-                                                                        <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' >
-                                                                            <RiUserUnfollowLine size={22} />
-                                                                            <span>Remove</span>
-                                                                        </DropdownMenuItem>
-                                                                        {data?.isSuperAdmin
-                                                                            &&
-                                                                            <DropdownMenuItem onClickCapture={() => {
-                                                                                groupAdminToggle.mutate({ user: memberData?.user, groupId: data?._id })
-                                                                            }} className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' >
-                                                                                <RiAdminLine size={22} />
-                                                                                <span>{data?.isAdmin ? "Remove as admin" : "Appoint as admin"}</span></DropdownMenuItem>
-                                                                        }
-                                                                    </DropdownMenuContent>
-                                                                </DropdownMenu>
-                                                            } */}
                                                                 </div>
                                                             </div>
                                                         )

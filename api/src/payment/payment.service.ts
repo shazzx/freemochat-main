@@ -50,7 +50,6 @@ export class PaymentService {
             });
             return refund;
         } catch (error) {
-            // Handle any errors
             throw new Error(`Error processing refund: ${error.message}`);
         }
     }

@@ -17,7 +17,6 @@ import { CacheService } from 'src/cache/cache.service';
 import { FriendService } from 'src/friend/friend.service';
 import { MemberService } from 'src/member/member.service';
 import { v4 as uuidv4 } from 'uuid';
-import { NotificationService } from 'src/notification/notification.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Notification } from 'src/schema/Notification';
 
@@ -62,7 +61,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const userPushToken = await this.cacheService.getUserPushToken(payload.recepientDetails.targetId)
 
       const pushMessage = {
-        // to: 'ExponentPushToken[g3lNZoCh-cv0PbpHf-bgNt]',
         to: userPushToken,
         sound: 'default',
         title: payload.recepientDetails.username,
@@ -124,8 +122,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(message),
-    }).then((data) => {
-      console.log('push notification sent')
     }).catch((error) => {
       console.log("something went wrong ", error, error.message)
     })
@@ -136,16 +132,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('groupchat')
   async handleGroupMessage(@MessageBody() payload: { senderDetails: { targetId: Types.ObjectId, username: string }, body: string, messageType: string, recepientDetails: { name: string, type: string, targetId: string } }) {
 
-    // let recepient = JSON.parse(await this.cacheService.getOnlineUser(payload.recepientDetails.targetId))
-    // console.log(recepient, recepient)
-
     this.logger.log(`Group Message received: ${payload.senderDetails.targetId + " - " + payload.senderDetails.username + " - " + payload.recepientDetails.targetId + " - Group Name: " + payload.recepientDetails.name + " - " + payload.body}`);
 
     try {
       let group = await this.chatGroupService.groupExist(payload.recepientDetails.targetId)
       const members = await this.memberService.getGroupMemberIds(payload.recepientDetails.targetId)
-
-      // console.log(isMember,'ismember')
 
       if (!group) {
         throw new BadRequestException("Group has been deleted")
@@ -215,7 +206,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   //   return payload
   // }
 
-  // calling logic
   @SubscribeMessage("initiate-call")
   async handleCallInitiation(@MessageBody() payload) {
     if (payload.recepientDetails && !payload.recepientDetails.userId) {
@@ -227,10 +217,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     let _recepient = await this.userService.getRawUser(payload.recepientDetails.userId)
     let socketStatus = this.server.sockets.sockets.has(recepient?.socketId)
 
-    // console.log(socketStatus, recepient, "socket status and recepient")
-
     let message = await this.messageService.createMessage({ type: 'User', sender: new Types.ObjectId(payload.userDetails.userId), recepient: new Types.ObjectId(payload.recepientDetails.userId), content: payload?.type, gateway: true, messageType: 'Info', })
-    // const chatlist = await this.chatlistService.createOrUpdateChatList(payload.userDetails.userId, payload.recepientDetails.userId, 'User', { sender: payload.senderDetails.userId, encryptedContent: "Video Call", messageId: message._id }, "Text")
 
     if (recepient?.socketId && socketStatus) {
       this.server.to(user.socketId).emit("call-ringing", { callState: "ringing" })
@@ -311,10 +298,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     const recepient = await this.userService.getRawUser(event?.user?.toString())
-    console.log(recepient._id, "recepient id")
-
     if (event?.from?.toString() == recepient._id.toString()) {
-      console.log("not sending push notification")
       this.server.to(user?.socketId).emit('notification', event)
       return
     }
@@ -322,7 +306,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const sender = await this.userService.getRawUser(event?.from?.toString())
 
     if (!sender) {
-      console.log("not sending push notification sender not found")
       this.server.to(user?.socketId).emit('notification', event)
       return
     }
@@ -335,9 +318,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       data: { someData: 'goes here' },
     };
 
-    console.log(pushMessage, "push message")
     this.sendPushNotification(pushMessage)
-
     this.server.to(user?.socketId).emit('notification', event)
   }
 
@@ -398,7 +379,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  // it will be handled when a client disconnects from the server
   async handleDisconnect(socket: Socket) {
     const username = socket.handshake.auth.username
     this.logger.log(`Socket disconnected: ${socket.id}, username: ${username}`);

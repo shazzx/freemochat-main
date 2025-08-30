@@ -317,11 +317,7 @@ export class UserService {
                         {
                             $match: {
                                 $expr: {
-
-                                    // $or: [
                                     $and: [{ $eq: ['$user', new Types.ObjectId(userId)] }, { $eq: ['$friend', '$$userId'] }]
-                                    // { $and: [{ $eq: ['$friend', '$$userId'] }, { $eq: ['$user', new Types.ObjectId(userId)] }] },
-                                    // ],
                                 }
 
                             },

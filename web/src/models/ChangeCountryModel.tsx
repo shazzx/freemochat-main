@@ -125,7 +125,6 @@ function ChangeCountryModel({ setModelTrigger }) {
             toast.info("Wrong or expired OTP")
             setOtpSent(false)
         }
-        // return response.data
     }
 
     const _updateUser = async (data) => {
@@ -156,7 +155,6 @@ function ChangeCountryModel({ setModelTrigger }) {
             }
         }): Promise<any> => {
             _updateUser(data)
-            // return await verifyOTP(_data)
         },
         onError: (e: any) => {
             if (e.response.data.error.message) {

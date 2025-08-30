@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Single Reel Item Component
 export const ReelItem = ({ reel, onPress }) => {
     const getThumbnailUrl = () => {
         if (reel.media && reel.media.length > 0) {
@@ -28,15 +27,14 @@ export const ReelItem = ({ reel, onPress }) => {
             className="reel-item-container cursor-pointer flex-shrink-0"
             onClick={handleReelPress}
             style={{
-                width: 'calc(33.333% - 8px)', // 3 items per row with gap
-                aspectRatio: '9/16', // Standard reel aspect ratio
+                width: 'calc(33.333% - 8px)', 
+                aspectRatio: '9/16', 
                 borderRadius: '12px',
                 overflow: 'hidden',
                 position: 'relative',
                 minHeight: '200px'
             }}
         >
-            {/* Thumbnail Image */}
             <div className="thumbnail-container" style={{ width: '100%', height: '100%', position: 'relative' }}>
                 <img
                     src={thumbnailUrl}
@@ -49,7 +47,6 @@ export const ReelItem = ({ reel, onPress }) => {
                     }}
                 />
 
-                {/* Play icon overlay */}
                 <div
                     className="overlay"
                     style={{
@@ -76,7 +73,6 @@ export const ReelItem = ({ reel, onPress }) => {
                     </svg>
                 </div>
 
-                {/* Gradient overlay for better text visibility */}
                 <div
                     style={{
                         position: 'absolute',
@@ -93,17 +89,16 @@ export const ReelItem = ({ reel, onPress }) => {
     );
 };
 
-// Reels Section Component
 const ReelsSuggestionSection = ({ reels, navigateToReels }) => {
     const navigate = useNavigate();
 
-    // Filter out invalid reels and limit to 3
+    
     const validReels = reels
         .filter(reel => reel?.media && reel?.media.length > 0)
-        .slice(0, 3); // Limit to 3 reels
+        .slice(0, 3); 
 
     const handleNavigateToReels = useCallback((reel) => {
-        // Navigate to reels screen - adapt this to your routing structure
+        
         navigate(`/reels/${reel._id}`, {
             state: {
                 sourceMode: 'videosFeed',
@@ -120,7 +115,6 @@ const ReelsSuggestionSection = ({ reels, navigateToReels }) => {
 
     return (
         <div className="w-full bg-card border border-muted rounded-lg overflow-hidden mb-2">
-            {/* Header */}
             <div className="flex justify-between items-center p-4 pb-3">
                 <h3 className="text-lg font-semibold text-foreground m-0">
                     Suggested Reels
@@ -128,7 +122,6 @@ const ReelsSuggestionSection = ({ reels, navigateToReels }) => {
                 <button
                     className="text-primary text-sm hover:underline bg-transparent border-none cursor-pointer transition-colors duration-200 hover:text-primary/80"
                     onClick={() => {
-                        // Handle see all navigation
                         navigate('/reels');
                     }}
                 >
@@ -136,7 +129,6 @@ const ReelsSuggestionSection = ({ reels, navigateToReels }) => {
                 </button>
             </div>
 
-            {/* Reels Grid */}
             <div className="px-4 pb-4">
                 <div
                     className="flex gap-3 w-full"
@@ -154,7 +146,6 @@ const ReelsSuggestionSection = ({ reels, navigateToReels }) => {
                         />
                     ))}
 
-                    {/* Fill empty spaces if less than 3 reels */}
                     {validReels.length < 3 && Array.from({ length: 3 - validReels.length }).map((_, index) => (
                         <div
                             key={`empty-${index}`}

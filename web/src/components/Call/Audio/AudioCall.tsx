@@ -47,11 +47,9 @@ const AudioCall = ({ channel, callDetails, cancelCall }) => {
 
   usePublish([localMicrophoneTrack]);
 
-  //remote users
   const remoteUsers = useRemoteUsers();
   const { audioTracks } = useRemoteAudioTracks(remoteUsers);
 
-  // play the remote user audio tracks
   audioTracks.forEach((track) => track.play());
 
   return (
@@ -78,10 +76,7 @@ const AudioCall = ({ channel, callDetails, cancelCall }) => {
         />
 
         <div className="fixed inset-0 z-50  w-screen sm:p-8 overflow-hidden h-screen flex items-center justify-center">
-          <div className='absolute backdrop-blur-[1.5px] w-screen h-screen' onClick={() => {
-            // setAudioCallCaller(false)
-          }}>
-
+          <div className='absolute backdrop-blur-[1.5px] w-screen h-screen'>
           </div>
           <div className='w-full sm:max-w-[420px] border-2 border-accent z-10 h-full sm:max-h-[80%] py-40 flex flex-col items-center rounded-md gap-12 bg-dark overflow-hidden'>
             <div className='flex flex-col gap-4 items-center justify-center'>
@@ -115,10 +110,6 @@ const AudioCall = ({ channel, callDetails, cancelCall }) => {
                 }}>
                 <MdPhone size={32} color="white" />
               </button>
-              {/* 
-              <button className="rounded-full p-[14px] bg-red-500" onClick={() => setMic(a => !a)}>
-                <Mic color="white" size={32} />
-              </button> */}
             </div>
           </div>
         </div>

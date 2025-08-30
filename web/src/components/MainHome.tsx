@@ -64,8 +64,6 @@ const MainHome = ({ children }: any) => {
   const { notification } = useAppSelector((state) => state.notification)
   const metrics = useUserMetrics()
   const [searchState, setSearchState] = useState(false)
-  // console.log(callDetails, callerState, onCall, recepientState, targetDetails, type)
-  // console.log(metrics.data)
   const [searchParams] = useSearchParams()
 
   const [searchSuggestions, setSearchSuggestions] = useState([])
@@ -113,21 +111,21 @@ const MainHome = ({ children }: any) => {
   const [modalTrigger, setModalTrigger] = useState(true)
 
   useEffect(() => {
-    // Initialize video view tracking for the entire app
+    
     if (user?._id) {
       console.log('MainHome: Initializing app-level video view tracking for user:', user._id);
 
-      // Set user ID for video tracking
+      
       videoViewTracker.setUserId(user._id);
       videoViewTracker.startPeriodicChecking();
 
-      // Enable debug mode in development
+      
       if (process.env.NODE_ENV === 'development') {
         videoViewTracker.setDebug(true);
       }
     }
 
-    // Test function to verify sendBeacon works on tab close
+    
     const testSendBeacon = () => {
       const testData = new URLSearchParams();
       testData.append('test', 'tab_close_test');
@@ -141,7 +139,7 @@ const MainHome = ({ children }: any) => {
       }
     };
 
-    // Handle app close/refresh - force send remaining views
+    
     const handleBeforeUnload = async (event) => {
       console.log('MainHome: App is closing/refreshing - force sending pending views');
       console.log('Tab closing - testing sendBeacon');
@@ -149,7 +147,7 @@ const MainHome = ({ children }: any) => {
 
 
       try {
-        // Force send any pending views before app closes
+        
         await videoViewTracker.sendBatchToServer(true);
         console.log('MainHome: Successfully sent pending views before app close');
       } catch (error) {
@@ -157,13 +155,13 @@ const MainHome = ({ children }: any) => {
       }
     };
 
-    // Handle page visibility change (when user switches tabs/minimizes)
+    
     const handleVisibilityChange = async () => {
       if (document.hidden) {
         console.log('MainHome: App went to background - sending pending views');
 
         try {
-          // Send pending views when app goes to background
+          
           await videoViewTracker.sendBatchToServer(true);
         } catch (error) {
           console.error('MainHome: Error sending views on visibility change:', error);
@@ -171,35 +169,35 @@ const MainHome = ({ children }: any) => {
       }
     };
 
-    // Add event listeners
+    
     window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Cleanup function
+    
     return () => {
       console.log('MainHome: Component unmounting - cleaning up video tracking');
 
-      // Remove event listeners
+      
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
 
-      // Force send remaining views and cleanup
+      
       videoViewTracker.cleanup().then(() => {
         console.log('MainHome: Video tracking cleanup completed');
       }).catch(error => {
         console.error('MainHome: Error during video tracking cleanup:', error);
       });
     };
-  }, [user?._id]); // Dependency on user ID
+  }, [user?._id]); 
 
-  // Optional: Add this effect to handle user changes (login/logout)
+  
   useEffect(() => {
-    // If user changes (login/logout), reset tracking
+    
     if (user?._id) {
       videoViewTracker.setUserId(user._id);
       console.log('MainHome: User changed, updated video tracking user ID:', user._id);
     } else {
-      // User logged out, cleanup tracking
+      
       console.log('MainHome: User logged out, cleaning up video tracking');
       videoViewTracker.cleanup().catch(error => {
         console.error('MainHome: Error cleaning up on logout:', error);
@@ -208,8 +206,8 @@ const MainHome = ({ children }: any) => {
   }, [user?._id]);
 
 
-  // Note: No periodic interval needed - VideoViewTracker automatically sends when batch reaches 12 views
-  // We only need to handle app exit scenarios for remaining views
+  
+  
   return (
     <div className="relative h-screen w-full flex flex-col overflow-hidden">
       {uploadStatus && uploadStatus?.isUploading && uploadStatus?.type == 'reels' &&
@@ -219,13 +217,11 @@ const MainHome = ({ children }: any) => {
         <ChangeEmailModel notice={true} setModalTrigger={setModalTrigger} />
       }
 
-      {/* incoming call */}
       {onCall && type == "Audio" && recepientState == "CALLING" && callDetails?.userDetails &&
         <AudioCallRecepient recepientDetails={callDetails.userDetails} />
       }
 
 
-      {/* accepted call */}
       {onCall && (recepientState == "ACCEPTED" || callerState == "ACCEPTED") && callDetails?.type == "AUDIO" && callDetails?.channel &&
         <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={AudioCall} />
       }
@@ -238,9 +234,6 @@ const MainHome = ({ children }: any) => {
       {onCall && recepientState == "ACCEPTED" && type == "Video" &&
         <Agora callDetails={callDetails} channel={''} Call={VideoCallAccepted} cancelCall={cancelCall} />
       }
-      {/* {onCall && (recepientState == "ACCEPTED" || (callerState == "ACCEPTED" || callerState == "CALLING")) && callDetails?.type == "VIDEO" && callDetails?.channel &&
-        <Agora callDetails={callDetails} channel={callDetails.channel} cancelCall={cancelCall} Call={VideoCall} />
-      } */}
 
       <NetworkStatusNotifier />
 
@@ -250,7 +243,6 @@ const MainHome = ({ children }: any) => {
             {searchParams.get('search') !== 'active' &&
               <div className="block">
                 <Link to="/">
-                  {/* logo */}
                   <h1 className="text-2xl font-bold">
                     <img className="h-16 w-auto object-contain flex-shrink-0 dark:invert dark:brightness-0" src={logo} alt="" />
                   </h1>
@@ -290,7 +282,6 @@ const MainHome = ({ children }: any) => {
                     />
 
 
-                    {/* <MdCancel size="24px" cursor="pointer" /> */}
                     {searchSuggestions.length > 0 && searchSuggestionsState &&
                       <div className="absolute top-10 z-50 bg-card max-w-2xl w-full flex flex-col">
                         {searchSuggestions.map((suggestion) => {
@@ -301,7 +292,6 @@ const MainHome = ({ children }: any) => {
                               navigate(`/search?query=${suggestion.value}&type=all`)
                             }}>
                               <span >{suggestion.value}</span>
-                              {/* <span className="px-2 py-1 bg-primary-active rounded-lg">{suggestion.type} </span> */}
                             </div>
                           )
                         })}
@@ -351,7 +341,6 @@ const MainHome = ({ children }: any) => {
                               navigate(`/search?query=${suggestion.value}&&type=default`, { replace: true })
                             }}>
                               <span >{suggestion.value}</span>
-                              {/* <span className="px-2 py-1 bg-primary-active rounded-lg">{suggestion.type} </span> */}
                             </div>
                           )
                         })}
@@ -393,7 +382,6 @@ const MainHome = ({ children }: any) => {
             </div>
 
             {notificationsState && <Notifications setNotificationsState={setNotificationsState} />}
-            {/* <ModeToggle /> */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild className="flex">
                 <Button variant="secondary" size="icon" className="rounded-full w-7 h-7 sm:w-9 sm:h-9">
@@ -439,10 +427,8 @@ const MainHome = ({ children }: any) => {
       <BottomNav />
 
       <div className="flex h-full overflow-hidden w-full">
-        {/* sidebar - desktop */}
         <div className="hidden border-r py-2 w-full max-w-72 h-full bg-card md:block">
           <div className="flex h-full max-h-screen flex-col gap-2">
-            {/* main navigation part - desktop */}
             <div className="flex-1">
               <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
                 <Link

@@ -63,19 +63,19 @@ export const useCreatePage = () => {
       return createPage(pageDetails.formData)
     },
 
-    // onMutate: async ({ pageDetails, images }) => {
-    //   await queryClient.cancelQueries({ queryKey: [PageKeys.PAGES] })
-    //   const previousPages = queryClient.getQueryData([PageKeys.PAGES])
+    
+    
+    
 
-    //   queryClient.setQueryData([PageKeys.PAGES], (pages: any) => {
-    //     const updatedPages = produce(pages, (draft: any) => {
-    //       return [{ ...pageDetails, images, followers: 0, totalPosts: 0 }, ...pages]
-    //     })
-    //     return updatedPages
-    //   });
+    
+    
+    
+    
+    
+    
 
-    //   return { previousPages };
-    // },
+    
+    
 
     onError: (err: any, data, context) => {
       const { response } = err
@@ -94,13 +94,13 @@ export const useCreatePage = () => {
     onSettled: (data) => {
       queryClient.invalidateQueries({ queryKey: [PageKeys.PAGES] })
 
-      // queryClient.setQueryData([PageKeys.PAGES], (pages: any) => {
-      //   const updatedPages = produce(pages, (draft: any) => {
-      //     pages.splice(0, 1)
-      //     return [{ ...data }, ...pages]
-      //   })
-      //   return updatedPages
-      // });
+      
+      
+      
+      
+      
+      
+      
     }
   })
 
@@ -189,7 +189,7 @@ export const useRemovePage = () => {
           console.log('not')
 
 
-          // throw new Error()
+          
         })
         return updatedPages
       });

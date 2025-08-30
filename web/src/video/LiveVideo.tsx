@@ -18,24 +18,24 @@ export const LiveVideo = () => {
   const appId = '07c0c67268b84af3a73d5ccc109fd264'
 
 
-  // const agoraEngine = useRTCClient( AgoraRTC.createClient({ codec: "vp8", mode: "rtc" })); // Initialize Agora Client
-  const { channelName } = useParams() //pull the channel name from the param
+  
+  const { channelName } = useParams() 
 
-  // set the connection state
+  
   const [activeConnection, setActiveConnection] = useState(true);
 
-  // track the mic/video state - Turn on Mic and Camera On
+  
   const [micOn, setMic] = useState(true);
   const [cameraOn, setCamera] = useState(true);
 
-  // get local video and mic tracks
+  
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
   const { localCameraTrack } = useLocalCameraTrack(cameraOn);
 
-  // to leave the call
+  
   const navigate = useNavigate()
 
-  // Join the channel
+  
   useJoin(
     {
       appid: appId,
@@ -47,11 +47,11 @@ export const LiveVideo = () => {
 
   usePublish([localMicrophoneTrack, localCameraTrack]);
 
-  //remote users
+  
   const remoteUsers = useRemoteUsers();
   const { audioTracks } = useRemoteAudioTracks(remoteUsers);
 
-  // play the remote user audio tracks
+  
   audioTracks.forEach((track) => track.play());
 
   useEffect(() => {
@@ -62,7 +62,6 @@ export const LiveVideo = () => {
     <>
       <div id='remoteVideoGrid'>
         {
-          // Initialize each remote stream using RemoteUser component
           remoteUsers.map((user) => {
             console.log(user)
             return (
@@ -86,7 +85,6 @@ export const LiveVideo = () => {
           className=''
         />
         <div>
-          {/* media-controls toolbar component - UI controling mic, camera, & connection state  */}
           <div id="controlsToolbar">
             <div id="mediaControls">
               <button className="btn" onClick={() => setMic(a => !a)}>

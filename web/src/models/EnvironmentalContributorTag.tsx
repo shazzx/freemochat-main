@@ -54,17 +54,16 @@ const EnvironmentalContributorTag: React.FC<EnvironmentalContributorTagProps> = 
 
   const totalContributions = data.plantation + data.garbage_collection + data.water_ponds + data.rain_water;
 
-  // Filter to only show icons for categories with contributions > 0
+  
   const activeContributorTypes = contributorTypes.filter(item => item.count > 0);
 
-  // Don't render tag if no contributions
+  
   if (totalContributions === 0) {
     return null;
   }
 
   return (
     <>
-      {/* Main Tag */}
       <button
         onClick={() => setModalVisible(true)}
         className="flex items-center bg-white px-[2px] py-[2px] rounded-2xl border border-green-100 hover:bg-green-50 transition-colors duration-200 shadow-sm"
@@ -97,11 +96,9 @@ const EnvironmentalContributorTag: React.FC<EnvironmentalContributorTagProps> = 
         )}
       </button>
 
-      {/* Modal */}
       {modalVisible && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-5 z-50">
           <div className="bg-white rounded-3xl p-5 w-full max-w-md shadow-2xl">
-            {/* Header */}
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-lg font-bold text-black">
                 Environmental Contributions
@@ -114,7 +111,6 @@ const EnvironmentalContributorTag: React.FC<EnvironmentalContributorTagProps> = 
               </button>
             </div>
 
-            {/* Contributions List */}
             <div className="mb-5">
               {contributorTypes.map((item) => {
                 const IconComponent = item.icon;
@@ -169,14 +165,12 @@ const EnvironmentalContributorTag: React.FC<EnvironmentalContributorTagProps> = 
               })}
             </div>
 
-            {/* Total Summary */}
             <div className="bg-green-100 p-3 rounded-xl mb-5 text-center">
               <span className="text-sm font-semibold text-green-800">
                 Total Environmental Contributions: {totalContributions}
               </span>
             </div>
 
-            {/* Support Button */}
             <button
               onClick={() => {
                 alert('Coming Soon!');
@@ -189,7 +183,6 @@ const EnvironmentalContributorTag: React.FC<EnvironmentalContributorTagProps> = 
               </span>
             </button>
 
-            {/* Coming Soon Badge */}
             <p className="text-center text-xs text-gray-500 italic">
               Feature coming soon!
             </p>

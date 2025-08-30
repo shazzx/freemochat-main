@@ -10,12 +10,12 @@ const Uploader = memo(({ message = "Uploading..." }: UploaderProps) => {
   const [borderOpacity, setBorderOpacity] = useState(0.6);
 
   useEffect(() => {
-    // Gradient position animation
+    
     const gradientInterval = setInterval(() => {
       setGradientPosition(prev => (prev + 0.02) % 1);
     }, 20);
 
-    // Border opacity animation
+    
     let opacityDirection = 1;
     const opacityInterval = setInterval(() => {
       setBorderOpacity(prev => {
@@ -37,10 +37,10 @@ const Uploader = memo(({ message = "Uploading..." }: UploaderProps) => {
     };
   }, []);
 
-  // Calculate gradient positions
+  
   const gradientAngle = gradientPosition * 360;
   
-  // Calculate gradient colors with animated opacity
+  
   const primaryColor = `rgba(100, 180, 255, ${0.4 + (borderOpacity - 0.6) * 1})`;
   const secondaryColor = `rgba(70, 120, 255, ${0.4 + (borderOpacity - 0.6) * 1})`;
   const tertiaryColor = `rgba(130, 80, 255, ${0.4 + (borderOpacity - 0.6) * 1})`;

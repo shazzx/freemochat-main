@@ -43,17 +43,17 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, 
     const mutation = useCreateComment({ ...params, isReel })
     const replyMutation = useReplyOnComment()
 
-    // Mentions state for comments
+    
     const [commentText, setCommentText] = useState("")
     const [commentMentionUserIds, setCommentMentionUserIds] = useState<string[]>([])
     const [commentMentionReferences, setCommentMentionReferences] = useState<MentionReference[]>([])
 
-    // Mentions state for replies
+    
     const [replyText, setReplyText] = useState("")
     const [replyMentionUserIds, setReplyMentionUserIds] = useState<string[]>([])
     const [replyMentionReferences, setReplyMentionReferences] = useState<MentionReference[]>([])
 
-    // Mentions state for edit modal
+    
     const [editText, setEditText] = useState("")
     const [editMentionUserIds, setEditMentionUserIds] = useState<string[]>([])
     const [editMentionReferences, setEditMentionReferences] = useState<MentionReference[]>([])
@@ -76,28 +76,28 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, 
     useEffect(() => {
         if (replyState?.content) {
             setReplyId(replyState._id)
-            // Reset reply text when changing reply context
+            
             setReplyText("")
             setReplyMentionUserIds([])
             setReplyMentionReferences([])
         }
     }, [replyState])
 
-    // Handle comment mentions and text change
+    
     const handleCommentMentionsChange = (internalText: string, userIds: string[], references: MentionReference[]) => {
         setCommentText(internalText)
         setCommentMentionUserIds(userIds)
         setCommentMentionReferences(references)
     }
 
-    // Handle reply mentions and text change
+    
     const handleReplyMentionsChange = (internalText: string, userIds: string[], references: MentionReference[]) => {
         setReplyText(internalText)
         setReplyMentionUserIds(userIds)
         setReplyMentionReferences(references)
     }
 
-    // Handle edit mentions and text change
+    
     const handleEditMentionsChange = (internalText: string, userIds: string[], references: MentionReference[]) => {
         setEditText(internalText)
         setEditMentionUserIds(userIds)
@@ -176,7 +176,7 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, 
 
         replyMutation.mutateAsync({ ...replyData, formData, mentionReferences: replyMentionReferences, })
 
-        // Clear reply input
+        
         setReplyText("")
         setReplyMentionUserIds([])
         setReplyMentionReferences([])
@@ -188,13 +188,13 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, 
     const updateReply = useUpdateReply()
     const stopRecordingRef = useRef(null)
 
-    // Initialize edit modal with existing content and mentions (simplified like createpost)
+    
     useEffect(() => {
         if (editCommentModelState && commentDetails) {
-            // Just set the content - MentionsInput will handle the conversion with initialReferences
+            
             setEditText(commentDetails.content || "")
 
-            // Extract user IDs for backend submission (simplified)
+            
             const existingMentions = commentDetails.mentions || []
             const mentionUserIds = existingMentions.map(mention => {
                 if (typeof mention === 'object' && mention !== null) {
@@ -208,7 +208,7 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, 
         }
     }, [editCommentModelState, commentDetails])
 
-    // Handle edit form submission
+    
     const handleEditSubmit = (e: FormEvent) => {
         e.preventDefault()
 
@@ -218,7 +218,7 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, 
         }
 
         if (commentDetails?.commentId && !commentDetails?.replyId) {
-            // Editing a comment
+            
             const commentData = {
                 ...commentDetails,
                 commentDetails: {
@@ -230,12 +230,12 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, 
                 mentions: editMentionUserIds,
                 mentionReferences: editMentionReferences
             }
-            // let formData = new FormData()
-            // formData.append('commentData', JSON.stringify(commentData))
+            
+            
             updateComment.mutate(commentData)
 
         } else {
-            // Editing a reply
+            
             let replyDetails = {
                 ...commentDetails,
                 replyDetails: {
@@ -247,15 +247,15 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, 
                 mentions: editMentionUserIds,
                 mentionReferences: editMentionReferences
             }
-            // let formData = new FormData()
-            // formData.append('replyData', JSON.stringify(replyDetails))
+            
+            
 
             updateReply.mutate({ ...replyDetails, commentId: commentDetails?.commentId })
         }
 
         setEditCommentModelState(false)
 
-        // Clear edit state
+        
         setEditText("")
         setEditMentionUserIds([])
         setEditMentionReferences([])
@@ -283,7 +283,7 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, 
                                 <div className='absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[1.5px] z-50 '>
                                     <div className='absolute w-full h-full top-0 left-0 z-10' onClick={() => {
                                         setEditCommentModelState(false)
-                                        // Clear edit state
+                                        
                                         setEditText("")
                                         setEditMentionUserIds([])
                                         setEditMentionReferences([])
@@ -319,7 +319,7 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, 
                                                     variant="outline"
                                                     onClick={() => {
                                                         setEditCommentModelState(false)
-                                                        // Clear edit state
+                                                        
                                                         setEditText("")
                                                         setEditMentionUserIds([])
                                                         setEditMentionReferences([])
@@ -348,7 +348,6 @@ function BottomComments({ isOpen, setOpen, params, postId, postData, pageIndex, 
 
                             </div>
                             <div className='relative p-4 flex h-full flex-col gap-2'>
-                                {/* comment section */}
                                 {data.length > 0 && data[0]?.comments?.length > 0 ? data.map((page, pageIndex) => {
                                     return (page.comments.map((comment: any, i) => {
                                         if (i == page.comments.length - 1) {

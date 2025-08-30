@@ -1,5 +1,5 @@
 import { FieldError, UseFormRegister } from "react-hook-form";
-import { z, ZodType } from "zod"; // Add new import
+import { z, ZodType } from "zod"; 
 
 
 export type FormData = {
@@ -45,5 +45,5 @@ export const UserSchema = z
     })
     .refine((data) => data.password === data.confirmPassword, {
         message: "Passwords do not match",
-        path: ["confirmPassword"], // path of error
+        path: ["confirmPassword"], 
     });

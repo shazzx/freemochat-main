@@ -9,7 +9,6 @@ import { MetricsAggregatorService } from 'src/metrics-aggregator/metrics-aggrega
 import { NotificationService } from 'src/notification/notification.service';
 import { PaymentService } from 'src/payment/payment.service';
 import { Bookmark } from 'src/schema/bookmark';
-import { Comment } from 'src/schema/comment';
 import { Follower } from 'src/schema/followers';
 import { Like } from 'src/schema/likes';
 import { Member } from 'src/schema/members';
@@ -54,13 +53,8 @@ export class PostsService {
         const today = new Date();
 
         try {
-            // Step 1: Send reminders for upcoming due dates
             await this.processPlantationReminders(today);
-
-            // Step 2: Remove plants that are 3+ days overdue
             await this.removeOverduePlantations(today);
-
-            console.log('✅ Completed plantation management processing');
         } catch (error) {
             console.error('❌ Error in plantation management:', error);
         }
@@ -161,11 +155,7 @@ export class PostsService {
             const plantationsDue = await this.getPlantationsDue(targetDate, stage);
 
             if (plantationsDue.length > 0) {
-                console.log(`Found ${plantationsDue.length} plantations for ${stage.stage} notification`);
-
-                // Group and send consolidated notifications
                 const groupedPlantations = this.groupPlantationsByUserAndProject(plantationsDue);
-                console.log(`Grouped into ${Object.keys(groupedPlantations).length} consolidated notifications`);
 
                 for (const [groupKey, plantations] of Object.entries(groupedPlantations)) {
                     await this.sendGroupedPlantationReminder(plantations, stage);
@@ -175,8 +165,6 @@ export class PostsService {
     }
 
     private async removeOverduePlantations(today: Date) {
-        console.log('Checking for plants to remove (3+ days overdue)...');
-
         const threeDaysAgo = new Date(today);
         threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
         threeDaysAgo.setHours(23, 59, 59, 999);
@@ -214,13 +202,10 @@ export class PostsService {
                 }
             ]);
 
-            console.log(`Found ${overduePlantations.length} plantations to remove (3+ days overdue)`);
-
             if (overduePlantations.length === 0) {
                 return;
             }
 
-            // Group by user and project for consolidated removal notifications
             const groupedRemovals = this.groupPlantationsByUserAndProject(overduePlantations);
 
             for (const [groupKey, plantations] of Object.entries(groupedRemovals)) {
@@ -229,8 +214,6 @@ export class PostsService {
                 const deleteResult = await this.environmentalContributionModel.deleteMany(
                     { _id: { $in: plantationIds } }
                 );
-
-                console.log(`🗑️ Deleted ${deleteResult.deletedCount} plantations from database`);
 
                 const user = plantations[0].user;
                 const project = plantations[0].post;
@@ -250,12 +233,7 @@ export class PostsService {
                     targetType: 'project',
                     value: `❌ ${plantText} in "${project.projectDetails?.name}" ${plantCount === 1 ? 'has' : 'have'} been permanently removed from the system (3+ days overdue). You can add ${plantCount === 1 ? 'it' : 'them'} back by creating new plantation entries.`,
                 });
-
-                console.log(`✅ Removed and notified about ${plantations.length} plantations from project ${project._id}`);
             }
-
-            console.log(`✅ Total removed: ${overduePlantations.length} plantations from ${Object.keys(groupedRemovals).length} projects`);
-
         } catch (error) {
             console.error('❌ Error removing overdue plantations:', error);
         }
@@ -285,7 +263,6 @@ export class PostsService {
             const endOfDay = new Date(targetDate);
             endOfDay.setHours(23, 59, 59, 999);
 
-            // FIXED: Removed isActive and notificationStages references
             const query = {
                 'plantationData.nextUpdateDue': {
                     $gte: startOfDay,
@@ -321,25 +298,19 @@ export class PostsService {
                 }
             ]);
 
-            // SIMPLE DUPLICATE PREVENTION: Check if we sent notification today
             const today = new Date();
-            const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-
-            // Filter out plantations that might have been notified today
-            // Since we don't have notificationStages field, we use a simple daily check
+            const todayString = today.toISOString().split('T')[0];
             const filteredPlantations = plantations.filter(plantation => {
                 const lastUpdate = plantation.plantationData.lastUpdateDate;
-                if (!lastUpdate) return true; // Never updated, needs reminder
+                if (!lastUpdate) return true;
 
                 const lastUpdateDate = new Date(lastUpdate).toISOString().split('T')[0];
-                // If updated today, no need for reminder
                 return lastUpdateDate !== todayString;
             });
 
             return filteredPlantations;
 
         } catch (error) {
-            console.error('Error fetching plantations due:', error);
             return [];
         }
     }
@@ -356,17 +327,8 @@ export class PostsService {
             const dueDate = new Date(firstPlantation.plantationData.nextUpdateDue);
             const daysRemaining = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-            // Create consolidated message
             const message = this.createGroupedReminderMessage(plantations, project, stage, daysRemaining);
 
-            console.log(`Sending grouped plantation reminder:`, {
-                userId: user._id,
-                projectId: project._id,
-                plantCount: plantations.length,
-                stage: stage.stage
-            });
-
-            // Send single consolidated notification
             await this.notificationService.createNotification({
                 from: null,
                 user: new Types.ObjectId(user._id),
@@ -376,10 +338,6 @@ export class PostsService {
                 targetType: 'project',
                 value: message,
             });
-
-            // REMOVED: notificationStages update since field doesn't exist in schema
-            console.log(`✅ Sent grouped ${stage.stage} reminder for ${plantations.length} plantations`);
-
         } catch (error) {
             console.error(`❌ Failed to send grouped reminder:`, error);
         }
@@ -394,7 +352,6 @@ export class PostsService {
             `your ${plantSummary}` :
             `your ${plantCount} plants${plantSummary ? ` (${plantSummary})` : ''}`;
 
-        // Messages with 3-day removal warning
         switch (stage.stage) {
             case '1_month':
                 return `Reminder: ${plantText}(plant) in "${projectName}"
@@ -540,7 +497,6 @@ export class PostsService {
             {
                 $unwind: "$target"
             },
-            // Environmental profile lookup for main target - ADD THIS NEW STAGE
             {
                 $lookup: {
                     from: 'counters',
@@ -553,7 +509,7 @@ export class PostsService {
                                         { $eq: ['$targetId', '$$targetId'] },
                                         { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
                                         { $eq: ['$type', 'contributions'] },
-                                        { $gt: ['$count', 0] }  // ADD THIS LINE
+                                        { $gt: ['$count', 0] }
                                     ]
                                 }
                             }
@@ -583,7 +539,6 @@ export class PostsService {
                                 }
                             }
                         },
-                        // Target lookup for shared post
                         {
                             $lookup: {
                                 from: 'users',
@@ -608,7 +563,6 @@ export class PostsService {
                                 as: 'pageTarget'
                             }
                         },
-                        // Handle user for shared post
                         {
                             $addFields: {
                                 userObjectId: {
@@ -677,7 +631,6 @@ export class PostsService {
                                 }
                             }
                         },
-                        // Handle likes for shared post
                         {
                             $lookup: {
                                 from: 'likes',
@@ -698,7 +651,6 @@ export class PostsService {
                                 as: 'userLike',
                             },
                         },
-                        // Handle bookmarks for shared post
                         {
                             $lookup: {
                                 from: 'bookmarks',
@@ -737,7 +689,6 @@ export class PostsService {
                                 as: 'environmentalContributions'
                             }
                         },
-                        // Handle counters for shared post
                         {
                             $lookup: {
                                 from: 'counters',
@@ -758,7 +709,6 @@ export class PostsService {
                                 as: 'counters'
                             }
                         },
-                        // Environmental profile lookup for shared post target - ADD THIS NEW STAGE
                         {
                             $lookup: {
                                 from: 'counters',
@@ -771,7 +721,7 @@ export class PostsService {
                                                     { $eq: ['$targetId', '$$targetId'] },
                                                     { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
                                                     { $eq: ['$type', 'contributions'] },
-                                                    { $gt: ['$count', 0] }  // ADD THIS LINE
+                                                    { $gt: ['$count', 0] }
                                                 ]
                                             }
                                         }
@@ -786,7 +736,6 @@ export class PostsService {
                                 as: 'targetEnvironmentalContributions'
                             }
                         },
-                        // Combine fields for shared post - UPDATE THIS STAGE
                         {
                             $addFields: {
                                 target: {
@@ -884,7 +833,6 @@ export class PostsService {
                                 as: 'mentions'
                             }
                         },
-                        // Project shared post fields
                         {
                             $project: {
                                 _id: 1,
@@ -997,7 +945,6 @@ export class PostsService {
                     as: 'counters'
                 }
             },
-            // UPDATE THIS STAGE - Add environmental profile to main target
             {
                 $addFields: {
                     target: {
@@ -1128,16 +1075,12 @@ export class PostsService {
 
         const results = { posts: _posts, nextCursor };
         return results
-        // let promotedPosts = await this.getPromotedPosts(userId, { country: string, city: string, area: string })
-        // const results = { posts: [..._posts, ...promotedPosts], nextCursor };
-        // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
     }
 
     async getReels(cursor: string | null, userId: string, targetId: string, type: string) {
         let model = type + 's'
         const limit = 18
 
-        // let visibility = self == 'true' ? {} : {}
         let visibility = {
             $or: [
                 { visibility: 'public' },
@@ -1232,7 +1175,6 @@ export class PostsService {
                                 }
                             }
                         },
-                        // Target lookup for shared post
                         {
                             $lookup: {
                                 from: 'users',
@@ -1257,7 +1199,6 @@ export class PostsService {
                                 as: 'pageTarget'
                             }
                         },
-                        // Handle user for shared post
                         {
                             $addFields: {
                                 userObjectId: {
@@ -1326,7 +1267,6 @@ export class PostsService {
                                 }
                             }
                         },
-                        // Handle likes for shared post
                         {
                             $lookup: {
                                 from: 'likes',
@@ -1347,7 +1287,6 @@ export class PostsService {
                                 as: 'userLike',
                             },
                         },
-                        // Handle bookmarks for shared post
                         {
                             $lookup: {
                                 from: 'bookmarks',
@@ -1367,7 +1306,6 @@ export class PostsService {
                                 as: 'userBookmark',
                             },
                         },
-                        // Handle counters for shared post
                         {
                             $lookup: {
                                 from: 'counters',
@@ -1388,7 +1326,6 @@ export class PostsService {
                                 as: 'counters'
                             }
                         },
-                        // Combine fields for shared post
                         {
                             $addFields: {
                                 target: {
@@ -1443,7 +1380,6 @@ export class PostsService {
                                 as: 'mentions'
                             }
                         },
-                        // Project shared post fields
                         {
                             $project: {
                                 _id: 1,
@@ -1892,7 +1828,6 @@ export class PostsService {
                                 as: 'counters'
                             }
                         },
-                        // Environmental profile lookup for shared post target - NEW STAGE
                         {
                             $lookup: {
                                 from: 'counters',
@@ -1905,7 +1840,7 @@ export class PostsService {
                                                     { $eq: ['$targetId', '$$targetId'] },
                                                     { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
                                                     { $eq: ['$type', 'contributions'] },
-                                                    { $gt: ['$count', 0] }  // ADD THIS LINE
+                                                    { $gt: ['$count', 0] }
                                                 ]
                                             }
                                         }
@@ -1920,7 +1855,6 @@ export class PostsService {
                                 as: 'targetEnvironmentalContributions'
                             }
                         },
-                        // Environmental contributions lookup for shared post - NEW STAGE
                         {
                             $lookup: {
                                 from: 'environmentalcontributions',
@@ -1959,7 +1893,6 @@ export class PostsService {
                                 as: 'mentions'
                             }
                         },
-                        // UPDATED - Enhanced target field with environmental profile
                         {
                             $addFields: {
                                 target: {
@@ -2038,7 +1971,6 @@ export class PostsService {
                                 isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                             }
                         },
-                        // UPDATED - Added missing fields to projection
                         {
                             $project: {
                                 _id: 1,
@@ -2183,7 +2115,6 @@ export class PostsService {
                     as: 'counters'
                 }
             },
-            // Environmental profile lookup for main post target - NEW STAGE
             {
                 $lookup: {
                     from: 'counters',
@@ -2196,7 +2127,7 @@ export class PostsService {
                                         { $eq: ['$targetId', '$$targetId'] },
                                         { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
                                         { $eq: ['$type', 'contributions'] },
-                                        { $gt: ['$count', 0] }  // ADD THIS LINE
+                                        { $gt: ['$count', 0] }
                                     ]
                                 }
                             }
@@ -2211,7 +2142,6 @@ export class PostsService {
                     as: 'targetEnvironmentalContributions'
                 }
             },
-            // Environmental contributions lookup for main post - NEW STAGE
             {
                 $lookup: {
                     from: 'environmentalcontributions',
@@ -2263,7 +2193,6 @@ export class PostsService {
                     as: 'mentions'
                 }
             },
-            // UPDATED - Enhanced target field with environmental profile
             {
                 $addFields: {
                     target: {
@@ -2342,7 +2271,6 @@ export class PostsService {
                     }
                 },
             },
-            // UPDATED - Added missing fields to projection
             {
                 $project: {
                     _id: 1,
@@ -2385,500 +2313,6 @@ export class PostsService {
         return post
     }
 
-    // async feed(userId, cursor) {
-    //     const limit = 12
-
-    //     let visibility = {
-    //         $or: [
-    //             { visibility: 'public' },
-    //             { $and: [{ visibility: 'private' }, { user: new Types.ObjectId(userId) }] }
-    //         ]
-    //     }
-
-    //     // const query = cursor ? { createdAt: { $lt: new Date(cursor) }, ...visibility, postType: 'post' } : { ...visibility, postType: 'post' };
-    //     const query = cursor
-    //         ? {
-    //             createdAt: { $lt: new Date(cursor) },
-    //             ...visibility,
-    //             postType: { $in: ['post'] }
-    //         }
-    //         : {
-    //             ...visibility,
-    //             postType: { $in: ['post'] }
-    //         };
-
-
-    //     const posts = await this.postModel.aggregate([
-    //         { $match: query },
-    //         { $sort: { createdAt: -1 } },
-    //         { $limit: limit + 1 },
-    //         // Target lookup section - Look up possible targets from different collections
-    //         {
-    //             $lookup: {
-    //                 from: 'users',
-    //                 localField: 'targetId',
-    //                 foreignField: '_id',
-    //                 as: 'userTarget'
-    //             }
-    //         },
-    //         {
-    //             $lookup: {
-    //                 from: 'groups',
-    //                 localField: 'targetId',
-    //                 foreignField: '_id',
-    //                 as: 'groupTarget'
-    //             }
-    //         },
-    //         {
-    //             $lookup: {
-    //                 from: 'pages',
-    //                 localField: 'targetId',
-    //                 foreignField: '_id',
-    //                 as: 'pageTarget'
-    //             }
-    //         },
-    //         // Handle user object ID conversion for group posts
-    //         {
-    //             $addFields: {
-    //                 userObjectId: {
-    //                     $cond: {
-    //                         if: { $eq: ["$type", "group"] },
-    //                         then: {
-    //                             $cond: {
-    //                                 if: { $eq: [{ $type: "$user" }, "string"] },
-    //                                 then: { $toObjectId: "$user" },
-    //                                 else: "$user"
-    //                             }
-    //                         },
-    //                         else: null
-    //                     }
-    //                 }
-    //             }
-    //         },
-    //         // Shared post lookup with enhanced structure to match main post
-    //         {
-    //             $lookup: {
-    //                 from: 'posts',
-    //                 let: { sharedPostId: '$sharedPost' },
-    //                 pipeline: [
-    //                     {
-    //                         $match: {
-    //                             $expr: {
-    //                                 $and: [
-    //                                     { $ne: ['$$sharedPostId', null] },
-    //                                     { $eq: ['$_id', '$$sharedPostId'] }
-    //                                 ]
-    //                             }
-    //                         }
-    //                     },
-    //                     // Target lookup for shared post
-    //                     {
-    //                         $lookup: {
-    //                             from: 'users',
-    //                             localField: 'targetId',
-    //                             foreignField: '_id',
-    //                             as: 'userTarget'
-    //                         }
-    //                     },
-    //                     {
-    //                         $lookup: {
-    //                             from: 'groups',
-    //                             localField: 'targetId',
-    //                             foreignField: '_id',
-    //                             as: 'groupTarget'
-    //                         }
-    //                     },
-    //                     {
-    //                         $lookup: {
-    //                             from: 'pages',
-    //                             localField: 'targetId',
-    //                             foreignField: '_id',
-    //                             as: 'pageTarget'
-    //                         }
-    //                     },
-    //                     // Handle user for shared post
-    //                     {
-    //                         $addFields: {
-    //                             userObjectId: {
-    //                                 $cond: {
-    //                                     if: { $eq: ["$type", "group"] },
-    //                                     then: {
-    //                                         $cond: {
-    //                                             if: { $eq: [{ $type: "$user" }, "string"] },
-    //                                             then: { $toObjectId: "$user" },
-    //                                             else: "$user"
-    //                                         }
-    //                                     },
-    //                                     else: null
-    //                                 }
-    //                             }
-    //                         }
-    //                     },
-    //                     {
-    //                         $lookup: {
-    //                             from: "users",
-    //                             let: { userId: "$userObjectId", postType: "$type" },
-    //                             pipeline: [
-    //                                 {
-    //                                     $match: {
-    //                                         $expr: {
-    //                                             $and: [
-    //                                                 { $eq: ["$$postType", "group"] },
-    //                                                 { $eq: ["$_id", "$$userId"] }
-    //                                             ]
-    //                                         }
-    //                                     }
-    //                                 },
-    //                                 { $limit: 1 }
-    //                             ],
-    //                             as: "userDetails"
-    //                         }
-    //                     },
-    //                     {
-    //                         $lookup: {
-    //                             from: 'users',
-    //                             localField: 'user',
-    //                             foreignField: '_id',
-    //                             as: 'regularUserDetails'
-    //                         }
-    //                     },
-    //                     {
-    //                         $addFields: {
-    //                             user: {
-    //                                 $cond: {
-    //                                     if: { $eq: ["$type", "group"] },
-    //                                     then: {
-    //                                         $cond: {
-    //                                             if: { $gt: [{ $size: "$userDetails" }, 0] },
-    //                                             then: { $arrayElemAt: ["$userDetails", 0] },
-    //                                             else: null
-    //                                         }
-    //                                     },
-    //                                     else: {
-    //                                         $cond: {
-    //                                             if: { $gt: [{ $size: "$regularUserDetails" }, 0] },
-    //                                             then: { $arrayElemAt: ["$regularUserDetails", 0] },
-    //                                             else: "$user"
-    //                                         }
-    //                                     }
-    //                                 }
-    //                             }
-    //                         }
-    //                     },
-    //                     // Handle likes for shared post
-    //                     {
-    //                         $lookup: {
-    //                             from: 'likes',
-    //                             let: { postId: '$_id' },
-    //                             pipeline: [
-    //                                 {
-    //                                     $match: {
-    //                                         $expr: {
-    //                                             $and: [
-    //                                                 { $eq: ['$targetId', '$$postId'] },
-    //                                                 { $eq: ['$userId', new Types.ObjectId(userId)] },
-    //                                                 { $eq: ['$type', "post"] },
-    //                                             ],
-    //                                         },
-    //                                     },
-    //                                 },
-    //                             ],
-    //                             as: 'userLike',
-    //                         },
-    //                     },
-    //                     // Handle bookmarks for shared post
-    //                     {
-    //                         $lookup: {
-    //                             from: 'bookmarks',
-    //                             let: { postId: '$_id' },
-    //                             pipeline: [
-    //                                 {
-    //                                     $match: {
-    //                                         $expr: {
-    //                                             $and: [
-    //                                                 { $eq: ['$postId', '$$postId'] },
-    //                                                 { $eq: ['$userId', new Types.ObjectId(userId)] },
-    //                                             ],
-    //                                         },
-    //                                     },
-    //                                 },
-    //                             ],
-    //                             as: 'userBookmark',
-    //                         },
-    //                     },
-    //                     // Handle counters for shared post
-    //                     {
-    //                         $lookup: {
-    //                             from: 'counters',
-    //                             let: { postId: '$_id' },
-    //                             pipeline: [
-    //                                 {
-    //                                     $match: {
-    //                                         $expr: {
-    //                                             $and: [
-    //                                                 { $eq: ['$targetId', '$$postId'] },
-    //                                                 { $eq: ['$name', 'post'] },
-    //                                                 { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
-    //                                             ]
-    //                                         }
-    //                                     }
-    //                                 }
-    //                             ],
-    //                             as: 'counters'
-    //                         }
-    //                     },
-    //                     // Combine fields for shared post
-    //                     {
-    //                         $addFields: {
-    //                             target: {
-    //                                 $switch: {
-    //                                     branches: [
-    //                                         { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-    //                                         { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-    //                                         { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-    //                                     ],
-    //                                     default: null
-    //                                 }
-    //                             },
-    //                             likesCount: {
-    //                                 $ifNull: [
-    //                                     { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
-    //                                     0
-    //                                 ]
-    //                             },
-    //                             commentsCount: {
-    //                                 $ifNull: [
-    //                                     { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
-    //                                     0
-    //                                 ]
-    //                             },
-    //                             bookmarksCount: {
-    //                                 $ifNull: [
-    //                                     { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
-    //                                     0
-    //                                 ]
-    //                             },
-    //                             isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
-    //                             reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
-    //                             isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
-    //                         }
-    //                     },
-    //                     // Project shared post fields
-    //                     {
-    //                         $project: {
-    //                             _id: 1,
-    //                             content: 1,
-    //                             media: 1,
-    //                             user: 1,
-    //                             promotion: 1,
-    //                             isUploaded: 1,
-    //                             target: 1,
-    //                             reaction: 1,
-    //                             likesCount: { $ifNull: ['$likesCount.count', 0] },
-    //                             commentsCount: { $ifNull: ['$commentsCount.count', 0] },
-    //                             bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
-    //                             isLikedByUser: 1,
-    //                             targetId: 1,
-    //                             type: 1,
-    //                             isBookmarkedByUser: 1,
-    //                             updatedAt: 1,
-    //                             createdAt: 1
-    //                         }
-    //                     }
-    //                 ],
-    //                 as: 'sharedPostDetails'
-    //             }
-    //         },
-    //         // User lookup for main post
-    //         {
-    //             $lookup: {
-    //                 from: "users",
-    //                 let: { userId: "$userObjectId", postType: "$type" },
-    //                 pipeline: [
-    //                     {
-    //                         $match: {
-    //                             $expr: {
-    //                                 $and: [
-    //                                     { $eq: ["$$postType", "group"] },
-    //                                     { $eq: ["$_id", "$$userId"] }
-    //                                 ]
-    //                             }
-    //                         }
-    //                     },
-    //                     { $limit: 1 }
-    //                 ],
-    //                 as: "userDetails"
-    //             }
-    //         },
-    //         {
-    //             $lookup: {
-    //                 from: 'users',
-    //                 localField: 'user',
-    //                 foreignField: '_id',
-    //                 as: 'regularUserDetails'
-    //             }
-    //         },
-    //         {
-    //             $addFields: {
-    //                 user: {
-    //                     $cond: {
-    //                         if: { $eq: ["$type", "group"] },
-    //                         then: {
-    //                             $cond: {
-    //                                 if: { $gt: [{ $size: "$userDetails" }, 0] },
-    //                                 then: { $arrayElemAt: ["$userDetails", 0] },
-    //                                 else: null
-    //                             }
-    //                         },
-    //                         else: {
-    //                             $cond: {
-    //                                 if: { $gt: [{ $size: "$regularUserDetails" }, 0] },
-    //                                 then: { $arrayElemAt: ["$regularUserDetails", 0] },
-    //                                 else: "$user"
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         },
-    //         // Bookmark lookup for main post
-    //         {
-    //             $lookup: {
-    //                 from: 'bookmarks',
-    //                 let: { postId: '$_id' },
-    //                 pipeline: [
-    //                     {
-    //                         $match: {
-    //                             $expr: {
-    //                                 $and: [
-    //                                     { $eq: ['$postId', '$$postId'] },
-    //                                     { $eq: ['$userId', new Types.ObjectId(userId)] },
-    //                                 ],
-    //                             },
-    //                         },
-    //                     },
-    //                 ],
-    //                 as: 'userBookmark',
-    //             },
-    //         },
-    //         // Like lookup for main post
-    //         {
-    //             $lookup: {
-    //                 from: 'likes',
-    //                 let: { postId: '$_id' },
-    //                 pipeline: [
-    //                     {
-    //                         $match: {
-    //                             $expr: {
-    //                                 $and: [
-    //                                     { $eq: ['$targetId', '$$postId'] },
-    //                                     { $eq: ['$userId', new Types.ObjectId(userId)] },
-    //                                     { $eq: ['$type', "post"] },
-    //                                 ],
-    //                             },
-    //                         },
-    //                     },
-    //                 ],
-    //                 as: 'userLike',
-    //             },
-    //         },
-    //         // Counter lookup for main post
-    //         {
-    //             $lookup: {
-    //                 from: 'counters',
-    //                 let: { postId: '$_id' },
-    //                 pipeline: [
-    //                     {
-    //                         $match: {
-    //                             $expr: {
-    //                                 $and: [
-    //                                     { $eq: ['$targetId', '$$postId'] },
-    //                                     { $eq: ['$name', 'post'] },
-    //                                     { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
-    //                                 ]
-    //                             }
-    //                         }
-    //                     }
-    //                 ],
-    //                 as: 'counters'
-    //             }
-    //         },
-    //         // Combine fields for main post
-    //         {
-    //             $addFields: {
-    //                 target: {
-    //                     $switch: {
-    //                         branches: [
-    //                             { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-    //                             { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-    //                             { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-    //                         ],
-    //                         default: null
-    //                     }
-    //                 },
-    //                 likesCount: {
-    //                     $ifNull: [
-    //                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
-    //                         0
-    //                     ]
-    //                 },
-    //                 commentsCount: {
-    //                     $ifNull: [
-    //                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
-    //                         0
-    //                     ]
-    //                 },
-    //                 bookmarksCount: {
-    //                     $ifNull: [
-    //                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
-    //                         0
-    //                     ]
-    //                 },
-    //                 isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
-    //                 reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
-    //                 isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
-    //             }
-    //         },
-    //         // Final projection
-    //         {
-    //             $project: {
-    //                 _id: 1,
-    //                 content: 1,
-    //                 media: 1,
-    //                 user: 1,
-    //                 promotion: 1,
-    //                 isUploaded: 1,
-    //                 target: 1,
-    //                 reaction: 1,
-    //                 likesCount: { $ifNull: ['$likesCount.count', 0] },
-    //                 commentsCount: { $ifNull: ['$commentsCount.count', 0] },
-    //                 bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
-    //                 isLikedByUser: 1,
-    //                 targetId: 1,
-    //                 type: 1,
-    //                 isBookmarkedByUser: 1,
-    //                 updatedAt: 1,
-    //                 createdAt: 1,
-    //                 sharedPost: {
-    //                     $cond: {
-    //                         if: { $gt: [{ $size: '$sharedPostDetails' }, 0] },
-    //                         then: { $arrayElemAt: ['$sharedPostDetails', 0] },
-    //                         else: null
-    //                     }
-    //                 }
-    //             },
-    //         },
-    //     ]);
-
-
-    //     const hasNextPage = posts.length > limit;
-    //     const _posts = hasNextPage ? posts.slice(0, -1) : posts;
-    //     const nextCursor = hasNextPage ? _posts[_posts.length - 1].createdAt.toISOString() : null;
-
-    //     const results = { posts: _posts, nextCursor };
-    //     return results
-    // }
-
     async feed(userId: string, cursor: string, reelsCursor: string) {
         const postLimit = 8
         const reelsLimit = 3
@@ -2890,7 +2324,6 @@ export class PostsService {
             ]
         }
 
-        // Posts query
         const postsQuery = cursor ? {
             createdAt: { $lt: new Date(cursor) },
             ...visibility,
@@ -2900,7 +2333,6 @@ export class PostsService {
             postType: { $in: ['post', 'plantation', 'garbage_collection', 'water_ponds', 'rain_water'] }
         };
 
-        // Reels query - using a separate cursor for reels pagination
         const reelsQuery = reelsCursor
             ? {
                 createdAt: { $lt: new Date(reelsCursor) },
@@ -2914,12 +2346,10 @@ export class PostsService {
                 'media.type': 'video'
             };
 
-        // Pipeline to process posts/reels with all required lookups
         const createPipeline: any = (query, limit) => [
             { $match: query },
             { $sort: { createdAt: -1 } },
             { $limit: limit + 1 },
-            // Target lookup section - Look up possible targets from different collections
             {
                 $lookup: {
                     from: 'users',
@@ -2944,7 +2374,6 @@ export class PostsService {
                     as: 'pageTarget'
                 }
             },
-            // Handle user object ID conversion for group posts
             {
                 $addFields: {
                     userObjectId: {
@@ -2962,7 +2391,6 @@ export class PostsService {
                     }
                 }
             },
-            // Shared post lookup with enhanced structure to match main post
             {
                 $lookup: {
                     from: 'posts',
@@ -2978,7 +2406,6 @@ export class PostsService {
                                 }
                             }
                         },
-                        // Target lookup for shared post
                         {
                             $lookup: {
                                 from: 'users',
@@ -3003,7 +2430,6 @@ export class PostsService {
                                 as: 'pageTarget'
                             }
                         },
-                        // Handle user for shared post
                         {
                             $addFields: {
                                 userObjectId: {
@@ -3091,7 +2517,6 @@ export class PostsService {
                                 }
                             }
                         },
-                        // Handle likes for shared post
                         {
                             $lookup: {
                                 from: 'likes',
@@ -3112,7 +2537,6 @@ export class PostsService {
                                 as: 'userLike',
                             },
                         },
-                        // Handle bookmarks for shared post
                         {
                             $lookup: {
                                 from: 'bookmarks',
@@ -3132,7 +2556,6 @@ export class PostsService {
                                 as: 'userBookmark',
                             },
                         },
-                        // Handle counters for shared post
                         {
                             $lookup: {
                                 from: 'counters',
@@ -3153,7 +2576,6 @@ export class PostsService {
                                 as: 'counters'
                             }
                         },
-                        // Environmental profile lookup for shared post target
                         {
                             $lookup: {
                                 from: 'counters',
@@ -3166,7 +2588,7 @@ export class PostsService {
                                                     { $eq: ['$targetId', '$$targetId'] },
                                                     { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
                                                     { $eq: ['$type', 'contributions'] },
-                                                    { $gt: ['$count', 0] }  // ADD THIS LINE
+                                                    { $gt: ['$count', 0] }
                                                 ]
                                             }
                                         }
@@ -3181,7 +2603,6 @@ export class PostsService {
                                 as: 'targetEnvironmentalContributions'
                             }
                         },
-                        // Combine fields for shared post
                         {
                             $addFields: {
                                 target: {
@@ -3279,7 +2700,6 @@ export class PostsService {
                                 as: 'mentions'
                             }
                         },
-                        // Project shared post fields
                         {
                             $project: {
                                 _id: 1,
@@ -3314,7 +2734,6 @@ export class PostsService {
                     as: 'sharedPostDetails'
                 }
             },
-            // User lookup for main post
             {
                 $lookup: {
                     from: "users",
@@ -3366,7 +2785,6 @@ export class PostsService {
                     }
                 }
             },
-            // Bookmark lookup for main post
             {
                 $lookup: {
                     from: 'bookmarks',
@@ -3386,7 +2804,6 @@ export class PostsService {
                     as: 'userBookmark',
                 },
             },
-            // Like lookup for main post
             {
                 $lookup: {
                     from: 'likes',
@@ -3407,7 +2824,6 @@ export class PostsService {
                     as: 'userLike',
                 },
             },
-            // Counter lookup for main post
             {
                 $lookup: {
                     from: 'counters',
@@ -3428,7 +2844,6 @@ export class PostsService {
                     as: 'counters'
                 }
             },
-            // Environmental profile lookup for main post target
             {
                 $lookup: {
                     from: 'counters',
@@ -3441,7 +2856,7 @@ export class PostsService {
                                         { $eq: ['$targetId', '$$targetId'] },
                                         { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
                                         { $eq: ['$type', 'contributions'] },
-                                        { $gt: ['$count', 0] }  // ADD THIS LINE
+                                        { $gt: ['$count', 0] }
                                     ]
                                 }
                             }
@@ -3624,23 +3039,19 @@ export class PostsService {
             }
         ];
 
-        // Execute both queries in parallel
         const [postsResult, reelsResult] = await Promise.all([
             this.postModel.aggregate(createPipeline(postsQuery, postLimit)),
             this.postModel.aggregate(createPipeline(reelsQuery, reelsLimit))
         ]);
 
-        // Process posts pagination
         const hasNextPostsPage = postsResult.length > postLimit;
         const posts = hasNextPostsPage ? postsResult.slice(0, postLimit) : postsResult;
         const nextPostsCursor = hasNextPostsPage ? posts[posts.length - 1].createdAt.toISOString() : null;
 
-        // Process reels pagination
         const hasNextReelsPage = reelsResult.length > reelsLimit;
         const reels = hasNextReelsPage ? reelsResult.slice(0, reelsLimit) : reelsResult;
         const nextReelsCursor = hasNextReelsPage ? reels[reels.length - 1].createdAt.toISOString() : null;
 
-        // Combine posts and reels in the response
         return {
             posts: [...posts],
             reels: [...reels],
@@ -3650,313 +3061,6 @@ export class PostsService {
             hasMoreReels: hasNextReelsPage
         };
     }
-
-    // async videosFeed(userId, cursor) {
-    //     const videoLimit = 10;
-
-    //     let visibility = {
-    //         $or: [
-    //             { visibility: 'public' },
-    //             { $and: [{ visibility: 'private' }, { user: new Types.ObjectId(userId) }] }
-    //         ]
-    //     };
-
-    //     // Videos query - only posts that have video media
-    //     const videosQuery = cursor
-    //         ? {
-    //             createdAt: { $lt: new Date(cursor) },
-    //             ...visibility,
-    //             postType: "post",
-    //             'media.type': 'video'  // Only include posts with video media
-    //         }
-    //         : {
-    //             ...visibility,
-    //             postType: "post",
-    //             'media.type': 'video'  // Only include posts with video media
-    //         };
-
-    //     // Pipeline to process videos with required lookups
-    //     const videosPipeline: any = [
-    //         { $match: videosQuery },
-    //         { $sort: { createdAt: -1 } },
-    //         { $limit: videoLimit + 1 },
-
-    //         // Target lookup section - Look up possible targets from different collections
-    //         {
-    //             $lookup: {
-    //                 from: 'users',
-    //                 localField: 'targetId',
-    //                 foreignField: '_id',
-    //                 as: 'userTarget'
-    //             }
-    //         },
-    //         {
-    //             $lookup: {
-    //                 from: 'groups',
-    //                 localField: 'targetId',
-    //                 foreignField: '_id',
-    //                 as: 'groupTarget'
-    //             }
-    //         },
-    //         {
-    //             $lookup: {
-    //                 from: 'pages',
-    //                 localField: 'targetId',
-    //                 foreignField: '_id',
-    //                 as: 'pageTarget'
-    //             }
-    //         },
-
-    //         // Handle user object ID conversion for group posts
-    //         {
-    //             $addFields: {
-    //                 userObjectId: {
-    //                     $cond: {
-    //                         if: { $eq: ["$type", "group"] },
-    //                         then: {
-    //                             $cond: {
-    //                                 if: { $eq: [{ $type: "$user" }, "string"] },
-    //                                 then: { $toObjectId: "$user" },
-    //                                 else: "$user"
-    //                             }
-    //                         },
-    //                         else: null
-    //                     }
-    //                 }
-    //             }
-    //         },
-
-    //         // User lookup for post
-    //         {
-    //             $lookup: {
-    //                 from: "users",
-    //                 let: { userId: "$userObjectId", postType: "$type" },
-    //                 pipeline: [
-    //                     {
-    //                         $match: {
-    //                             $expr: {
-    //                                 $and: [
-    //                                     { $eq: ["$$postType", "group"] },
-    //                                     { $eq: ["$_id", "$$userId"] }
-    //                                 ]
-    //                             }
-    //                         }
-    //                     },
-    //                     { $limit: 1 }
-    //                 ],
-    //                 as: "userDetails"
-    //             }
-    //         },
-    //         {
-    //             $lookup: {
-    //                 from: 'users',
-    //                 localField: 'user',
-    //                 foreignField: '_id',
-    //                 as: 'regularUserDetails'
-    //             }
-    //         },
-    //         {
-    //             $addFields: {
-    //                 user: {
-    //                     $cond: {
-    //                         if: { $eq: ["$type", "group"] },
-    //                         then: {
-    //                             $cond: {
-    //                                 if: { $gt: [{ $size: "$userDetails" }, 0] },
-    //                                 then: { $arrayElemAt: ["$userDetails", 0] },
-    //                                 else: null
-    //                             }
-    //                         },
-    //                         else: {
-    //                             $cond: {
-    //                                 if: { $gt: [{ $size: "$regularUserDetails" }, 0] },
-    //                                 then: { $arrayElemAt: ["$regularUserDetails", 0] },
-    //                                 else: "$user"
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         },
-
-    //         // Bookmark lookup for post
-    //         {
-    //             $lookup: {
-    //                 from: 'bookmarks',
-    //                 let: { postId: '$_id' },
-    //                 pipeline: [
-    //                     {
-    //                         $match: {
-    //                             $expr: {
-    //                                 $and: [
-    //                                     { $eq: ['$postId', '$$postId'] },
-    //                                     { $eq: ['$userId', new Types.ObjectId(userId)] },
-    //                                 ],
-    //                             },
-    //                         },
-    //                     },
-    //                 ],
-    //                 as: 'userBookmark',
-    //             },
-    //         },
-
-    //         // Like lookup for post
-    //         {
-    //             $lookup: {
-    //                 from: 'likes',
-    //                 let: { postId: '$_id' },
-    //                 pipeline: [
-    //                     {
-    //                         $match: {
-    //                             $expr: {
-    //                                 $and: [
-    //                                     { $eq: ['$targetId', '$$postId'] },
-    //                                     { $eq: ['$userId', new Types.ObjectId(userId)] },
-    //                                     { $eq: ['$type', "post"] },
-    //                                 ],
-    //                             },
-    //                         },
-    //                     },
-    //                 ],
-    //                 as: 'userLike',
-    //             },
-    //         },
-
-    //         // Counter lookup for post
-    //         {
-    //             $lookup: {
-    //                 from: 'counters',
-    //                 let: { postId: '$_id' },
-    //                 pipeline: [
-    //                     {
-    //                         $match: {
-    //                             $expr: {
-    //                                 $and: [
-    //                                     { $eq: ['$targetId', '$$postId'] },
-    //                                     { $eq: ['$name', 'post'] },
-    //                                     { $in: ['$type', ['likes', 'comments', 'bookmarks']] }
-    //                                 ]
-    //                             }
-    //                         }
-    //                     }
-    //                 ],
-    //                 as: 'counters'
-    //             }
-    //         },
-
-    //         // Combine fields for post
-    //         {
-    //             $addFields: {
-    //                 target: {
-    //                     $switch: {
-    //                         branches: [
-    //                             { case: { $gt: [{ $size: '$userTarget' }, 0] }, then: { $arrayElemAt: ['$userTarget', 0] } },
-    //                             { case: { $gt: [{ $size: '$pageTarget' }, 0] }, then: { $arrayElemAt: ['$pageTarget', 0] } },
-    //                             { case: { $gt: [{ $size: '$groupTarget' }, 0] }, then: { $arrayElemAt: ['$groupTarget', 0] } }
-    //                         ],
-    //                         default: null
-    //                     }
-    //                 },
-    //                 likesCount: {
-    //                     $ifNull: [
-    //                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'likes'] } } }, 0] },
-    //                         0
-    //                     ]
-    //                 },
-    //                 commentsCount: {
-    //                     $ifNull: [
-    //                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'comments'] } } }, 0] },
-    //                         0
-    //                     ]
-    //                 },
-    //                 bookmarksCount: {
-    //                     $ifNull: [
-    //                         { $arrayElemAt: [{ $filter: { input: '$counters', as: 'c', cond: { $eq: ['$$c.type', 'bookmarks'] } } }, 0] },
-    //                         0
-    //                     ]
-    //                 },
-    //                 isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
-    //                 reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
-    //                 isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
-    //                 // Filter media to only include videos
-    //                 videoMedia: {
-    //                     $filter: {
-    //                         input: '$media',
-    //                         as: 'mediaItem',
-    //                         cond: { $eq: ['$mediaItem.type', 'video'] }
-    //                     }
-    //                 },
-    //                 // Get only the first video
-    //                 firstVideo: {
-    //                     $arrayElemAt: [
-    //                         {
-    //                             $filter: {
-    //                                 input: '$media',
-    //                                 as: 'mediaItem',
-    //                                 cond: { $eq: ['$mediaItem.type', 'video'] }
-    //                             }
-    //                         },
-    //                         0
-    //                     ]
-    //                 }
-    //             }
-    //         },
-
-    //         // Final projection with video filtering
-    //         {
-    //             $project: {
-    //                 _id: 1,
-    //                 content: 1,
-    //                 // Only include the first video media
-    //                 media: {
-    //                     $cond: {
-    //                         if: { $gt: [{ $size: '$videoMedia' }, 0] },
-    //                         then: [{ $arrayElemAt: ['$videoMedia', 0] }],
-    //                         else: []
-    //                     }
-    //                 },
-    //                 user: 1,
-    //                 promotion: 1,
-    //                 isUploaded: 1,
-    //                 target: 1,
-    //                 reaction: 1,
-    //                 postType: 1,
-    //                 likesCount: { $ifNull: ['$likesCount.count', 0] },
-    //                 commentsCount: { $ifNull: ['$commentsCount.count', 0] },
-    //                 bookmarksCount: { $ifNull: ['$bookmarksCount.count', 0] },
-    //                 isLikedByUser: 1,
-    //                 targetId: 1,
-    //                 type: 1,
-    //                 isBookmarkedByUser: 1,
-    //                 updatedAt: 1,
-    //                 createdAt: 1
-    //             },
-    //         },
-    //         // Filter out posts with no videos
-    //         {
-    //             $match: {
-    //                 "media.0": { $exists: true }
-    //             }
-    //         }
-    //     ];
-
-    //     // Execute the query
-    //     const videosResult = await this.postModel.aggregate(videosPipeline);
-
-    //     // Process pagination and ensure all posts have videos
-    //     const filteredVideos = videosResult.filter(post => post.media && post.media.length > 0);
-    //     const hasNextPage = videosResult.length > videoLimit;
-    //     const videos = hasNextPage ? filteredVideos.slice(0, videoLimit) : filteredVideos;
-    //     const nextCursor = hasNextPage && videos.length > 0
-    //         ? videos[videos.length - 1].createdAt.toISOString()
-    //         : null;
-
-    //     return {
-    //         videos,
-    //         nextCursor,
-    //         hasMore: hasNextPage
-    //     };
-    // }
 
     async videosFeed(userId: string, cursor: string, postId?: string) {
         const videoLimit = 8;
@@ -3970,18 +3074,14 @@ export class PostsService {
             ]
         };
 
-        // Build our query based on inputs
         let matchQuery: any = {
             ...visibility,
             postType: "post",
             'media.type': 'video'
         };
 
-        // If we have a postId, use it as our starting point
         if (postId && !cursor) {
             try {
-                // First, fetch the postId item to get its creation date
-                // We'll need this to use as a reference point
                 const initialPost = await this.postModel.findOne({
                     _id: new Types.ObjectId(postId),
                     ...visibility
@@ -3990,8 +3090,6 @@ export class PostsService {
                 if (initialPost) {
                     console.log(`Found initial post with ID ${postId}, created at ${initialPost.createdAt}`);
 
-                    // Set up a query for posts created at the same time or earlier
-                    // This ensures we include the initial post and anything newer
                     matchQuery.createdAt = { $lte: initialPost.createdAt };
                 } else {
                     console.log(`Initial post with ID ${postId} not found, using regular feed`);
@@ -4000,20 +3098,15 @@ export class PostsService {
                 console.error("Invalid postId format or error fetching:", error);
             }
         }
-        // Standard cursor-based pagination when no initial postId or when loading more
         else if (cursor) {
             matchQuery.createdAt = { $lt: new Date(cursor) };
         }
 
-        // Pipeline to process videos with required lookups
         const videosPipeline: any = [
             { $match: matchQuery },
-            // Sort by newest first
             { $sort: { createdAt: -1 } },
-            // Limit to slightly more than what we need, to account for filtering
             { $limit: videoLimit + 2 },
 
-            // Target lookup section and all the rest of your pipeline...
             {
                 $lookup: {
                     from: 'users',
@@ -4038,8 +3131,6 @@ export class PostsService {
                     as: 'pageTarget'
                 }
             },
-
-            // Handle user object ID conversion for group posts
             {
                 $addFields: {
                     userObjectId: {
@@ -4057,8 +3148,6 @@ export class PostsService {
                     }
                 }
             },
-
-            // User lookup for post
             {
                 $lookup: {
                     from: "users",
@@ -4110,8 +3199,6 @@ export class PostsService {
                     }
                 }
             },
-
-            // Bookmark lookup for post
             {
                 $lookup: {
                     from: 'bookmarks',
@@ -4131,8 +3218,6 @@ export class PostsService {
                     as: 'userBookmark',
                 },
             },
-
-            // Like lookup for post
             {
                 $lookup: {
                     from: 'likes',
@@ -4153,8 +3238,6 @@ export class PostsService {
                     as: 'userLike',
                 },
             },
-
-            // Counter lookup for post
             {
                 $lookup: {
                     from: 'counters',
@@ -4175,8 +3258,6 @@ export class PostsService {
                     as: 'counters'
                 }
             },
-
-            // Combine fields for post
             {
                 $addFields: {
                     target: {
@@ -4222,7 +3303,6 @@ export class PostsService {
                     isLikedByUser: { $gt: [{ $size: '$userLike' }, 0] },
                     reaction: { $arrayElemAt: ['$userLike.reaction', 0] },
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
-                    // Filter media to only include videos
                     videoMedia: {
                         $filter: {
                             input: '$media',
@@ -4230,7 +3310,6 @@ export class PostsService {
                             cond: { $eq: ['$$mediaItem.type', 'video'] }
                         }
                     },
-                    // Get only the first video
                     firstVideo: {
                         $arrayElemAt: [
                             {
@@ -4269,7 +3348,6 @@ export class PostsService {
                 $project: {
                     _id: 1,
                     content: 1,
-                    // Only include the first video media
                     media: {
                         $cond: {
                             if: { $gt: [{ $size: '$videoMedia' }, 0] },
@@ -4297,7 +3375,6 @@ export class PostsService {
                     createdAt: 1
                 },
             },
-            // Filter out posts with no videos
             {
                 $match: {
                     "media.0": { $exists: true }
@@ -4305,17 +3382,13 @@ export class PostsService {
             }
         ];
         const videosResult = await this.postModel.aggregate(videosPipeline);
-
-        // If we're using an initial postId, make sure it's the first in the list
         let processedVideos = videosResult;
 
         if (postId && !cursor && videosResult.length > 0) {
             const initialPostIndex = videosResult.findIndex(post => post._id.toString() === postId);
 
             if (initialPostIndex > 0) {
-                // Remove it from its current position
                 const initialPost = videosResult.splice(initialPostIndex, 1)[0];
-                // Add it to the start
                 processedVideos = [initialPost, ...videosResult];
                 console.log(`Moved initial post to first position`);
             } else if (initialPostIndex === 0) {
@@ -4325,7 +3398,6 @@ export class PostsService {
             }
         }
 
-        // Ensure we don't exceed our limit
         const hasNextPage = processedVideos.length > videoLimit;
         const videos = hasNextPage ? processedVideos.slice(0, videoLimit) : processedVideos;
 
@@ -4354,17 +3426,14 @@ export class PostsService {
             ]
         };
 
-        // Build our query based on inputs
         let matchQuery = {
             ...visibility,
             postType: 'post',
             isUploaded: null
         };
 
-        // If we have an postId, use it as our starting point
         if (postId && !cursor) {
             try {
-                // First, fetch the postId item to get its creation date
                 const initialReel = await this.postModel.findOne({
                     _id: new Types.ObjectId(postId),
                     ...visibility,
@@ -4374,7 +3443,6 @@ export class PostsService {
                 if (initialReel) {
                     console.log(`Found initial reel with ID ${postId}, created at ${initialReel.createdAt}`);
 
-                    // Set up a query for reels created at the same time or earlier
                     matchQuery['createdAt'] = { $lte: initialReel.createdAt };
                 } else {
                     console.log(`Initial reel with ID ${postId} not found, using regular feed`);
@@ -4383,7 +3451,6 @@ export class PostsService {
                 console.error("Invalid postId format or error fetching:", error);
             }
         }
-        // Standard cursor-based pagination when no initial reel or when loading more
         else if (cursor) {
             matchQuery['createdAt'] = { $lt: new Date(cursor) };
         }
@@ -4392,7 +3459,6 @@ export class PostsService {
             { $match: matchQuery },
             { $sort: { createdAt: -1 } },
             { $limit: limit + 1 },
-            // Target lookup section - Look up possible targets from different collections
             {
                 $lookup: {
                     from: 'users',
@@ -4417,7 +3483,6 @@ export class PostsService {
                     as: 'pageTarget'
                 }
             },
-            // Handle user object ID conversion for group posts
             {
                 $addFields: {
                     userObjectId: {
@@ -4487,7 +3552,6 @@ export class PostsService {
                     }
                 }
             },
-            // Bookmark lookup for main post
             {
                 $lookup: {
                     from: 'bookmarks',
@@ -4507,7 +3571,6 @@ export class PostsService {
                     as: 'userBookmark',
                 },
             },
-            // Like lookup for main post
             {
                 $lookup: {
                     from: 'likes',
@@ -4528,7 +3591,6 @@ export class PostsService {
                     as: 'userLike',
                 },
             },
-            // Counter lookup for main post
             {
                 $lookup: {
                     from: 'counters',
@@ -4549,7 +3611,6 @@ export class PostsService {
                     as: 'counters'
                 }
             },
-            // Combine fields for main post
             {
                 $addFields: {
                     target: {
@@ -4597,7 +3658,6 @@ export class PostsService {
                     isBookmarkedByUser: { $gt: [{ $size: '$userBookmark' }, 0] },
                 }
             },
-            // Final projection
             {
                 $project: {
                     _id: 1,
@@ -4620,32 +3680,17 @@ export class PostsService {
                     isBookmarkedByUser: 1,
                     updatedAt: 1,
                     createdAt: 1,
-                    // sharedPost: {
-                    //     $cond: {
-                    //         if: { $gt: [{ $size: '$sharedPostDetails' }, 0] },
-                    //         then: { $arrayElemAt: ['$sharedPostDetails', 0] },
-                    //         else: null
-                    //     }
-                    // }
                 },
             },
         ]);
-        // If we're using an postId, make sure it's the first in the list
         let processedReels = reels;
 
         if (postId && !cursor && reels.length > 0) {
             const initialReelIndex = reels.findIndex(reel => reel._id.toString() === postId);
 
             if (initialReelIndex > 0) {
-                // Remove it from its current position
                 const initialReel = reels.splice(initialReelIndex, 1)[0];
-                // Add it to the start
                 processedReels = [initialReel, ...reels];
-                console.log(`Moved initial reel to first position`);
-            } else if (initialReelIndex === 0) {
-                console.log(`Initial reel already at first position`);
-            } else {
-                console.log(`Initial reel not found in results, using feed as-is`);
             }
         }
 
@@ -4704,61 +3749,20 @@ export class PostsService {
         return viewedPost
     }
 
-    // async bulkViewPosts({ userId, postIds, type }: SBulkViewPost) {
-
-    //     try {
-    //         let viewPosts = postIds.map(
-    //             async (postId) => {
-    //                 const post = await this.postModel.findById(postId)
-    //                 if (!post) {
-    //                     throw new BadRequestException()
-    //                 }
-    //                 await this.viewPostsModel.updateOne(
-    //                     { type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) },
-    //                     { $setOnInsert: { type, userId: new Types.ObjectId(userId), postId: new Types.ObjectId(postId) } },
-    //                     { upsert: true }
-    //                 )
-
-    //                 if (type == 'video') {
-    //                     await this.metricsAggregatorService.incrementCount(new Types.ObjectId(postId), 'post', "videoViews")
-    //                 }
-    //             })
-
-    //         if (Promise.all(viewPosts)) {
-    //             return true
-    //         }
-    //     } catch (error) {
-    //         return false
-    //     }
-
-    // }
-
     async bulkViewPosts({ userId, postIds, type }: SBulkViewPost) {
         console.log(userId, postIds, type);
         try {
-            // Convert userId to ObjectId once
             const userObjectId = new Types.ObjectId(userId);
-
-            // Convert postIds to ObjectIds
             const postObjectIds = postIds.map(id => new Types.ObjectId(id));
-
-            // Verify all posts exist in a single query
             const existingPosts = await this.postModel.find({
                 _id: { $in: postObjectIds }
             }, { _id: 1 }).lean();
-
-            console.log(existingPosts, 'existing posts');
 
             if (existingPosts.length !== postIds.length) {
                 throw new BadRequestException('One or more posts do not exist');
             }
 
-            // Start a MongoDB session for transaction
-            // const session = await startSession();
-            // session.startTransaction();
-
             try {
-                // Create bulk operations for inserting unique views
                 const bulkOps = postObjectIds.map(postId => ({
                     updateOne: {
                         filter: {
@@ -4821,102 +3825,40 @@ export class PostsService {
                 return true;
 
             } catch (error) {
-                console.error('Error in bulkViewPosts transaction:', error);
                 return false;
             }
         } catch (error) {
-            console.error('Error in bulkViewPosts:', error);
             return false;
         }
     }
+
     async testingPromotedPosts(address) {
-        // await this.postModel.deleteMany()
-        // await this.promotionModel.deleteMany()
-        // const feedPosts = await this.postModel.aggregate([
-        //     {
-        //         $lookup: {
-        //             from: 'promotions',
-        //             localField: '_id',
-        //             foreignField: 'postId',
-        //             as: 'promotedInfo',
-        //         },
-        //     },
-        //     {
-        //         $match: {
-        //             $and: [
-        //                 { 'promotedInfo.0': { $exists: true } }, // Is a promoted post
-        //                 {
-        //                     $or: [
-        //                         { 'promotedInfo.targetAddress.country': null }, // International posts
-        //                         {
-        //                             $and: [
-        //                                 { 'promotedInfo.targetAddress.country': address.country },
-        //                                 { 'promotedInfo.targetAddress.city': null },
-        //                                 { 'promotedInfo.targetAddress.area': null },
-        //                             ]
-        //                         }, // Country-only targeting
-        //                         {
-        //                             $and: [
-        //                                 { 'promotedInfo.targetAddress.country': address.country },
-        //                                 { 'promotedInfo.targetAddress.city': address.city },
-        //                                 { 'promotedInfo.targetAddress.area': null },
-        //                             ]
-        //                         }, // Country and city targeting
-        //                         {
-        //                             $and: [
-        //                                 { 'promotedInfo.targetAddress.country': address.country },
-        //                                 { 'promotedInfo.targetAddress.city': address.city },
-        //                                 { 'promotedInfo.targetAddress.area': address.area },
-        //                             ]
-        //                         }, // Exact match on country, city, and area
-        //                     ]
-        //                 }
-        //             ]
-        //         },
-        //     },
-        //     {
-        //         $addFields: {
-        //             isPromoted: {
-        //                 $cond: {
-        //                     if: { $gt: [{ $size: '$promotedInfo' }, 0] },
-        //                     then: true,
-        //                     else: false,
-        //                 },
-        //             },
-        //         },
-        //     },
-        //     {
-        //         $project: {
-        //             promotedInfo: 0, // Remove the promotedInfo field from the result
-        //         },
-        //     },
-        // ]);
         // const promotedPosts = await this.promotionModel.aggregate([
         //     {
         //         $match: {
         //             $or: [
-        //                 { 'targetAdress.country': null }, // International posts
+        //                 { 'targetAdress.country': null },
         //                 {
         //                     $and: [
         //                         { 'targetAdress.country': address.country },
         //                         { 'targetAdress.city': null },
         //                         { 'targetAdress.area': null },
         //                     ]
-        //                 }, // Country-only targeting
+        //                 },
         //                 {
         //                     $and: [
         //                         { 'targetAdress.country': address.country },
         //                         { 'targetAdress.city': address.city },
         //                         { 'targetAdress.area': null },
         //                     ]
-        //                 }, // Country and city targeting
+        //                 },
         //                 {
         //                     $and: [
         //                         { 'targetAdress.country': address.country },
         //                         { 'targetAdress.city': address.city },
         //                         { 'targetAdress.area': address.area },
         //                     ]
-        //                 }, // Exact match on country, city, and area
+        //                 },
         //             ]
         //         },
         //     },
@@ -4958,10 +3900,8 @@ export class PostsService {
         //             _id: '$postDetails._id',
         //             title: '$postDetails.title',
         //             content: '$postDetails.content',
-        //             // Include other fields from the post as needed
         //             promotedId: '$_id',
         //             targetAddress: 1,
-        //             // Include other fields from the promoted post as needed
         //         },
         //     },
         // ]);
@@ -5021,21 +3961,21 @@ export class PostsService {
                                 { 'targetAdress.city': null },
                                 { 'targetAdress.area': null },
                             ]
-                        }, // Country-only targeting
+                        },
                         {
                             $and: [
                                 { 'targetAdress.country': address.country },
                                 { 'targetAdress.city': address.city },
                                 { 'targetAdress.area': null },
                             ]
-                        }, // Country and city targeting
+                        },
                         {
                             $and: [
                                 { 'targetAdress.country': address.country },
                                 { 'targetAdress.city': address.city },
                                 { 'targetAdress.area': address.area },
                             ]
-                        }, // Exact match on country, city, and area
+                        },
                     ]
                 },
             },
@@ -5257,15 +4197,6 @@ export class PostsService {
             { $match: query },
             { $sort: _reverse },
             { $limit: limit + 1 },
-            // {
-            // $group: {
-            // _id: null,
-            // totalCost: { $sum: "$paymentDetails.totalAmount" },
-            // totalReach: { $sum: "$reach" },
-            // activeCampaigns: { $sum: "$active" },
-            // promotions: { $push: "$$ROOT" }
-            // }
-            // }
         ])
         const promotionsData = await this.promotionModel.aggregate([
             {
@@ -5287,9 +4218,7 @@ export class PostsService {
     }
 
     async postPromotion({ postId, userId, promotionDetails, isApp }: SPostPromotion) {
-
         const promotion = await this.promotionModel.findOne({ postId: new Types.ObjectId(postId), user: userId, active: 1 })
-
         if (promotion) {
             throw new BadRequestException(POST_PROMOTION.ALREADY_ACTIVE)
         }
@@ -5297,9 +4226,7 @@ export class PostsService {
         await this.locationService.isValidRegisteredAddress(promotionDetails.targetAddress)
 
         const totalAmount = (promotionDetails.reachTarget / 1000) * 0.5
-
         const _promotion = await this.promotionModel.create({ user: userId, active: 0, postId: new Types.ObjectId(postId), reachTarget: promotionDetails.reachTarget, paymentDetails: { totalAmount, status: PAYMENT_STATES.PENDING }, targetAdress: promotionDetails.targetAddress })
-        console.log(_promotion)
 
         let productDetails = [{ price_data: { unit_amount: promotionDetails.reachTarget * 0.05, currency: CURRENCIES.USD, product_data: { name: "post promotion", description: "post promotion" } }, quantity: 1 }]
 
@@ -5522,7 +4449,7 @@ export class PostsService {
                                         { $eq: ['$targetId', '$$targetId'] },
                                         { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
                                         { $eq: ['$type', 'contributions'] },
-                                        { $gt: ['$count', 0] }  // ADD THIS LINE
+                                        { $gt: ['$count', 0] }
                                     ]
                                 }
                             }
@@ -5768,7 +4695,7 @@ export class PostsService {
                 )
             }
             if (targetType == 'group') {
-                let updatedInteraction = await this.memberModel.updateOne({ member: interactionFilter.userId, groupId: interactionFilter.targetId },
+                await this.memberModel.updateOne({ member: interactionFilter.userId, groupId: interactionFilter.targetId },
                     { $inc: { interactionScore: 1 } }
                 )
             }
@@ -5777,13 +4704,13 @@ export class PostsService {
 
 
         if (targetType == 'user' || targetType == "page") {
-            let updatedInteraction = await this.followerModel.updateOne({ follower: interactionFilter.userId, targetId: interactionFilter.targetId },
+            await this.followerModel.updateOne({ follower: interactionFilter.userId, targetId: interactionFilter.targetId },
                 { $inc: { interactionScore: -1 } }
             )
         }
 
         if (targetType == 'group') {
-            let updatedInteraction = await this.memberModel.updateOne({ member: interactionFilter.userId, groupId: interactionFilter.targetId },
+            await this.memberModel.updateOne({ member: interactionFilter.userId, groupId: interactionFilter.targetId },
                 { $inc: { interactionScore: -1 } }
             )
         }
@@ -5998,16 +4925,13 @@ export class PostsService {
             return { type: 'clustered', data: [] };
         }
 
-        // 🔧 KEY CHANGE: Query individual EnvironmentalContribution documents (each = 1 element on map)
         const pipeline = [
-            // Match contributions with location data
             {
                 $match: {
                     'location.latitude': { $exists: true },
                     'location.longitude': { $exists: true }
                 }
             },
-            // Join with Post to get post type and visibility
             {
                 $lookup: {
                     from: 'posts',
@@ -6019,14 +4943,12 @@ export class PostsService {
             {
                 $unwind: '$post'
             },
-            // Filter by category and visibility
             {
                 $match: {
                     'post.postType': { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
                     'post.visibility': 'public'
                 }
             },
-            // Add bounds filtering if provided
             ...(bounds ? [{
                 $match: {
                     'location.latitude': {
@@ -6096,7 +5018,6 @@ export class PostsService {
 
         const results = await this.environmentalContributionModel.aggregate(pipeline);
 
-        // 🔧 CLUSTERING: Group nearby elements of the same type
         if (clustering && results.length > 50) {
             const clustered = this.clusterEnvironmentalElements(results, query.clusterRadius || 50);
             return {
@@ -6106,7 +5027,7 @@ export class PostsService {
         }
 
         return {
-            type: 'individual', // Each marker = 1 tree/bin/pond/harvester
+            type: 'individual',
             data: results
         };
     }
@@ -6125,12 +5046,11 @@ export class PostsService {
                     longitude: centerElement.location.longitude
                 },
                 postType: centerElement.postType,
-                count: 1, // Count of individual elements (trees/bins/ponds)
-                elements: [centerElement], // Individual environmental elements
+                count: 1,
+                elements: [centerElement],
                 projectDetails: centerElement.projectDetails
             };
 
-            // Find nearby elements of the same type
             for (let j = i + 1; j < elements.length; j++) {
                 if (used.has(j)) continue;
 
@@ -6141,7 +5061,6 @@ export class PostsService {
                     elements[j].location.longitude
                 );
 
-                // Cluster elements of same type that are close together
                 if (distance <= radiusKm && elements[j].postType === centerElement.postType) {
                     cluster.count++;
                     cluster.elements.push(elements[j]);
@@ -6207,8 +5126,6 @@ export class PostsService {
     }
 
     async getGlobalMapCounts(query: GetGlobalMapCountsDTO) {
-        const { bounds, country, city } = query;
-
         const data = await this.metricsAggregatorService.getGlobalEnvironmentalCounts()
         return this.formatCounterDataToResponse(data)
     }
@@ -6216,9 +5133,7 @@ export class PostsService {
     async searchGlobalMapLocations(query: SearchGlobalMapLocationsDTO) {
         const { query: searchQuery, category, limit } = query;
 
-        // 🔧 UPDATED: Search individual elements and group by location
         const pipeline: any = [
-            // Join with Post data
             {
                 $lookup: {
                     from: 'posts',
@@ -6230,31 +5145,27 @@ export class PostsService {
             {
                 $unwind: '$post'
             },
-            // Filter by category and search criteria
             {
                 $match: {
                     'post.postType': { $in: category === 'all' ? ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'] : [category] },
                     'post.visibility': 'public',
                     $or: [
-                        // Search in individual element locations
                         { 'location.address': { $regex: new RegExp(searchQuery, 'i') } },
                         { 'location.city': { $regex: new RegExp(searchQuery, 'i') } },
                         { 'location.country': { $regex: new RegExp(searchQuery, 'i') } },
-                        // Also search in project details
                         { 'post.projectDetails.name': { $regex: new RegExp(searchQuery, 'i') } },
                         { 'post.projectDetails.description': { $regex: new RegExp(searchQuery, 'i') } }
                     ]
                 }
             },
-            // Group by city/country to show location-based results
             {
                 $group: {
                     _id: {
                         city: '$location.city',
                         country: '$location.country'
                     },
-                    elementCount: { $sum: 1 }, // Count of individual elements in this location
-                    uniqueProjects: { $addToSet: '$postId' }, // Unique projects in this location
+                    elementCount: { $sum: 1 },
+                    uniqueProjects: { $addToSet: '$postId' },
                     center: {
                         $first: {
                             latitude: '$location.latitude',
@@ -6284,8 +5195,8 @@ export class PostsService {
                             { $ifNull: ['$_id.country', ''] }
                         ]
                     },
-                    elementCount: 1, // Total individual elements in this location
-                    projectCount: { $size: '$uniqueProjects' }, // Number of projects
+                    elementCount: 1,
+                    projectCount: { $size: '$uniqueProjects' },
                     center: 1,
                     sampleElements: { $slice: ['$sampleElements', 5] }
                 }
@@ -6299,14 +5210,13 @@ export class PostsService {
         return {
             results: results.map(result => ({
                 ...result,
-                count: result.elementCount, // For frontend compatibility
+                count: result.elementCount,
                 description: `${result.elementCount} elements in ${result.projectCount} projects`
             })),
             total: results.length
         };
     }
 
-    // 🔧 UPDATED: Get plantation elements due for updates (individual trees)
     async getPlantationElementsDue(targetDate: Date, stage: any) {
         const plantationElementsDue = await this.environmentalContributionModel.aggregate([
             {
@@ -6318,7 +5228,6 @@ export class PostsService {
                     }
                 }
             },
-            // Join with Post to get user info and project details
             {
                 $lookup: {
                     from: 'posts',
@@ -6330,7 +5239,6 @@ export class PostsService {
             {
                 $unwind: '$post'
             },
-            // Check for existing notifications (per individual element)
             {
                 $lookup: {
                     from: 'notificationlogs',
@@ -6352,7 +5260,7 @@ export class PostsService {
             },
             {
                 $match: {
-                    'sentNotifications': { $size: 0 } // Only elements without this notification
+                    'sentNotifications': { $size: 0 }
                 }
             },
             {
@@ -6362,9 +5270,9 @@ export class PostsService {
                     user: '$post.user',
                     projectName: '$post.projectDetails.name',
                     plantationData: 1,
-                    location: 1, // Individual tree location
+                    location: 1,
                     createdAt: 1,
-                    media: 1 // Photos of this specific tree
+                    media: 1
                 }
             }
         ]);
@@ -6372,9 +5280,8 @@ export class PostsService {
         return plantationElementsDue;
     }
 
-    // Distance calculation helper (unchanged)
     private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-        const R = 6371; // Earth's radius in kilometers
+        const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -6415,7 +5322,7 @@ export class PostsService {
                         $push: {
                             postId: "$_id",
                             location: "$location",
-                            media: { $arrayElemAt: ["$media", 0] }, // First image for preview
+                            media: { $arrayElemAt: ["$media", 0] },
                             plantationData: "$plantationData",
                             garbageCollectionData: "$garbageCollectionData",
                             waterPondsData: "$waterPondsData",
@@ -6424,7 +5331,6 @@ export class PostsService {
                             user: "$user"
                         }
                     },
-                    // Calculate cluster center
                     centerLat: { $avg: "$location.latitude" },
                     centerLng: { $avg: "$location.longitude" }
                 }
@@ -6498,9 +5404,8 @@ export class PostsService {
 
     async createElement(targetId: string, postType: string, data: CreateEnvironmentalContributionDTO) {
         const environmentalContribution = await this.environmentalContributionModel.create({ ...data, postId: new Types.ObjectId(data.postId) })
-        console.log(environmentalContribution?.location, 'environmental contribution created')
-        // global contributions
         Promise.all([
+            // global contributions
             this.metricsAggregatorService.incrementCount(null, "global_environmental_contributions", 'contributions'),
             this.metricsAggregatorService.incrementCount(null, postType, "contributions"),
             this.metricsAggregatorService.incrementCount(null, postType, `${environmentalContribution.location.country}_country_contributions`, null, 1, environmentalContribution.location),
@@ -6535,11 +5440,8 @@ export class PostsService {
             this.environmentalContributionModel.deleteMany({ postId: objectId })
         ]);
 
-        console.log(`Deleted ${deleteResult.deletedCount} elements from database`);
-
         if (elements.length > 0) {
             await this.cleanupElementFiles(elements);
-            console.log('✅ Element files cleanup completed');
             await this.decrementElementCounts(elements, postType, targetId);
             return { deleteCount: deleteResult.deletedCount };
         }
@@ -6547,15 +5449,11 @@ export class PostsService {
     }
 
     async deleteElement(elementId: string, postType: string, targetId: string) {
-        console.log(elementId, 'element id')
         const element = await this.environmentalContributionModel.findByIdAndDelete(elementId)
 
         if (element && element['media']) {
-            console.log(`Deleted ${element} from database`);
-
             await this.cleanupElementFiles([element]);
             await this.decrementElementCounts([element], postType, targetId);
-            console.log('✅ Element files cleanup completed');
             return true
         }
 
@@ -6564,7 +5462,6 @@ export class PostsService {
     private async decrementElementCounts(elements: any, postType: string, targetId: string) {
         const countryCounts = elements.reduce((acc, element) => {
             const country = element.location?.country;
-            console.log(country)
             if (country) {
                 acc[country] = (acc[country] || 0) + 1;
             }
@@ -6599,8 +5496,6 @@ export class PostsService {
 
         if (filesToDelete.length === 0) return;
 
-        console.log(`🗑️ Processing ${filesToDelete.length} files for deletion`);
-
         if (filesToDelete.length <= 10) {
             await this.deleteFilesParallel(filesToDelete);
         } else if (filesToDelete.length <= 1000) {
@@ -6611,7 +5506,6 @@ export class PostsService {
     }
 
     private async deleteFilesParallel(filenames: string[]): Promise<void> {
-        console.log('📤 Using parallel individual deletions');
         const deletePromises = filenames.map(filename =>
             this.uploadService.deleteFromS3(filename)
         );
@@ -6619,12 +5513,10 @@ export class PostsService {
     }
 
     private async deleteMultipleBatches(filenames: string[]): Promise<void> {
-        console.log('🔄 Using multiple batch deletions');
         const batchSize = 1000;
 
         for (let i = 0; i < filenames.length; i += batchSize) {
             const batch = filenames.slice(i, i + batchSize);
-            console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(filenames.length / batchSize)}`);
             await this.uploadService.deleteMultipleFromS3(batch);
         }
     }
@@ -6653,7 +5545,4 @@ export class PostsService {
 
         return filesToDelete;
     }
-
-
-
 }

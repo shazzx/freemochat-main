@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReelsList from './ReelList';
 
-// NotFound SVG Component (converted to web)
+
 const NotFoundSvg = ({ text = "No Content" }) => (
   <div className="flex flex-col items-center justify-center text-center">
     <svg
@@ -33,7 +33,7 @@ const UserReelsSection = ({ targetId, type }) => {
   console.log('UserReelsSection rendered for targetId:', targetId);
   const navigate = useNavigate();
 
-  // Fetch user reels
+  
   const {
     data,
     isLoading,
@@ -42,7 +42,7 @@ const UserReelsSection = ({ targetId, type }) => {
     fetchNextPage,
     refetch
   } = useUserReels(targetId, type);
-  // Flatten the pages data for grid display
+  
   const reelsList = useMemo(() => {
     if (!data) return [];
 
@@ -50,13 +50,13 @@ const UserReelsSection = ({ targetId, type }) => {
   }, [data]);
 
   const handleReelPress = useCallback((reel) => {
-    // Get the entire current page of reels
+    
     const currentPage = data?.pages?.[data.pages.length - 1] || { posts: [] };
 
-    // Add a unique key to the reel to prevent scroll issues
+    
     const enrichedReel = {
       ...reel,
-      _navigationTimestamp: Date.now() // Add timestamp to make each navigation unique
+      _navigationTimestamp: Date.now() 
     };
 
     navigate(`/reels/${reel._id}`, {
@@ -73,7 +73,7 @@ const UserReelsSection = ({ targetId, type }) => {
     });
   }, [navigate, targetId, data, reelsList]);
 
-  // Empty state component
+  
   const EmptyComponent = useCallback(() => (
     <div className="py-12 px-4">
       <NotFoundSvg text="No Reels" />
@@ -92,9 +92,9 @@ const UserReelsSection = ({ targetId, type }) => {
         isLoading={isLoading}
         isFetchingNextPage={isFetchingNextPage}
         onReelPress={handleReelPress}
-        // onRefresh={refetch}
-        // refreshing={isLoading && !isFetchingNextPage}
-        // headerTitle="My Reels"
+        
+        
+        
         ListEmptyComponent={<EmptyComponent />}
       />
     </div>

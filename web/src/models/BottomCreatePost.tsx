@@ -24,7 +24,7 @@ interface UserSuggestion {
     isSpecial?: boolean;
 }
 
-// Background color options
+
 const BACKGROUND_COLORS = [
     { name: 'None', color: null, gradient: null },
     { name: 'Blue', color: '#4A90E2', gradient: ['#4A90E2', '#357ABD'] },
@@ -37,13 +37,13 @@ const BACKGROUND_COLORS = [
     { name: 'Gold', color: '#FFD700', gradient: ['#FFD700', '#FFA500'] },
 ];
 
-// Text length limits
+
 const TEXT_LIMITS = {
     WITH_BACKGROUND: 280,
     WITHOUT_BACKGROUND: 2000,
 };
 
-// Helper functions
+
 const extractHashtags = (text: string): string[] => {
     if (!text) return [];
     const hashtagRegex = /#([a-zA-Z0-9_]+)/g;
@@ -87,7 +87,7 @@ function BottomCreatePost({ setModelTrigger, createPost, createReel, editPost, p
     const [searchParams] = useSearchParams()
     const isOpen = (searchParams.get("createpost") == 'true') || (searchParams.get("createreel") == 'true') ? true : editPost ? true : false
 
-    // New state for enhanced features
+    
     const [inputText, setInputText] = useState("")
     const [mentionUserIds, setMentionUserIds] = useState<string[]>([])
     const [mentionReferences, setMentionReferences] = useState<MentionReference[]>([])
@@ -99,7 +99,7 @@ function BottomCreatePost({ setModelTrigger, createPost, createReel, editPost, p
 
     const content = useRef<HTMLTextAreaElement>()
 
-    // Initialize component state properly for edit mode
+    
     useEffect(() => {
         if (editPost && postDetails) {
             setInputText(postDetails.content || "");
@@ -111,13 +111,13 @@ function BottomCreatePost({ setModelTrigger, createPost, createReel, editPost, p
         }
     }, [editPost, postDetails]);
 
-    // Extract hashtags whenever internal text changes
+    
     useEffect(() => {
         const hashtags = extractHashtags(inputText);
         setExtractedHashtags(hashtags);
     }, [inputText]);
 
-    // Reset background when media is added
+    
     useEffect(() => {
         if (selectedMedia.length > 0 && selectedBackground.color) {
             setSelectedBackground(BACKGROUND_COLORS[0]);
@@ -138,7 +138,7 @@ function BottomCreatePost({ setModelTrigger, createPost, createReel, editPost, p
         console.log(postMedia)
     }, [])
 
-    // Helper function to determine if current selection should be treated as a reel
+    
     const isReelContent = () => {
         if (isReel) return true;
         return selectedMedia.length === 1 && selectedMedia[0].type === 'video';
@@ -180,7 +180,7 @@ function BottomCreatePost({ setModelTrigger, createPost, createReel, editPost, p
     }
     const navigate = useNavigate()
 
-    // Handle mentions change - receives internal text with user IDs
+    
     const handleMentionsChange = (internalText: string, userIds: string[], references: MentionReference[]) => {
         const textLimit = getCurrentTextLimit();
 
@@ -307,13 +307,13 @@ function BottomCreatePost({ setModelTrigger, createPost, createReel, editPost, p
         e.target.value = '';
     }
 
-    // Display hashtags in a readable format
+    
     const displayHashtags = useMemo(() => {
         if (extractedHashtags.length === 0) return '';
         return extractedHashtags.map(tag => `#${tag}`).join(', ');
     }, [extractedHashtags]);
 
-    // Text Preview Component using BackgroundPost
+    
     const TextPreview = () => {
         if (!selectedBackground?.color || selectedMedia.length > 0) {
             return null;
@@ -321,7 +321,7 @@ function BottomCreatePost({ setModelTrigger, createPost, createReel, editPost, p
 
         let previewText = inputText.trim() || "Your text will appear here...";
         
-        // Convert mentions for preview
+        
         mentionReferences.forEach(ref => {
             const userIdRegex = new RegExp(`@${ref._id}`, 'g');
             previewText = previewText.replace(userIdRegex, `@${ref.username}`);
@@ -409,7 +409,6 @@ function BottomCreatePost({ setModelTrigger, createPost, createReel, editPost, p
                                             textLimit={getCurrentTextLimit()}
                                         />
 
-                                        {/* Character count */}
                                         <div className="flex justify-end mt-1">
                                             <span className={`text-xs ${inputText.length > getCurrentTextLimit() * 0.9 ? 'text-red-500' : 'text-gray-500'}`}>
                                                 {inputText.length}/{getCurrentTextLimit()}
@@ -417,10 +416,8 @@ function BottomCreatePost({ setModelTrigger, createPost, createReel, editPost, p
                                         </div>
                                     </div>
 
-                                    {/* Text Preview for Background Posts */}
                                     <TextPreview />
 
-                                    {/* Background Color Picker */}
                                     {canUseBackground() && (
                                         <div className="space-y-2">
                                             <button
@@ -462,7 +459,6 @@ function BottomCreatePost({ setModelTrigger, createPost, createReel, editPost, p
                                         </div>
                                     )}
 
-                                    {/* Mentions and Hashtags Info */}
                                     {/* {mentionUserIds.length > 0 && (
                                         <div className="bg-blue-50 p-2 rounded-md">
                                             <div className="flex items-center gap-2">

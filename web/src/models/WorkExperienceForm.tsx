@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 
-// Schema matching your React Native implementation
+
 const workExperienceSchema = yup.object().shape({
   jobTitle: yup.string().required('Job title is required'),
   company: yup.string().required('Company is required'),
@@ -18,7 +18,7 @@ const workExperienceSchema = yup.object().shape({
 });
 
 export default function WorkExperienceForm({ setOpen, onSave, existingData = null }) {
-    // Set form title based on whether we're editing or creating
+    
     const formTitle = existingData ? "Edit Work Experience" : "Add Work Experience";
     
     const form = useForm({
@@ -32,7 +32,7 @@ export default function WorkExperienceForm({ setOpen, onSave, existingData = nul
     });
 
     const handleSubmit = (data) => {
-        // Convert totalYears to number
+        
         data.totalYears = Number(data.totalYears);
         
         onSave(data, existingData ? true : false);

@@ -33,8 +33,6 @@ export class Hashtag {
 
 export const HashtagSchema = SchemaFactory.createForClass(Hashtag);
 
-// Text index for hashtag search
 HashtagSchema.index({ name: 'text', displayName: 'text' });
 
-// Compound index for trending hashtags
 HashtagSchema.index({ usageCount: -1, lastUsed: -1 });

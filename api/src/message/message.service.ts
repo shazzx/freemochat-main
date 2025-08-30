@@ -19,17 +19,12 @@ export class MessageService {
   async createMessage(messageDetails: { type: string, content: string, messageType: string, sender: Types.ObjectId, recepient: Types.ObjectId, media?: { url: string, type?: string, duration?: number, isUploaded: boolean }, gateway?: boolean, isGroup?: boolean, removeUser?: boolean, removeChat?: boolean }) {
     const message = await this.messageModel.create(messageDetails)
     if (!messageDetails?.gateway) {
-      // console.log('gateway condition')
       await this.chatlistService.createOrUpdateChatList(messageDetails.sender.toString(), messageDetails.recepient.toString(), messageDetails.type, { sender: messageDetails.sender, encryptedContent: messageDetails?.isGroup ? messageDetails.content : messageDetails.messageType, messageId: message._id }, messageDetails.messageType, messageDetails.removeUser, messageDetails.removeChat)
     }
     return message
   }
 
   async updateMessage(messageId: string, messageDetails: { type?: string, content?: string, messageType?: string, media?: { url: string, type?: string, duration?: number, isUploaded: boolean } }) {
-    // console.log(messageDetails, messageId)
-    // let updatedUser = this.userModel.findByIdAndUpdate(userId, { $set: { ...updatedDetails } }, { returnOriginal: false })
-
-    // console.log(await this.messageModel.findById(messageId))
     const message = await this.messageModel.findByIdAndUpdate(messageId, { $set: { media: messageDetails.media } }, { new: true })
     return message
   }
@@ -42,13 +37,10 @@ export class MessageService {
     }
 
     const softDelete = await this.messageSoftDelete.findOne({ user: new Types.ObjectId(userId), recepient: new Types.ObjectId(recepientId) })
-    // console.log(softDelete)
     const _cursor = cursor && softDelete ? { createdAt: { $lt: new Date(cursor) }, _id: { $gt: softDelete.lastDeletedId } } : cursor ? { createdAt: { $lt: new Date(cursor) } } : softDelete ? { _id: { $gt: softDelete.lastDeletedId } } : {}
 
-    // let query = { ..._cursor, $or: [{ sender: userId, recepient: recepientId }, { sender: recepientId, recepient: userId }] }
     let query;
     let messages;
-    // console.log(cursor)
     if (isChatGroup == 0) {
       query = { ..._cursor, $or: [{ sender: new Types.ObjectId(userId), recepient: new Types.ObjectId(recepientId) }, { sender: new Types.ObjectId(recepientId), recepient: new Types.ObjectId(userId) }] }
       messages = await this.messageModel.aggregate([
@@ -65,8 +57,6 @@ export class MessageService {
           cursor ? { createdAt: { $lt: new Date(cursor) } } : softDelete ? { _id: { $gt: softDelete.lastDeletedId } } : {};
 
       query = { ..._cursor, recepient: new Types.ObjectId(recepientId) }
-
-      // console.log(query)
 
       messages = await this.messageModel.aggregate([
         { $match: { ...query } },
@@ -85,7 +75,6 @@ export class MessageService {
                 $addFields: {
                   sender: {
                     _id: '$senderId',
-                    // Add other fields you want to include, set to null
                   }
                 }
               }
@@ -110,7 +99,6 @@ export class MessageService {
                         lastname: 1,
                         profile: 1,
                         email: 1
-                        // Add other fields you want to include
                       }
                     }
                   ],
@@ -146,13 +134,9 @@ export class MessageService {
     const hasNextPage = messages.length > limit;
     const _messages = hasNextPage ? messages.slice(0, -1).reverse() : messages.reverse();
     const nextCursor = hasNextPage ? _messages[0].createdAt.toISOString() : null;
-    // console.log(_messages[0])
 
     const results = { messages: _messages, nextCursor };
     return results
-
-    // const messages = await this.messageModel.find({ $or: [{ sender: userId, recepient: recepientId }, { sender: recepientId, recepient: userId }] }).sort({ createdAt: -1 })
-    // return messages
   }
 
   async removeMessage(recepientId: string, userId: string, messageId: string, senderId: string) {

@@ -19,7 +19,6 @@ import { Cursor, ValidMongoId } from 'src/schema/validation/global';
 import Stripe from 'stripe';
 import { z } from 'zod';
 import { HashtagService } from 'src/hashtag/hashtagservice';
-import { NotificationService } from 'src/notification/notification.service';
 import { checkForSpecialMentions } from 'src/utils/global';
 
 @Controller('posts')
@@ -44,7 +43,6 @@ export class PostsController {
     async getReels(@Req() req: Request, @Res() response: Response) {
         const { sub } = req.user
         const { cursor, targetId, type } = req.query as { type: string, cursor: string, targetId: string }
-        console.log(targetId, 'get reels targetId')
         response.json(await this.postService.getReels(cursor, sub, targetId, type))
     }
 
@@ -77,14 +75,11 @@ export class PostsController {
         const user = req.user
         const { reelUrl, postId } = req.body
 
-        console.log(reelUrl, postId, 'reel details')
         const post = await this.postService._getPost(postId)
 
         if (!post) {
             throw new BadRequestException("No post found")
         }
-
-        console.log(post)
 
         if (post.postType !== 'reel') {
             throw new BadRequestException("Provided post is not a reel")
@@ -108,97 +103,6 @@ export class PostsController {
         const { type, postId } = query
         response.json(await this.postService.getPost(sub, postId, type))
     }
-
-    // @UseInterceptors(FilesInterceptor('files'))
-    // @Post("create")
-    // async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
-    //     const uploadPromise = files.map((file) => {
-    //         const fileType = getFileType(file.mimetype)
-    //         const filename = uuidv4()
-    //         return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
-    //     })
-
-    //     const { sub } = req.user
-    //     let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId)
-
-    //     let uploadedPost = await this.postService.createPost(
-    //         {
-    //             ...createPostDTO,
-    //             isUploaded: files.length > 0 ? false : null,
-    //             targetId,
-    //             postType: 'post',
-    //             user: new Types.ObjectId(sub)
-    //         })
-
-    //     if (files.length > 0) {
-    //         this.eventEmitter.emit("files.uploaded", { uploadPromise, postId: uploadedPost._id.toString(), targetId, type: createPostDTO.type })
-    //     }
-
-    //     res.json(uploadedPost)
-    // }
-
-
-    // In your existing PostController - just modify this method
-    // @UseInterceptors(FilesInterceptor('files'))
-    // @Post("create")
-    // async createPost(@Body(new ZodValidationPipe(CreatePost, true, "postData")) createPostDTO: CreatePostDTO, @Req() req: Request, @Res() res: Response, @UploadedFiles() files: Express.Multer.File[]) {
-    //     const { sub } = req.user;
-    //     let targetId = createPostDTO.type == "user" ? new Types.ObjectId(sub) : new Types.ObjectId(createPostDTO.targetId);
-
-    //     console.log(createPostDTO, 'create post data');
-
-    //     // 🔧 ADD THIS: Handle location posts
-    //     if (createPostDTO.postType && ['plantation', 'garbage_collection', 'dam'].includes(createPostDTO.postType)) {
-    //         // Add plantation update cycle
-    //         if (createPostDTO.postType === 'plantation' && createPostDTO.plantationData) {
-    //             const nextUpdateDue = new Date();
-    //             nextUpdateDue.setMonth(nextUpdateDue.getMonth() + 3);
-    //             createPostDTO.plantationData = {
-    //                 ...createPostDTO.plantationData,
-    //                 lastUpdateDate: new Date(),
-    //                 nextUpdateDue,
-    //                 isActive: true
-    //             };
-    //             createPostDTO.updateHistory = [{
-    //                 updateDate: new Date(),
-    //                 imageCount: files.length,
-    //                 notes: 'Initial plantation'
-    //             }];
-    //         }
-    //     }
-
-    //     // Your existing createPost logic continues unchanged
-    //     let uploadedPost = await this.postService.createPost({
-    //         ...createPostDTO,
-    //         isUploaded: files.length > 0 ? false : null,
-    //         targetId,
-    //         postType: createPostDTO.postType || 'post', // 🔧 ADD THIS LINE
-    //         user: new Types.ObjectId(sub)
-    //     });
-
-    //     if (files.length > 0) {
-    //         // 🔧 MODIFY THIS: Add location data to upload promise
-    //         const uploadPromise = files.map((file, index) => {
-    //             const fileType = getFileType(file.mimetype);
-    //             const filename = uuidv4();
-    //             return this.uploadService.processAndUploadContent(file.buffer, filename, fileType, file.originalname)
-    //                 .then(result => ({
-    //                     ...result,
-    //                     location: createPostDTO.mediaLocations?.[index] // 🔧 ADD THIS
-    //                 }));
-    //         });
-
-    //         this.eventEmitter.emit("files.uploaded", {
-    //             uploadPromise,
-    //             postId: uploadedPost._id.toString(),
-    //             targetId,
-    //             type: createPostDTO.type
-    //         });
-    //     }
-
-    //     res.json(uploadedPost);
-    // }
-
 
     @Get("global-map/data")
     async getGlobalMapData(
@@ -245,7 +149,6 @@ export class PostsController {
         const hashtags = this.hashtagService.extractHashtags(createPostDTO.content || '');
         const mentions = createPostDTO?.mentions?.map(id => new Types.ObjectId(id)) || []
 
-        // 🔧 UPDATED: Simplified post data - no environmental data
         let finalPostData = {
             ...createPostDTO,
             hashtags,
@@ -261,60 +164,46 @@ export class PostsController {
         let uploadedPost = await this.postService.createPost(finalPostData, sub, hasFollowersMention);
         this.hashtagService.processPostHashtags(String(uploadedPost._id), hashtags);
 
-        // 🔧 NEW: Create EnvironmentalContribution document for environmental posts
         let environmentalContribution = null;
         if (createPostDTO.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(createPostDTO.postType)) {
 
             let environmentalData: any = {
                 postId: uploadedPost._id,
-                location: createPostDTO.location, // Use main location from post
+                location: createPostDTO.location,
                 updateHistory: [{
                     updateDate: new Date(),
-                    media: [], // Will be populated after file upload
+                    media: [],
                     notes: this.getInitialNotes(createPostDTO.postType)
                 }]
             };
 
-            // Add type-specific environmental data based on postType
             if (createPostDTO.postType === 'plantation') {
-                // Note: You'll need to add plantationData to CreatePostDTO or handle it separately
                 const nextUpdateDue = new Date();
                 nextUpdateDue.setMonth(nextUpdateDue.getMonth() + 6);
 
                 environmentalData.plantationData = {
-                    // Add default or passed plantation data
                     lastUpdateDate: new Date(),
                     nextUpdateDue,
                     isActive: true,
-                    // You might want to add plantationData back to CreatePostDTO
-                    // or handle this data separately in the request
                 };
             }
 
             if (createPostDTO.postType === 'garbage_collection') {
                 environmentalData.garbageCollectionData = {
-                    // Add garbage collection specific data
-                    // You might want to add this data to CreatePostDTO
                 };
             }
 
             if (createPostDTO.postType === 'water_ponds') {
                 environmentalData.waterPondsData = {
-                    // Add water ponds specific data
                 };
             }
 
             if (createPostDTO.postType === 'rain_water') {
                 environmentalData.rainWaterData = {
-                    // Add rain water specific data
                 };
             }
-
-            // Create the environmental contribution document
-            // environmentalContribution = await this.environmentalContributionService.create(environmentalData);
         }
 
-        // Handle file uploads
         if (files.length > 0) {
             const uploadPromise = files.map((file, index) => {
                 const fileType = getFileType(file.mimetype);
@@ -336,7 +225,6 @@ export class PostsController {
             });
         }
 
-        // Return post with environmental contribution data if applicable
         const response = {
             ...uploadedPost.toObject(),
             environmentalContribution: environmentalContribution?.toObject()
@@ -427,12 +315,10 @@ export class PostsController {
             throw new NotFoundException("Element not found")
         }
 
-        console.log(String(element.postId), post._id.toString())
         if (String(element.postId) !== post._id.toString()) {
             throw new BadRequestException("Element is not part of the project")
         }
 
-        console.log(file, 'file')
         const fileType = getFileType(file.mimetype);
         const filename = uuidv4();
         const { url } = await this.uploadService.processAndUploadContent(
@@ -443,8 +329,7 @@ export class PostsController {
             // false,
             // post.postType as EnvironmentalContributionType
         )
-        console.log(url, 'url')
-        console.log(data, 'data')
+
         const elementUpdateHistory: any = [...element.updateHistory]
 
         const updateData = {
@@ -464,7 +349,6 @@ export class PostsController {
                 }],
         }
         const environmentalContribution = await this.postService.updateElement(data.elementId, updateData)
-        console.log(environmentalContribution, 'updated data')
         res.json(environmentalContribution)
     }
 
@@ -592,31 +476,20 @@ export class PostsController {
                     let thumbnailUrlSplit = media?.thumbnail?.split("/")
                     let watermarkUrlSplit = media?.watermarkUrl?.split("/")
 
-                    console.log(`deleting ${videoUrlSplit}, ${thumbnailUrlSplit}, ${watermarkUrlSplit} from s3...`)
-
                     let videoFilename = videoUrlSplit?.[videoUrlSplit?.length - 1]
                     let thumbnailFilename = thumbnailUrlSplit?.[thumbnailUrlSplit?.length - 1]
                     let watermarkedVideoFilename = watermarkUrlSplit?.[watermarkUrlSplit?.length - 1]
 
-                    console.log(videoFilename, thumbnailFilename, watermarkedVideoFilename, 'filenames')
-
-                    console.log(`deleting ${videoFilename} from s3...`)
-
                     if (videoFilename) {
                         const video = await this.uploadService.deleteFromS3(videoFilename)
-                        console.log(video.$metadata.httpStatusCode)
                     }
 
                     if (thumbnailFilename) {
                         const thumbnail = await this.uploadService.deleteFromS3(thumbnailFilename)
-                        console.log(`deleting ${thumbnailFilename} from s3...`)
-                        console.log(thumbnail.$metadata.httpStatusCode)
                     }
 
                     if (watermarkedVideoFilename) {
                         const watermarkVideo = await this.uploadService.deleteFromS3(watermarkedVideoFilename)
-                        console.log(`deleting ${watermarkedVideoFilename} from s3...`)
-                        console.log(watermarkVideo.$metadata.httpStatusCode, 'deleted')
                     }
 
 
@@ -712,8 +585,6 @@ export class PostsController {
 
         const { sub } = req.user
         const _postData = updatePostDto
-        console.log(updatePostDto)
-
         const post = await this.postService._getPost(_postData.postId)
 
         if (!post) {
@@ -865,12 +736,6 @@ export class PostsController {
         res.json({ deleted: true })
     }
 
-    // @Post("post")
-    // async getPost(@Body(new ZodValidationPipe(GetPost)) @Req() req: Request, @Res() res: Response) {
-    //     const { postId } = req.body
-    //     res.json(await this.postService.getPost(postId))
-    // }
-
     @Post("like")
     async like(@Body(new ZodValidationPipe(LikePost)) body: LikePostDTO, @Req() req: Request, @Res() res: Response) {
         const { postId, authorId, type, postType, targetId, reaction } = body
@@ -894,14 +759,6 @@ export class PostsController {
         const { postId, cursor } = query
         res.json(await this.postService.getPostLikes(cursor, postId))
     }
-
-
-    // @Post("likedBy")
-    // async likedBy(@Req() req) {
-    //     const { postId } = req.body
-    //     return await this.postService.getLikedUsers({ postId })
-    // }
-
 
     @Post("likeComment")
     async likeComment(@Body(new ZodValidationPipe(LikeCommentOrReply)) body: LikeCommentOrReplyDTO, @Req() req, @Res() res: Response) {
@@ -988,7 +845,6 @@ export class PostsController {
 
         const paymentIntent: any = event.data.object;
         const promotionId = paymentIntent.metadata
-        // Handle the event
         switch (event.type) {
             case 'payment_intent.succeeded':
                 const paymentIntent: any = event.data.object;
@@ -1000,12 +856,9 @@ export class PostsController {
             case 'payment_method.attached':
                 const paymentMethod = event.data.object;
                 break;
-            // ... handle other event types
             default:
                 console.log(`Unhandled event type ${event.type}`);
         }
-
-        // Return a response to acknowledge receipt of the event
     }
 
 

@@ -165,17 +165,3 @@ export class CacheService {
     return await this.redis.hget("online_users", userId);
   }
 }
-  // async cacheCommentsPage(key: string, data) {
-    // if (data.likesCount >= 100) {
-    //   await this.redis.set(`comments:${comment._id}:${page}`, JSON.stringify(comment), {
-    //     keepTtl: true,
-
-    //   });
-    // }
-  // }
-  
-  // async getCommentsPage(key: string): Promise < any > {
-  //   const cachedComment: string = await this.redis.get(key);
-  //   return cachedComment ? JSON.parse(cachedComment) : null;
-  // }
-  

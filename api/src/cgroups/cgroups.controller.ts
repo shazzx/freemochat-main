@@ -55,22 +55,6 @@ export class CGroupsController {
         this.eventEmiiter.emit("profiles.upload", { uploadPromise, targetId: group._id.toString(), type: 'chatgroup' })
 
         res.json(group)
-        // let images;
-        // for (let file of files) {
-        //     const fileType = getFileType(file.mimetype)
-        //     const filename = uuidv4()
-        //     console.log(file)
-        //     let {url} = await this.uploadService.processAndUploadContent(file.buffer, filename, fileType)
-        //     console.log({url})
-        //     if (file.originalname == 'profile') {
-        //         images = { ...images, profile: url }
-        //     }
-        //     if (file.originalname == 'cover') {
-        //         images = { ...images, cover: url }
-        //     }
-        // }
-
-        // console.log(images)
     }
 
     @UseInterceptors(FilesInterceptor('files'))

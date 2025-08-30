@@ -9,29 +9,18 @@ const initialState = {
     callDetails: null,
     type: null,
     isMobile: false,
-    // caller: null,
-    // recepient: null,
 }
 
 const callSlice = createSlice({
     name: "call",
     initialState,
     reducers: {
-        // caller
         startCall(state, action) {
             state.onCall = true
             state.type = action.payload.type
             state.callerState = CallStates.CALLING
             state.targetDetails = action.payload.targetDetails
         },
-
-
-        setAcceptedCallState(state, action) {
-            // state.callDetails = action.payload
-        },
-
-
-        // recep
 
         callRinging(state) {
             state.recepientState = CallStates.RINGING
@@ -55,7 +44,6 @@ const callSlice = createSlice({
             }
         },
 
-        // both
         endCall(state) {
             state.onCall = false
             state.targetDetails = null

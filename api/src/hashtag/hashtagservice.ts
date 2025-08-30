@@ -11,7 +11,6 @@ export class HashtagService {
     @InjectModel(Post.name) private postModel: Model<Post>,
   ) { }
 
-  // Extract hashtags from text content
   extractHashtags(content: string): string[] {
     if (!content) return [];
 
@@ -29,7 +28,6 @@ export class HashtagService {
     return hashtags;
   }
 
-  // Create or update hashtags when a post is created/updated
   async processPostHashtags(postId: string, hashtags: string[]): Promise<string[]> {
 
     if (hashtags.length === 0) return [];
@@ -112,7 +110,6 @@ export class HashtagService {
       .exec();
   }
 
-  // Get posts by hashtag
   async getPostsByHashtag(
     hashtagName: string,
     userId: string,
@@ -129,7 +126,6 @@ export class HashtagService {
       };
     }
 
-    // Build query for posts
     let query: any = {
       _id: { $in: hashtag.posts },
       $or: [
@@ -138,18 +134,15 @@ export class HashtagService {
       ]
     };
 
-    // Add cursor pagination
     if (cursor) {
       query.createdAt = { $lt: new Date(cursor) };
     }
 
-    // Create aggregation pipeline similar to the feed
     const pipeline: any = [
       { $match: query },
       { $sort: { createdAt: -1 } },
       { $limit: limit + 1 },
 
-      // User lookup
       {
         $lookup: {
           from: 'users',
@@ -160,7 +153,6 @@ export class HashtagService {
       },
       { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
 
-      // Target lookup (users, groups, pages)
       {
         $lookup: {
           from: 'users',
@@ -186,7 +178,6 @@ export class HashtagService {
         }
       },
 
-      // Mentions lookup
       {
         $lookup: {
           from: 'users',
@@ -207,7 +198,6 @@ export class HashtagService {
         }
       },
 
-      // Likes lookup
       {
         $lookup: {
           from: 'likes',
@@ -229,7 +219,6 @@ export class HashtagService {
         }
       },
 
-      // Bookmarks lookup
       {
         $lookup: {
           from: 'bookmarks',
@@ -250,7 +239,6 @@ export class HashtagService {
         }
       },
 
-      // Counters lookup
       {
         $lookup: {
           from: 'counters',
@@ -303,7 +291,7 @@ export class HashtagService {
                     { $eq: ['$targetId', '$$targetId'] },
                     { $in: ['$name', ['plantation', 'garbage_collection', 'water_ponds', 'rain_water']] },
                     { $eq: ['$type', 'contributions'] },
-                    { $gt: ['$count', 0] }  // ADD THIS LINE
+                    { $gt: ['$count', 0] } 
                   ]
                 }
               }
@@ -319,7 +307,6 @@ export class HashtagService {
         }
       },
 
-      // Format the response
       {
         $addFields: {
           target: {
@@ -406,7 +393,6 @@ export class HashtagService {
         }
       },
 
-      // Final projection
       {
         $project: {
           _id: 1,
@@ -438,7 +424,6 @@ export class HashtagService {
 
     const posts = await this.postModel.aggregate(pipeline);
 
-    // Handle pagination
     const hasMore = posts.length > limit;
     const resultPosts = hasMore ? posts.slice(0, limit) : posts;
     const nextCursor = hasMore ? resultPosts[resultPosts.length - 1].createdAt.toISOString() : null;

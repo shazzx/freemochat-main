@@ -24,6 +24,26 @@ export class AuthService {
         @InjectModel(OTP.name) private readonly otpModel: Model<OTP>
     ) { }
 
+    private getTokenConfig() {
+        const isTestMode = process.env.ENV === 'DEVELOPMENT';
+
+        if (isTestMode) {
+            return {
+                accessTokenExpiry: '2m',
+                refreshTokenExpiry: '10m',
+                accessTokenSeconds: 2 * 60, 
+                refreshTokenSeconds: 10 * 60
+            };
+        }
+
+        return {
+            accessTokenExpiry: '15m',        
+            refreshTokenExpiry: '30d',       
+            accessTokenSeconds: 15 * 60,    
+            refreshTokenSeconds: 30 * 24 * 60 * 60 
+        };
+    }
+
     async validateUser(username: string, password: string): Promise<any> {
         let user = await this.userService.findUser(username)
         if (!user) {
@@ -37,7 +57,6 @@ export class AuthService {
         }
 
         let verification = {
-            // phone: false
             email: false
         }
 
@@ -49,10 +68,6 @@ export class AuthService {
             verification.email = true
         }
 
-        // if (user.isPhoneVerified) {
-        //     verification.phone = true
-        // }
-
         if (verification.email) {
             return user
         }
@@ -60,11 +75,6 @@ export class AuthService {
         if (!user.tempSecret) {
             let tempSecret = uuidv4()
             let emailOTP = await this.otpService.generateOtp(user._id, 'email')
-            // {Phone OTP Starts Here}
-            // let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
-            // console.log(phoneOTP)
-            // await this.twilioService.sendSMS(user.phone, message)
-            // {Phone OTP Ends Here}
 
             const message = messageGenerator(user.firstname + " " + user?.lastname, emailOTP)
 
@@ -73,16 +83,13 @@ export class AuthService {
                 from: process.env.VERIFY_EMAIL,
                 subject: "OTP Verification",
                 text: message,
-                // html: emailData.html,
             })
-            console.log(message)
 
             await this.userService.updateUser(user._id, { tempSecret: tempSecret })
             throw new HttpException({ message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: { username, auth_id: tempSecret }, verification }, HttpStatus.BAD_REQUEST)
         }
+
         let emailOTP = await this.otpService.generateOtp(user._id, 'email')
-        // let phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
-        // await this.twilioService.sendSMS(user.phone, message)
         const message = messageGenerator(user.firstname + " " + user?.lastname, emailOTP)
 
         await this.twilioService.sendEmail({
@@ -90,7 +97,6 @@ export class AuthService {
             from: process.env.VERIFY_EMAIL,
             subject: "OTP Verification",
             text: message,
-            // html: emailData.html,
         })
 
         throw new HttpException({ message: USER.NOT_VERIFIED, type: USER.NOT_VERIFIED, user: { username, auth_id: user.tempSecret }, verification }, HttpStatus.BAD_REQUEST)
@@ -98,27 +104,158 @@ export class AuthService {
 
     async login(user: any) {
         const payload = { username: user.username, sub: user._id }
-        const refresh_token = this.jwtService.sign(payload, { secret: jwtConstants.secret, expiresIn: '120h' })
+        const tokenConfig = this.getTokenConfig();
+
+        const access_token = this.jwtService.sign(payload, {
+            secret: jwtConstants.secret,
+            expiresIn: tokenConfig.accessTokenExpiry
+        })
+
+        const refresh_token = this.jwtService.sign(payload, {
+            secret: jwtConstants.secret,
+            expiresIn: tokenConfig.refreshTokenExpiry
+        })
+
         await this.redisService.setUserRefreshToken(user._id, refresh_token)
+
+        console.log(`🔑 Tokens created for user ${user.username}:`, {
+            accessTokenExpiry: tokenConfig.accessTokenExpiry,
+            refreshTokenExpiry: tokenConfig.refreshTokenExpiry,
+            isTestMode: process.env.NODE_ENV === 'test' || process.env.TOKEN_TEST_MODE === 'true'
+        });
+
         return {
             user,
-            access_token: this.jwtService.sign(payload, { secret: jwtConstants.secret, expiresIn: '120h' }),
+            access_token,
+            refresh_token,
+            expires_in: tokenConfig.accessTokenSeconds,
+            refresh_expires_in: tokenConfig.refreshTokenSeconds, 
+            token_type: 'Bearer',
+            ...(process.env.NODE_ENV === 'test' && {
+                testing_info: {
+                    access_expires_at: new Date(Date.now() + tokenConfig.accessTokenSeconds * 1000).toISOString(),
+                    refresh_expires_at: new Date(Date.now() + tokenConfig.refreshTokenSeconds * 1000).toISOString()
+                }
+            })
         }
     }
 
     async accessToken({ username, userId }: { username: string, userId: string }) {
-        return this.jwtService.sign({ username, sub: userId }, { secret: jwtConstants.secret, expiresIn: '120h' })
+        const tokenConfig = this.getTokenConfig();
+        return this.jwtService.sign({ username, sub: userId }, {
+            secret: jwtConstants.secret,
+            expiresIn: tokenConfig.accessTokenExpiry
+        })
     }
 
-    async refreshToken(token) {
+    async refreshToken(token: string) {
         try {
+            const tokenConfig = this.getTokenConfig();
             const payload = await this.jwtService.decode(token)
-            const refresh_token = await this.redisService.getUserRefreshToken(payload.sub)
-            const { username, sub } = this.jwtService.verify(refresh_token, { secret: jwtConstants.secret })
-            const access_token = this.jwtService.sign({ username, sub }, { secret: jwtConstants.secret, expiresIn: jwtConstants.accessTokenExpiry })
-            return access_token
+            const stored_refresh_token = await this.redisService.getUserRefreshToken(payload.sub)
+
+            if (!stored_refresh_token || stored_refresh_token !== token) {
+                console.log(`❌ Refresh token mismatch for user ${payload.sub}`);
+                throw new UnauthorizedException('Invalid refresh token')
+            }
+
+            const { username, sub } = this.jwtService.verify(stored_refresh_token, { secret: jwtConstants.secret })
+
+            const new_access_token = this.jwtService.sign({ username, sub }, {
+                secret: jwtConstants.secret,
+                expiresIn: tokenConfig.accessTokenExpiry
+            })
+
+            const new_refresh_token = this.jwtService.sign({ username, sub }, {
+                secret: jwtConstants.secret,
+                expiresIn: tokenConfig.refreshTokenExpiry
+            })
+
+            await this.redisService.setUserRefreshToken(sub, new_refresh_token)
+
+            console.log(`🔄 Token refreshed for user ${username}:`, {
+                oldTokenHash: token.substring(0, 10) + '...',
+                newTokenHash: new_access_token.substring(0, 10) + '...',
+                expiresIn: tokenConfig.accessTokenSeconds
+            });
+
+            return {
+                access_token: new_access_token,
+                refresh_token: new_refresh_token,
+                expires_in: tokenConfig.accessTokenSeconds,
+                refresh_expires_in: tokenConfig.refreshTokenSeconds,
+                token_type: 'Bearer',
+                ...(process.env.NODE_ENV === 'test' && {
+                    refreshed_at: new Date().toISOString(),
+                    expires_at: new Date(Date.now() + tokenConfig.accessTokenSeconds * 1000).toISOString()
+                })
+            }
         } catch (error) {
-            return false
+            console.error('❌ Token refresh failed:', error.message);
+            throw new UnauthorizedException('Token refresh failed')
+        }
+    }
+
+    async mobileRefreshToken(refresh_token: string) {
+        if (!refresh_token) {
+            throw new UnauthorizedException('Refresh token is required');
+        }
+
+        try {
+            const result = await this.refreshToken(refresh_token);
+
+            return {
+                ...result,
+                mobile_specific: {
+                    should_retry: false,
+                    next_refresh_in: Math.floor(result.expires_in * 0.8),
+                    server_time: Date.now()
+                }
+            };
+        } catch (error) {
+            if (error.message.includes('jwt expired')) {
+                throw new UnauthorizedException({
+                    message: 'Refresh token expired',
+                    code: 'REFRESH_TOKEN_EXPIRED',
+                    should_logout: true
+                });
+            }
+
+            throw error;
+        }
+    }
+
+    async validateTokenSilently(token: string): Promise<{ valid: boolean, payload?: any, error?: string }> {
+        try {
+            const payload = this.jwtService.verify(token, { secret: jwtConstants.secret });
+            return { valid: true, payload };
+        } catch (error) {
+            return { valid: false, error: error.message };
+        }
+    }
+
+    async getTokenInfo(token: string) {
+        if (process.env.NODE_ENV !== 'test') {
+            throw new UnauthorizedException('This endpoint is only available in test mode');
+        }
+
+        try {
+            const decoded = this.jwtService.decode(token, { json: true });
+            const validation = await this.validateTokenSilently(token);
+
+            return {
+                decoded,
+                isValid: validation.valid,
+                error: validation.error,
+                expiresAt: decoded?.exp ? new Date(decoded.exp * 1000).toISOString() : null,
+                issuedAt: decoded?.iat ? new Date(decoded.iat * 1000).toISOString() : null,
+                timeUntilExpiry: decoded?.exp ? Math.max(0, decoded.exp - Math.floor(Date.now() / 1000)) : null
+            };
+        } catch (error) {
+            return {
+                error: error.message,
+                isValid: false
+            };
         }
     }
 

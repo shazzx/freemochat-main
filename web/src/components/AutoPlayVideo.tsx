@@ -3,14 +3,12 @@ import videoViewTracker from './Reel/VideoViewTracker';
 
 const AutoPlayVideo = ({
   src,
-  postId, // Required prop for tracking this specific video
-  // ❌ REMOVED: userId prop - not needed since MainHome sets it globally
+  postId, 
   type = 'video/mp4',
   handleNavigation
 }: {
   src: string;
-  postId: string; // Unique identifier for this video
-  // userId?: string; // ❌ REMOVED - MainHome handles this
+  postId: string;
   handleNavigation: any;
   type?: string;
 }) => {
@@ -22,45 +20,31 @@ const AutoPlayVideo = ({
   const hasStartedTracking = useRef(false);
   const isComponentMounted = useRef(true);
 
-  
-
-  // ✅ SIMPLIFIED: Only cleanup on unmount, no user dependency
   useEffect(() => {
     isComponentMounted.current = true;
 
     return () => {
       isComponentMounted.current = false;
-
-      // Stop tracking this video when component unmounts
       if (postId && hasStartedTracking.current) {
-        console.log(`AutoPlayVideo: Stopping tracking for video ${postId} on unmount`);
         videoViewTracker.stopTracking(postId);
         hasStartedTracking.current = false;
       }
     };
-  }, [postId]); // ❌ REMOVED: userId dependency
+  }, [postId]);
 
-  // ✅ SIMPLIFIED: Handle playback state changes
   const updatePlaybackState = (playing: boolean) => {
     setIsPlaying(playing);
 
-    // ✅ SIMPLIFIED: Only check if we have postId and started tracking
-    // MainHome already set userId globally, so VideoViewTracker knows the user
     if (postId && hasStartedTracking.current) {
-      console.log(`AutoPlayVideo: Updating playback state for ${postId}: ${playing ? 'playing' : 'paused'}`);
       videoViewTracker.updatePlaybackState(postId, playing);
     }
   };
 
-  // ✅ SIMPLIFIED: Start tracking when video becomes visible and plays
   const startViewTracking = () => {
-    // ✅ SIMPLIFIED: Only check postId and if not already tracking
-    // VideoViewTracker already has userId from MainHome
     if (!postId || hasStartedTracking.current) {
       return;
     }
 
-    console.log(`AutoPlayVideo: Starting view tracking for video ${postId}`);
     const trackingStarted = videoViewTracker.startTracking({
       videoId: postId,
       type: 'video'
@@ -83,18 +67,11 @@ const AutoPlayVideo = ({
         if (entry.isIntersecting) {
           setIsVisible(true);
 
-          // Start video playback
           if (videoRef.current) {
             videoRef.current.play().then(() => {
-              // Video started playing successfully
               updatePlaybackState(true);
-
-              // Start view tracking when video actually starts playing
               startViewTracking();
             }).catch(err => {
-              console.log('AutoPlayVideo: Error playing video:', err);
-
-              // Try muted playback for autoplay restrictions
               if (err.name === 'NotAllowedError' && videoRef.current) {
                 videoRef.current.muted = true;
                 videoRef.current.play().then(() => {
@@ -109,7 +86,6 @@ const AutoPlayVideo = ({
         } else {
           setIsVisible(false);
 
-          // Pause video when not visible
           if (videoRef.current) {
             videoRef.current.pause();
             updatePlaybackState(false);
@@ -127,13 +103,11 @@ const AutoPlayVideo = ({
         observer.unobserve(videoRef.current);
       }
     };
-  }, [postId]); // ❌ REMOVED: userId dependency
+  }, [postId]);
 
-  // Handle video events
   const handlePlay = () => {
     updatePlaybackState(true);
 
-    // Start tracking if not already started
     if (!hasStartedTracking.current) {
       startViewTracking();
     }
@@ -145,15 +119,12 @@ const AutoPlayVideo = ({
 
   const handleEnded = () => {
     updatePlaybackState(false);
-    console.log(`AutoPlayVideo: Video ${postId} ended`);
   };
 
   const handleError = (e) => {
-    console.error(`AutoPlayVideo: Error loading video ${postId}:`, e);
     updatePlaybackState(false);
   };
 
-  // Handle manual play/pause toggle
   const togglePlayPause = () => {
     if (!videoRef.current) return;
 
@@ -161,9 +132,6 @@ const AutoPlayVideo = ({
       videoRef.current.pause();
     } else {
       videoRef.current.play().catch(err => {
-        console.log('AutoPlayVideo: Error playing video manually:', err);
-
-        // Try muted playback
         if (err.name === 'NotAllowedError') {
           videoRef.current.muted = true;
           videoRef.current.play().catch(e => {
@@ -188,15 +156,10 @@ const AutoPlayVideo = ({
 
     const touchEndTime = Date.now();
     const touchDuration = touchEndTime - touchStartTime.current;
-
-    // Get final touch position
     const touch = e.changedTouches[0];
     const deltaX = Math.abs(touch.clientX - touchStartPos.current.x);
     const deltaY = Math.abs(touch.clientY - touchStartPos.current.y);
 
-    // Consider it a tap if:
-    // 1. Touch duration is less than 300ms (quick tap)
-    // 2. Movement is less than 10px in any direction (not a scroll)
     if (touchDuration < 300 && deltaX < 10 && deltaY < 10) {
       e.preventDefault();
       e.stopPropagation();
@@ -205,11 +168,9 @@ const AutoPlayVideo = ({
   };
 
   const handleClick = (e) => {
-    // Check if it's a navigation click
     if (handleNavigation) {
       handleNavigation();
     } else {
-      // Toggle play/pause if no navigation handler
       e.preventDefault();
       e.stopPropagation();
       togglePlayPause();
@@ -219,9 +180,9 @@ const AutoPlayVideo = ({
   return (
     <div className="relative">
       <video
-        onClick={handleClick} // For desktop/mouse
-        onTouchStart={handleTouchStart} // Track touch start
-        onTouchEnd={handleTouchEnd} // Smart touch end that avoids scroll conflicts
+        onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         ref={videoRef}
         src={src}
         loop
@@ -235,12 +196,11 @@ const AutoPlayVideo = ({
         onError={handleError}
         className={`w-full ${isVisible ? 'opacity-100' : 'opacity-50'} w-full max-h-[500px] h-full transition-opacity duration-300`}
         style={{
-          touchAction: 'manipulation', // Prevents double-tap zoom and improves touch response
-          WebkitTouchCallout: 'none'   // Prevents long-press callout on iOS
+          touchAction: 'manipulation',
+          WebkitTouchCallout: 'none'
         }}
       />
 
-      {/* Play/Pause indicator overlay */}
       {!isPlaying && isVisible && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 pointer-events-none">
           <div className="bg-black bg-opacity-60 rounded-full p-4">
@@ -255,7 +215,6 @@ const AutoPlayVideo = ({
         </div>
       )}
 
-      {/* ✅ OPTIONAL: Re-enable debug info if needed */}
       {process.env.NODE_ENV === 'development' && (
         <div className="absolute top-2 left-2 bg-black bg-opacity-75 text-white text-xs p-2 rounded">
           <div>Video ID: {postId}</div>

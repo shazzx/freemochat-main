@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, InternalServerErrorException, Post, Query, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, InternalServerErrorException, Post, Query, Req, Res, UnauthorizedException, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 import { UserService } from './user.service';
 import { Response } from 'express';
@@ -58,13 +58,9 @@ export class UserController {
             let user = await this.userService.createUser({ firstname, lastname, username, password, confirmPassword, address, phone, tempSecret, email })
 
             await this.locationService.checkAddressRegisteration(address)
-
-            console.log("user created")
             // const phoneOTP = await this.otpService.generateOtp(user._id, 'phone')
             const emailOTP = await this.otpService.generateOtp(user._id, 'email')
             const message = messageGenerator(user.firstname + " " + user?.lastname, emailOTP, 'register')
-
-            console.log('emailOTP: ', emailOTP, "tempSecret: ", tempSecret, "phone secret: ")
 
             await this.twilioService.sendEmail({
                 to: email,
@@ -73,7 +69,6 @@ export class UserController {
                 html: `<div>${message}</div>`,
             })
 
-            console.log(message)
             // await this.twilioService.sendSMS(phone, message)
             res.json({ success: true, tempSecret, username: user.username, message: "account created successfully", verification: "pending" })
 
@@ -81,15 +76,6 @@ export class UserController {
             console.log(error)
             throw new InternalServerErrorException(error)
         }
-        // const payload = await this.authService.login(user)
-
-        // response.cookie("refreshToken", payload.refresh_token, {
-        //     httpOnly: true,
-        //     sameSite: 'strict',
-        //     maxAge: 60 * 60
-        // }).json({
-        //     access_token: payload.access_token, user
-        // })
     }
 
     @Public()
@@ -549,7 +535,6 @@ export class UserController {
         @Body(new ZodValidationPipe(LoginUser)) loginUserDTO: LoginUserDTO,
         @Req() req: Request,
         @Res({ passthrough: true }) response: Response) {
-        // username here is a phone number from user
         const { username, password } = loginUserDTO
         const user = await this.authService.validateUser(username, password)
 
@@ -574,21 +559,50 @@ export class UserController {
     }
 
     @Public()
-    @Post("refresh-token")
-    async refreshToken(
-        @Req() req: Request,
-        @Res() res: Response) {
-        const accessToken = req.cookies.accessToken
-        console.log(accessToken)
+    @Post('refresh')
+    async refreshToken(@Body() body: { refresh_token: string }) {
+        const { refresh_token } = body;
 
-        // if (!refreshToken) {
-        //     throw new BadRequestException("something went wrong")
-        // }
+        if (!refresh_token) {
+            throw new UnauthorizedException('Refresh token is required');
+        }
 
-        // console.log(refreshToken, 'refresh')
-        // const accessToken = await this.authService.refreshToken(refreshToken)
-        // res.json({ accessToken })
+        try {
+            const tokens = await this.authService.mobileRefreshToken(refresh_token);
+            return tokens;
+        } catch (error) {
+            throw new UnauthorizedException('Invalid refresh token');
+        }
     }
+
+    // @Public()
+    // @Post("refresh-token")
+    // async refreshToken(
+    //     @Body() body: { token: string }
+    // ) {
+    //     const { token } = body;
+
+    //     if (!token) {
+    //         throw new UnauthorizedException('Token is required');
+    //     }
+
+    //     try {
+    //         const result = await this.authService.refreshToken(token);
+
+    //         if (!result) {
+    //             throw new UnauthorizedException('Token refresh failed');
+    //         }
+
+    //         return {
+    //             access_token: result.access_token,
+    //             refresh_token: result.refresh_token,
+    //             expires_in: result.expires_in,
+    //             token_type: result.token_type
+    //         };
+    //     } catch (error) {
+    //         throw new UnauthorizedException('Invalid token');
+    //     }
+    // }
 
     @Get("")
     async getUser(
@@ -674,8 +688,6 @@ export class UserController {
         // await this.cacheService.setUserOffline(userId)
         // }
 
-        console.log(online, 'online')
-        console.log(offline, 'offline')
         response.json(online || offline)
     }
 

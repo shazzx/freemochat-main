@@ -62,13 +62,6 @@ export class User {
         autoScrollDelay: number | null;
     };
 
-    // auth related
-    // @Prop({type: String, required: true})
-    // emailSecret: string;
-
-    // @Prop({type: String, required: true})
-    // phoneSecret: string;
-
     @Prop({ type: String, default: null })
     tempSecret: string
 

@@ -18,7 +18,6 @@ export class Group {
     @Prop({type: String, unique: true})
     handle: String;
 
-    // this property is only for profile images to know about background image processing 
     @Prop({type: Boolean, default: null})
     isUploaded: Boolean
 

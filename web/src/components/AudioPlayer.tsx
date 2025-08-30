@@ -9,7 +9,7 @@ const VoiceMessagePlayer = ({ audioBlob }) => {
   const audioRef = useRef(null);
   const progressBarRef = useRef(null);
   const playHeadRef = useRef(null);
-  // deprecated component
+
   useEffect(() => {
     if (audioBlob) {
       const audioUrl = URL.createObjectURL(audioBlob);

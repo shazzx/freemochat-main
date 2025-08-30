@@ -7,15 +7,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { MetricsAggregatorModule } from 'src/metrics-aggregator/metrics-aggregator.module';
 import { Group, GroupSchema } from 'src/schema/group';
 import { ChatGroup, ChatGroupSchema } from 'src/schema/cgroup';
-import { MessageModule } from 'src/message/message.module';
-import { ChatlistModule } from 'src/chatlist/chatlist.module';
-import { ChatModule } from 'src/chat/chat.module';
 
 @Module({
   imports: [JwtModule,
     MetricsAggregatorModule,
-    MessageModule,
-    ChatlistModule,
     MongooseModule.forFeature([
       { name: Member.name, schema: MemberSchema }, 
       { name: Group.name, schema: GroupSchema }, 

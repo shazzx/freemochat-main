@@ -18,7 +18,7 @@ export function SearchInput() {
     const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
 
-    // Fetch suggestions with React Query
+    
     const { data: suggestions = [], isLoading } = useQuery<SearchSuggestion[]>({
         queryKey: ['searchSuggestions', inputValue],
         queryFn: async () => {
@@ -28,10 +28,10 @@ export function SearchInput() {
             return response.json();
         },
         enabled: inputValue.trim().length >= 2,
-        staleTime: 30000, // 30 seconds
+        staleTime: 30000, 
     });
 
-    // Handle search submission
+    
     const handleSearch = () => {
         if (inputValue.trim()) {
             navigate(`/search?query=${encodeURIComponent(inputValue)}`);
@@ -39,27 +39,27 @@ export function SearchInput() {
         }
     };
 
-    // Handle suggestion click
+    
     const handleSuggestionClick = (suggestion: SearchSuggestion) => {
         setInputValue(suggestion.value);
         navigate(`/search?query=${encodeURIComponent(suggestion.value)}&type=${suggestion.type}`);
         setShowSuggestions(false);
     };
 
-    // Handle input changes with debounce
+    
     const debouncedInputChange = debounce((value: string) => {
         setInputValue(value);
         setShowSuggestions(value.trim().length >= 2);
     }, 300);
 
-    // Handle key press for search submission
+    
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             handleSearch();
         }
     };
 
-    // Close suggestions when clicking outside
+    
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
@@ -99,7 +99,6 @@ export function SearchInput() {
                 </Button>
             </div>
 
-            {/* Suggestions Dropdown */}
             {showSuggestions && (
                 <div
                     ref={suggestionsRef}

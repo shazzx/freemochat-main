@@ -28,8 +28,6 @@ export class AdminService {
         return await this.adminModel.findOne({ username })
     }
 
-
-    // use this method with caution
     async createAdmin(adminDetails) {
         let admin = await this.adminModel.find()
         if (admin && admin.length > 0) {
@@ -124,9 +122,6 @@ export class AdminService {
     async getDashboardData() {
         try {
             const [latestCampaigns, latestReports] = await Promise.all([
-                // this.counterModel.find({
-                //     type: { $in: ['users', 'campaigns', 'reports'] }
-                // }).lean(),
 
                 this.campaignModel.find()
                     .sort({ createdAt: -1 })

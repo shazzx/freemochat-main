@@ -1,4 +1,4 @@
-// import SettingsModel from '@/admin/models/SettingsModel'
+
 import { axiosClient } from '@/api/axiosClient'
 import { useAppSelector } from '@/app/hooks'
 import HelperMessage from '@/components/HelperMessage'
@@ -9,7 +9,7 @@ import Cover from '@/components/profile/Cover'
 import CustomTabList from '@/components/profile/CustomTabList'
 import Profile from '@/components/profile/Profile'
 import ProfileMedia from '@/components/ProfileMedia'
-// import ProfileMedia from '@/components/ProfileMedia'
+
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -38,7 +38,7 @@ import { Label } from '@/components/ui/label'
 import { format } from 'date-fns'
 import { FiExternalLink } from "react-icons/fi";
 import EnvironmentalContributorTag from '@/models/EnvironmentalContributorTag'
-// import UserReelsSection from '@/components/Reel/UserReelsSection'
+
 
 const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const localUserData = useAppSelector(data => data.user)
@@ -48,7 +48,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
     const isOwn = localUserData.user._id == query.data?._id
     const acceptFriendRequest = useAcceptFriendRequest()
-    // const rejectFriendRequest = useRejectFriendRequest()
+    
     let user = isSelf ? localUserData.user : query.isFetched && query?.data
 
     const { _id, firstname, lastname, username, email, bio, areFriends, isFollowed, friendRequest, followersCount, friendsCount, address, profile, cover, workExperience, education, maritalStatus, dateOfBirth, socialMedia, website } = !isSelf ? query.isFetched && !query.isError && user : user
@@ -109,20 +109,20 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
         }
     }
 
-    // post upload
+    
     const _createPost = async ({ visibility, content, selectedMedia, backgroundColor, mentions, mentionReferences, formData }) => {
         let postDetails = { content, type: "user", postType: 'post', backgroundColor, mentions, targetId: user?._id, visibility }
         formData.append("postData", JSON.stringify(postDetails))
         createPost.mutate({ content, formData, selectedMedia, mentions, mentionReferences, backgroundColor, postType: 'post', type: "user", target: user })
         setPostModal(false)
     }
-    // const _createPost = async ({ content, selectedMedia, formData, visibility }) => {
-    //     let data;
-    //     let postDetails = { content, media: data, type: "user", visibility }
-    //     formData.append("postData", JSON.stringify(postDetails))
-    //     createPost.mutate({ content, formData, selectedMedia, type: "user", target: user, isUploaded: false, postType: 'post' })
-    //     setPostModal(false)
-    // }
+    
+    
+    
+    
+    
+    
+    
 
     let removePost = (id) => {
         let _postIndex = posts.findIndex((post) => {
@@ -140,7 +140,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
     const [mediaOpenModel, setMediaOpenModel] = useState(false)
     const [mediaOpenDetails, setMediaOpenDetails] = useState({ type: '', url: '' })
 
-    // post in view
+    
     const { inView, ref } = useInView()
     useEffect(() => {
         fetchNextPage()
@@ -158,12 +158,12 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
             }
         }
 
-        // Add event listener when dropdown is open
+        
         if (openQuickChat) {
             document.addEventListener('mousedown', handleClickOutside);
         }
 
-        // Clean up the event listener
+        
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
@@ -202,20 +202,16 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
             {
                 (query.isSuccess || isSelf) && !query.isLoading &&
                 <div className='w-full flex flex-col overflow-y-auto border-muted bg-background-secondary'>
-                    {/* media model (when you click any media in the profile main page this model will open) */}
                     {mediaOpenModel && mediaOpenDetails &&
                         <MediaOpenModel mediaOpenDetails={mediaOpenDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                     }
 
-                    {/* profile settings model */}
                     {searchParams.get("settings") && <QuickSettings user={localUserData.user} setModelTrigger={setProfileSettingsModel} uploadSingle={uploadSingle} />}
                     {searchParams.get("createpost") && (width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
 
                     <div className='flex w-full flex-col items-center w-ful'>
                         <div className="flex max-w-5xl w-full flex-col justify-cente relative">
-                            {/* cover image component */}
                             <Cover cover={cover} />
-                            {/* profile image */}
                             <div className='flex justify-between'>
                                 <div className='flex-responsive gap-2 relative pl-4 sm:pl10 left max-w-[90%] sm:w-full bottom-6'>
                                     <Profile image={profile} fallbackName={firstname && firstname[0]?.toUpperCase()} width={'w-24'} smWidth={'w-32'} height={'h-24'} smHeight={'h-32'} />
@@ -244,9 +240,7 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
 
                                             </div>
                                             <div className='flex flex-col text-sm'>
-                                                {/* address?.area + ", " +  */}
                                                 <span>{address?.city + ", " + address?.country}</span>
-                                                {/* <span>{friendsCount > 0 && (friendsCount == 1 ? friendsCount + " friend" : friendsCount + " friends")} {friendsCount > 0 && friendsCount && followersCount > 0 && ","} {followersCount && followersCount > 0 && (followersCount == 1 ? followersCount + " follower" : followersCount + " followers")}</span>                                    </div> */}
                                                 <span>{friendsCount > 0 && ("Friends " + friendsCount)} {friendsCount > 0 && followersCount > 0 && ", "} {followersCount > 0 && (" Followers " + followersCount)}</span>
                                             </div>
 
@@ -257,7 +251,6 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                     </div>
                                 </div>
 
-                                {/* profile edit */}
                                 {isSelf && <div className='p-4'>
                                     <PencilIcon className='cursor-pointer' size="25" onClick={() => {
                                         navigate("?settings=true")
@@ -316,7 +309,6 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                     </DropdownMenu>}
                             </div>
 
-                            {/* tabs container */}
                             <Tabs defaultValue="posts">
                                 <CustomTabList list={tabList} minWidth={306} maxWidth={80} />
                                 <TabsContent value="posts" className="">
@@ -337,17 +329,6 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                                         </Avatar>
                                                                     </div>
                                                                 </div>
-                                                                {/* <Input
-                                                                    onClick={() => {
-                                        navigate("?createpost=true")
-
-                                                                        setPostModal(true)
-                                                                    }}
-                                                                    ref={postContent}
-                                                                    type="text"
-                                                                    placeholder="Start writing a post"
-                                                                    className="max-w-2xl appearance-none bg-background shadow-none"
-                                                                /> */}
                                                                 <div
                                                                     className="max-w-2xl w-full rounded-md p-2 cursor-pointer flex items-center appearance-none bg-background border border-accent shadow-none"
                                                                     onClick={() => {
@@ -395,9 +376,6 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                 <TabsContent value="followers" className="">
                                     <Followers isSelf={isSelf} userFollowers={!userFollowers.isLoading && userFollowers} followUserToggle={followUserToggle} recepientId={_id} media={media} setMediaModelDetails={setMediaModelDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                                 </TabsContent>
-                                {/* <TabsContent value="reels" className='flex flex-col gap-2'>
-                                    <UserReelsSection userId={user?._id} />
-                                </TabsContent> */}
                                 <TabsContent value="media" className='flex flex-col gap-2'>
                                     <MediaSection targetId={_id && _id} media={media} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                                 </TabsContent>
@@ -597,9 +575,6 @@ const ProfilePage: FC<{ role?: string }> = ({ role }) => {
                                                             </a>
                                                         </div>}
                                                 </div>}
-
-
-                                            {/* Education Section */}
                                             <div className="w-full flex flex-col gap-2">
                                                 <div className="flex items-center gap-2">
                                                     <h2>Education</h2>

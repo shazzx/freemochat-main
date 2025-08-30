@@ -45,7 +45,6 @@ function Newfeed() {
             let posts = data.reverse()
             console.log(posts)
             setPosts(posts)
-            // getting media
             const response = await axiosClient.get("/media")
             setMedia(response.data)
         }

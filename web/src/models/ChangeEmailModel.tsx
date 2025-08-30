@@ -130,15 +130,11 @@ function
                                 onChange={(e) => setEmail(e.target.value)}
                                 name="email"
                                 type='email'
-                                // ref={phoneRef}
                                 placeholder="Enter your new email"
                                 id="email"
-                                // defaultValue={phone}
                                 className="max-w-96 w-full"
                                 disabled={otpSent}
-                            // {...register("phone")}
                             />
-                            {/* {errors.phone && <p>{errors.phone.message}</p>} */}
                         </div>
                         <InputOTPForm changeData={changeEmail} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeEmail} buttonTitle={notice ? "Update Email" : "Change Email"} data={!email || !otpSent ? true : false} type="email" label="Email Verification" description={otpSent ? "Please enter the one-time password sent to your email." : "Click on send to get an OTP for verification."} />
                         {notice && <Button type="button" onClick={() => {

@@ -30,10 +30,8 @@ const SearchSuggestions = ({
     onClose();
     
     if (suggestion.type === 'hashtag') {
-      // Navigate to your existing hashtag feed route
       navigate(`/hashtags-feed/${suggestion.value.replace('#', '')}`);
     } else {
-      // For other types, navigate to search results
       searchRef.current.value = suggestion.value;
       navigate(`/search?query=${suggestion.value}&type=${suggestion.type === 'user' ? 'users' : suggestion.type + 's'}`);
     }
@@ -77,7 +75,6 @@ const SearchSuggestions = ({
   );
 };
 
-// Usage example - this would replace your existing search suggestions in the header
 const EnhancedSearchHeader = ({ 
   searchQuery, 
   setSearchQuery, 
@@ -95,7 +92,6 @@ const EnhancedSearchHeader = ({
     
     if (e.target.value.length > 2) {
       try {
-        // Enhanced API call that includes hashtags
         const { data } = await axiosClient.get(`/search/suggestions?query=${e.target.value}`);
         setSearchSuggestions(data);
         setSearchSuggestionsState(true);
@@ -115,7 +111,6 @@ const EnhancedSearchHeader = ({
     const query = searchQuery.trim();
     
     if (query) {
-      // Check if it's a hashtag search
       if (query.startsWith('#')) {
         navigate(`/hashtags-feed/${query.replace('#', '')}`);
       } else {

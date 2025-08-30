@@ -1,13 +1,6 @@
 import { z } from 'zod'
 import { Cursor, ValidMongoId } from './global'
 import { isUUID } from 'validator'
-// firstname: 'shahzad',
-//   lastname: 'ali',
-//   username: 'shahzadali',
-//   email: 'shahzadali@gmail.com',
-//   address: { country: 'pakistan', city: 'karachi', area: 'Pipri' },
-//   password: 'shazzhere',
-//   confirmPassword: 'shazzhere'
 
 export const CreateUser = z.object({
     firstname: z.string(),

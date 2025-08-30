@@ -7,7 +7,7 @@ import { BookmarkIcon, Video, Grid, List } from 'lucide-react'
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-// Custom hook for intersection observer
+
 const useIntersectionObserver = ({
   onIntersect,
   threshold = 0.1,
@@ -45,7 +45,7 @@ const useIntersectionObserver = ({
   return targetRef
 }
 
-// Loading indicator component
+
 const LoadingIndicator = () => (
   <div className="flex justify-center items-center py-8">
     <div className="flex items-center gap-2 text-muted-foreground">
@@ -55,209 +55,209 @@ const LoadingIndicator = () => (
   </div>
 )
 
-// End of results indicator
+
 const EndOfResults = () => (
   <div className="flex justify-center items-center py-8">
     <span className="text-sm text-muted-foreground">No more content to load</span>
   </div>
 )
 
-// // Tabs Component
-// const Tabs = ({ currentTab, setCurrentTab, tabs }) => {
-//   return (
-//     <div className="flex space-x-1 rounded-lg bg-muted p-1">
-//       {tabs.map((tab) => (
-//         <button
-//           key={tab.id}
-//           onClick={() => setCurrentTab(tab.id)}
-//           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${currentTab === tab.id
-//             ? 'bg-white dark:bg-background text-foreground shadow-sm'
-//             : 'text-muted-foreground hover:text-foreground'
-//             }`}
-//         >
-//           {tab.id === 'posts' ? <List size={16} /> : <Video size={16} />}
-//           {tab.label}
-//         </button>
-//       ))}
-//     </div>
-//   )
-// }
 
-// // Updated ReelCard Component with styling matching your main ReelsList
-// const ReelCard = ({ reel, onPress }) => {
-//   // Get thumbnail from media object (matching your main ReelsList logic)
-//   const getThumbnailUrl = () => {
-//     if (reel?.media && reel?.media.length > 0) {
-//       // First check if thumbnail exists in first media item
-//       if (reel.media[0].thumbnail) {
-//         return reel.media[0].thumbnail;
-//       }
 
-//       // Fall back to video URL
-//       if (reel.media[0].url) {
-//         return reel.media[0].url;
-//       }
-//     }
 
-//     // Fallback placeholder
-//     return 'https://via.placeholder.com/300x500/333333/FFFFFF?text=Video';
-//   };
 
-//   const thumbnailUrl = getThumbnailUrl();
 
-//   return (
-//     <div
-//       className="reel-item cursor-pointer group"
-//       onClick={onPress}
-//       style={{
-//         aspectRatio: '9/16',
-//         borderRadius: '12px',
-//         overflow: 'hidden',
-//         position: 'relative',
-//         backgroundColor: '#000',
-//         border: '1px solid rgba(0,0,0,0.1)',
-//         transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-//       }}
-//       onMouseEnter={(e) => {
-//         e.currentTarget.style.transform = 'scale(1.02)';
-//         e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-//       }}
-//       onMouseLeave={(e) => {
-//         e.currentTarget.style.transform = 'scale(1)';
-//         e.currentTarget.style.boxShadow = 'none';
-//       }}
-//     >
-//       {/* Thumbnail */}
-//       <div className="thumbnail-container" style={{ width: '100%', height: '100%', position: 'relative' }}>
-//         <img
-//           src={thumbnailUrl}
-//           alt="Reel thumbnail"
-//           className="w-full h-full object-cover"
-//           style={{
-//             width: '100%',
-//             height: '100%',
-//             objectFit: 'cover'
-//           }}
-//           onError={(e) => {
-//             e.target["src"] = 'https://via.placeholder.com/300x500/333333/FFFFFF?text=Video'
-//           }}
-//         />
 
-//         {/* Video Duration or Play Indicator */}
-//         <div
-//           className="overlay group-hover:bg-black/40 transition-colors duration-200"
-//           style={{
-//             position: 'absolute',
-//             top: 0,
-//             left: 0,
-//             right: 0,
-//             bottom: 0,
-//             backgroundColor: 'rgba(0,0,0,0.2)',
-//             display: 'flex',
-//             justifyContent: 'center',
-//             alignItems: 'center'
-//           }}
-//         >
-//           <svg
-//             width="32"
-//             height="32"
-//             viewBox="0 0 24 24"
-//             fill="white"
-//             className="opacity-90 group-hover:scale-110 transition-transform duration-200"
-//           >
-//             <path d="M8 5v14l11-7z" />
-//           </svg>
-//         </div>
 
-//         {/* Gradient overlay for better contrast */}
-//         <div
-//           style={{
-//             position: 'absolute',
-//             bottom: 0,
-//             left: 0,
-//             right: 0,
-//             height: '30%',
-//             background: 'linear-gradient(transparent, rgba(0,0,0,0.6))',
-//             pointerEvents: 'none'
-//           }}
-//         />
-//       </div>
-//     </div>
-//   )
-// }
 
-// // Updated ReelsList Component with infinite scroll
-// const ReelsList = ({
-//   data,
-//   isLoading,
-//   onReelPress,
-//   onRefresh,
-//   refreshing,
-//   onLoadMore,
-//   hasNextPage,
-//   isFetchingNextPage
-// }) => {
-//   // Intersection observer for infinite scroll
-//   const loadMoreRef = useIntersectionObserver({
-//     onIntersect: onLoadMore,
-//     enabled: !isLoading && !isFetchingNextPage && hasNextPage,
-//     threshold: 0.1,
-//     rootMargin: '100px'
-//   })
 
-//   if (isLoading) {
-//     return (
-//       <div className="flex justify-center items-center h-64">
-//         <ScreenLoader />
-//       </div>
-//     )
-//   }
 
-//   if (!data || data.length === 0) {
-//     return (
-//       <div className="flex flex-col w-full items-center justify-center py-20">
-//         <svg className="w-48 h-32 mb-4" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg">
-//           <path fill="transparent" d="M0 0h900v600H0z" />
-//           <path d="M777.431 522H385.569C374.055 522 365 513.427 365 503.191V276.809c0-10.236 9.055-18.809 20.569-18.809h391.862c11.514 0 20.569 8.572 20.569 18.809v226.382c0 10.236-9.055 18.809-20.569 18.809z" fill="#fff" stroke="#E1E4E5" strokeWidth="4" />
-//           <path d="M798 268.775H365v-6.206c0-11.358 9.211-20.569 20.569-20.569h391.862c11.358 0 20.569 9.211 20.569 20.569v6.206z" fill="#fff" stroke="#E1E4E5" strokeWidth="4" />
-//           <path d="M385.61 261.224a4.847 4.847 0 1 0-.001-9.693 4.847 4.847 0 0 0 .001 9.693zm20.195 0a4.847 4.847 0 1 0-.001-9.693 4.847 4.847 0 0 0 .001 9.693zm19.387 0a4.847 4.847 0 1 0 0-9.694 4.847 4.847 0 0 0 0 9.694z" fill="#E1E4E5" />
-//           <rect x="400" y="300" width="200" height="150" rx="8" fill="#666AF6" />
-//           <polygon points="470,350 470,390 500,370" fill="white" />
-//         </svg>
-//         <span className="text-center text-muted-foreground">No Bookmarked Reels.</span>
-//       </div>
-//     )
-//   }
 
-//   // Filter valid reels (matching your main ReelsList logic)
-//   const formattedData = data?.filter(item => item?.media && item?.media.length > 0);
 
-//   return (
-//     <div className="w-full">
-//       {/* Grid Container - Updated to match your main ReelsList styling */}
-//       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 px-4">
-//         {formattedData.map((reel) => (
-//           <ReelCard
-//             key={reel._id}
-//             reel={reel}
-//             onPress={() => onReelPress(reel)}
-//           />
-//         ))}
-//       </div>
 
-//       {/* Infinite scroll trigger and loading states */}
-//       <div className="w-full">
-//         {isFetchingNextPage && <LoadingIndicator />}
-//         {hasNextPage && !isFetchingNextPage && (
-//           <div ref={loadMoreRef} className="h-4" />
-//         )}
-//         {!hasNextPage && formattedData.length > 0 && <EndOfResults />}
-//       </div>
-//     </div>
-//   )
-// }
 
-// Updated PostsList Component with infinite scroll
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const PostsList = ({
   data,
   isLoading,
@@ -266,7 +266,7 @@ const PostsList = ({
   hasNextPage,
   isFetchingNextPage
 }) => {
-  // Intersection observer for infinite scroll
+  
   const loadMoreRef = useIntersectionObserver({
     onIntersect: onLoadMore,
     enabled: !isLoading && !isFetchingNextPage && hasNextPage,
@@ -319,7 +319,6 @@ const PostsList = ({
         })
       })}
 
-      {/* Infinite scroll trigger and loading states */}
       <div className="w-full">
         {isFetchingNextPage && <LoadingIndicator />}
         {hasNextPage && !isFetchingNextPage && (
@@ -351,13 +350,13 @@ function Bookmarked() {
   }, [hasNextPage, isFetchingNextPage, isLoading, fetchNextPage])
 
   const handleReelPress = useCallback((reel) => {
-    // Get the entire current page of bookmarked reels
+    
     const currentItems = bookmarkedItems || []
 
-    // Add a unique key to the reel to prevent scroll issues
+    
     const enrichedReel = {
       ...reel,
-      _navigationTimestamp: Date.now() // Add timestamp to make each navigation unique
+      _navigationTimestamp: Date.now() 
     }
 
     navigate('/reels', {
@@ -365,16 +364,16 @@ function Bookmarked() {
         initialReelId: reel._id,
         reelData: enrichedReel,
         sourceMode: 'bookmarks',
-        // Pass additional context to help with positioning
+        
         reelIndex: currentItems.findIndex(item => item._id === reel._id),
         totalReels: currentItems.length,
-        // Pass current items to avoid refetching
+        
         initialItems: currentItems
       }
     })
   }, [navigate])
 
-  // Extract flat list of bookmarked items
+  
   const bookmarkedItems = useMemo(() => {
     if (!data || isLoading) return []
 
@@ -399,13 +398,11 @@ function Bookmarked() {
   return (
     <div className='w-full flex md:px-6 lg:px-24 overflow-y-auto border-muted'>
       <div className='max-w-4xl w-full flex flex-col gap-4'>
-        {/* Header */}
         <div className='flex gap-3 items-center border border-muted p-4 bg-card rounded-md'>
           <BookmarkIcon />
           <span className='text-base'>Bookmarked Posts</span>
         </div>
 
-        {/* Content */}
         <div className='relative flex w-full flex-col'>
            <PostsList
           data={data}

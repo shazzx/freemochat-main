@@ -19,7 +19,6 @@ const VideoPlayer = ({ src, ref, isVisible }) => {
       <video
         ref={ref}
         src={src}
-        // className="w-full h-auto rounded-lg shadow-lg"
         className={`w-full ${isVisible ? 'opacity-100' : 'opacity-50'} w-full max-h-[500px] h-full transition-opacity duration-300`}
         onClick={togglePlay}
       />

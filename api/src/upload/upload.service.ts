@@ -54,14 +54,10 @@ export class UploadService {
     private readonly VALIDATION_CONFIG = {
         plantation: {
             requiredLabels: [
-                // Actual planted vegetation - what user has planted
                 'Plant', 'Tree', 'Vegetation', 'Flora', 'Leaf', 'Branch', 'Trunk', 'Root',
                 'Sapling', 'Seedling', 'Bush', 'Shrub', 'Flower', 'Blossom', 'Stem',
-                // Planted areas and gardens created by user
                 'Garden', 'Landscape', 'Grass', 'Lawn', 'Agriculture', 'Farm', 'Crop', 'Grove', 'Orchard',
-                // Evidence of planting activity
                 'Soil', 'Earth', 'Ground', 'Dirt', 'Gardening', 'Planting', 'Planted Area',
-                // Tools used in planting (evidence of planting action)
                 'Shovel', 'Spade', 'Gardening Tool', 'Watering Can', 'Pot', 'Planter'
             ],
             conflictingLabels: [
@@ -74,16 +70,11 @@ export class UploadService {
         },
         garbage_collection: {
             requiredLabels: [
-                // Garbage collection systems/boxes placed by user
                 'Trash Can', 'Garbage Can', 'Dumpster', 'Bin', 'Container', 'Waste Container',
                 'Recycle Bin', 'Dustbin', 'Garbage Bin', 'Waste Bin',
-                // Collection infrastructure placed by user
                 'Collection Point', 'Waste Management', 'Recycling Station',
-                // Evidence of waste collection setup
                 'Bag', 'Plastic Bag', 'Collection Bag', 'Waste Collection',
-                // Environmental cleanup efforts by user
                 'Cleaning', 'Collection', 'Street', 'Park', 'Public Space', 'Cleanup',
-                // Types of collection systems
                 'Plastic', 'Metal', 'Recycling', 'Waste Sorting'
             ],
             conflictingLabels: [
@@ -95,17 +86,12 @@ export class UploadService {
         },
         water_ponds: {
             requiredLabels: [
-                // Water conservation structures created by user
                 'Pond', 'Water Body', 'Basin', 'Reservoir', 'Tank', 'Water Storage',
                 'Artificial Pond', 'Man-made Water Body',
-                // Construction evidence of water pond creation
                 'Construction', 'Excavation', 'Concrete', 'Stone', 'Rock', 'Built Structure',
                 'Water Conservation', 'Storage System', 'Water Management',
-                // Water pond infrastructure created by user
                 'Dam', 'Barrier', 'Wall', 'Channel', 'Water Infrastructure',
-                // Natural/excavated water features
                 'Water', 'Reflection', 'Waterhole', 'Lagoon',
-                // Tools/evidence of pond creation
                 'Excavation', 'Earth Work', 'Construction Equipment'
             ],
             conflictingLabels: [
@@ -117,17 +103,13 @@ export class UploadService {
         },
         rain_water: {
             requiredLabels: [
-                // Rainwater harvesting systems created/installed by user
                 'Tank', 'Water Tank', 'Storage Tank', 'Container', 'Barrel', 'Storage',
                 'Reservoir', 'Cistern', 'Water Storage', 'Collection Tank',
-                // Rainwater collection infrastructure installed by user
                 'Collection System', 'Harvesting System', 'Water Collection',
                 'Gutter', 'Pipe', 'Drainage', 'Channel', 'Spout', 'Downspout',
                 'Collector', 'Filter', 'Rain Collection',
-                // Installation evidence
                 'Installation', 'Equipment', 'Infrastructure', 'Water System',
                 'Construction', 'Building', 'Structure', 'Setup',
-                // Roof collection systems (part of rainwater harvesting)
                 'Roof', 'Rooftop Collection', 'Catchment'
             ],
             conflictingLabels: [
@@ -139,41 +121,23 @@ export class UploadService {
         }
     };
 
-    /**
- * Main validation method for environmental contribution images
- */
     async validateEnvironmentalImage(
         imageBuffer: Buffer,
         claimedType: EnvironmentalContributionType
     ): Promise<ValidationResult> {
         try {
-            console.log(`🔍 Validating image for ${claimedType} environmental action...`);
-
-            // Get detailed image labels from AWS Rekognition
             const labels = await this.detectImageLabels(imageBuffer);
-            console.log(`📋 Detected ${labels.length} labels:`, labels.map(l => `${l.Name} (${l.Confidence?.toFixed(1)}%)`));
-
-            // Validate against claimed type
             const validation = this.validateAgainstType(labels, claimedType);
 
-            // If validation fails, suggest the most likely category
             if (!validation.isValid) {
                 validation.suggestedCategory = this.suggestCorrectCategory(labels);
             }
 
-            console.log(`✅ Validation result for ${claimedType}:`, {
-                isValid: validation.isValid,
-                confidence: validation.confidence,
-                reason: validation.reason
-            });
-
             return validation;
 
         } catch (error) {
-            console.error('❌ Error in environmental image validation:', error);
-            // Don't block uploads on validation errors, but log them
             return {
-                isValid: true, // Fail open for now
+                isValid: true,
                 confidence: 0,
                 detectedLabels: [],
                 reason: 'Validation service temporarily unavailable'
@@ -181,23 +145,17 @@ export class UploadService {
         }
     }
 
-    /**
-     * Detect labels in image using AWS Rekognition
-     */
     private async detectImageLabels(imageBuffer: Buffer): Promise<any[]> {
         const command = new DetectLabelsCommand({
             Image: { Bytes: imageBuffer },
-            MaxLabels: 50, // Get more labels for better accuracy
-            MinConfidence: 60, // Lower threshold to catch more possibilities
+            MaxLabels: 50, 
+            MinConfidence: 60,
         });
 
         const response = await this.rekognitionClient.send(command);
         return response.Labels || [];
     }
 
-    /**
-     * Validate detected labels against claimed environmental action type
-     */
     private validateAgainstType(
         detectedLabels: any[],
         claimedType: EnvironmentalContributionType
@@ -209,7 +167,6 @@ export class UploadService {
             return acc;
         }, {} as Record<string, number>);
 
-        // Check for conflicting labels (things that shouldn't be in this action type)
         const conflicts = config.conflictingLabels.filter(conflictLabel =>
             labelNames.some(detectedLabel =>
                 detectedLabel.toLowerCase().includes(conflictLabel.toLowerCase()) ||
@@ -239,7 +196,7 @@ export class UploadService {
             }
         }
 
-        // Check for required labels (evidence of the environmental action)
+        
         const matchedLabels = config.requiredLabels.filter(requiredLabel =>
             labelNames.some(detectedLabel =>
                 detectedLabel.toLowerCase().includes(requiredLabel.toLowerCase()) ||
@@ -257,7 +214,7 @@ export class UploadService {
             };
         }
 
-        // Calculate confidence based on matched labels and their individual confidences
+        
         const matchConfidences = matchedLabels.map(matchedLabel => {
             const correspondingDetectedLabels = labelNames.filter(detectedLabel =>
                 detectedLabel.toLowerCase().includes(matchedLabel.toLowerCase()) ||
@@ -269,7 +226,7 @@ export class UploadService {
 
         const avgConfidence = matchConfidences.reduce((sum, conf) => sum + conf, 0) / matchConfidences.length;
 
-        // Require minimum confidence and minimum number of matches
+        
         const isValid = avgConfidence >= config.minConfidence && matchedLabels.length >= 1;
 
         return {
@@ -282,9 +239,6 @@ export class UploadService {
         };
     }
 
-    /**
-     * Suggest the most likely correct category based on detected labels
-     */
     private suggestCorrectCategory(detectedLabels: any[]): EnvironmentalContributionType | undefined {
         const labelNames = detectedLabels.map(label => label.Name);
         const scores: Record<EnvironmentalContributionType, number> = {
@@ -294,7 +248,7 @@ export class UploadService {
             rain_water: 0
         };
 
-        // Score each category based on label matches
+        
         Object.keys(this.VALIDATION_CONFIG).forEach(type => {
             const config = this.VALIDATION_CONFIG[type as EnvironmentalContributionType];
             const matches = config.requiredLabels.filter(requiredLabel =>
@@ -306,7 +260,7 @@ export class UploadService {
             scores[type as EnvironmentalContributionType] = matches.length;
         });
 
-        // Return category with highest score, if any
+        
         const maxScore = Math.max(...Object.values(scores));
         if (maxScore > 0) {
             return Object.keys(scores).find(
@@ -317,9 +271,6 @@ export class UploadService {
         return undefined;
     }
 
-    /**
-     * Check for semantic matches between labels (e.g., "Flora" matches "Plant")
-     */
     private isSemanticMatch(detected: string, required: string): boolean {
         const semanticGroups = {
             plants: ['plant', 'tree', 'vegetation', 'flora', 'leaf', 'branch', 'trunk', 'bush', 'shrub'],
@@ -340,9 +291,6 @@ export class UploadService {
         return false;
     }
 
-    /**
-     * Enhanced moderation that includes environmental validation
-     */
     async moderateAndValidateEnvironmentalImage(
         imageBuffer: Buffer,
         claimedType: EnvironmentalContributionType
@@ -354,7 +302,7 @@ export class UploadService {
         validationReason?: string;
         suggestedCategory?: EnvironmentalContributionType;
     }> {
-        // Run both moderation and validation in parallel
+        
         const [moderationResult, validationResult] = await Promise.all([
             this.moderateImage(imageBuffer),
             this.validateEnvironmentalImage(imageBuffer, claimedType)
@@ -376,7 +324,7 @@ export class UploadService {
         contentType: string,
         originalname?: string,
         isReel: boolean = false,
-        // NEW: Add environmental validation parameters
+        
         environmentalType?: EnvironmentalContributionType,
         skipEnvironmentalValidation: boolean = false
     ) {
@@ -385,10 +333,10 @@ export class UploadService {
 
         try {
             if (contentType === 'image') {
-                // Smart image type detection
+                
                 const detectedImageType = this.detectImageMimeType(file, originalname || fileName);
 
-                // Check if image needs mobile optimization
+                
                 const shouldOptimize = await this.shouldOptimizeImage(file, originalname || fileName);
 
                 let finalImageBuffer = file;
@@ -400,12 +348,9 @@ export class UploadService {
                     finalImageBuffer = optimizationResult.optimizedBuffer;
                     finalMimeType = optimizationResult.finalMimeType;
 
-                    console.log('✅ Mobile-optimized image ready for moderation and upload');
-                } else {
-                    console.log('✅ Image already mobile-optimized, using original');
-                }
+                } 
 
-                // NEW: Environmental validation for contribution images
+                
                 if (environmentalType && !skipEnvironmentalValidation) {
                     console.log(`🌱 Validating image for ${environmentalType} contribution...`);
 
@@ -414,7 +359,7 @@ export class UploadService {
                         environmentalType
                     );
 
-                    // Check moderation first
+                    
                     if (!validationResult.isSafe) {
                         throw new Error(`Content violates moderation policies: ${validationResult.moderationLabels.join(', ')}`);
                     }
@@ -429,9 +374,8 @@ export class UploadService {
                         throw new BadRequestException(errorMessage);
                     }
 
-                    console.log(`✅ Image validated as ${environmentalType} with ${validationResult.confidence}% confidence`);
                 } else {
-                    // Standard moderation for non-environmental images
+                    
                     moderationResult = await this.moderateImage(finalImageBuffer);
 
                     if (!moderationResult.isSafe) {
@@ -455,7 +399,6 @@ export class UploadService {
                     console.log(`🔄 Optimizing ${isReel ? 'reel' : 'normal video'} for mobile devices...`);
                     finalVideoBuffer = await this.optimizeVideoWithFFmpeg(file, fileName, isReel);
                 } else {
-                    console.log('✅ Video already mobile-optimized, skipping processing');
                     finalVideoBuffer = file;
 
                     const originalFormat = await this.getVideoFormat(file);
@@ -470,11 +413,11 @@ export class UploadService {
 
             } else if (contentType === 'pdf') {
                 processedContent = file;
-                // moderationResult = await this.moderatePdf(file);
+                
 
-                // if (!moderationResult.isSafe) {
-                //     throw new Error('Content violates moderation policies');
-                // }
+                
+                
+                
 
                 const uploadResult = await this.uploadToS3(file, fileName, 'application/pdf');
                 return { url: uploadResult, fileName, fileType: contentType, originalname };
@@ -485,38 +428,36 @@ export class UploadService {
                 return { url: uploadResult, fileName, fileType: contentType };
 
             } else {
-                console.log(contentType, 'contenttype');
                 throw new Error('Unsupported file type');
             }
 
         } catch (error) {
-            console.error('❌ Error processing content:', error);
             throw error;
         }
     }
 
 
-    // Mobile compatibility checker
+    
     private async checkMobileCompatibility(videoBuffer: Buffer): Promise<boolean> {
         try {
             const videoInfo = await this.getVideoInfo(videoBuffer);
 
-            // Check mobile-specific requirements for both normal videos and reels
+            
             const checks = {
                 hasH264Codec: videoInfo.codec === 'h264',
-                hasValidResolution: videoInfo.width <= 1280 && videoInfo.height <= 720, // 720p max for mobile optimization
-                hasValidBitrate: videoInfo.bitrate <= 5000000, // 5Mbps max for mobile networks
-                hasValidFramerate: true // Mobile devices handle up to 30fps efficiently
+                hasValidResolution: videoInfo.width <= 1280 && videoInfo.height <= 720, 
+                hasValidBitrate: videoInfo.bitrate <= 5000000, 
+                hasValidFramerate: true 
             };
 
             const isCompatible = Object.values(checks).every(check => check);
             return isCompatible;
         } catch (error) {
-            return false; // Not compatible if we can't determine
+            return false; 
         }
     }
 
-    // Get detailed video information
+    
     private async getVideoInfo(videoBuffer: Buffer): Promise<{
         format: string;
         duration: number;
@@ -550,7 +491,7 @@ export class UploadService {
         });
     }
 
-    // Get video format only
+    
     private async getVideoFormat(videoBuffer: Buffer): Promise<string> {
         return new Promise((resolve, reject) => {
             const inputStream = new Readable();
@@ -569,7 +510,7 @@ export class UploadService {
         });
     }
 
-    // Convert to MP4 without heavy optimization (for already good videos)
+    
     private async convertToMp4Only(file: Buffer, fileName: string): Promise<Buffer> {
         const tempInputPath = path.join(os.tmpdir(), `input-${Date.now()}.tmp`);
         const tempOutputPath = path.join(os.tmpdir(), `output-${Date.now()}.mp4`);
@@ -579,9 +520,9 @@ export class UploadService {
         return new Promise((resolve, reject) => {
             ffmpeg(tempInputPath)
                 .outputOptions([
-                    '-c:v copy',        // Copy video stream (no re-encoding)
-                    '-c:a copy',        // Copy audio stream (no re-encoding)
-                    '-movflags faststart',  // Web optimization
+                    '-c:v copy',        
+                    '-c:a copy',        
+                    '-movflags faststart',  
                     '-threads 2'
                 ])
                 .output(tempOutputPath)
@@ -618,16 +559,16 @@ export class UploadService {
                     return;
                 }
 
-                // Get duration in seconds
+                
                 const duration = metadata.format.duration;
                 resolve(duration);
             });
         });
     }
 
-    // Smart image MIME type detection
+    
     private detectImageMimeType(imageBuffer: Buffer, filename: string): string {
-        // Check magic numbers (file signatures) first
+        
         const signatures = [
             { signature: [0xFF, 0xD8, 0xFF], type: 'image/jpeg' },
             { signature: [0x89, 0x50, 0x4E, 0x47], type: 'image/png' },
@@ -642,26 +583,26 @@ export class UploadService {
             }
         }
 
-        // Fallback to filename extension
+        
         const mimeType = lookup(filename);
         if (mimeType && mimeType.startsWith('image/')) {
             return mimeType;
         }
 
-        return 'image/jpeg'; // Safe default
+        return 'image/jpeg'; 
     }
 
-    // Smart audio MIME type detection
+    
     private detectAudioMimeType(audioBuffer: Buffer, filename: string): string {
-        // Check magic numbers for audio files
+        
         const signatures = [
-            { signature: [0xFF, 0xFB], type: 'audio/mpeg' }, // MP3
-            { signature: [0xFF, 0xF3], type: 'audio/mpeg' }, // MP3
-            { signature: [0xFF, 0xF2], type: 'audio/mpeg' }, // MP3
-            { signature: [0x49, 0x44, 0x33], type: 'audio/mpeg' }, // MP3 with ID3
-            { signature: [0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41], type: 'audio/mp4' }, // M4A
-            { signature: [0x4F, 0x67, 0x67, 0x53], type: 'audio/ogg' }, // OGG
-            { signature: [0x52, 0x49, 0x46, 0x46], type: 'audio/wav' } // WAV
+            { signature: [0xFF, 0xFB], type: 'audio/mpeg' }, 
+            { signature: [0xFF, 0xF3], type: 'audio/mpeg' }, 
+            { signature: [0xFF, 0xF2], type: 'audio/mpeg' }, 
+            { signature: [0x49, 0x44, 0x33], type: 'audio/mpeg' }, 
+            { signature: [0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41], type: 'audio/mp4' }, 
+            { signature: [0x4F, 0x67, 0x67, 0x53], type: 'audio/ogg' }, 
+            { signature: [0x52, 0x49, 0x46, 0x46], type: 'audio/wav' } 
         ];
 
         for (const { signature, type } of signatures) {
@@ -670,13 +611,13 @@ export class UploadService {
             }
         }
 
-        // Fallback to filename extension
+        
         const mimeType = lookup(filename);
         if (mimeType && mimeType.startsWith('audio/')) {
             return mimeType;
         }
 
-        return 'audio/mpeg'; // Safe default
+        return 'audio/mpeg'; 
     }
 
     private matchesSignature(buffer: Buffer, signature: number[]): boolean {
@@ -686,29 +627,29 @@ export class UploadService {
 
     async resizeImageForRekognition(imageBuffer: Buffer): Promise<Buffer> {
         try {
-            // Get image metadata first to make informed decisions
+            
             const metadata = await sharp(imageBuffer).metadata();
             console.log(`📸 Original image: ${metadata.width}x${metadata.height}, ${(imageBuffer.length / (1024 * 1024)).toFixed(2)}MB`);
 
-            // Start with aggressive downsizing for very large images
+            
             const maxDimension = Math.max(metadata.width || 0, metadata.height || 0);
             let targetWidth, targetHeight, quality;
 
             if (maxDimension > 4000) {
-                // Very large image
+                
                 targetWidth = 600;
                 quality = 30;
             } else if (maxDimension > 2000) {
-                // Large image
+                
                 targetWidth = 800;
                 quality = 40;
             } else {
-                // Moderate sized image
+                
                 targetWidth = 1000;
                 quality = 50;
             }
 
-            // Process in a memory-efficient way
+            
             let resizedBuffer = await sharp(imageBuffer, { limitInputPixels: 100000000 })
                 .resize({ width: targetWidth, withoutEnlargement: true })
                 .jpeg({ quality: quality })
@@ -716,7 +657,7 @@ export class UploadService {
 
             console.log(`📸 Resized to: ${(resizedBuffer.length / (1024 * 1024)).toFixed(2)}MB`);
 
-            // If still too big, try more extreme measures
+            
             if (resizedBuffer.length > 4.5 * 1024 * 1024) {
                 resizedBuffer = await sharp(resizedBuffer)
                     .resize({ width: 500 })
@@ -777,7 +718,7 @@ export class UploadService {
             });
 
             const response = await this.textractClient.send(command);
-            // Implement your own logic to check for inappropriate content in the text
+            
             const isSafe = !response.Blocks?.some(block =>
                 block.BlockType === 'LINE' &&
                 /inappropriate|offensive/i.test(block.Text || '')
@@ -797,8 +738,8 @@ export class UploadService {
             Bucket: this.bucketName,
             Key: fileName,
             Body: file,
-            ContentType: contentType, // Now correctly detected for all file types
-            CacheControl: 'max-age=31536000', // 1 year cache for better CDN performance
+            ContentType: contentType, 
+            CacheControl: 'max-age=31536000', 
         });
 
         try {
@@ -808,7 +749,7 @@ export class UploadService {
             if (cloudFrontDomain) {
                 return `${cloudFrontDomain}/${fileName}`;
             } else {
-                // Fallback to S3 URL (but you should use CloudFront for better performance)
+                
                 return `https://${this.bucketName}.s3.amazonaws.com/${fileName}`;
             }
         } catch (error) {
@@ -826,8 +767,6 @@ export class UploadService {
         try {
             return await this.s3Client.send(command);
         } catch (error) {
-            console.error('⚠️ Error deleting from S3:', error);
-            // We're not throwing here to avoid breaking the main flow if deletion fails
         }
     }
 
@@ -844,17 +783,13 @@ export class UploadService {
 
         try {
             const result = await this.s3Client.send(command);
-            console.log(`✅ Batch deleted ${keys.length} files from S3`);
             return result;
         } catch (error) {
-            console.error('⚠️ Error batch deleting from S3:', error);
             await this.fallbackIndividualDeletes(keys);
         }
     }
 
     private async fallbackIndividualDeletes(keys: string[]): Promise<void> {
-        console.log(`🔄 Falling back to individual deletions for ${keys.length} files`);
-
         const deletePromises = keys.map(key =>
             this.deleteFromS3(key).catch(error => {
                 console.error(`Failed to delete ${key}:`, error);
@@ -883,7 +818,6 @@ export class UploadService {
         }
     }
 
-    // Your existing watermark method (keeping as-is since it works perfectly)
     async watermarkVideoFromSignedUrl(
         signedUrl: string,
         options: {
@@ -899,62 +833,39 @@ export class UploadService {
         postService?: PostsService,
         postDetails?: { postId: string, media: { type: string, url: string, thumbnail: string }[], isUploaded: null }
     ): Promise<string> {
-        // Use node-fetch to download from URL
         const fetch = require('node-fetch');
 
         try {
-            // Default path is in assets directory relative to this file
             const defaultImagePath = path.join(__dirname, '..', '..', 'assets', 'freemochat-logo.png');
             const watermarkImagePath = options.watermarkImagePath || defaultImagePath;
 
             const position = options.position || 'bottomRight';
-            const opacity = options.opacity || 0.9;
             const scale = options.scale || 0.5;
 
-            // Check if watermark image exists
             const imageExists = fs.existsSync(watermarkImagePath);
 
             if (!imageExists) {
-                console.warn(`⚠️ Watermark image not found at ${watermarkImagePath}`);
-                console.log(`Full path attempted: ${path.resolve(watermarkImagePath)}`);
-
                 if (!options.text) {
-                    options.text = 'Freemochat'; // Fallback text
+                    options.text = 'Freemochat';
                 }
-            } else {
-                console.log(`✅ Found watermark image at: ${watermarkImagePath}`);
-            }
+            } 
 
-            console.log(`🎬 Starting watermark process for video: ${signedUrl}`);
-
-            // 1. Download the video from the signed URL
-            console.log(`📥 Downloading video from signed URL...`);
             const response = await fetch(signedUrl);
             if (!response.ok) {
                 throw new Error(`Failed to download video: ${response.statusText}`);
             }
             const videoBuffer = Buffer.from(await response.arrayBuffer());
-            console.log(`✅ Video downloaded, size: ${(videoBuffer.length / (1024 * 1024)).toFixed(2)} MB`);
-
-            // 2. Create temporary files for processing
             const tempInputPath = path.join(os.tmpdir(), `input-${Date.now()}.mp4`);
             const tempOutputPath = path.join(os.tmpdir(), `output-${Date.now()}.mp4`);
 
-            // 3. Write the downloaded buffer to a temporary file
             await fs.promises.writeFile(tempInputPath, videoBuffer);
-            console.log(`💾 Video saved to temporary file: ${tempInputPath}`);
 
-            // 4. Apply watermark - text watermark is much more reliable, so we'll use that as a fallback
-            console.log(`🎨 Using ${imageExists ? 'image' : 'text'} watermark...`);
-
-            // First try with text watermark (works more consistently across FFmpeg versions)
             if (!imageExists || options.text) {
                 await new Promise<void>((resolve, reject) => {
                     const text = options.text || 'Freemochat';
                     const fontSize = options.fontSize || 24;
                     const fontColor = options.fontColor || 'white';
 
-                    // Position mapping for text
                     let x, y;
                     switch (position) {
                         case 'topLeft':
@@ -995,33 +906,29 @@ export class UploadService {
                         })
                         .output(tempOutputPath)
                         .outputOptions([
-                            '-codec:a copy',  // Copy audio codec
-                            '-q:v 1',          // High quality
+                            '-codec:a copy', 
+                            '-q:v 1',       
                             '-threads 2'
                         ])
-                        .on('start', (commandLine) => {
-                            console.log(`🎬 FFmpeg text watermarking started: ${commandLine}`);
-                        })
-                        .on('progress', (progress) => {
-                            if (progress.percent) {
-                                console.log(`🔄 Watermarking progress: ${Math.round(progress.percent)}% done`);
-                            }
-                        })
+                        // .on('start', (commandLine) => {
+                        //     console.log(`🎬 FFmpeg text watermarking started: ${commandLine}`);
+                        // })
+                        // .on('progress', (progress) => {
+                        //     if (progress.percent) {
+                        //         console.log(`🔄 Watermarking progress: ${Math.round(progress.percent)}% done`);
+                        //     }
+                        // })
                         .on('end', () => {
-                            console.log('✅ Text watermarking completed');
                             resolve();
                         })
                         .on('error', (err) => {
-                            console.error('❌ Error during text watermarking:', err);
                             reject(err);
                         })
                         .run();
                 });
             } else {
-                // Try image watermark with a very simple approach
                 try {
                     await new Promise<void>((resolve, reject) => {
-                        // Position mapping for overlay
                         let overlayPos;
                         switch (position) {
                             case 'topLeft':
@@ -1041,45 +948,36 @@ export class UploadService {
                                 break;
                         }
 
-                        // Create a temporary scaled watermark first
                         const tempWatermarkPath = path.join(os.tmpdir(), `watermark-${Date.now()}.png`);
 
-                        // Two-step process: first scale the watermark image
                         ffmpeg(watermarkImagePath)
                             .outputOptions(['-vf', `scale=iw*${scale}:-1`])
                             .output(tempWatermarkPath)
                             .on('end', () => {
-                                console.log('✅ Watermark scaled successfully');
-
-                                // Then overlay the watermark on the video
                                 ffmpeg(tempInputPath)
                                     .input(tempWatermarkPath)
                                     .complexFilter([
                                         `overlay=${overlayPos}`
                                     ])
                                     .outputOptions([
-                                        '-codec:a copy',  // Copy audio codec
-                                        '-q:v 1',          // High quality
+                                        '-codec:a copy', 
+                                        '-q:v 1',       
                                         '-threads 2'
                                     ])
                                     .output(tempOutputPath)
-                                    .on('start', (commandLine) => {
-                                        console.log(`🎬 FFmpeg overlay started: ${commandLine}`);
-                                    })
-                                    .on('progress', (progress) => {
-                                        if (progress.percent) {
-                                            console.log(`🔄 Overlay progress: ${Math.round(progress.percent)}% done`);
-                                        }
-                                    })
+                                    // .on('start', (commandLine) => {
+                                    //     console.log(`🎬 FFmpeg overlay started: ${commandLine}`);
+                                    // })
+                                    // .on('progress', (progress) => {
+                                    //     if (progress.percent) {
+                                    //         console.log(`🔄 Overlay progress: ${Math.round(progress.percent)}% done`);
+                                    //     }
+                                    // })
                                     .on('end', () => {
-                                        console.log('✅ Overlay completed');
-                                        // Clean up the temporary watermark
                                         fs.unlink(tempWatermarkPath, () => { });
                                         resolve();
                                     })
                                     .on('error', (err) => {
-                                        console.error('❌ Error during overlay:', err);
-                                        // Clean up the temporary watermark
                                         fs.unlink(tempWatermarkPath, () => { });
                                         reject(err);
                                     })
@@ -1092,9 +990,6 @@ export class UploadService {
                             .run();
                     });
                 } catch (imageError) {
-                    console.error('❌ Image watermark failed, falling back to text watermark:', imageError);
-
-                    // If image watermarking fails, fall back to text watermark
                     await new Promise<void>((resolve, reject) => {
                         ffmpeg(tempInputPath)
                             .videoFilters({
@@ -1116,11 +1011,9 @@ export class UploadService {
                                 '-q:v 1'
                             ])
                             .on('end', () => {
-                                console.log('✅ Fallback text watermarking completed');
                                 resolve();
                             })
                             .on('error', (err) => {
-                                console.error('❌ Error during fallback text watermarking:', err);
                                 reject(err);
                             })
                             .run();
@@ -1128,84 +1021,46 @@ export class UploadService {
                 }
             }
 
-            // 5. Read the processed file
-            console.log(`📖 Reading watermarked video...`);
             const processedBuffer = await fs.promises.readFile(tempOutputPath);
-
-            // 6. Generate a unique filename for the watermarked video
             const originalFilename = decodeURIComponent(new URL(signedUrl).pathname.split('/').pop() || 'video');
             const fileNameWithoutExt = originalFilename.split('.')[0];
             const watermarkedFileName = `${fileNameWithoutExt}-watermarked-${Date.now()}.mp4`;
-
-            // 7. Upload to S3
-            console.log(`☁️ Uploading watermarked video to S3...`);
             const uploadResult = await this.uploadToS3(processedBuffer, watermarkedFileName, 'video/mp4');
-            console.log(`✅ Watermarked video uploaded to: ${uploadResult}`);
 
-            // 8. Clean up temporary files
-            console.log(`🧹 Cleaning up temporary files...`);
             await fs.promises.unlink(tempInputPath).catch(() => { });
             await fs.promises.unlink(tempOutputPath).catch(() => { });
 
-            console.log(`🎉 Watermark process completed successfully`);
-
             if (shouldUpdatePost && postService && postDetails) {
                 const updateData = { ...postDetails, media: [{ ...postDetails.media[0], watermarkUrl: uploadResult }] };
-                console.log(postDetails, 'provided data');
-                console.log(updateData, 'updating post with updated data');
                 postService.updatePost(postDetails.postId, updateData);
-                console.log('✅ Post updated with watermarked video');
             }
             return uploadResult;
         } catch (error) {
-            console.error('❌ Error watermarking video:', error);
             throw error;
         }
     }
 
-    // ===== MOBILE-FIRST IMAGE OPTIMIZATION METHODS =====
-
-    // Check if image needs mobile optimization
     private async shouldOptimizeImage(imageBuffer: Buffer, filename: string): Promise<boolean> {
         try {
             const metadata = await sharp(imageBuffer).metadata();
             const fileSizeInMB = imageBuffer.length / (1024 * 1024);
 
-            // Mobile-first optimization checks
-            const isLargeFile = fileSizeInMB > 1; // 1MB+ needs optimization
+            const isLargeFile = fileSizeInMB > 1;
             const isHighResolution = (metadata.width || 0) > 1920 || (metadata.height || 0) > 1080;
             const isUnoptimizedFormat = !['jpeg', 'jpg', 'webp'].includes(metadata.format || '');
-            const hasLowQuality = metadata.density && metadata.density > 150; // High DPI images
 
             const needsOptimization = isLargeFile || isHighResolution || isUnoptimizedFormat;
 
             if (!needsOptimization) {
-                console.log('📸 Image already mobile-optimized:', {
-                    format: metadata.format,
-                    size: `${fileSizeInMB.toFixed(2)}MB`,
-                    resolution: `${metadata.width}x${metadata.height}`,
-                    optimized: true
-                });
                 return false;
             }
 
-            console.log('🔧 Image needs mobile optimization:', {
-                format: metadata.format,
-                size: `${fileSizeInMB.toFixed(2)}MB`,
-                resolution: `${metadata.width}x${metadata.height}`,
-                isLargeFile,
-                isHighResolution,
-                isUnoptimizedFormat
-            });
-
             return true;
         } catch (error) {
-            console.log('⚠️ Error checking image info, will optimize for mobile compatibility:', error);
-            return true; // Optimize if we can't determine
+            return true;
         }
     }
 
-    // Mobile-first image optimization
     private async optimizeImageForMobile(imageBuffer: Buffer, filename: string): Promise<{
         optimizedBuffer: Buffer;
         finalMimeType: string;
@@ -1217,44 +1072,35 @@ export class UploadService {
     }> {
         try {
             const originalSizeInMB = imageBuffer.length / (1024 * 1024);
-            const metadata = await sharp(imageBuffer).metadata();
-
-            console.log(`📸 Starting mobile image optimization:`);
-            console.log(`   Original: ${metadata.width}x${metadata.height}, ${originalSizeInMB.toFixed(2)}MB, ${metadata.format}`);
-
-            // Mobile-optimized settings based on image size and usage
-            const maxWidth = 1920;  // Max 1080p for mobile-web balance
+            const maxWidth = 1920; 
             const maxHeight = 1080;
             let quality: number;
-            let format: 'jpeg' | 'webp' = 'jpeg'; // Default to JPEG for universal compatibility
+            let format: 'jpeg' | 'webp' = 'jpeg';
 
-            // Adaptive quality based on file size (mobile-first approach)
             if (originalSizeInMB > 10) {
-                quality = 70; // Aggressive compression for very large images
+                quality = 70;
             } else if (originalSizeInMB > 5) {
-                quality = 75; // Good compression for large images
+                quality = 75;
             } else if (originalSizeInMB > 2) {
-                quality = 80; // Moderate compression for medium images
+                quality = 80;
             } else {
-                quality = 85; // Light compression for smaller images
+                quality = 85;
             }
 
-            // Check if we should use WebP (better compression, but need JPEG fallback for old devices)
             const useWebP = this.shouldUseWebP(filename);
             if (useWebP) {
                 format = 'webp';
-                quality = Math.max(75, quality - 5); // WebP can use slightly lower quality for same visual result
+                quality = Math.max(75, quality - 5);
             }
 
-            // Optimize the image
             let sharpInstance = sharp(imageBuffer, { limitInputPixels: 100000000 })
                 .resize({
                     width: maxWidth,
                     height: maxHeight,
-                    fit: 'inside', // Maintain aspect ratio, never crop
-                    withoutEnlargement: true // Don't upscale small images
+                    fit: 'inside',
+                    withoutEnlargement: true
                 })
-                .rotate(); // Auto-rotate based on EXIF data
+                .rotate();
 
             let optimizedBuffer: Buffer;
             let finalMimeType: string;
@@ -1263,7 +1109,7 @@ export class UploadService {
                 optimizedBuffer = await sharpInstance
                     .webp({
                         quality: quality,
-                        effort: 4, // Good compression vs speed balance
+                        effort: 4,
                         smartSubsample: true
                     })
                     .toBuffer();
@@ -1272,8 +1118,8 @@ export class UploadService {
                 optimizedBuffer = await sharpInstance
                     .jpeg({
                         quality: quality,
-                        progressive: true, // Progressive JPEG for faster loading
-                        mozjpeg: true, // Better compression
+                        progressive: true,
+                        mozjpeg: true,
                         optimiseScans: true
                     })
                     .toBuffer();
@@ -1282,18 +1128,6 @@ export class UploadService {
 
             const optimizedSizeInMB = optimizedBuffer.length / (1024 * 1024);
             const reductionPercentage = ((originalSizeInMB - optimizedSizeInMB) / originalSizeInMB) * 100;
-
-            // Get final dimensions
-            const optimizedMetadata = await sharp(optimizedBuffer).metadata();
-
-            console.log(`✅ Mobile image optimization completed:`);
-            console.log(`   Optimized: ${optimizedMetadata.width}x${optimizedMetadata.height}, ${optimizedSizeInMB.toFixed(2)}MB, ${format.toUpperCase()}`);
-            console.log(`   Reduction: ${reductionPercentage.toFixed(1)}%`);
-
-            // Warn if compression is very low (might indicate already optimized image)
-            if (reductionPercentage < 20 && originalSizeInMB > 1) {
-                console.log(`⚠️ Low compression ratio (${reductionPercentage.toFixed(1)}%) - image may already be optimized`);
-            }
 
             return {
                 optimizedBuffer,
@@ -1306,174 +1140,104 @@ export class UploadService {
             };
 
         } catch (error) {
-            console.error('❌ Error optimizing image for mobile:', error);
             throw new Error(`Failed to optimize image: ${error.message}`);
         }
     }
 
-    // Determine if WebP should be used (consider browser support vs file size benefits)
     private shouldUseWebP(filename: string): boolean {
-        // For now, stick with JPEG for universal compatibility
-        // WebP can be added later as an advanced feature with fallbacks
         return false;
     }
 
-    // Enhanced video optimization detection for TikTok and other pre-optimized videos
     private async shouldOptimizeVideo(videoBuffer: Buffer, filename: string): Promise<boolean> {
         try {
             const videoInfo = await this.getVideoInfo(videoBuffer);
             const fileSizeInMB = videoBuffer.length / (1024 * 1024);
-
-            // Check if this looks like a TikTok or other highly-optimized video
             const isTikTokLike = await this.detectTikTokStyleVideo(videoInfo, fileSizeInMB, filename);
 
             if (isTikTokLike) {
-                console.log('🎵 TikTok-style video detected - already highly optimized, skipping processing');
                 return false;
             }
 
-            // Enhanced optimization checks for regular videos
             const isAlreadyMp4 = videoInfo.format === 'mp4';
             const isSmallFile = fileSizeInMB < 10;
-            const hasGoodBitrate = videoInfo.bitrate && videoInfo.bitrate < 4000000; // Less than 4Mbps
-            const hasGoodResolution = videoInfo.width && videoInfo.width <= 1280; // Mobile-friendly 720p max for all videos
+            const hasGoodBitrate = videoInfo.bitrate && videoInfo.bitrate < 4000000;
+            const hasGoodResolution = videoInfo.width && videoInfo.width <= 1280;
             const hasMobileCompatibleProfile = await this.checkMobileCompatibility(videoBuffer);
             const hasEfficientSizeRatio = this.checkVideoEfficiency(videoInfo, fileSizeInMB);
 
-            // Don't optimize if all mobile-friendly conditions are met
             if (isAlreadyMp4 && isSmallFile && hasGoodBitrate && hasGoodResolution && hasMobileCompatibleProfile && hasEfficientSizeRatio) {
-                console.log('📱 Video already mobile-optimized:', {
-                    format: videoInfo.format,
-                    size: `${fileSizeInMB.toFixed(2)}MB`,
-                    bitrate: `${(videoInfo.bitrate / 1000000).toFixed(2)}Mbps`,
-                    resolution: `${videoInfo.width}x${videoInfo.height}`,
-                    mobileCompatible: hasMobileCompatibleProfile,
-                    efficient: hasEfficientSizeRatio
-                });
                 return false;
             }
 
-            console.log('🔧 Video needs mobile optimization:', {
-                format: videoInfo.format,
-                needsFormatChange: !isAlreadyMp4,
-                isLargeFile: !isSmallFile,
-                needsBitrateReduction: !hasGoodBitrate,
-                needsResolutionReduction: !hasGoodResolution,
-                needsMobileProfile: !hasMobileCompatibleProfile,
-                inefficient: !hasEfficientSizeRatio,
-                isTikTokLike
-            });
-
             return true;
         } catch (error) {
-            console.log('⚠️ Error checking video info, will optimize for mobile compatibility:', error);
-            return true; // Optimize if we can't determine
+            return true;
         }
     }
 
-    // Detect TikTok-style highly optimized videos
     private async detectTikTokStyleVideo(videoInfo: any, fileSizeInMB: number, filename: string): Promise<boolean> {
         try {
-            // Common characteristics of TikTok/social media optimized videos
             const indicators = {
-                // Size efficiency (very small for duration)
                 isVeryEfficient: this.checkVideoEfficiency(videoInfo, fileSizeInMB, true),
-
-                // Typical mobile resolutions used by TikTok
                 hasTikTokResolution: this.checkTikTokResolution(videoInfo.width, videoInfo.height),
-
-                // Typical TikTok bitrate ranges (very optimized)
                 hasTikTokBitrate: this.checkTikTokBitrate(videoInfo.bitrate, fileSizeInMB),
-
-                // Filename patterns (optional, might indicate source)
                 hasSocialMediaPattern: this.checkSocialMediaFilename(filename),
-
-                // Duration patterns (TikTok videos are typically short)
-                hasShortDuration: videoInfo.duration && videoInfo.duration <= 180, // 3 minutes max
-
-                // Already perfect mobile settings
+                hasShortDuration: videoInfo.duration && videoInfo.duration <= 180,
                 hasPerfectMobileSettings: videoInfo.codec === 'h264' && videoInfo.format === 'mp4'
             };
 
-            // If multiple indicators suggest TikTok-style optimization, skip processing
             const positiveIndicators = Object.values(indicators).filter(Boolean).length;
-            const isTikTokLike = positiveIndicators >= 3; // 3 or more indicators
-
-            if (isTikTokLike) {
-                console.log('🎵 TikTok-style video indicators:', {
-                    ...indicators,
-                    totalIndicators: positiveIndicators,
-                    confidence: `${(positiveIndicators / 6 * 100).toFixed(0)}%`
-                });
-            }
+            const isTikTokLike = positiveIndicators >= 3;
 
             return isTikTokLike;
 
         } catch (error) {
-            console.log('⚠️ Error detecting TikTok-style video:', error);
-            return false; // Default to normal processing if detection fails
+            return false;
         }
     }
 
-    // Check video size efficiency (bytes per second)
     private checkVideoEfficiency(videoInfo: any, fileSizeInMB: number, strict: boolean = false): boolean {
         if (!videoInfo.duration || videoInfo.duration <= 0) return false;
 
         const bytesPerSecond = (fileSizeInMB * 1024 * 1024) / videoInfo.duration;
         const kbytesPerSecond = bytesPerSecond / 1024;
-
-        // TikTok videos are VERY efficient (usually 100-400 KB/second)
-        // Regular efficient videos: 200-800 KB/second
-        const threshold = strict ? 400 : 800; // KB/second
-
+        const threshold = strict ? 400 : 800;
         const isEfficient = kbytesPerSecond < threshold;
-
-        if (isEfficient) {
-            console.log(`✅ Video is very efficient: ${kbytesPerSecond.toFixed(0)} KB/sec (threshold: ${threshold})`);
-        }
 
         return isEfficient;
     }
 
-    // Check typical TikTok/social media resolutions
     private checkTikTokResolution(width: number, height: number): boolean {
         if (!width || !height) return false;
 
         const commonTikTokResolutions = [
-            { w: 720, h: 1280 },   // 9:16 portrait (most common)
-            { w: 1080, h: 1920 },  // Full HD portrait
-            { w: 540, h: 960 },    // Lower quality portrait
-            { w: 480, h: 854 },    // Compressed portrait
-            { w: 576, h: 1024 },   // Alternative portrait
-            { w: 1280, h: 720 },   // 16:9 landscape (less common)
-            { w: 720, h: 720 },    // Square (Instagram style)
-            { w: 1080, h: 1080 }   // HD Square
+            { w: 720, h: 1280 },  
+            { w: 1080, h: 1920 }, 
+            { w: 540, h: 960 },   
+            { w: 480, h: 854 },   
+            { w: 576, h: 1024 },  
+            { w: 1280, h: 720 },  
+            { w: 720, h: 720 },   
+            { w: 1080, h: 1080 }
         ];
 
         return commonTikTokResolutions.some(res =>
             (Math.abs(width - res.w) <= 10 && Math.abs(height - res.h) <= 10) ||
-            (Math.abs(width - res.h) <= 10 && Math.abs(height - res.w) <= 10) // Rotated
+            (Math.abs(width - res.h) <= 10 && Math.abs(height - res.w) <= 10)
         );
     }
 
-    // Check typical TikTok bitrate patterns
     private checkTikTokBitrate(bitrate: number, fileSizeInMB: number): boolean {
         if (!bitrate || bitrate <= 0) return false;
 
         const bitrateKbps = bitrate / 1000;
-
-        // TikTok typically uses 1-3 Mbps for mobile optimization
-        // Very efficient encoding in this range
         const isTikTokRange = bitrateKbps >= 800 && bitrateKbps <= 3500;
-
-        // Also check if bitrate seems very optimized for file size
-        const expectedMinBitrate = (fileSizeInMB * 8 * 1000) / 180; // Assume max 3 min video
+        const expectedMinBitrate = (fileSizeInMB * 8 * 1000) / 180;
         const isVeryOptimized = bitrateKbps < expectedMinBitrate * 1.5;
 
         return isTikTokRange && isVeryOptimized;
     }
 
-    // Check filename patterns that might indicate social media downloads
     private checkSocialMediaFilename(filename: string): boolean {
         const patterns = [
             /tiktok/i,
@@ -1483,8 +1247,8 @@ export class UploadService {
             /shorts/i,
             /snap/i,
             /social/i,
-            /_\d{10,}/,  // Timestamp patterns
-            /\d{4}-\d{2}-\d{2}/,  // Date patterns
+            /_\d{10,}/, 
+            /\d{4}-\d{2}-\d{2}/,
             /download/i,
             /saved/i
         ];
@@ -1492,7 +1256,6 @@ export class UploadService {
         return patterns.some(pattern => pattern.test(filename));
     }
 
-    // FIXED: Smart bitrate calculation to prevent size increases
     private async calculateOptimalBitrate(file: Buffer, fileSizeInMB: number, isReel: boolean): Promise<{
         compressionLevel: number;
         videoBitrate: string;
@@ -1500,28 +1263,21 @@ export class UploadService {
         preset: string;
     }> {
         try {
-            // Get original video info with robust error handling
             const videoInfo = await this.getVideoInfo(file);
             const originalBitrate = videoInfo.bitrate || 0;
 
-            // Handle cases where bitrate detection fails
             let originalBitrateKbps = 0;
             if (originalBitrate && !isNaN(originalBitrate) && originalBitrate > 0) {
                 originalBitrateKbps = Math.round(originalBitrate / 1000);
             } else {
-                // Estimate bitrate based on file size and duration
-                const duration = videoInfo.duration || 60; // Default 60 seconds if unknown
-                const estimatedBitrate = (fileSizeInMB * 8 * 1024) / duration; // Kbps
+                const duration = videoInfo.duration || 60;
+                const estimatedBitrate = (fileSizeInMB * 8 * 1024) / duration;
                 originalBitrateKbps = Math.round(estimatedBitrate);
-                console.log(`⚠️ Could not detect original bitrate, estimated: ${originalBitrateKbps}kbps`);
             }
-
-            console.log(`📊 Original video stats: ${fileSizeInMB.toFixed(2)}MB, ${originalBitrateKbps}kbps bitrate`);
 
             let compressionLevel, videoBitrate, audioBitrate, preset;
 
             if (isReel) {
-                // Reels optimization with safe bitrate calculation
                 if (fileSizeInMB > 30) {
                     compressionLevel = 28;
                     videoBitrate = this.calculateSafeBitrate(originalBitrateKbps, 1800, 0.7);
@@ -1539,7 +1295,6 @@ export class UploadService {
                     preset = 'faster';
                 }
             } else {
-                // Normal videos optimization with safe bitrate calculation
                 if (fileSizeInMB > 100) {
                     compressionLevel = 28;
                     videoBitrate = this.calculateSafeBitrate(originalBitrateKbps, 3000, 0.6);
@@ -1556,7 +1311,6 @@ export class UploadService {
                     audioBitrate = '128k';
                     preset = 'faster';
                 } else {
-                    // Conservative for small files
                     compressionLevel = 22;
                     videoBitrate = this.calculateSafeBitrate(originalBitrateKbps, 3000, 0.9);
                     audioBitrate = '128k';
@@ -1564,20 +1318,9 @@ export class UploadService {
                 }
             }
 
-            console.log(`🎯 Calculated optimal settings:`, {
-                compressionLevel,
-                videoBitrate,
-                audioBitrate,
-                preset,
-                originalBitrate: `${originalBitrateKbps}k`
-            });
-
             return { compressionLevel, videoBitrate, audioBitrate, preset };
 
         } catch (error) {
-            console.log('⚠️ Error calculating optimal bitrate, using safe defaults:', error);
-
-            // Robust fallback based on file size only
             if (isReel) {
                 if (fileSizeInMB > 30) {
                     return { compressionLevel: 28, videoBitrate: '1800k', audioBitrate: '96k', preset: 'veryfast' };
@@ -1598,46 +1341,34 @@ export class UploadService {
         }
     }
 
-    // Helper method for safe bitrate calculation
     private calculateSafeBitrate(originalBitrateKbps: number, maxBitrate: number, reductionFactor: number): string {
-        // Handle edge cases
         if (!originalBitrateKbps || isNaN(originalBitrateKbps) || originalBitrateKbps <= 0) {
-            // If we can't detect original bitrate, use conservative default
-            const safeBitrate = Math.min(maxBitrate * 0.7, 2500); // 70% of max or 2.5Mbps, whichever is lower
+            const safeBitrate = Math.min(maxBitrate * 0.7, 2500);
             return Math.round(safeBitrate).toString() + 'k';
         }
 
-        // Calculate target bitrate
         const targetBitrate = Math.min(maxBitrate, originalBitrateKbps * reductionFactor);
 
-        // Ensure minimum reasonable bitrate (don't go too low)
-        const minBitrate = 800; // 800kbps minimum
+        const minBitrate = 800;
         const finalBitrate = Math.max(minBitrate, targetBitrate);
 
         return Math.round(finalBitrate).toString() + 'k';
     }
 
-
-    // Update the main optimization method to handle TikTok videos gracefully
     private async optimizeVideoWithFFmpeg(file: Buffer, fileName: string, isReel: boolean = false): Promise<Buffer> {
-        // Check one more time if this is a TikTok-style video that slipped through
         const videoInfo = await this.getVideoInfo(file);
         const fileSizeInMB = file.length / (1024 * 1024);
-
         const isTikTokLike = await this.detectTikTokStyleVideo(videoInfo, fileSizeInMB, fileName);
 
         if (isTikTokLike) {
-            console.log('🎵 TikTok-style video detected during optimization - using minimal processing');
             return await this.minimalVideoProcessing(file, fileName);
         }
 
-        // Continue with normal optimization for other videos
         const tempInputPath = path.join(os.tmpdir(), `input-${Date.now()}.mp4`);
         const tempOutputPath = path.join(os.tmpdir(), `output-${Date.now()}.mp4`);
 
         await fs.promises.writeFile(tempInputPath, file);
 
-        // Use smart bitrate calculation
         const optimalSettings = await this.calculateOptimalBitrate(file, fileSizeInMB, isReel);
         const { compressionLevel, videoBitrate, audioBitrate, preset } = optimalSettings;
 
@@ -1666,16 +1397,7 @@ export class UploadService {
                     '-r 30'
                 ])
                 .output(tempOutputPath)
-                .on('start', (commandLine) => {
-                    console.log(`📱 Smart mobile-optimized FFmpeg started: ${commandLine}`);
-                })
-                .on('progress', (progress) => {
-                    if (progress.percent) {
-                        console.log(`🔄 Smart encoding: ${Math.round(progress.percent)}% done`);
-                    }
-                })
                 .on('end', async () => {
-                    console.log('✅ Smart mobile video optimization completed');
                     try {
                         const outputBuffer = await fs.promises.readFile(tempOutputPath);
                         await fs.promises.unlink(tempInputPath).catch(() => { });
@@ -1683,23 +1405,6 @@ export class UploadService {
 
                         const newSizeInMB = outputBuffer.length / (1024 * 1024);
                         const compressionRatio = (newSizeInMB / fileSizeInMB * 100);
-                        const reductionPercentage = (100 - compressionRatio);
-
-                        console.log(`📱 Smart optimization results:`);
-                        console.log(`   Original: ${fileSizeInMB.toFixed(2)}MB`);
-                        console.log(`   Optimized: ${newSizeInMB.toFixed(2)}MB`);
-                        console.log(`   Change: ${reductionPercentage >= 0 ? '-' : '+'}${Math.abs(reductionPercentage).toFixed(1)}%`);
-                        console.log(`   Type: ${isReel ? 'Reel (720p max)' : 'Normal (720p max)'}`);
-
-                        // Warning if size increased
-                        if (newSizeInMB > fileSizeInMB) {
-                            console.log(`⚠️ WARNING: File size increased! This shouldn't happen with smart optimization.`);
-                            console.log(`   Consider using original file or adjusting settings.`);
-                        } else if (reductionPercentage < 10 && fileSizeInMB > 5) {
-                            console.log(`ℹ️ Low compression (${reductionPercentage.toFixed(1)}%) - source was likely pre-optimized`);
-                        } else {
-                            console.log(`✅ Optimization successful: ${reductionPercentage.toFixed(1)}% reduction`);
-                        }
 
                         resolve(outputBuffer);
                     } catch (err) {
@@ -1707,7 +1412,6 @@ export class UploadService {
                     }
                 })
                 .on('error', async (err) => {
-                    console.error('❌ Smart FFmpeg error:', err);
                     await fs.promises.unlink(tempInputPath).catch(() => { });
                     await fs.promises.unlink(tempOutputPath).catch(() => { });
                     reject(err);
@@ -1716,38 +1420,31 @@ export class UploadService {
         });
     }
 
-    // Minimal processing for TikTok-style videos (ensure MP4 format + compatibility)
     private async minimalVideoProcessing(file: Buffer, fileName: string): Promise<Buffer> {
         const tempInputPath = path.join(os.tmpdir(), `input-${Date.now()}.mp4`);
         const tempOutputPath = path.join(os.tmpdir(), `output-${Date.now()}.mp4`);
 
         await fs.promises.writeFile(tempInputPath, file);
 
-        // Check if it's already MP4 format
         const videoInfo = await this.getVideoInfo(file);
         const isAlreadyMp4 = videoInfo.format === 'mp4';
 
         return new Promise((resolve, reject) => {
             if (isAlreadyMp4) {
-                // Already MP4 - just copy streams + ensure web optimization
                 ffmpeg(tempInputPath)
                     .outputOptions([
-                        '-c:v copy',           // Copy video stream (no re-encoding)
-                        '-c:a copy',           // Copy audio stream (no re-encoding)
-                        '-movflags +faststart', // Web optimization
+                        '-c:v copy',
+                        '-c:a copy',
+                        '-movflags +faststart',
                         '-threads 2'
                     ])
                     .output(tempOutputPath)
-                    .on('start', () => {
-                        console.log('🎵 TikTok MP4: Copy streams only (preserve quality)');
-                    })
                     .on('end', async () => {
                         try {
                             const outputBuffer = await fs.promises.readFile(tempOutputPath);
                             await fs.promises.unlink(tempInputPath).catch(() => { });
                             await fs.promises.unlink(tempOutputPath).catch(() => { });
 
-                            console.log('✅ TikTok MP4: Quality preserved, web-optimized');
                             resolve(outputBuffer);
                         } catch (err) {
                             reject(err);
@@ -1760,39 +1457,26 @@ export class UploadService {
                     })
                     .run();
             } else {
-                // Not MP4 - convert to MP4 with minimal quality loss
                 ffmpeg(tempInputPath)
                     .outputOptions([
-                        '-c:v libx264',        // Re-encode to H.264 (for MP4)
-                        '-profile:v baseline', // Mobile compatibility
-                        '-level 3.0',          // Mobile compatibility
-                        '-crf 18',             // Very high quality (minimal loss)
-                        '-preset medium',      // Good quality/speed balance
+                        '-c:v libx264',
+                        '-profile:v baseline',
+                        '-level 3.0',         
+                        '-crf 18',            
+                        '-preset medium',     
                         '-threads 2',
-                        '-c:a aac',            // Re-encode audio to AAC
-                        '-b:a 128k',           // Good audio quality
-                        '-movflags +faststart', // Web optimization
-                        '-pix_fmt yuv420p'     // iOS compatibility
+                        '-c:a aac',           
+                        '-b:a 128k',          
+                        '-movflags +faststart',
+                        '-pix_fmt yuv420p'    
 
                     ])
                     .output(tempOutputPath)
-                    .on('start', () => {
-                        console.log(`🎵 TikTok ${videoInfo.format?.toUpperCase()}: Converting to MP4 with minimal quality loss`);
-                    })
-                    .on('progress', (progress) => {
-                        if (progress.percent) {
-                            console.log(`🔄 TikTok conversion: ${Math.round(progress.percent)}% done`);
-                        }
-                    })
-                    .on('end', async () => {
+                     .on('end', async () => {
                         try {
                             const outputBuffer = await fs.promises.readFile(tempOutputPath);
                             await fs.promises.unlink(tempInputPath).catch(() => { });
                             await fs.promises.unlink(tempOutputPath).catch(() => { });
-
-                            const originalSize = file.length / (1024 * 1024);
-                            const newSize = outputBuffer.length / (1024 * 1024);
-                            console.log(`✅ TikTok conversion completed: ${originalSize.toFixed(2)}MB → ${newSize.toFixed(2)}MB`);
 
                             resolve(outputBuffer);
                         } catch (err) {

@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Search, X, TreePine, Trash2, Droplets, CloudRain, MapPin, Briefcase, Globe, ArrowRight, Loader2, AlertCircle, Clock, ExternalLink, Share } from 'lucide-react';
 
-// Interfaces
+
 interface MapData {
   type: 'clustered' | 'individual';
   data: any[];
@@ -63,7 +63,7 @@ interface SelectedElement {
   createdAt?: string;
 }
 
-// Comprehensive Element Details Modal (converted from mobile version)
+
 const ElementDetailsModal: React.FC<{
   visible: boolean;
   element: SelectedElement | null;
@@ -76,7 +76,7 @@ const ElementDetailsModal: React.FC<{
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
 
-  // Helper function to get category configuration
+  
   const getCategoryConfig = (postType: string) => {
     const baseConfig = {
       plantation: { icon: TreePine, color: '#4CAF50', name: 'Trees', singular: 'Tree' },
@@ -138,7 +138,7 @@ const ElementDetailsModal: React.FC<{
     const targetDate = new Date(date).getTime();
     const diffInSeconds = Math.floor((now - targetDate) / 1000);
 
-    // Future date (negative difference)
+    
     if (diffInSeconds < 0) {
       const futureDiffInSeconds = Math.abs(diffInSeconds);
 
@@ -168,7 +168,7 @@ const ElementDetailsModal: React.FC<{
       return diffInYears === 1 ? '1 year remaining' : `${diffInYears} years remaining`;
     }
 
-    // Past date
+    
     if (diffInSeconds < 60) return 'Just now';
 
     const diffInMinutes = Math.floor(diffInSeconds / 60);
@@ -195,7 +195,7 @@ const ElementDetailsModal: React.FC<{
     return diffInYears === 1 ? '1 year ago' : `${diffInYears} years ago`;
   };
 
-  // Get project details with fallback
+  
   const getProjectDetails = () => {
     if (element?.postId?.projectDetails) {
       return element.postId.projectDetails;
@@ -207,7 +207,7 @@ const ElementDetailsModal: React.FC<{
     };
   };
 
-  // Open location in maps
+  
   const handleOpenInMaps = useCallback(() => {
     if (!element?.location) return;
 
@@ -220,7 +220,7 @@ const ElementDetailsModal: React.FC<{
   const getAllMedia = () => {
     const allMedia = [];
 
-    // Add main element media
+    
     if (element?.media) {
       element.media.forEach((item, index) => {
         allMedia.push({
@@ -231,7 +231,7 @@ const ElementDetailsModal: React.FC<{
       });
     }
 
-    // Add update history media
+    
     if (element?.updateHistory) {
       element.updateHistory.forEach((update, updateIndex) => {
         if (update.media) {
@@ -251,7 +251,7 @@ const ElementDetailsModal: React.FC<{
     return allMedia;
   };
 
-  // Handle image press
+  
   const handleImagePress = useCallback((index: number) => {
     setSelectedImageIndex(index);
     setImageViewerVisible(true);
@@ -267,10 +267,8 @@ const ElementDetailsModal: React.FC<{
 
   return (
     <>
-      {/* Main Modal */}
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-card rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-          {/* Header */}
           <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-2">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Element Details</h2>
@@ -293,7 +291,6 @@ const ElementDetailsModal: React.FC<{
             </button>
           </div>
 
-          {/* Content */}
           <div className="flex-1 overflow-y-auto">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-12">
@@ -302,7 +299,6 @@ const ElementDetailsModal: React.FC<{
               </div>
             ) : element ? (
               <div className="p-6 space-y-6">
-                {/* Project Info */}
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <div className="flex items-center space-x-3 mb-3">
                     <div className="p-2 rounded-lg" style={{ backgroundColor: `${categoryConfig.color}20` }}>
@@ -327,8 +323,6 @@ const ElementDetailsModal: React.FC<{
                 </div>
 
 
-
-                {/* Media Gallery - UPDATED with centering for single images */}
                 {allMedia.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3">
@@ -358,7 +352,6 @@ const ElementDetailsModal: React.FC<{
                   </div>
                 )}
 
-                {/* Update History - UPDATED with centering for single images */}
                 {element.updateHistory && element.updateHistory.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3">
@@ -404,7 +397,6 @@ const ElementDetailsModal: React.FC<{
                   </div>
                 )}
 
-                {/* Element Information */}
                 {elementData && (
                   <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3">
@@ -421,7 +413,6 @@ const ElementDetailsModal: React.FC<{
                   </div>
                 )}
 
-                {/* Location Details */}
                 <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                   <div className="flex justify-between items-center mb-3">
                     <h4 className="text-md font-semibold text-gray-900 dark:text-white">Location Details</h4>
@@ -455,7 +446,6 @@ const ElementDetailsModal: React.FC<{
                   </div>
                 </div>
 
-                {/* Metadata */}
                 {element && (
                   <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3">Metadata</h4>
@@ -480,7 +470,6 @@ const ElementDetailsModal: React.FC<{
                   </div>
                 )}
 
-                {/* Delete Button */}
                 {allowEdit && element && onDelete && (
                   <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                     <button
@@ -505,7 +494,6 @@ const ElementDetailsModal: React.FC<{
         </div>
       </div>
 
-      {/* Full-screen Image Viewer */}
       {imageViewerVisible && (
         <div className="fixed inset-0 bg-black z-[100]">
           <button
@@ -547,5 +535,4 @@ const ElementDetailsModal: React.FC<{
   );
 };
 
-// Export the modal component
 export default ElementDetailsModal;

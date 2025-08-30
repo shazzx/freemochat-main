@@ -36,9 +36,6 @@ function AuthVerificationForm() {
     }
 
     const { verificationStatus } = useAppSelector((state) => state.verificationStatus)
-    // if(!verificationStatus.success){
-    //     navigate("/login")
-    // }
 
     const dispatch = useAppDispatch()
 
@@ -100,11 +97,6 @@ function AuthVerificationForm() {
         console.log(data)
     }
 
-    if (mutation.isSuccess) {
-        // dispatchUser()
-        // navigate("/")
-    }
-
     return (
         <div className="flex items-center justify-center w-screen h-screen">
             <Card className="flex flex-col p-4 items-center justify-center">
@@ -112,16 +104,6 @@ function AuthVerificationForm() {
                     <CardTitle className="text-2xl">Verification</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-12 max-w-96 p-4">
-                    {/* {verificationStatus.isEmailVerified ?
-                        <div className="flex gap-2 items-center justify-center">
-                            <FaCheckCircle className="text-green-500 text-3xl" />
-                            <span>EmailIsVerified</span>
-                        </div>
-
-                        :
-                        <InputOTPForm otpResend={otpResend} onSubmit={onSubmit} type="email" label="Email Verification" description="Please enter the one-time password sent to your email." />
-
-                    } */}
                     {verificationStatus.isEmailVerified ?
                         <div className="flex gap-2 items-center justify-center">
                             <FaCheckCircle className="text-green-500 text-3xl" />

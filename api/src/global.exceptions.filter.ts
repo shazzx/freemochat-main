@@ -15,7 +15,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let errorCode: string;
     let data: {type: string, };
 
-    // Handle HttpException
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse: any = exception.getResponse();
@@ -27,19 +26,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = exceptionResponse as string;
       }
     }
-    // Handle MongoDB errors
     else if (exception instanceof MongoError || exception instanceof MongooseError) {
       status = HttpStatus.BAD_REQUEST;
       message = exception.message.startsWith("E1100") ? "Already Exists" : 'Something went wrong';
       errorCode = 'MONGO_ERROR';
     }
-    // Handle custom S3 upload exception
-    // else if (exception instanceof S3UploadException) {
-    //   status = exception.getStatus();
-    //   message = exception.message;
-    //   errorCode = 'S3_UPLOAD_ERROR';
-    // }
-    // Handle unknown exceptions
     else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       message = 'Internal server error';

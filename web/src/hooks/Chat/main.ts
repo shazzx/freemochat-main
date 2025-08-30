@@ -12,7 +12,7 @@ export const useUserChatlist = () => {
         },
 
     })
-    // console.log(data)
+    
 
     return {
         data,
@@ -25,7 +25,7 @@ export const useUserChatlist = () => {
 
 
 export const useGroupMemberToggle = (_userId: string, groupId: string) => {
-    // console.log(groupId, 'groupid')
+    
     const queryClient = useQueryClient()
     const { data, isSuccess, isPending, mutate, mutateAsync } = useMutation({
         mutationFn: (data: { userId: string, userIndex?: number, pageIndex?: number, type: string, toggleState?: string }) => {
@@ -71,7 +71,7 @@ export const useGroupMemberToggle = (_userId: string, groupId: string) => {
             const previousUser = queryClient.getQueryData(['userFriends', _userId])
             queryClient.setQueryData(['userFriends', _userId], (data: any) => {
                 const updatedUser = produce(data, (draft: any) => {
-                    // console.log(data)
+                    
                     if (draft.pages[pageIndex].friends[userIndex].friend.isGroupMember) {
                         draft.pages[pageIndex].friends[userIndex].friend.isGroupMember = false 
                         toast.success('Member Removed')
@@ -94,12 +94,12 @@ export const useGroupMemberToggle = (_userId: string, groupId: string) => {
         onError: (err, newComment, context) => {
             console.log(err, newComment)
             toast.error("something went wrong")
-            // queryClient.setQueryData(['userFriends', _userId], context.previousUser)
+            
         },
         onSettled: (e) => {
             console.log(e, 'member toggle response')
-            // uncommeting this will refetch the comments again from the server to be in sync
-            // queryClient.invalidateQueries({ queryKey: ["comments"] })
+            
+            
         }
     })
 
@@ -121,7 +121,7 @@ export const useChatGroups = () => {
         },
 
     })
-    // console.log(data)
+    
 
     return {
         data,
@@ -157,31 +157,31 @@ export const useCreateChatGroup = () => {
             return createChatGroup(groupDetails.formData)
         },
 
-        // onMutate: async ({ groupDetails, images }) => {
-        //     console.log(groupDetails, images)
-        //     await queryClient.cancelQueries({ queryKey: ["chatgroups"] })
-        //     const previousGroups = queryClient.getQueryData(["chatgroups"])
+        
+        
+        
+        
 
-        //     queryClient.setQueryData(["chatgroups"], (pages: any) => {
-        //         const updatedGroups = produce(pages, (draft: any) => {
-        //             return [{ ...groupDetails, images, followers: 0, totalPosts: 0 }, ...pages]
+        
+        
+        
 
-        //             // throw new Error()
-        //         })
-        //         return updatedGroups
-        //     });
+        
+        
+        
+        
 
-        //     return { previousGroups };
-        // },
+        
+        
 
         onError: (err) => {
             console.log(err)
             toast.error("something went wrong")
-            // queryClient.setQueryData(["chatgroups"], context.previousGroups)
+            
         },
         onSettled: (e) => {
             console.log(e)
-            // uncommeting this will refetch the comments again from the server to be in sync
+            
             queryClient.invalidateQueries({ queryKey: ["chatlist"] })
         }
     })
@@ -203,29 +203,29 @@ export const useUpdateChatGroup = () => {
             return updateChatGroup(groupDetails.formData)
         },
 
-        // onMutate: async ({ updatedGroupDetails, images, groupDetails }) => {
-        //     console.log(groupDetails, updatedGroupDetails)
-        //     await queryClient.cancelQueries({ queryKey: ['groups'] })
-        //     const previousGroups = queryClient.getQueryData(['groups'])
+        
+        
+        
+        
 
-        //     queryClient.setQueryData(['groups'], (groups: any) => {
-        //         const updatedGroups = produce(groups, (draft: any) => {
-        //             console.log(draft[groupDetails.index])
-        //             draft[groupDetails.index] = { ...draft[groupDetails.index], images: { ...draft[groupDetails.index].images, ...images }, ...updatedGroupDetails }
-        //             console.log(draft[groupDetails.index])
+        
+        
+        
+        
+        
 
-        //             return draft
-        //         })
-        //         return updatedGroups
-        //     });
+        
+        
+        
+        
 
-        //     return { previousGroups };
-        // },
+        
+        
 
         onError: (err) => {
             console.log(err)
             toast.error("something went wrong")
-            // queryClient.setQueryData(['groups'], context.previousGroups)
+            
         },
         onSettled: (e) => {
             queryClient.invalidateQueries({ queryKey: ["chatgroup"] })
@@ -243,7 +243,7 @@ export const useUpdateChatGroup = () => {
 }
 
 export function useMessages({recepientId, isChatGroup}: {recepientId: string, isChatGroup: number}): any {
-// console.log(recepientId, isChatGroup, 'recepient id')
+
     const { data, isLoading, isFetching, fetchNextPage, fetchPreviousPage, fetchStatus, isSuccess, isFetchingNextPage, error } = useInfiniteQuery({
         queryKey: ['messages', recepientId],
         queryFn: ({ pageParam, }) => fetchMessages(pageParam, recepientId, isChatGroup),
@@ -259,7 +259,7 @@ export function useMessages({recepientId, isChatGroup}: {recepientId: string, is
         },
 
     });
-    // console.log(data)
+    
 
     return {
         data: data?.pages ?? [],
@@ -312,8 +312,8 @@ export const useCreateMessage = (recepientId: string) => {
         },
         onSettled: (e) => {
             console.log(e)
-            // uncommeting this will refetch the user posts again from the server to be in sync
-            // queryClient.invalidateQueries({ queryKey: ["userPosts"] })
+            
+            
         }
     })
 

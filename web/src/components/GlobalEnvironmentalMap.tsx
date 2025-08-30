@@ -8,7 +8,6 @@ import { debouncedCountrySearch } from '@/lib/utils';
 import { domain } from '@/config/domain';
 import { Link } from 'react-router-dom';
 
-// Interfaces
 interface MapData {
   type: 'clustered' | 'individual';
   data: any[];
@@ -85,7 +84,7 @@ interface MapRegion {
   longitudeDelta: number;
 }
 
-// Default fallback region - Pakistan
+
 const DEFAULT_REGION = {
   latitude: 30.3753,
   longitude: 69.3451,
@@ -93,7 +92,7 @@ const DEFAULT_REGION = {
   longitudeDelta: 8.0,
 };
 
-// Google Maps configuration
+
 const mapContainerStyle = {
   width: '100%',
   height: '100%'
@@ -107,7 +106,7 @@ const mapOptions = {
   fullscreenControl: false,
 };
 
-// Helper Functions
+
 const getCategoryConfig = (category: string) => {
   const baseConfig = {
     plantation: { icon: TreePine, color: '#4CAF50', name: 'Trees', singular: 'Tree' },
@@ -119,7 +118,7 @@ const getCategoryConfig = (category: string) => {
   return baseConfig[category] || baseConfig.all;
 };
 
-// Custom marker icons for Google Maps
+
 const createCustomMarkerIcon = (postType: string, count?: number): string => {
   const config = getCategoryConfig(postType);
   const isCluster = count && count > 1;
@@ -152,7 +151,7 @@ const createCustomMarkerIcon = (postType: string, count?: number): string => {
   return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgIcon)))}`;
 };
 
-// Fallback Map Component
+
 const FallbackMap: React.FC<{
   currentRegion: MapRegion;
   mapData: MapData | null;
@@ -161,7 +160,6 @@ const FallbackMap: React.FC<{
 }> = ({ currentRegion, mapData, onMarkerClick, selectedConfig }) => {
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-green-100 to-blue-100 overflow-hidden">
-      {/* Grid background */}
       <div className="absolute inset-0 opacity-20">
         <div className="grid grid-cols-12 grid-rows-12 h-full w-full">
           {Array.from({ length: 144 }).map((_, i) => (
@@ -170,7 +168,6 @@ const FallbackMap: React.FC<{
         </div>
       </div>
 
-      {/* Fallback markers */}
       {mapData?.data?.map((element, index) => {
         const config = getCategoryConfig(element.postType || element.postId?.postType);
         const IconComponent = config.icon;
@@ -200,12 +197,10 @@ const FallbackMap: React.FC<{
         );
       })}
 
-      {/* Center indicator */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
         <div className="w-2 h-2 bg-red-500 rounded-full"></div>
       </div>
 
-      {/* Fallback message */}
       <div className="absolute top-4 left-4 right-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
         <div className="flex items-center space-x-2">
           <AlertCircle className="w-5 h-5 text-yellow-600" />
@@ -220,7 +215,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   visible = true,
   onClose
 }) => {
-  // State management
+  
   const [currentRegion, setCurrentRegion] = useState<MapRegion | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
   const [googleMapsReady, setGoogleMapsReady] = useState(false);
@@ -246,7 +241,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  // Modal states
+  
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
   const [showElementModal, setShowElementModal] = useState(false);
   const [activeMarker, setActiveMarker] = useState<any>(null);
@@ -254,13 +249,13 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   const [isLoadingElementDetails, setIsLoadingElementDetails] = useState(false);
   const [showCountryContributions, setShowCountryContributions] = useState(false);
 
-  // Refs
+  
   const searchTimeoutRef = useRef<NodeJS.Timeout>(null);
   const dataFetchTimeoutRef = useRef<NodeJS.Timeout>(null);
   const lastFetchedBoundsRef = useRef<string>('');
   const mapRef = useRef<google.maps.Map>(null);
 
-  // Check if Google Maps is loaded
+  
   useEffect(() => {
     const checkGoogleMaps = () => {
       if (window.google && window.google.maps) {
@@ -274,14 +269,14 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     if (!checkGoogleMaps()) {
       console.log('Waiting for Google Maps to load...');
 
-      // Poll for Google Maps availability
+      
       const interval = setInterval(() => {
         if (checkGoogleMaps()) {
           clearInterval(interval);
         }
       }, 100);
 
-      // Cleanup interval after 15 seconds
+      
       const timeout = setTimeout(() => {
         clearInterval(interval);
         if (!window.google || !window.google.maps) {
@@ -296,7 +291,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     }
   }, []);
 
-  // Initialize location
+  
   useEffect(() => {
     const initializeLocation = async () => {
       if (!visible) return;
@@ -311,7 +306,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
             navigator.geolocation.getCurrentPosition(resolve, reject, {
               timeout: 5000,
               enableHighAccuracy: false,
-              maximumAge: 300000 // Use cached location if available
+              maximumAge: 300000 
             });
           });
 
@@ -344,7 +339,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     fetchGlobalCounts();
   }, [visible]);
 
-  // Fetch data when everything is ready
+  
   useEffect(() => {
     if (visible && currentRegion && googleMapsReady && isInitialLoad) {
       console.log('Everything ready, fetching initial data...');
@@ -353,7 +348,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     }
   }, [visible, currentRegion, googleMapsReady, selectedCategory, isInitialLoad]);
 
-  // API Functions
+  
   const fetchGlobalCounts = useCallback(async () => {
     const defaultCounts = {
       totalPosts: 0,
@@ -497,16 +492,16 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     }
   }, []);
 
-  // Event Handlers
+  
   const handleMarkerClick = useCallback((element: any, isCluster: boolean = false) => {
     if (isCluster && element.count > 1) {
-      // Zoom in on cluster
+      
       const newCenter = { lat: element.center.latitude, lng: element.center.longitude };
       const newZoom = Math.min(mapZoom + 3, 18);
       setMapCenter(newCenter);
       setMapZoom(newZoom);
 
-      // Update region for API calls
+      
       setCurrentRegion({
         latitude: element.center.latitude,
         longitude: element.center.longitude,
@@ -514,7 +509,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
         longitudeDelta: Math.max(currentRegion.longitudeDelta / 3, 0.01),
       });
     } else {
-      // Show info window for individual element
+      
       const elementToShow = isCluster ? element.elements[0] : element;
       setActiveMarker(elementToShow);
       setShowInfoWindow(true);
@@ -576,7 +571,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     }
   }, [currentRegion, isInitialLoad]);
 
-  // Helper Functions
+  
   const getCurrentCategoryTotals = () => {
     if (!globalCounts) return { posts: 0, elements: 0, label: 'Elements' };
 
@@ -615,7 +610,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   };
 
   const getElementSpecificData = (element: any) => {
-    // Handle new optimized data structure with elementSummary
+    
     if (element.elementSummary && element.postType) {
       if (element.postType === 'plantation') {
         return {
@@ -659,7 +654,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
       }
     }
 
-    // Fallback: Handle legacy data structure
+    
     if (element.plantationData) {
       return {
         type: 'Tree',
@@ -745,7 +740,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     }
   };
 
-  // Effects for data fetching
+  
   useEffect(() => {
     if (!isInitialLoad && visible && currentRegion && googleMapsReady) {
       if (dataFetchTimeoutRef.current) {
@@ -791,7 +786,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
   if (!visible) return null;
 
-  // Single loading condition
+  
   if (locationLoading || !currentRegion || !googleMapsReady) {
     return (
       <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
@@ -817,7 +812,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
   return (
     <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
-      {/* Header */}
       {onClose && (
         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Global Environmental Map</h1>
@@ -830,7 +824,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
         </div>
       )}
 
-      {/* Search Container */}
       <div className="p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="relative flex w-full items-center gap-2">
           <Link to={domain}>
@@ -850,7 +843,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
             )}
           </div>
 
-          {/* Search Results */}
           {showSearchResults && searchResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-50">
               {searchResults.map((result, index) => (
@@ -870,7 +862,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
         </div>
       </div>
 
-      {/* Category Filter */}
       <div className="p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="flex space-x-2 overflow-x-auto no-scrollbar pb-2">
           {(['plantation', 'water_ponds', 'rain_water', 'garbage_collection', 'all'] as const).map((category) => {
@@ -920,7 +911,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
         </div>
       </div>
 
-      {/* Map Container */}
       <div className="flex-1 relative">
         {window.google && window.google.maps ? (
           <GoogleMap
@@ -937,7 +927,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
           >
             {renderMarkers()}
 
-            {/* Info Window */}
             {showInfoWindow && activeMarker && (
               <InfoWindow
                 position={{
@@ -995,7 +984,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
           />
         )}
 
-        {/* Loading Indicator */}
         {isLoadingData && (
           <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 bg-opacity-90 rounded-lg px-3 py-2 shadow-md flex items-center space-x-2 z-10">
             <Loader2 className="w-4 h-4 animate-spin" style={{ color: selectedConfig.color }} />
@@ -1005,7 +993,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
           </div>
         )}
 
-        {/* Stats Card */}
         {globalCounts && (
           <div className="absolute bottom-4 left-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-10">
             <div className="flex justify-between items-center mb-3">
@@ -1041,7 +1028,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
           </div>
         )}
 
-        {/* No Data Message */}
         {mapData && mapData.data.length === 0 && !isLoadingData && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 bg-opacity-90 rounded-lg p-6 text-center max-w-sm">
             {(() => {
@@ -1058,7 +1044,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
         )}
       </div>
 
-      {/* Element Details Modal */}
       <ElementDetailsModal
         visible={showElementModal}
         element={selectedElement}
@@ -1066,7 +1051,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
         onClose={() => setShowElementModal(false)}
       />
 
-      {/* Country Contributions Modal */}
       <CountryContributionsModal
         visible={showCountryContributions}
         onClose={() => setShowCountryContributions(false)}

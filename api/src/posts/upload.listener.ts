@@ -49,8 +49,8 @@ export class UploadListener {
                     postMedia.push({
                         type: 'video',
                         url: file.url,
-                        location: file.location, // 🔧 ADD THIS
-                        capturedAt: file.location ? new Date() : undefined // 🔧 ADD THIS
+                        location: file.location,
+                        capturedAt: file.location ? new Date() : undefined
                     });
                 }
                 if (file.fileType == 'image') {
@@ -58,8 +58,8 @@ export class UploadListener {
                     postMedia.push({
                         type: 'image',
                         url: file.url,
-                        location: file.location, // 🔧 ADD THIS
-                        capturedAt: file.location ? new Date() : undefined // 🔧 ADD THIS
+                        location: file.location,
+                        capturedAt: file.location ? new Date() : undefined
                     });
                 }
             }
@@ -141,51 +141,6 @@ export class UploadListener {
         }
     }
 
-    // @OnEvent("reel.upload")
-    // async handleReelUploadEvent({ uploadPromise, postId, targetId, type, uploadType }: {
-    //     uploadPromise: any,
-    //     postId: string,
-    //     targetId: Types.ObjectId,
-    //     type: string
-    //     uploadType?: string
-    //     _postData?: any
-    // }) {
-    //     try {
-    //         const videos = await Promise.all(uploadPromise)
-
-    //         let postMedia = []
-    //         for (let video of videos) {
-    //             if (video.fileType == 'video') {
-    //                 postMedia.push({ type: 'video', url: video.url })
-    //             }
-    //         }
-
-    //         const postDetails = { media: postMedia, isUploaded: null }
-    //         await this.postsService.updatePost(postId, postDetails);
-    //         await this.chatGateway.uploadSuccess({
-    //             isSuccess: true, target: {
-    //                 targetId,
-    //                 type,
-    //                 invalidate: "reels"
-    //             }
-    //         })
-    //     } catch (error) {
-    //         console.error(`Error uploading media for post ${postId}:`, error);
-    //         if (uploadType !== 'update') {
-    //             await this.postsService.deletePost(postId);
-    //         }
-
-    //         await this.chatGateway.uploadSuccess({
-    //             isSuccess: false, target: {
-    //                 targetId,
-    //                 type,
-    //                 error,
-    //                 invalidate: "reels"
-    //             }
-    //         })
-    //     }
-    // }
-
     @OnEvent("reel.upload")
     async handleReelUploadEvent({
         uploadPromise,
@@ -198,7 +153,6 @@ export class UploadListener {
         _media
     }) {
         try {
-            // Wait for video upload to complete
             const videos = await Promise.all(uploadPromise);
 
             let postMedia = [];
@@ -278,7 +232,6 @@ export class UploadListener {
         }
     }
 
-    // Generate and upload thumbnail
     private async generateAndUploadThumbnail(
         postId: string,
         videoBuffer: Buffer,
@@ -287,13 +240,9 @@ export class UploadListener {
         type: string
     ) {
         try {
-            // Generate thumbnail from video
             const thumbnailBuffer = await this.extractThumbnail(videoBuffer);
 
             if (!thumbnailBuffer) {
-                console.warn('Could not generate thumbnail for video');
-
-                // Still notify success even if thumbnail fails
                 await this.chatGateway.uploadSuccess({
                     isSuccess: true,
                     target: {
@@ -306,7 +255,6 @@ export class UploadListener {
                 return;
             }
 
-            // Upload thumbnail to storage
             const thumbnailFilename = `${filename}_thumbnail`;
             const thumbnail = await this.uploadService.processAndUploadContent(
                 thumbnailBuffer,
@@ -321,31 +269,22 @@ export class UploadListener {
         }
     }
 
-    // Extract thumbnail from video using fluent-ffmpeg
     private async extractThumbnail(videoBuffer: Buffer): Promise<Buffer> {
         return new Promise<Buffer>(async (resolve, reject) => {
             try {
-                // Create temporary directories and files
                 const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'reel-thumb-'));
                 const videoPath = path.join(tempDir, 'video.mp4');
                 const thumbnailPath = path.join(tempDir, 'thumbnail.jpg');
-
-                // Write video buffer to temporary file
                 await fs.writeFile(videoPath, videoBuffer);
-
-                // Use fluent-ffmpeg to extract thumbnail
                 ffmpeg(videoPath)
                     .on('error', async (err) => {
                         console.error('Error generating thumbnail:', err);
                         await fs.remove(tempDir).catch(e => console.error('Error cleaning temp dir:', e));
-                        resolve(null); // Return null instead of rejecting to continue the flow
+                        resolve(null);
                     })
                     .on('end', async () => {
                         try {
-                            // Read the thumbnail file
                             const thumbnailBuffer = await fs.readFile(thumbnailPath);
-
-                            // Clean up temp directory
                             await fs.remove(tempDir).catch(e => console.error('Error cleaning temp dir:', e));
 
                             resolve(thumbnailBuffer);
@@ -356,19 +295,17 @@ export class UploadListener {
                         }
                     })
                     .screenshots({
-                        timestamps: ['15%'], // Take screenshot at 15% of the video duration
+                        timestamps: ['15%'],
                         filename: 'thumbnail.jpg',
                         folder: tempDir,
-                        size: '640x?', // 640px width, maintain aspect ratio
+                        size: '640x?',
                     });
             } catch (err) {
                 console.error('Error in thumbnail extraction:', err);
-                resolve(null); // Return null instead of rejecting to continue the flow
+                resolve(null);
             }
         });
     }
-
-
 
     @OnEvent("profiles.upload")
     async handleProfilesUpload({ uploadPromise, targetId, type }: {
@@ -388,8 +325,6 @@ export class UploadListener {
                     _images = { ..._images, cover: file.url }
                 }
             }
-
-            console.log(_images)
 
             if (type == 'group') {
                 await this.groupsService.updateGroup(targetId, { ..._images, isUploaded: null });
@@ -413,7 +348,6 @@ export class UploadListener {
             }
 
             if (type == 'page') {
-                console.log(targetId, files, 'page', targetId)
                 await this.pageService.updatePage(targetId, { ..._images, isUploaded: null });
                 await this.chatGateway.uploadSuccess({
                     isSuccess: true, target: {
@@ -424,7 +358,6 @@ export class UploadListener {
             }
 
         } catch (error) {
-            console.error(`Error uploading media for page ${targetId}:`, error);
             await this.chatGateway.uploadSuccess({ isSuccess: false })
         }
     }
@@ -454,7 +387,6 @@ export class UploadListener {
                 }
             })
         } catch (error) {
-            console.error(`Error uploading media for message ${messageId}:`, error);
             await this.messageService.removeMessage(messageDetails.recepient.toString(), userId, messageId, messageDetails.sender.toString())
         }
     }
@@ -464,7 +396,6 @@ export class UploadListener {
         for (const filename of filenames) {
             try {
                 await this.uploadService.deleteFromS3(filename);
-                console.log(`✅ Deleted: ${filename}`);
             } catch (error) {
                 console.error(`❌ Delete failed: ${filename}`, error.message);
             }

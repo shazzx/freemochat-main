@@ -49,18 +49,6 @@ function ImageCrop({ imageBase64, imageSrc, uploadImage, setImageView, imageType
 
   return (
     <div className='image_crop-main bg-card'>
-      {/* Select Image and Convert it to readable URL */}
-      {/* <input type="file" accept="image/*" name='image' onChange={(e) => {
-        // SetImageSrc(e.target.files[0])
-        const reader = new FileReader()
-        reader.addEventListener('load', () => {
-          const image = reader.result
-          // SetImageBase64(image)
-        })
-
-        reader.readAsDataURL(e.target.files[0])
-      }} /> */}
-
       <div className='image_crop-container'>
         <div>Edit Image</div>
         {

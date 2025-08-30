@@ -37,12 +37,8 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
   const parsedContent = useMemo(() => {
     if (!content) return [];
 
-    // First, replace user IDs with usernames for display
     let displayContent = content;
 
-    // Replace @userId with @username for each mentioned user
-    // Handle both 24-character MongoDB ObjectIds and any deleted users
-    // Skip special mentions like @followers
     const userIdRegex = /@([a-f\d]{24})/g;
     let match;
     const processedIds = new Set();
@@ -54,29 +50,24 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
         const user = mentions.find(u => u._id === userId);
 
         if (user) {
-          // Replace user ID with current username
           const idRegex = new RegExp(`@${userId}`, 'g');
           displayContent = displayContent.replace(idRegex, `@${user.username}`);
         } else {
-          // Handle deleted/not found users
           const idRegex = new RegExp(`@${userId}`, 'g');
           displayContent = displayContent.replace(idRegex, '@deleted-user');
         }
       }
     }
 
-    // Parse the content for different types of content
     const parts = [];
     let lastIndex = 0;
 
-    // Create patterns for different content types
     const patterns = [
       { type: 'url', regex: URL_REGEX },
       { type: 'mention', regex: MENTION_REGEX },
       { type: 'hashtag', regex: HASHTAG_REGEX }
     ];
 
-    // Find all matches and their positions
     const matches = [];
 
     patterns.forEach(pattern => {
@@ -94,12 +85,9 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
       }
     });
 
-    // Sort matches by position
     matches.sort((a, b) => a.index - b.index);
 
-    // Process matches in order
     matches.forEach(match => {
-      // Add text before the match
       if (match.index > lastIndex) {
         parts.push({
           type: 'text',
@@ -107,14 +95,13 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
         });
       }
 
-      // Add the match based on type
       if (match.type === 'url') {
         parts.push({
           type: 'link',
           content: match.content
         });
       } else if (match.type === 'mention') {
-        const username = match.content.slice(1); // Remove @ symbol
+        const username = match.content.slice(1);
 
         if (username === 'deleted-user') {
           parts.push({
@@ -123,7 +110,6 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
             style: { color: '#999', fontStyle: 'italic' }
           });
         } else if (username === 'followers') {
-          // Handle special @followers mention
           parts.push({
             type: 'special-mention',
             content: match.content,
@@ -146,7 +132,7 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
           }
         }
       } else if (match.type === 'hashtag') {
-        const hashtagName = match.content.slice(1); // Remove # symbol
+        const hashtagName = match.content.slice(1);
         parts.push({
           type: 'hashtag',
           content: match.content,
@@ -157,7 +143,6 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
       lastIndex = match.index + match.length;
     });
 
-    // Add remaining text
     if (lastIndex < displayContent.length) {
       parts.push({
         type: 'text',
@@ -216,7 +201,6 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
     window.open(formattedUrl, '_blank');
   }, []);
 
-  // Dynamic styles based on hasBackground prop
   const hasBackgroundTextStyles = hasBackground ? {
     fontSize: '18px',
     fontWeight: 700,
@@ -299,7 +283,7 @@ const ContentWithLinksAndMentions = memo<ContentWithLinksAndMentionsProps>(({
               style={{
                 color: baseTextColor,
                 ...hasBackgroundTextStyles,
-                ...item.style || {} // Apply additional styling for deleted users
+                ...item.style || {}
               }}
             >
               {item.content}

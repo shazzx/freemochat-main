@@ -28,7 +28,6 @@ import PasswordInput from "./PasswordInput"
 
 
 export function Signup() {
-    // const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(_SignupUserSchema) })
     const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
         resolver: yupResolver(SignupSchema),
         mode: 'onChange',
@@ -200,14 +199,6 @@ export function Signup() {
                                     <Label >
                                         Country
                                     </Label>
-                                    {/* <Input
-                                        name="country"
-                                        placeholder="Enter your country name"
-                                        id="country"
-                                        className="max-w-96 w-full"
-                                        {...register("address.country")}
-                                    />
-                                    {errors.address?.country && <p>{errors.address.country.message}</p>} */}
                                     <div className="flex gap-2 ">
                                         <SelectScrollable placeholder={"Select country"} selectData={countries} setCity={setCity} setCountry={setCountry} />
                                     </div>
@@ -224,14 +215,6 @@ export function Signup() {
                                         setCountry={setCountry}
                                         areCities={true}
                                         countryName={country} />
-                                    {/* <Input
-                                        name="city"
-                                        placeholder="Enter your city name"
-                                        id="city"
-                                        className="max-w-96 w-full"
-                                        {...register("address.city")}
-                                    />
-                                    {errors.address?.city && <p>{errors.address.city.message}</p>} */}
                                 </div>
 
                             </div>

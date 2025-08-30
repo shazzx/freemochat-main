@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import ContentWithLinksAndMentions from '@/components/ContentWithLinksAndMentions';
 
-// Define the mention user interface
 interface MentionUser {
   _id: string;
   username: string;
@@ -10,7 +9,6 @@ interface MentionUser {
   profile?: string;
 }
 
-// Define the theme interface
 interface Theme {
   colors: {
     text: string;
@@ -23,7 +21,6 @@ interface Theme {
   dark?: boolean;
 }
 
-// Define the ContentWithLinksAndMentions component props
 interface ContentWithLinksAndMentionsProps {
   content: string;
   hasBackground?: boolean;
@@ -37,7 +34,6 @@ interface ContentWithLinksAndMentionsProps {
   showReadMore?: boolean;
 }
 
-// Define the main component props
 interface BackgroundPostProps {
   content: string;
   backgroundColor: string;
@@ -53,8 +49,6 @@ interface BackgroundPostProps {
   toggleReadMore?: () => void;
   className?: string;
 }
-
-// Use the separate ContentWithLinksAndMentions component
 
 const BackgroundPost: React.FC<BackgroundPostProps> = memo(({
   content,
@@ -76,7 +70,6 @@ const BackgroundPost: React.FC<BackgroundPostProps> = memo(({
     return null;
   }
 
-  // Use the imported ContentWithLinksAndMentions as default
   const ContentComponent = CustomContentComponent || ContentWithLinksAndMentions;
 
   const getTextStyle = (): React.CSSProperties => {
@@ -163,7 +156,6 @@ const BackgroundPost: React.FC<BackgroundPostProps> = memo(({
   );
 });
 
-// Add display name for better debugging
 BackgroundPost.displayName = 'BackgroundPost';
 
 export default BackgroundPost;

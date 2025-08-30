@@ -197,65 +197,6 @@ export class NotificationService {
     const nextCursor = hasNextPage ? _notifications[_notifications.length - 1].createdAt.toISOString() : null;
 
     const results = { notifications, nextCursor };
-    // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
-
     return results
   }
-
-  // private async logNotification(plantation: any, stage: any) {
-  //   await this.notificationLogModel.create({
-  //     postId: plantation._id.toString(),
-  //     userId: plantation.user.toString(),
-  //     notificationType: 'plantation_reminder',
-  //     stage: stage.stage,
-  //     sentAt: new Date(),
-  //     dueDate: plantation.plantationData.nextUpdateDue
-  //   });
-  // }
-
-  // Optional: Run more frequently for urgent notifications (last 24 hours)
-  // @Cron('0 */6 * * *') // Every 6 hours
-  // async checkUrgentReminders() {
-  //   const today = new Date();
-  //   const tomorrow = new Date(today);
-  //   tomorrow.setDate(tomorrow.getDate() + 1);
-
-  //   // Check for overdue plantations
-  //   const overduePlantations = await this.postModel.find({
-  //     postType: 'plantation',
-  //     'plantationData.isActive': true,
-  //     'plantationData.nextUpdateDue': { $lt: today }
-  //   }).populate('user', 'fcmToken');
-
-  //   for (const plantation of overduePlantations) {
-  //     await this.sendOverdueNotification(plantation);
-  //   }
-  // }
-
-  // private async sendOverdueNotification(plantation: any) {
-  //   const daysOverdue = Math.ceil((new Date().getTime() - new Date(plantation.plantationData.nextUpdateDue).getTime()) / (1000 * 60 * 60 * 24));
-
-  //   await this.notificationService.sendNotification({
-  //     userId: plantation.user._id,
-  //     title: 'Plantation Update Overdue!',
-  //     body: `Your plants are ${daysOverdue} days overdue for an update. Please visit and update them soon!`,
-  //     type: 'plantation_overdue',
-  //     data: {
-  //       postId: plantation._id.toString(),
-  //       daysOverdue: daysOverdue,
-  //       action: 'update_plantation'
-  //     }
-  //   });
-  // }
-
-  // Manual method to send immediate notifications (for testing)
-  // async sendTestNotification(postId: string) {
-  //   const plantation = await this.postModel.findById(postId);
-  //   if (plantation && plantation.postType === 'plantation') {
-  //     await this.sendPlantationReminder(plantation, {
-  //       stage: '24_hours',
-  //       title: 'Test Notification'
-  //     });
-  //   }
-  // }
 }

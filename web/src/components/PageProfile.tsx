@@ -64,47 +64,7 @@ function PageProfile() {
     const isAdmin = _pageData?.data?.admins?.includes(user?._id)
     const pageMedia = useMedia("pageMedia", _pageData?.data?._id)
     const media = pageMedia?.data
-    // useEffect(() => {
-    //     let promotedPosts = async () => {
-    //         const posts = await axiosClient.get("/posts/promotedPosts")
-    //         console.log(posts, 'how are you')
-    //     }
-    //     promotedPosts()
-    // }, [])
-    // const uploadContent = async (content: any, selectedImages, formData) => {
-    //     setNewPost({ content: content.content, images: [content?.images], username, user })
-
-    //     let data;
-    //     let status;
-
-    //     if (selectedImages?.length == 1) {
-    //         let response = await axiosClient.post("/upload/single", formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-    //         data = response.data
-    //         status = response.status
-    //     }
-
-    //     if (selectedImages?.length > 1) {
-    //         let response = await axiosClient.post("/upload", formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-    //         data = response.data
-    //         status = response.status
-    //     }
-
-    //     const response = await axiosClient.post("/posts/create", { postDetails: { ...content, targetId: _pageData.data?._id, type: "page" } })
-    //     console.log(response.data)
-    //     // setNewPost(response.data)
-
-    // }
-
     const createPost = useCreatePost('pagePosts', _pageData.data?._id)
-
-
-    // const _createPost = async ({ content, selectedMedia, formData, visibility }) => {
-    //     let postDetails = { content, type: "page", targetId: _pageData.data._id, visibility }
-    //     formData.append("postData", JSON.stringify(postDetails))
-    //     let response = createPost.mutate({ content, formData, selectedMedia, type: "page", target: _pageData?.data })
-    //     console.log(response, 'uploaded')
-    //     setPostModal(false)
-    // }
 
     const _createPost = async ({ visibility, content, selectedMedia, backgroundColor, mentions, mentionReferences, formData }) => {
         let postDetails = { content, type: "page", postType: 'post', backgroundColor, mentions, targetId: _pageData?.data?._id, visibility }
@@ -135,8 +95,6 @@ function PageProfile() {
     const [mediaOpenModel, setMediaOpenModel] = useState(false)
     const [mediaOpenDetails, setMediaOpenDetails] = useState({ type: '', url: '' })
 
-
-    // quick chat
     const { socket } = useAppSelector((data) => data.socket) as { socket: Socket }
     const [messages, setMessages] = useState([])
     const [inputValue, setInputValue] = useState("")
@@ -146,7 +104,7 @@ function PageProfile() {
     const handleSendMessage = (e) => {
         if (e.key !== "Enter" || inputValue.trim().length === 0) return;
 
-        // send a message to the server
+        
         setMessages((previousMessages) => [...previousMessages, { recepeint: _pageData?.data?._id, sender: user?._id, content: inputValue, type: "Page" }]);
 
         socket.emit("chat", { senderDetails: { userId: user?._id, username: user?.username }, body: inputValue, recepientDetails });
@@ -162,12 +120,12 @@ function PageProfile() {
             }
         }
 
-        // Add event listener when dropdown is open
+        
         if (openQuickChat) {
             document.addEventListener('mousedown', handleClickOutside);
         }
 
-        // Clean up the event listener
+        
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
@@ -205,12 +163,10 @@ function PageProfile() {
                             <QuickChat target={!_pageData.isLoading && _pageData} />
                         </div>
                     }
-                    {/* media model (when you click any media in the profile main page this model will open) */}
                     {mediaOpenModel && mediaOpenDetails &&
                         <MediaOpenModel mediaOpenDetails={mediaOpenDetails} setMediaOpenDetails={setMediaOpenDetails} setMediaOpenModel={setMediaOpenModel} />
                     }
                     {profileSettingsModel && <QuickSettings user={user} setModelTrigger={setProfileSettingsModel} />}
-                    {/* {postModal && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />} */}
                     {searchParams.get("createpost") && (width < 540) ? <BottomCreatePost setModelTrigger={setPostModal} createPost={_createPost} /> : searchParams.get("createpost") && <CPostModal setModelTrigger={setPostModal} createPost={_createPost} />}
 
                     <div className='flex w-full flex-col items-center w-ful'>
@@ -283,8 +239,6 @@ function PageProfile() {
                                                 <div className="w-full flex-1">
                                                     <form onSubmit={async (e) => {
                                                         e.preventDefault()
-                                                        // mutation.mutate({ title: 'shazz', content: postContent.current.value })
-                                                        // console.log(mutation.data)
                                                     }}>
                                                         <div className="relative flex gap-2">
                                                             <div className='w-12'>
@@ -355,21 +309,6 @@ function PageProfile() {
                                                                     </div>
                                                                 </div>
                                                             </Link>
-                                                            {/* 
-                                                    {_pageData?.data?.admins?.includes(user?._id) &&
-
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" className="h-8 w-8 bg-card p-2 rounded-md">
-                                                                    <span className="sr-only">Open menu</span>
-                                                                    <EllipsisVertical className="h-4 w-4" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end" className='bg-card p-2 rounded-md'>
-                                                                <DropdownMenuItem >Remove</DropdownMenuItem>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    } */}
                                                         </div>
                                                     )
                                                 })

@@ -110,7 +110,6 @@ const CountryContributionsModal: React.FC<CountryContributionsModalProps> = ({ v
       if (window.confirm('Failed to load country contributions. Would you like to retry?')) {
         fetchCountryContributions(isRefresh);
       } else if (!data) {
-        // Set empty data structure on error
         setData({
           categories: {
             plantation: [],

@@ -421,7 +421,6 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
     }
   }, []);
 
-  // Helper functions
   const getEnvironmentalContributions = () => {
     return post.environmentalContributions || [];
   };
@@ -521,7 +520,6 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
     }
   };
 
-  // Event handlers
   const handleMarkerClick = useCallback((contribution: any) => {
     const tooltipData = {
       _id: contribution._id,
@@ -558,7 +556,6 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
   const { totalElements } = getAggregatedStats();
   const IconComponent = typeConfig.icon;
 
-  // Prepare markers for map
   const mapMarkers = getEnvironmentalContributions().map((contribution, index) => ({
     id: contribution._id,
     position: {

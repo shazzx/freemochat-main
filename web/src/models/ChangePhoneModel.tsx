@@ -104,7 +104,6 @@ function ChangePhoneModel({ setModelTrigger }) {
             toast.info("Wrong or expired OTP")
             setOtpSent(false)
         }
-        // return response.data
     }
 
         const _updateUser = async (data) => {
@@ -130,7 +129,6 @@ function ChangePhoneModel({ setModelTrigger }) {
         mutationFn: async (data: {
                 phone: string,
         }): Promise<any> => {
-            // return await verifyOTP(_data)
             return await _updateUser(data)
         },
         onError: (e: any) => {
@@ -180,16 +178,11 @@ function ChangePhoneModel({ setModelTrigger }) {
                                 disabled={otpSent}
                                 name="phone"
                                 type='number'
-                                // ref={phoneRef}
                                 placeholder="Enter your phone number"
                                 id="phone"
-                                // defaultValue={phone}
                                 className="max-w-96 w-full"
-                            // {...register("phone")}
                             />
-                            {/* {errors.phone && <p>{errors.phone.message}</p>} */}
                         </div>
-                        {/* <InputOTPForm changeData={changeCountry} setCode={setOtp} setOtpSent={setOtpSent} sent={otpSent} send={true} otpResend={otpResend} onSubmit={changeCountry} buttonTitle={"Change Phone"} data={!_phone || !otpSent ? true : false} type="phone" label="Phone Verification" description={otpSent ? "Please enter the one-time password sent to your phone." : "Click on send to get an OTP for verification."} /> */}
                         <Button type="button" onClick={changeCountry}>Change</Button>
                     </div>
 

@@ -74,7 +74,7 @@ class PlantationData {
 
 class GarbageCollectionData {
     @Prop({ type: String })
-    type?: string; // Recycling, Organic, General, etc.
+    type?: string; 
 
     @Prop({ type: String })
     capacity?: string;
@@ -85,7 +85,7 @@ class GarbageCollectionData {
 
 class WaterPondsData {
     @Prop({ type: String })
-    type?: string; // Storage, Decorative, Irrigation, etc.
+    type?: string; 
 
     @Prop({ type: String })
     capacity?: string;
@@ -99,7 +99,7 @@ class WaterPondsData {
 
 class RainWaterData {
     @Prop({ type: String })
-    type?: string; // Rooftop, Ground catchment, etc.
+    type?: string;
 
     @Prop({ type: String })
     capacity?: string;
@@ -175,7 +175,6 @@ PostSchema.index({ postType: 1 });
 PostSchema.index({ 'plantationData.nextUpdateDue': 1 });
 PostSchema.index({ hashtags: 1 });
 
-// this will represent single entity in a project of envirmental contribution like single plant and a project can have multiple plants so multiple docs.
 @Schema({ timestamps: true })
 export class EnvironmentalContribution {
     @Prop({ type: Types.ObjectId, ref: "Post", required: true, index: true })

@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 
-// Schema matching your React Native implementation
+
 const educationSchema = yup.object().shape({
   institution: yup.string().required('Institution is required'),
   degree: yup.string().required('Degree is required'),
@@ -21,10 +21,10 @@ const educationSchema = yup.object().shape({
 });
 
 export default function EducationForm({ setOpen, onSave, existingData = null }) {
-    // Set initial state for current studying based on existing data if provided
+    
     const [isCurrentlyStudying, setIsCurrentlyStudying] = useState(existingData?.current || false);
     
-    // Set form title based on whether we're editing or creating
+    
     const formTitle = existingData ? "Edit Education" : "Add Education";
     
     const form = useForm({
@@ -41,7 +41,7 @@ export default function EducationForm({ setOpen, onSave, existingData = null }) 
     });
 
     const handleSubmit = (data) => {
-        // If currently studying, set endYear to null
+        
         if (data.current) {
             data.endYear = null;
         }

@@ -20,10 +20,10 @@ interface UserSuggestion {
     firstname: string;
     lastname: string;
     profile?: string;
-    isSpecial?: boolean; // For special mentions like @followers
+    isSpecial?: boolean; 
 }
 
-// Background color options
+
 const BACKGROUND_COLORS = [
     { name: 'None', color: null, gradient: null },
     { name: 'Blue', color: '#4A90E2', gradient: ['#4A90E2', '#357ABD'] },
@@ -36,13 +36,13 @@ const BACKGROUND_COLORS = [
     { name: 'Gold', color: '#FFD700', gradient: ['#FFD700', '#FFA500'] },
 ];
 
-// Text length limits
+
 const TEXT_LIMITS = {
     WITH_BACKGROUND: 280,
     WITHOUT_BACKGROUND: 2000,
 };
 
-// Helper functions
+
 const extractHashtags = (text: string): string[] => {
     if (!text) return [];
     const hashtagRegex = /#([a-zA-Z0-9_]+)/g;
@@ -105,8 +105,8 @@ const CPostModal: FC<{
     const [postMedia, setPostMedia] = useState<{ remove: string, url: string, file: string, filename: string }[]>((postDetails && postDetails?.media) ? [...postDetails?.media] : [])
     const [uploading, setUploading] = useState(false)
 
-    // CRITICAL: For edit mode, pass the INTERNAL text (with user IDs) to MentionsInput
-    // The MentionsInput component will handle converting it to display format (usernames)
+    
+    
     const [inputText, setInputText] = useState("")
     const [mentionUserIds, setMentionUserIds] = useState<string[]>([])
     const [mentionReferences, setMentionReferences] = useState<MentionReference[]>([])
@@ -118,13 +118,13 @@ const CPostModal: FC<{
 
     const content = useRef<HTMLTextAreaElement>()
 
-    // CRITICAL: Initialize the component state properly for edit mode
+    
     useEffect(() => {
         if (editPost && postDetails) {
-            // Set the internal text (with user IDs) - MentionsInput will convert to display
+            
             setInputText(postDetails.content || "");
             
-            // Initialize mention user IDs if they exist
+            
             if (postDetails.mentions && postDetails.mentions.length > 0) {
                 const userIds = postDetails.mentions.map(m => m._id);
                 setMentionUserIds(userIds);
@@ -132,20 +132,20 @@ const CPostModal: FC<{
         }
     }, [editPost, postDetails]);
 
-    // Extract hashtags whenever internal text changes (from MentionsInput)
+    
     useEffect(() => {
         const hashtags = extractHashtags(inputText);
         setExtractedHashtags(hashtags);
     }, [inputText]);
 
-    // Reset background when media is added
+    
     useEffect(() => {
         if (media.length > 0 && selectedBackground.color) {
             setSelectedBackground(BACKGROUND_COLORS[0]);
         }
     }, [media.length, selectedBackground.color]);
 
-    // Helper function to determine if current selection should be treated as a reel
+    
     const isReelContent = () => {
         if (isReel) return true;
         return selectedMedia.length === 1 && selectedMedia[0].type === 'video';
@@ -186,15 +186,15 @@ const CPostModal: FC<{
     }
     const navigate = useNavigate()
 
-    // CRITICAL: This receives the INTERNAL text (with user IDs) from MentionsInput
+    
     const handleMentionsChange = (internalText: string, userIds: string[], references: MentionReference[]) => {
         const textLimit = getCurrentTextLimit();
 
-        // Note: The length check should be based on display text length, but for simplicity
-        // we'll use internal text length. In production, you might want to convert to display
-        // text first to get accurate character count that user sees.
+        
+        
+        
         if (internalText.length <= textLimit) {
-            setInputText(internalText); // Store internal text (with user IDs)
+            setInputText(internalText); 
             setMentionUserIds(userIds);
             setMentionReferences(references);
         } else {
@@ -249,10 +249,10 @@ const CPostModal: FC<{
         if ((isShared && !editPost) || ((hasContent || hasValidMedia) && !editPost)) {
             const postData = {
                 visibility: selected,
-                content: inputText.trim(), // Send internal text (with user IDs) to backend
+                content: inputText.trim(), 
                 selectedMedia,
-                mentions: mentionUserIds, // Send user IDs array
-                mentionReferences, // Send full mention references for any additional processing
+                mentions: mentionUserIds, 
+                mentionReferences, 
                 hashtags: extractedHashtags,
                 ...(selectedBackground.color && media.length === 0 && { backgroundColor: selectedBackground.color })
             };
@@ -270,13 +270,13 @@ const CPostModal: FC<{
         if ((isShared && editPost) || ((hasContent || hasValidMedia) && editPost)) {
             const updateData = {
                 visibility: selected,
-                content: inputText.trim(), // Send internal text (with user IDs) to backend
+                content: inputText.trim(), 
                 formData,
                 selectedMedia,
                 media: postMedia,
                 setModelTrigger,
-                mentions: mentionUserIds, // Send user IDs array  
-                mentionReferences, // Send full mention references
+                mentions: mentionUserIds, 
+                mentionReferences, 
                 hashtags: extractedHashtags,
                 postId: postDetails._id,
                 type: postDetails.type || 'post',
@@ -316,24 +316,24 @@ const CPostModal: FC<{
         e.target.value = '';
     }
 
-    // Display hashtags in a readable format
+    
     const displayHashtags = useMemo(() => {
         if (extractedHashtags.length === 0) return '';
         return extractedHashtags.map(tag => `#${tag}`).join(', ');
     }, [extractedHashtags]);
 
-    // Text Preview Component using BackgroundPost
+    
     const TextPreview = () => {
         if (!selectedBackground?.color || media.length > 0 || selectedMedia.length > 0) {
             return null;
         }
 
-        // For preview, we need to convert internal text to display text
-        // This is a simplified version - in production you might want to use the same
-        // conversion logic from MentionsInput
+        
+        
+        
         let previewText = inputText.trim() || "Your text will appear here...";
         
-        // Convert mentions for preview (simple approach)
+        
         mentionReferences.forEach(ref => {
             const userIdRegex = new RegExp(`@${ref._id}`, 'g');
             previewText = previewText.replace(userIdRegex, `@${ref.username}`);
@@ -394,11 +394,10 @@ const CPostModal: FC<{
                             </div>
                         }
 
-                        {/* CRITICAL: MentionsInput handles the conversion from internal to display */}
                         <div className={`w-full ${selectedMedia?.length > 0 || postDetails?.media?.length ? 'min-h-[200px]' : 'min-h-[200px]'}`}>
                             <MentionsInput
-                                value={inputText} // Pass internal text (with user IDs)
-                                onChangeText={handleMentionsChange} // Receive internal text back
+                                value={inputText} 
+                                onChangeText={handleMentionsChange} 
                                 placeholder={getPlaceholderText()}
                                 className="border-accent border w-full bg-card h-full p-2 min-h-[150px] resize-none"
                                 onSuggestionsFetch={fetchUserMentionSuggestions}
@@ -413,7 +412,6 @@ const CPostModal: FC<{
                                 textLimit={getCurrentTextLimit()}
                             />
 
-                            {/* Character count */}
                             <div className="flex justify-end mt-1">
                                 <span className={`text-xs ${inputText.length > getCurrentTextLimit() * 0.9 ? 'text-red-500' : 'text-gray-500'}`}>
                                     {inputText.length}/{getCurrentTextLimit()}
@@ -421,10 +419,8 @@ const CPostModal: FC<{
                             </div>
                         </div>
 
-                        {/* Text Preview for Background Posts */}
                         <TextPreview />
 
-                        {/* Background Color Picker */}
                         {canUseBackground() && (
                             <div className="space-y-2">
                                 <button
@@ -466,7 +462,6 @@ const CPostModal: FC<{
                             </div>
                         )}
 
-                        {/* Mentions and Hashtags Info */}
                         {/* {mentionUserIds.length > 0 && (
                             <div className="bg-blue-50 p-2 rounded-md">
                                 <div className="flex items-center gap-2">
@@ -532,7 +527,6 @@ const CPostModal: FC<{
                                                         height={340}
                                                         onEmojiClick={(emoji) => {
                                                             setEmojiPickerState(false)
-                                                            // Add emoji to current internal text
                                                             setInputText(prev => prev + " " + emoji.emoji)
                                                         }}
                                                     />

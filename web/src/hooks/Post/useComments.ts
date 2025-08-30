@@ -206,7 +206,7 @@ export const useCreateComment = ({ type, targetId, postId, isReel, reelsKey }: a
       })
 
 
-      // queryClient.invalidateQueries({ queryKey: [CommentKeys.COMMENTS] })
+      
     }
   })
 
@@ -231,13 +231,13 @@ export const useUpdateComment = (postId) => {
 
       queryClient.setQueryData([CommentKeys.COMMENTS, postId], (pages: any) => {
         const updatedComments = produce(pages, (draft: any) => {
-          // Find the comment by ID across all pages
+          
           for (let pageIndex = 0; pageIndex < draft.pages.length; pageIndex++) {
             const commentIndex = draft.pages[pageIndex].comments.findIndex(comment => comment._id === commentId);
 
             if (commentIndex !== -1) {
               draft.pages[pageIndex].comments[commentIndex].content = commentDetails.content
-              draft.pages[pageIndex].comments[commentIndex].mentions = mentionReferences  // Use mentionReferences for UI
+              draft.pages[pageIndex].comments[commentIndex].mentions = mentionReferences  
               return draft
             }
           }
@@ -296,7 +296,7 @@ export const useDeleteComment = (postId) => {
       queryClient.setQueryData([CommentKeys.COMMENTS, postId], context.previousComments)
     },
     onSettled: () => {
-      // queryClient.invalidateQueries({ queryKey: [CommentKeys.COMMENTS] })
+      
     }
   })
 
@@ -391,13 +391,13 @@ export const useUpdateReply = () => {
 
       queryClient.setQueryData([CommentKeys.REPLIES, commentId], (pages: any) => {
         const updatedReplies = produce(pages, (draft: any) => {
-          // Find the reply by ID across all pages
+          
           for (let pageIndex = 0; pageIndex < draft.pages.length; pageIndex++) {
             const replyIndex = draft.pages[pageIndex].replies.findIndex(reply => reply._id === replyId);
 
             if (replyIndex !== -1) {
               draft.pages[pageIndex].replies[replyIndex].content = replyDetails.content
-              draft.pages[pageIndex].replies[replyIndex].mentions = mentionReferences  // Use mentionReferences for UI
+              draft.pages[pageIndex].replies[replyIndex].mentions = mentionReferences  
               return draft
             }
           }
@@ -516,8 +516,8 @@ export const useLikeComment = (postId) => {
       queryClient.setQueryData([CommentKeys.COMMENTS, postId], context.previousComments)
     },
     onSettled: (e) => {
-      // uncommeting this will refetch the comments again from the server to be in sync
-      // queryClient.invalidateQueries({ queryKey: [CommentKeys.COMMENTS] })
+      
+      
     }
   })
 

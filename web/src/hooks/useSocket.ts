@@ -81,7 +81,7 @@ export const useSocket = () => {
         return
       }
       console.log(message)
-      // console.log('this is recepient', message?.recepientDetails?.targetId)
+      
 
       queryClient.setQueryData(["messages", (message?.senderDetails?.targetId || message?.sender)], (pages: any) => {
         const updatedMessages = produce(pages, (draft: any) => {
@@ -122,83 +122,83 @@ export const useSocket = () => {
 
     });
 
-    // socket.on('groupchat', (message) => {
-    //   console.log(message, 'groupmessage')
-    //   if (message?.success == false) {
-    //     toast.error(message?.message)
-    //   }
+    
+    
+    
+    
+    
 
-    //   // console.log(message, 'new message')
-    //   let newMessage = {
-    //     _id: message?._id,
-    //     recepient: message?.recepientDetails?.groupId,
-    //     sender: message?.senderDetails,
-    //     content: message?.body,
-    //     media: message?.media,
-    //     type: message?.type
-    //   }
-    //   // console.log(newMessage)
-    //   if (newMessage.sender.username == user.username) {
-    //     return
-    //   }
-    //   queryClient.invalidateQueries({ queryKey: ['chatlist'] })
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
-    //   // queryClient.invalidateQueries({queryKey: ['messages', recepient]})
-    //   queryClient.setQueryData(["messages", recepient], (pages: any) => {
-    //     const updatedMessages = produce(pages, (draft: any) => {
-    //       if (!draft) {
-    //         return null
-    //       }
+    
+    
+    
+    
+    
+    
 
-    //       let pageIndex = -1
-    //       let messageIndex = -1
+    
+    
 
-    //       draft.pages.forEach((page, _pageIndex) => {
-    //         page.messages.forEach((message, _messageIndex) => {
-    //           if (message._id == newMessage._id) {
-    //             console.log('yes exists')
-    //             pageIndex = _pageIndex
-    //             messageIndex = _messageIndex
-    //           }
-    //         })
-    //       })
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
-    //       console.log(pageIndex, 'pageindex', messageIndex, 'messageindex')
+    
 
-    //       if (pageIndex > -1 && messageIndex > -1) {
-    //         return draft
-    //       }
+    
+    
+    
 
-    //       if (draft.pages[draft.pages.length - 1].messages) {
-    //         draft.pages[draft.pages.length - 1].messages = [...draft.pages[draft.pages.length - 1].messages, newMessage]
-    //         return draft
-    //       }
-    //       console.log(pages)
-    //       throw new Error()
-    //     })
-    //     return updatedMessages
-    //   });
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
-    // });
+    
 
-    // socket.on("group-error", (data) => {
-    //   console.log(data)
-    //   toast.error(data.message)
-    // })
+    
+    
+    
+    
 
-    // socket.on('toggleJoin', (data) => {
-    //   console.log(data)
-    //   queryClient.invalidateQueries({ queryKey: ["chatlist"] })
-    //   queryClient.invalidateQueries({ queryKey: ["messages", data.groupId] })
-    // })
+    
+    
+    
+    
+    
 
-    // socket.on("users", (users) => {
-    //   console.log(users)
-    // })
+    
+    
+    
 
-    // socket.on("getOnlineFriends", (onlineFriends) => {
-    //   console.log(onlineFriends)
-    // })
+    
+    
+    
 
     socket.on("upload-status", (data) => {
 
@@ -232,7 +232,7 @@ export const useSocket = () => {
       }
 
       if (data.isSuccess && data.target.type == "page") {
-        // const {targetId} = data.target
+        
         queryClient.invalidateQueries({ queryKey: ['page'] })
         queryClient.invalidateQueries({ queryKey: ['pages'] })
         return
@@ -245,7 +245,7 @@ export const useSocket = () => {
       }
 
       if (data.isSuccess && data.target.type == "group") {
-        // const {targetId} = data.target
+        
         queryClient.invalidateQueries({ queryKey: ['group'] })
         queryClient.invalidateQueries({ queryKey: ['groups'] })
         return
@@ -259,15 +259,15 @@ export const useSocket = () => {
       queryClient.invalidateQueries({ queryKey: ['chatlist'] })
     })
 
-    // socket.on("friendStatus", (data) => {
-    //   if (data?.isOnline && data?.friendId) {
-    //     dispatch(setOnline(data.friendId))
-    //     queryClient.invalidateQueries({ queryKey: ['chatlist'] })
-    //   } else {
-    //     dispatch(setOffline(data.friendId))
-    //     queryClient.invalidateQueries({ queryKey: ['chatlist'] })
-    //   }
-    // })
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 
     socket.on("friendStatus", (data) => {
@@ -281,7 +281,7 @@ export const useSocket = () => {
 
     socket.on("notification", (data) => {
       queryClient.invalidateQueries({ queryKey: ['metrics'] })
-      // dispatch(setNewNotification())
+      
     })
 
 
@@ -322,11 +322,11 @@ export const useSocket = () => {
     socket.on("call-ringing", (data) => {
       dispatch(callRinging())
     })
-    // socket.on("call-decline", (data) => {
-    //   console.log("decline")
-    //   toast.info("Call declined")
-    //   dispatch(endCall())
-    // })
+    
+    
+    
+    
+    
     socket.on("call-accept", (data) => {
       console.log(data)
       if (data?.type == "AUDIO") {
@@ -360,10 +360,10 @@ export const useSocket = () => {
     return () => {
       socket.off("connect");
       socket.off("disconnect");
-      // socket.off("group-error");
+      
       socket.off("chat");
-      // socket.off("group-chat");
-      // socket.off("toggleJoin");
+      
+      
       socket.off("upload-status");
       socket.off("chatlist");
       socket.off("friendStatus");
@@ -373,12 +373,12 @@ export const useSocket = () => {
       socket.off("initiate-call");
       socket.off("call-ringing");
       socket.off("call-log");
-      // socket.off("call-decline");
+      
       socket.off("call-accept");
-      // socket.off("friendOnlineStatusChange");
-      // socket.off("users");
-      // socket.off("getOnlineFriends");
-      // socket.off('newMessage');
+      
+      
+      
+      
       console.log('exiting socket')
     };
 

@@ -4,7 +4,6 @@ import { Image, Video } from 'lucide-react'
 import UserReelsSection from './Reel/UserReelsSection'
 import { useAppSelector } from '@/app/hooks'
 
-// Tabs Component
 const Tabs = ({ currentTab, setCurrentTab, tabs }) => {
   return (
     <div className="flex space-x-1 rounded-lg bg-muted p-1">
@@ -25,7 +24,6 @@ const Tabs = ({ currentTab, setCurrentTab, tabs }) => {
   )
 }
 
-// Images List Component
 const ImagesList = ({ images, setMediaOpenDetails, setMediaOpenModel }) => {
   if (!images || images.length === 0) {
     return (
@@ -68,72 +66,14 @@ const ImagesList = ({ images, setMediaOpenDetails, setMediaOpenModel }) => {
   )
 }
 
-// Videos List Component
-const VideosList = ({ videos, setMediaOpenDetails, setMediaOpenModel }) => {
-  if (!videos || videos.length === 0) {
-    return (
-      <div className="flex flex-col w-full items-center justify-center py-20">
-        <svg width="190" height="120" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path fill="transparent" d="M0 0h900v600H0z" />
-          <path d="M777.431 522H385.569C374.055 522 365 513.427 365 503.191V276.809c0-10.236 9.055-18.809 20.569-18.809h391.862c11.514 0 20.569 8.572 20.569 18.809v226.382c0 10.236-9.055 18.809-20.569 18.809z" fill="#fff" stroke="#E1E4E5" strokeWidth="4" />
-          <path d="M798 268.775H365v-6.206c0-11.358 9.211-20.569 20.569-20.569h391.862c11.358 0 20.569 9.211 20.569 20.569v6.206z" fill="#fff" stroke="#E1E4E5" strokeWidth="4" />
-          <path d="M385.61 261.224a4.847 4.847 0 1 0-.001-9.693 4.847 4.847 0 0 0 .001 9.693zm20.195 0a4.847 4.847 0 1 0-.001-9.693 4.847 4.847 0 0 0 .001 9.693zm19.387 0a4.847 4.847 0 1 0 0-9.694 4.847 4.847 0 0 0 0 9.694z" fill="#E1E4E5" />
-          <path fillRule="evenodd" clipRule="evenodd" d="M337 289.704c0 31.055 16.436 58.395 41.657 75.629-.011 9.897.012 23.231.012 37.225l40.87-20.221a114.597 114.597 0 0 0 21.633 2.071c57.318 0 104.173-42.166 104.173-94.704 0-52.537-46.855-94.704-104.173-94.704C383.854 195 337 237.167 337 289.704z" fill="#666AF6" stroke="#666AF6" strokeWidth="12.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path fillRule="evenodd" clipRule="evenodd" d="m433.223 259.957 36.981 21.876c5.324 3.149 5.324 10.857 0 14.017l-36.981 21.877c-5.429 3.206-12.281-.707-12.281-7.003v-43.753c0-6.319 6.852-10.232 12.281-7.014z" fill="#fff" />
-        </svg>
-        <span className="text-center text-muted-foreground">No Videos</span>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-wrap gap-2 p-4">
-      {videos.map((video, index) => {
-        return (
-          <div
-            className="relative h-24 w-24 rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200 group"
-            key={`${video}-${index}`}
-            onClick={() => {
-              setMediaOpenDetails({ type: 'video', url: video })
-              setMediaOpenModel(true)
-            }}
-          >
-            <video
-              src={video}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            {/* Play button overlay */}
-            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center group-hover:bg-opacity-50 transition-all duration-200">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="white"
-                className="opacity-90 group-hover:scale-110 transition-transform duration-200"
-              >
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 const MediaSection = ({ media, setMediaOpenDetails, setMediaOpenModel, targetId, type = 'user' }) => {
-  // Tab state
   const [currentTab, setCurrentTab] = useState('images')
 
-  // Define tabs
   const mediaTabs = [
     { id: 'images', label: 'Photos' },
     { id: 'videos', label: 'Videos' }
   ]
 
-  console.log(media)
-
-  // Render tab content
   const renderTabContent = () => {
     if (currentTab === 'images') {
       return (
@@ -145,11 +85,6 @@ const MediaSection = ({ media, setMediaOpenDetails, setMediaOpenModel, targetId,
       )
     } else {
       return (
-        // <VideosList
-        //   videos={media?.videos || []}
-        //   setMediaOpenDetails={setMediaOpenDetails}
-        //   setMediaOpenModel={setMediaOpenModel}
-        // />
         <UserReelsSection targetId={targetId} type={type} />
       )
     }
@@ -158,7 +93,6 @@ const MediaSection = ({ media, setMediaOpenDetails, setMediaOpenModel, targetId,
   return (
     <div className="flex flex-col gap-4 p-4">
       <Card className="flex flex-col w-full h-fit gap-4 p-4">
-        {/* Tabs */}
         <div className="flex">
           <Tabs
             currentTab={currentTab}
@@ -167,7 +101,6 @@ const MediaSection = ({ media, setMediaOpenDetails, setMediaOpenModel, targetId,
           />
         </div>
 
-        {/* Content */}
         <div className="relative flex w-full flex-col">
           {renderTabContent()}
         </div>

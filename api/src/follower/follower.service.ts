@@ -47,8 +47,6 @@ export class FollowerService {
         const nextCursor = hasNextPage ? _followers[_followers.length - 1].createdAt.toISOString() : null;
 
         const results = { followers: _followers, nextCursor };
-        // this.cacheService.set(cacheKey, JSON.stringify(results), 300)
-
         return results
     }
     

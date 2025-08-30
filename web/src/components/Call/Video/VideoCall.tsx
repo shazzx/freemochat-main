@@ -25,15 +25,13 @@ const VideoCall = ({ cancelCall }) => {
     const { socket } = useAppSelector((state) => state.socket)
 
 
-  const appId = '07c0c67268b84af3a73d5ccc109fd264'
+    const appId = '07c0c67268b84af3a73d5ccc109fd264'
 
     const [activeConnection, setActiveConnection] = useState(true);
 
-    // track the mic/video state - Turn on Mic and Camera On
     const [micOn, setMic] = useState(true);
     const [cameraOn, setCamera] = useState(true);
 
-    // get local video and mic tracks
     const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
     const { localCameraTrack } = useLocalCameraTrack(cameraOn);
 
@@ -97,10 +95,6 @@ const VideoCall = ({ cancelCall }) => {
                         }}>
                         <MdPhone size={32} color="white" />
                     </button>
-                    {/* 
-            <button className="rounded-full p-[14px] bg-red-500" onClick={() => setMic(a => !a)}>
-                <Mic color="white" size={32} />
-            </button> */}
                 </div> :
                 <div className="flex gap-12 absolute bottom-32 z-30">
                     <Button type="button" className="rounded-full p-4 bg-red-500 hover:bg-red-400 active:bg-red-600" onClick={async () => {
@@ -118,7 +112,6 @@ const VideoCall = ({ cancelCall }) => {
             }
             <div className="remoteVideoContainer">
                 {
-                    // Initialize each remote stream using RemoteUser component
                     remoteUsers.map((user) => {
                         return (
                             <div key={user.uid} className={isMobile ? "remote-video-container-mobile" : "remote-video-container"}>
@@ -158,24 +151,6 @@ const VideoCall = ({ cancelCall }) => {
                     className=''
                 />
                 <div>
-
-                    {/* media-controls toolbar component - UI controling mic, camera, & connection state  */}
-                    {/* <div id="controlsToolbar">
-            <div id="mediaControls">
-              <button className="btn" onClick={() => setMic(a => !a)}>
-                Mic
-              </button>
-              <button className="btn" onClick={() => setCamera(a => !a)}>
-                Camera
-              </button>
-            </div>
-            <button id="endConnection"
-                onClick={() => {
-                  setActiveConnection(false)
-                  navigate('/')
-                }}> Disconnect
-            </button>
-          </div> */}
                 </div>
             </div>
         </div>

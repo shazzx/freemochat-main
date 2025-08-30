@@ -8,7 +8,6 @@ import { NotificationModule } from 'src/notification/notification.module';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Counter.name, schema: counterSchema }]),
-    // NotificationModule
   ],
   controllers: [MetricsAggregatorController],
   providers: [MetricsAggregatorService],

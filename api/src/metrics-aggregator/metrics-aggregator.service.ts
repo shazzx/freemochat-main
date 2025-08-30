@@ -41,18 +41,15 @@ export class MetricsAggregatorService {
         return await this.counterModel.find({ targetId: null, type: "contributions" })
     }
 
-    // Ultra-optimized MongoDB aggregation approach
     async getCountryContributions() {
         try {
             const result = await this.counterModel.aggregate([
-                // Step 1: Match only country contribution documents
                 {
                     $match: {
                         type: { $regex: /_country_contributions$/ }
                     }
                 },
 
-                // Step 2: Add computed fields for country and category
                 {
                     $addFields: {
                         country: {
@@ -66,7 +63,6 @@ export class MetricsAggregatorService {
                     }
                 },
 
-                // Step 3: Group by category and country
                 {
                     $group: {
                         _id: {
@@ -77,7 +73,6 @@ export class MetricsAggregatorService {
                     }
                 },
 
-                // Step 4: Group by category to create the final structure
                 {
                     $group: {
                         _id: "$_id.category",
@@ -91,7 +86,6 @@ export class MetricsAggregatorService {
                     }
                 },
 
-                // Step 5: Sort countries within each category by count
                 {
                     $addFields: {
                         countries: {
@@ -102,14 +96,13 @@ export class MetricsAggregatorService {
                                         sortBy: { count: -1 }
                                     }
                                 },
-                                50  // Top 50 countries per category
+                                50 
                             ]
                         }
                     }
                 }
             ]);
 
-            // Transform to expected format
             const categories = {
                 plantation: [],
                 garbage_collection: [],
@@ -164,11 +157,8 @@ export class MetricsAggregatorService {
         }
     }
 
-    // Add this method to your metrics-aggregator.service.ts
-
     async searchCountries(searchQuery: string) {
         try {
-            // Get all country contribution documents
             const rawData = await this.counterModel.find({
                 type: { $regex: /_country_contributions$/ }
             }).lean();
@@ -181,7 +171,6 @@ export class MetricsAggregatorService {
                 const count = doc.count || 0;
                 const location = doc.location || { latitude: null, longitude: null };
 
-                // Initialize country if not exists
                 if (!countriesMap.has(countryName)) {
                     countriesMap.set(countryName, {
                         country: countryName,
@@ -197,7 +186,6 @@ export class MetricsAggregatorService {
                     });
                 }
 
-                // Add to country data
                 const countryData = countriesMap.get(countryName);
                 countryData.totalContributions += count;
 
@@ -206,16 +194,13 @@ export class MetricsAggregatorService {
                 }
             });
 
-            // Convert to array
             const allCountries = Array.from(countriesMap.values());
 
-            // Filter countries by search query using regex (case-insensitive)
             const searchRegex = new RegExp(searchQuery, 'i');
             const filteredCountries = allCountries.filter(country =>
                 searchRegex.test(country.country) || searchRegex.test(country.displayName)
             );
 
-            // Sort by total contributions (descending)
             filteredCountries.sort((a, b) => b.totalContributions - a.totalContributions);
 
             return {

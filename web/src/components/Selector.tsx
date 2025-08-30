@@ -1,16 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 
 const Selector = () => {
     const [countries, setCountries] = useState([]);
     const [selectedCountry, setSelectedCountry] = useState('');
-    useEffect(() => {
-        console.log(countries)
-    }, [countries])
-
-    useEffect(() => {
-        // Load countries from JSON file
-
-    }, []);
 
     const handleCountryChange = (event) => {
         setSelectedCountry(event.target.value);

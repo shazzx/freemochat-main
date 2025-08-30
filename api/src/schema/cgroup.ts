@@ -12,7 +12,6 @@ export class ChatGroup {
     @Prop()
     cover: string
 
-    // this property is only for profile images to know about background image processing 
     @Prop({ type: Boolean, default: null })
     isUploaded: Boolean
 

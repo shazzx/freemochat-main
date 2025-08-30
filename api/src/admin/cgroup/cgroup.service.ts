@@ -10,10 +10,6 @@ export class CGroupService {
     async getChatGroups(cursor: string, search: string) {
         let limit = 50
         const _cursor = cursor ? { createdAt: { $lt: new Date(cursor) } } : {};
-
-        // const query = search
-        //     ? { handle: { $regex: search, $options: 'i' }, ..._cursor }
-        //     : _cursor;
         try {
 
             const query: any = search

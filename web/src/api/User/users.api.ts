@@ -3,7 +3,6 @@ import { axiosClient } from "../axiosClient"
 export const fetchUser = async (username) => {
     if (username.length > 0) {
         const { data } = await axiosClient.get(`/user?username=${username}`)
-        // console.log(data, 'fetched user')
         if (data == null) {
             throw new Error('not found')
         }
@@ -42,15 +41,12 @@ export const removeStory = async (_data: { storyId: string, url: string }) => {
 
 export const updateUser = async (formData: FormData) => {
     const { data } = await axiosClient.post("/user/update", formData, { headers: { "Content-Type": 'multipart/form-data' }, timeout: 20000 })
-    // console.log(data)
     return data
 }
 
 
 export const sendFriendRequest = async (recepientId) => {
-    // console.log(recepientId)
     const { data } = await axiosClient.post("/user/request", { recepientId })
-    // console.log(data)
     return data
 }
 
@@ -75,7 +71,6 @@ export const removeFriend = async (recepientId) => {
 
 export const followUserToggle = async (recepientId) => {
     const { data } = await axiosClient.post("/user/follow", { recepientId })
-    // console.log(data)
     return data
 }
 
@@ -83,26 +78,22 @@ export const followUserToggle = async (recepientId) => {
 
 export const userFollowers = async (pageParam, userId?: string) => {
     const { data } = await axiosClient.get("/followers", { params: { cursor: pageParam, targetId: userId, type: 'user' } })
-    // console.log(data)
     return data
 }
 
 
 export const userFriends = async (pageParam, userId?: string, groupId?: string) => {
     const { data } = await axiosClient.get("/user/friends", { params: { cursor: pageParam, userId, groupId } })
-    // console.log(data)
     return data
 }
 
 export const userFriendRequests = async (pageParam) => {
     const { data } = await axiosClient.get("/user/requests", { params: { cursor: pageParam } })
-    // console.log(data)
     return data
 }
 
 export const userNotifications = async (pageParam) => {
     const { data } = await axiosClient.get("/notifications", { params: { cursor: pageParam } })
-    // console.log(data)
     return data
 }
 

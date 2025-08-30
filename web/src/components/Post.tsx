@@ -35,7 +35,7 @@ import BackgroundPost from './BackgroundPost'
 import EnvironmentalContributorTag from '@/models/EnvironmentalContributorTag'
 import LocationPostDisplay from './LocationPostDisplay'
 
-// Define types for mentions and content parsing
+
 interface MentionUser {
     _id: string;
     username: string;
@@ -76,97 +76,97 @@ interface PostProps {
     scrollRef?: any
 }
 
-// Regex patterns for parsing content
+
 const URL_REGEX = /(?:(?:https?|ftp):\/\/)?(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi;
 const MENTION_REGEX = /@(\w+)/g;
 const HASHTAG_REGEX = /#([a-zA-Z0-9_]+)/g;
 const MAX_CONTENT_LENGTH = 360;
 
-// BackgroundPost component for posts with colored backgrounds
-// const BackgroundPost: React.FC<{
-//     content: string;
-//     backgroundColor: string;
-//     theme?: any;
-//     mentions: MentionUser[];
-//     onHashtagPress: (hashtag: string) => void;
-//     expanded: boolean;
-//     toggleReadMore: () => void;
-// }> = ({ content, backgroundColor, mentions, onHashtagPress, expanded, toggleReadMore }) => {
-//     const navigate = useNavigate();
 
-//     const getTextStyle = (): React.CSSProperties => {
-//         const textLength: number = content.length;
-//         let fontSize: number = 24;
 
-//         if (textLength > 200) fontSize = 18;
-//         else if (textLength > 150) fontSize = 20;
-//         else if (textLength > 100) fontSize = 22;
-//         else if (textLength > 50) fontSize = 24;
 
-//         return {
-//             fontSize,
-//             color: 'white',
-//             textAlign: 'center',
-//             fontWeight: 700,
-//             textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)',
-//             lineHeight: fontSize * 1.3 + 'px',
-//         };
-//     };
 
-//     const textStyle = getTextStyle();
-//     const postHeight = Math.min(Math.max(200, (textStyle.fontSize as number) * 8), 400);
 
-//     return (
-//         <div
-//             style={{
-//                 backgroundColor: backgroundColor,
-//                 height: postHeight,
-//                 display: 'flex',
-//                 justifyContent: 'center',
-//                 alignItems: 'center',
-//                 position: 'relative',
-//                 overflow: 'hidden',
-//                 borderRadius: '8px',
-//                 margin: '10px 0',
-//             }}
-//         >
-//             <div style={{ 
-//                 padding: '20px',
-//                 zIndex: 2,
-//                 width: '100%',
-//                 display: 'flex',
-//                 justifyContent: 'center',
-//                 alignItems: 'center'
-//             }}>
-//                 <ContentWithLinksAndMentions
-//                     content={content}
-//                     expanded={expanded}
-//                     toggleReadMore={toggleReadMore}
-//                     mentions={mentions}
-//                     onHashtagPress={onHashtagPress}
-//                     hasBackground={true}
-//                     textStyle={textStyle}
-//                 />
-//             </div>
 
-//             {/* Gradient overlay */}
-//             <div 
-//                 style={{
-//                     position: 'absolute',
-//                     top: 0,
-//                     left: 0,
-//                     right: 0,
-//                     bottom: 0,
-//                     backgroundColor: `${backgroundColor}22`,
-//                     opacity: 0.1,
-//                     zIndex: 1,
-//                 }}
-//             />
-//         </div>
-//     );
-// };
 
-// ContentWithLinksAndMentions component for parsing and rendering interactive content
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const ContentWithLinksAndMentions: React.FC<{
     content: string;
     expanded: boolean;
@@ -183,7 +183,7 @@ const ContentWithLinksAndMentions: React.FC<{
 
         let displayContent = content;
 
-        // Replace user IDs with usernames
+        
         const userIdRegex = /@([a-f\d]{24})/g;
         let match;
         const processedIds = new Set<string>();
@@ -426,7 +426,7 @@ const ContentWithLinksAndMentions: React.FC<{
     );
 };
 
-// Create a separate SharedPostContent component
+
 const SharedPostContent = ({ sharedPost, handleNavigation }) => {
     const navigate = useNavigate();
     const [expanded, setExpanded] = useState(false);
@@ -464,12 +464,12 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
         const touchEndTime = Date.now();
         const touchDuration = touchEndTime - touchStartTime.current;
 
-        // Get final touch position
+        
         const touch = e.changedTouches[0];
         const deltaX = Math.abs(touch.clientX - touchStartPos.current.x);
         const deltaY = Math.abs(touch.clientY - touchStartPos.current.y);
 
-        // 2. Movement is less than 10px in any direction (not a scroll)
+        
         if (touchDuration < 300 && deltaX < 10 && deltaY < 10) {
             e.preventDefault();
             e.stopPropagation();
@@ -587,7 +587,6 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
                             <span className='text-muted-foreground text-xs font-normal'>{date}</span>
                         </div>
 
-                        {/* Reel Badge */}
                         {sharedPost?.postType === 'reel' && (
                             <div className="flex gap-1 items-center bg-blue-600/80 px-3 rounded-full ml-3 shadow-sm">
                                 <FilmIcon size={16} color='white' />
@@ -604,7 +603,6 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
 
             >
                 <div className='text-sm font-normal px-2 sm:px-0'>
-                    {/* Background post rendering for shared posts */}
                     {sharedPost?.backgroundColor ? (
                         <BackgroundPost
                             content={sharedPost.content}
@@ -625,7 +623,6 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
                     )}
                 </div>
 
-                {/* Reel Rendering */}
                 {sharedPost?.postType === 'reel' && (
                     <div className="flex justify-center py-2">
                         <ReelItem
@@ -643,7 +640,6 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
                     </div>
                 )}
 
-                {/* Regular Media Rendering (only if not a reel and no background) */}
                 {sharedPost?.postType !== 'reel' && !sharedPost?.backgroundColor && sharedPost && sharedPost.media && (
                     <div className='overflow-hidden aspect-auto max-w-xl flex items-center justify-center bg-background'>
                         {width > 540 ?
@@ -763,8 +759,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         }
 
         if (inView && postData?.promotion?.length > 0 && postData?.promotion[0]?.active == 1) {
-            // dispatch(insertViewedPost(postData._id))
-            // viewPost()
+            
+            
         }
     }, [inView])
 
@@ -805,7 +801,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
     let navigation = postData?.type == "user" ? postData?.target?.username : postData?.target?.handle
 
-    // Check if the post has a shared post
+    
     const hasSharedPost = postData?.sharedPost && Object.keys(postData.sharedPost).length > 0;
 
     if (postData?.isUploaded == false) {
@@ -996,7 +992,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                         toggleReadMore={toggleReadMore}
                                     />
                                 ) : (
-                                    /* Regular content with links and mentions */
+                                    
                                     <ContentWithLinksAndMentions
                                         content={postData?.content || ''}
                                         expanded={contentExpanded}
@@ -1007,7 +1003,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 )}
                             </div>
 
-                            {/* Media content - only show if no background color or if there are media files */}
                             {(!postData?.backgroundColor || postData?.media?.length > 0) && postData && postData.media && (
                                 <div className=' overflow-hidden aspect-auto max-w-xl flex items-center justify-center bg-background' onClick={() => {
                                     if (postData?.media?.[0]?.type == 'video') {
@@ -1057,7 +1052,6 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                 </div>
                             )}
 
-                            {/* Display shared post if it exists */}
                             {hasSharedPost && (
                                 <div className="px-2 sm:px-0 my-2">
                                     <SharedPostContent
@@ -1177,7 +1171,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                     sharedPost={postData}
                                     postId={postData._id}
                                     postType={postData.type}
-                                    // handleDownload={downloadVideo}
+                                    
                                     onClose={() => setShareState(false)}
                                 />
                             }
@@ -1190,7 +1184,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                     sharedPost={postData}
                                     postId={postData._id}
                                     postType={postData.type}
-                                    // handleDownload={downloadVideo}
+                                    
                                     onClose={() => setShareState(false)}
                                 />
                             }

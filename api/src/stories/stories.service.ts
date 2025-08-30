@@ -16,115 +16,6 @@ export class StoriesService {
         private readonly notificationService: NotificationService
     ) { }
 
-
-    // async getStories(userId: string, username: string) {
-    //     const friendIds = await this.friendService.getFriends(userId, true)
-    //     console.log(friendIds, 'user friends stories')
-    //     const stories = await this.storyModel.aggregate([
-    //         {
-    //             $match: {
-    //                 user: { $in: [new Types.ObjectId(userId), ...friendIds] }
-    //                 // user: { $in: [new Types.ObjectId(userId), ...friendIds] }
-    //             }
-    //         },
-    //         {
-    //             $sort: { createdAt: -1 } // Sort by createdAt in descending order
-    //         },
-    //         {
-    //             $group: {
-    //                 _id: '$user',
-    //                 stories: { $push: '$$ROOT' }
-    //             }
-    //         },
-    //         {
-    //             $lookup: {
-    //                 from: 'users',
-    //                 localField: '_id',
-    //                 foreignField: '_id',
-    //                 as: 'user'
-    //             }
-    //         },
-    //         {
-    //             $unwind: '$user'
-    //         },
-    //         {
-    //             $project: {
-    //                 _id: 0,
-    //                 user: '$user',
-    //                 stories: 1
-    //             }
-    //         }
-    //     ]);
-
-    //     return stories
-    // }
-
-    // async getStories(userId: string, username: string) {
-    //     const friendIds = await this.friendService.getFriends(userId, true);
-    //     console.log(friendIds, 'user friends stories');
-
-    //     const currentUserObjectId = new Types.ObjectId(userId);
-
-    //     const stories = await this.storyModel.aggregate([
-    //         {
-    //             $match: {
-    //                 user: { $in: [currentUserObjectId, ...friendIds] }
-    //             }
-    //         },
-    //         {
-    //             $addFields: {
-    //                 // Check if current user liked this story
-    //                 isLiked: {
-    //                     $in: [currentUserObjectId, '$likedBy']
-    //                 }
-    //             }
-    //         },
-    //         {
-    //             $sort: { createdAt: -1 } // Sort by createdAt in descending order
-    //         },
-    //         {
-    //             $group: {
-    //                 _id: '$user',
-    //                 stories: { $push: '$ROOT' }
-    //             }
-    //         },
-    //         {
-    //             $lookup: {
-    //                 from: 'users',
-    //                 localField: '_id',
-    //                 foreignField: '_id',
-    //                 as: 'user'
-    //             }
-    //         },
-    //         {
-    //             $unwind: '$user'
-    //         },
-    //         {
-    //             $project: {
-    //                 _id: 0,
-    //                 user: '$user',
-    //                 stories: {
-    //                     $map: {
-    //                         input: '$stories',
-    //                         as: 'story',
-    //                         in: {
-    //                             _id: '$story._id',
-    //                             url: '$story.url',
-    //                             createdAt: '$story.createdAt',
-    //                             user: '$story.user',
-    //                             isLiked: '$story.isLiked'
-    //                             // Explicitly exclude likedBy array and no likeCount
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     ]);
-
-    //     return stories;
-    // }
-
-    // Alternative approach - even cleaner
     async getStories(userId: string, username: string) {
         const friendIds = await this.friendService.getFriends(userId, true);
         const currentUserObjectId = new Types.ObjectId(userId);
@@ -199,7 +90,7 @@ export class StoriesService {
                 };
             }
 
-            const updatedStory = await this.storyModel.findByIdAndUpdate(
+            await this.storyModel.findByIdAndUpdate(
                 storyObjectId,
                 { $addToSet: { likedBy: userObjectId } },
                 {
@@ -208,8 +99,6 @@ export class StoriesService {
                     runValidators: true
                 }
             );
-
-            console.log('story liked', story, new Types.ObjectId(String(story.user)))
 
             await this.notificationService.createNotification(
                 {
@@ -238,15 +127,11 @@ export class StoriesService {
     async viewStory(storyId, userId) {
         const story = await this.storyModel.findById(storyId)
 
-        console.log(story, storyId, 'inside view story method')
         if (story.user == userId) {
-            console.log('return null')
             return null
         }
 
         const alreadyViewed = await this.viewedStoriesModel.findOne({ storyId: new Types.ObjectId(storyId), userId: new Types.ObjectId(userId) })
-
-        console.log(alreadyViewed, storyId, userId)
 
         if (alreadyViewed) {
             console.log('story already viewed')
@@ -254,13 +139,10 @@ export class StoriesService {
         }
 
         try {
-            console.log("story viewed")
             const storyViewed = await this.viewedStoriesModel.create({ storyId: new Types.ObjectId(storyId), userId: new Types.ObjectId(userId) })
-            console.log(storyViewed, 'storyviewed code below')
             return storyViewed
 
         } catch (error) {
-            console.log('this is error', error)
             if (error.name == "MongoServerError" && error.code == 11000) {
                 return null
             }
@@ -271,14 +153,12 @@ export class StoriesService {
 
     async getStoryViewes(storyId) {
         const storyViews = await this.viewedStoriesModel.find({ storyId: new Types.ObjectId(storyId) }).populate('userId')
-        console.log('viewed stories list', storyViews)
         return storyViews
     }
 
     async getStoryLikes(storyId: string) {
         try {
             const storyObjectId = new Types.ObjectId(storyId);
-
             const result = await this.storyModel.aggregate([
                 {
                     $match: { _id: storyObjectId }
@@ -330,21 +210,6 @@ export class StoriesService {
         const story = await this.storyModel.create({ url: storyDetails.url, user: new Types.ObjectId(userId) })
         return story
     }
-
-    // async updateStory(username: string, storyDetails: any) {
-    //     let user: any = await this.userService.getUser(username)
-    //     let storyIndex = user.stories.findIndex(story => story.id === storyDetails.id)
-    //     if (storyIndex == -1) {
-    //         throw new BadRequestException()
-    //     }
-
-    //     user.stories[storyIndex].title = storyDetails.title
-
-    //     this.userService.updateUser(username, user)
-
-    //     return user.stories[storyIndex]
-    // }
-
 
     async deleteStory(storyId: string, userId) {
         const deletedStory = await this.storyModel.findOneAndDelete({ _id: new Types.ObjectId(storyId), user: new Types.ObjectId(userId) })

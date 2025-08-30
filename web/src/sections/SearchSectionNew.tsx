@@ -23,19 +23,19 @@ function SearchSection() {
     const navigate = useNavigate()
     const { user } = useAppSelector(state => state.user)
 
-    // Get search parameters
+    
     const params = Object.fromEntries(searchParams.entries())
     const [type, setType] = useState(params.type || 'all')
     const [groupAction, setGroupAction] = useState('')
     const searchQuery = params.query || ''
 
-    // Create refs for intersection observer
+    
     const { ref: loadMoreRef, inView } = useInView({
         threshold: 0.5,
         triggerOnce: false,
     })
 
-    // Fetch search results with infinite query
+    
     const {
         data,
         fetchNextPage,
@@ -53,7 +53,7 @@ function SearchSection() {
         },
         initialPageParam: null,
         getNextPageParam: (lastPage, pages) => {
-            // If any of the result arrays have items equal to the limit, we assume there are more pages
+            
             const hasMoreItems = Object.values(lastPage).some(arr =>
                 Array.isArray(arr) && arr.length === ITEMS_PER_PAGE
             )
@@ -63,7 +63,7 @@ function SearchSection() {
         refetchOnWindowFocus: false,
     })
 
-    // Fetch trending hashtags when on hashtags tab with no search query
+    
     const { data: trendingHashtags, isLoading: trendingLoading } = useQuery({
         queryKey: ['trending-hashtags'],
         queryFn: async () => {
@@ -74,33 +74,33 @@ function SearchSection() {
         refetchOnWindowFocus: false,
     })
 
-    // Flatten the results from all pages
+    
     const allUsers = data ? data.pages.flatMap(page => page.users || []) : []
     const allPosts = data ? data.pages.flatMap(page => page.posts || []) : []
     const allGroups = data ? data.pages.flatMap(page => page.groups || []) : []
     const allPages = data ? data.pages.flatMap(page => page.pages || []) : []
     const allHashtags = data ? data.pages.flatMap(page => page.hashtags || []) : []
 
-    // Load more when second-to-last item is in view
+    
     useEffect(() => {
         if (inView && hasNextPage && !isFetchingNextPage) {
             fetchNextPage()
         }
     }, [inView, fetchNextPage, hasNextPage, isFetchingNextPage])
 
-    // Update type in search params
+    
     const updateType = (newType) => {
         searchParams.set('type', newType)
         setSearchParams(searchParams)
         setType(newType)
     }
 
-    // Handle hashtag press
+    
     const handleHashtagPress = useCallback((hashtag) => {
         navigate(`/hashtags-feed/${hashtag}`)
     }, [navigate])
 
-    // Join group handler
+    
     const joinGroup = async (groupId) => {
         try {
             const { data } = await axiosClient.post("/groups/join", { groupDetails: { groupId } })
@@ -112,19 +112,19 @@ function SearchSection() {
         }
     }
 
-    // Follow page handler
+    
     const followPage = async (pageId) => {
         try {
             const { data } = await axiosClient.post("/page/follow", { pageDetails: { pageId } })
             if (data.success) {
-                // You could update local state or refetch data here
+                
             }
         } catch (error) {
             console.error("Error following page:", error)
         }
     }
 
-    // Accept friend request handler
+    
     const acceptFriendRequest = async (username) => {
         try {
             const { data } = await axiosClient.post("user/acceptrequest", {
@@ -138,7 +138,7 @@ function SearchSection() {
         }
     }
 
-    // Send friend request handler
+    
     const sendFriendRequest = async (username) => {
         try {
             const { data } = await axiosClient.post("/user/friendrequest", {
@@ -152,7 +152,7 @@ function SearchSection() {
         }
     }
 
-    // Render user card
+    
     const renderUserCard = (userData, showActions = true) => (
         <Link to={`${domain}/user/${userData?.username}`} key={userData?._id}>
             <div className='flex w-full justify-between items-center p-2 gap-2 bg-card rounded-md'>
@@ -174,7 +174,7 @@ function SearchSection() {
         </Link>
     )
 
-    // Render group card
+    
     const renderGroupCard = (group) => (
         <Link to={`${domain}/group/${group?.handle}`} key={group?._id}>
             <div className='flex w-full justify-between items-center p-2 gap-2 bg-card rounded-md'>
@@ -196,7 +196,7 @@ function SearchSection() {
         </Link>
     )
 
-    // Render page card
+    
     const renderPageCard = (page) => (
         <Link to={`${domain}/page/${page?.handle}`} key={page?._id}>
             <div className='flex w-full justify-between items-center p-2 gap-2 bg-card rounded-md'>
@@ -218,7 +218,7 @@ function SearchSection() {
         </Link>
     )
 
-    // Render post
+    
     const renderPost = (post, index) => (
         <Post
             key={post._id}
@@ -234,9 +234,9 @@ function SearchSection() {
         />
     )
 
-    // Render hashtag content
+    
     const renderHashtagContent = () => {
-        // Show trending hashtags when no search query
+        
         if (!searchQuery.trim()) {
             if (trendingLoading) {
                 return <ScreenLoader />
@@ -248,7 +248,7 @@ function SearchSection() {
             )
         }
 
-        // Show hashtag search results
+        
         if (isLoading) {
             return <ScreenLoader />
         }
@@ -261,7 +261,7 @@ function SearchSection() {
             <div className='w-full flex flex-col gap-2'>
                 <div className='font-medium text-lg'>Hashtags</div>
                 {allHashtags.map((hashtag, index) => {
-                    // Add ref to second-to-last item for infinite loading
+                    
                     if (index === allHashtags.length - 2) {
                         return (
                             <div ref={loadMoreRef} key={hashtag._id}>
@@ -285,9 +285,9 @@ function SearchSection() {
         )
     }
 
-    // Render content based on type
+    
     const renderContent = () => {
-        // Special handling for hashtags
+        
         if (type === 'hashtags') {
             return renderHashtagContent()
         }
@@ -302,7 +302,6 @@ function SearchSection() {
 
             return (
                 <>
-                    {/* Users section */}
                     {allUsers.length > 0 && (
                         <div className='w-full flex flex-col gap-2 mb-4'>
                             <div className='font-medium text-lg'>Users</div>
@@ -320,7 +319,6 @@ function SearchSection() {
                         </div>
                     )}
 
-                    {/* Groups section */}
                     {allGroups.length > 0 && (
                         <div className='w-full flex flex-col gap-2 mb-4'>
                             <div className='font-medium text-lg'>Groups</div>
@@ -338,7 +336,6 @@ function SearchSection() {
                         </div>
                     )}
 
-                    {/* Pages section */}
                     {allPages.length > 0 && (
                         <div className='w-full flex flex-col gap-2 mb-4'>
                             <div className='font-medium text-lg'>Pages</div>
@@ -356,7 +353,6 @@ function SearchSection() {
                         </div>
                     )}
 
-                    {/* Hashtags section */}
                     {allHashtags.length > 0 && (
                         <div className='w-full flex flex-col gap-2 mb-4'>
                             <div className='font-medium text-lg'>Hashtags</div>
@@ -383,13 +379,11 @@ function SearchSection() {
             )
         }
 
-        // User-specific view
         if (type === 'users') {
             return allUsers.length > 0 ? (
                 <div className='w-full flex flex-col gap-2'>
                     <div className='font-medium text-lg'>Users</div>
                     {allUsers.map((user, index) => {
-                        // Add ref to second-to-last item for infinite loading
                         if (index === allUsers.length - 2) {
                             return <div ref={loadMoreRef} key={user._id}>{renderUserCard(user)}</div>
                         }
@@ -400,13 +394,12 @@ function SearchSection() {
             ) : <NoSearchResult content='No users found' />
         }
 
-        // Posts-specific view
         if (type === 'posts') {
             return allPosts.length > 0 ? (
                 <div className='w-full flex flex-col gap-2'>
                     <div className='font-medium text-lg'>Posts</div>
                     {allPosts.map((post, index) => {
-                        // Add ref to second-to-last item for infinite loading
+                        
                         if (index === allPosts.length - 2) {
                             return <div ref={loadMoreRef} key={post._id}>{renderPost(post, index)}</div>
                         }
@@ -417,13 +410,13 @@ function SearchSection() {
             ) : <NoSearchResult content='No posts found' />
         }
 
-        // Pages-specific view
+        
         if (type === 'pages') {
             return allPages.length > 0 ? (
                 <div className='w-full flex flex-col gap-2'>
                     <div className='font-medium text-lg'>Pages</div>
                     {allPages.map((page, index) => {
-                        // Add ref to second-to-last item for infinite loading
+                        
                         if (index === allPages.length - 2) {
                             return <div ref={loadMoreRef} key={page._id}>{renderPageCard(page)}</div>
                         }
@@ -434,13 +427,13 @@ function SearchSection() {
             ) : <NoSearchResult content='No pages found' />
         }
 
-        // Groups-specific view
+        
         if (type === 'groups') {
             return allGroups.length > 0 ? (
                 <div className='w-full flex flex-col gap-2'>
                     <div className='font-medium text-lg'>Groups</div>
                     {allGroups.map((group, index) => {
-                        // Add ref to second-to-last item for infinite loading
+                        
                         if (index === allGroups.length - 2) {
                             return <div ref={loadMoreRef} key={group._id}>{renderGroupCard(group)}</div>
                         }
@@ -457,7 +450,6 @@ function SearchSection() {
     return (
         <div className='w-full flex px-2 sm:px-14 overflow-hidden overflow-y-auto'>
             <div className='max-w-xl w-full flex flex-col gap-2'>
-                {/* Search filters */}
                 <div className='flex w-full gap-3 flex-wrap items-center border border-muted p-2 bg-card rounded-md'>
                     <Button
                         className={`${type === 'all' ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80 text-foreground'}`}
@@ -491,7 +483,6 @@ function SearchSection() {
                     </Button>
                 </div>
 
-                {/* Search results */}
                 <div className='flex w-full items-center flex-col'>
                     <div className='relative w-full flex justify-center overflow-y-auto'>
                         <div className='w-full flex flex-col gap-2'>

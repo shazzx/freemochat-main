@@ -58,7 +58,7 @@ class SocketManager {
             this.handleConnectionError(error);
         });
 
-        // Handle timeout specifically
+        
         this.socket.on('error', (error: Error) => {
             if (error.message.includes('timeout')) {
                 console.error('Socket timeout occurred');
@@ -69,10 +69,10 @@ class SocketManager {
 
     private handleDisconnect(reason: string) {
         if (reason === 'io server disconnect') {
-            // Server disconnected us, try to reconnect immediately
+            
             this.socket?.connect();
         } else if (reason === 'transport close' || reason === 'ping timeout') {
-            // Network issues, attempt reconnect with backoff
+            
             this.attemptReconnect();
         }
     }
@@ -127,7 +127,7 @@ class SocketManager {
     }
 }
 
-// Usage example
+
 const socketManager = new SocketManager(url);
 
 export const socketConnect = (username?: string): Socket => {
@@ -139,68 +139,67 @@ export const socketDisconnect = () => {
     return socketManager.disconnect();
 };
 
-// const url = import.meta.env.VITE_ENV == 'PRODUCTION' ? import.meta.env.VITE_APP_BASE_URL_PROD : import.meta.env.VITE_APP_BASE_URL_DEV
-// let socket = io(url, {
-//     path: "/api/socket",
-//     autoConnect: false,
-//     forceNew: true,
-//     reconnection: true,
-//     reconnectionAttempts: Infinity,
-//     reconnectionDelay: 1000,
-//     reconnectionDelayMax: 5000
 
-// })
 
-// export const socketConnect = (username: string) => {
-//     if (!username) return socket;
 
-//     socket.auth = { username };
 
-//     // socket.on('disconnect', (reason) => {
-//     //     console.log(`Socket disconnected: ${reason}`);
 
-//     //     if (reason === 'io server disconnect') {
-//     //         socket.connect();
-//     //     }
-//     // });
 
-//     socket.connect();
 
-//     socket.on('connect', () => {
-//         console.log(`Socket connected for user: ${username}`);
-//     });
 
-//     socket.on('connect_error', (error) => {
-//         console.error('Socket connection error:', error);
-//     });
 
-//     return socket
-// }
 
-// export const socketConnect = (username?: string) => {
-//     if (!username) return socket;
 
-//     socket.auth = { username };
 
-//     socket.on('disconnect', (reason) => {
-//         console.log(`Socket disconnected: ${reason}`);
 
-//         // Attempt to reconnect manually
-//         if (reason === 'io server disconnect') {
-//             // If disconnected by the server, manually reconnect
-//             socket.connect();
-//         }
-//     });
 
-//     socket.connect();  // Initial connection
 
-//     socket.on('connect', () => {
-//         console.log(`Socket connected for user: ${username}`);
-//     });
 
-//     socket.on('connect_error', (error) => {
-//         console.error('Socket connection error:', error);
-//     });
 
-//     return socket;
-// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

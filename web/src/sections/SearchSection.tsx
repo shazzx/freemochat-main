@@ -78,13 +78,13 @@ function SearchSection() {
         navigate(`/hashtags-feed/${hashtag}`)
     }, [navigate])
 
-    // Render trending hashtags when on hashtags tab with no search query
+    
     const renderTrendingHashtags = () => {
         if (params.query?.trim() || type !== 'hashtags') return null;
         return <TrendingHashtags onHashtagPress={handleHashtagPress} />;
     };
 
-    // Render hashtag search results
+    
     const renderHashtagResults = () => {
         if (type !== 'hashtags' || !params.query?.trim()) return null;
 
@@ -127,23 +127,19 @@ function SearchSection() {
                 </div>
                 
                 <div className='flex w-full items-center flex-col'>
-                    {/* Hashtag specific content */}
                     {type === 'hashtags' ? (
                         <div className="w-full">
                             {renderTrendingHashtags()}
                             {renderHashtagResults()}
                         </div>
                     ) : (
-                        // Existing content for other types
                         <>
                             {isFetched ? (
                                 <div className='relative w-full flex justify-center overflow-y-auto border-muted'>
                                     <div className='w-full flex flex-col gap-2'>
                                         <div className='flex w-full flex-col gap-2'>
-                                            {/* Default tab content with hashtags included */}
                                             {type == 'default' && (
                                                 <div className='w-full flex flex-col gap-2'>
-                                                    {/* Users section */}
                                                     {users?.length > 0 && <div>Users</div>}
                                                     {users?.length > 0 && users?.map((_user, i) => {
                                                         if (i >= 3) return null
@@ -192,7 +188,6 @@ function SearchSection() {
                                                         </div>
                                                     )}
 
-                                                    {/* Groups section */}
                                                     {groups.length > 0 && (
                                                         <div className='w-full flex flex-col gap-2'>
                                                             <div>Groups</div>
@@ -232,7 +227,6 @@ function SearchSection() {
                                                         </div>
                                                     )}
 
-                                                    {/* Pages section */}
                                                     {pages.length > 0 && (
                                                         <div className='w-full flex flex-col gap-2'>
                                                             <div>Pages</div>
@@ -273,7 +267,6 @@ function SearchSection() {
                                                         </div>
                                                     )}
 
-                                                    {/* Hashtags section */}
                                                     {hashtags.length > 0 && (
                                                         <div className='w-full flex flex-col gap-2'>
                                                             <div>Hashtags</div>
@@ -295,14 +288,12 @@ function SearchSection() {
                                                         </div>
                                                     )}
 
-                                                    {/* No results */}
                                                     {pages.length == 0 && users.length == 0 && groups.length == 0 && hashtags.length == 0 && (
                                                         <NoSearchResult content={'not found'} />
                                                     )}
                                                 </div>
                                             )}
 
-                                            {/* Individual tab contents */}
                                             {type == 'users' && users && (
                                                 <div className='w-full flex flex-col gap-2'>
                                                     {users.length > 0 && <div>Users</div>}

@@ -45,13 +45,12 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
         if (stories && openedStoryIndex >= 0 && storyViewIndex >= 0) {
             const storyId = stories[openedStoryIndex].stories[storyViewIndex]._id
             
-            // Fetch views for own stories
             if (isOwnStory) {
                 fetchUserStoryViews(storyId)
                 fetchUserStoryLikes(storyId)
             }
             
-            // Set like status from story data
+            
             setIsLiked(currentStory?.isLiked || false)
             
             console.log(storyId, 'current story id')
@@ -77,7 +76,7 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
                 storyId: currentStory._id,
             })
 
-            // Update the story data to reflect the like
+            
             if (currentStory) {
                 currentStory.isLiked = true
             }
@@ -170,7 +169,6 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
                     }} />
             </div>
 
-            {/* Like Button for Non-Own Stories */}
             {!isOwnStory && (
                 <div className="absolute bottom-4 right-4">
                     <Button
@@ -189,7 +187,6 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
                 </div>
             )}
 
-            {/* Story Viewers Modal */}
             {storyViewersState &&
                 <div className='absolute z-[100] bottom-0 w-full h-[50%] bg-background rounded-sm'>
                     <div className="flex justify-between items-center p-4 border-b">
@@ -199,7 +196,7 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
                     <div className="overflow-y-auto max-h-96 p-2">
                         {storyViewsData?.length > 0 ?
                             storyViewsData.map(({ userId }) => {
-                                // userId == user object
+                                
                                 const user = userId
                                 return (
                                     <Link key={user._id} to={`${domain}/user/${user.username}`} className="items-center p-2 flex gap-2 bg-accent rounded-md cursor-pointer m-2" >
@@ -230,7 +227,6 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
                 </div>
             }
 
-            {/* Story Likes Modal */}
             {storyLikesState &&
                 <div className='absolute z-[100] bottom-0 w-full h-[50%] bg-background rounded-sm'>
                     <div className="flex justify-between items-center p-4 border-b">
@@ -269,10 +265,8 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
                 </div>
             }
 
-            {/* Views and Likes Counter for Own Stories */}
             {isOwnStory &&
                 <div className="absolute flex gap-4 items-center bottom-4 left-4">
-                    {/* Views Counter */}
                     <div className="flex gap-2 items-center bg-black/50 rounded-full px-3 py-2 cursor-pointer" onClick={() => {
                         setStoryViewersState(true)
                     }}>
@@ -281,8 +275,6 @@ function Story({ stories, openedStoryIndex, user, storyViewIndex, setOpenedStory
                             {storyViewsData ? storyViewsData?.length || 0 : 0}
                         </span>
                     </div>
-
-                    {/* Likes Counter */}
                     <div className="flex gap-2 items-center bg-black/50 rounded-full px-3 py-2 cursor-pointer" onClick={() => {
                         setStoryLikesState(true)
                     }}>

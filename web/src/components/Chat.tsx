@@ -37,7 +37,6 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
     const [inputValue, setInputValue] = useState("");
     const [groupData, setGroupData] = useState(null)
     const chatContainerRef = useRef(null)
-    // const [isRecording, setIsRecording] = useState(false)
 
     const { ref, inView } = useInView()
 
@@ -69,38 +68,6 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
 
     const userOnlineStatus = useOnlineStatus(recepientDetails?.userId)
 
-
-    // const [isOnline, setIsOnline] = useState(null)
-
-    // const online = useAppSelector((state) => state.online)
-
-    // useEffect(() => {
-
-    //     if (online.isOnline[recepientDetails?.userId]) {
-    //         setIsOnline(true)
-    //     } else {
-    //         setIsOnline(false)
-    //     }
-    // }, [online.isOnline])
-
-    // useEffect(() => {
-    //     function handleClickOutside(event) {
-    //         if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-    //             setFileSelectDropDownState(false);
-    //         }
-    //     }
-
-    //     // Add event listener when dropdown is open
-    //     if (fileSelectDropDownState) {
-    //         document.addEventListener('mousedown', handleClickOutside);
-    //     }
-
-    //     // Clean up the event listener
-    //     return () => {
-    //         document.removeEventListener('mousedown', handleClickOutside);
-    //     };
-    // }, [fileSelectDropDownState])
-
     useEffect(() => {
         function handleClickOutside(event) {
             if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
@@ -108,17 +75,15 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
             }
         }
 
-        // Add event listener when dropdown is open
         if (emojiPickerState) {
             document.addEventListener('mousedown', handleClickOutside);
         }
 
-        // Clean up the event listener
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [emojiPickerState])
-    // messages and groups
+
     const messagesDetails = recepientDetails?.groupId ? { recepientId: recepientDetails?.groupId, isChatGroup: 1 } : { recepientId: recepientDetails?.userId, isChatGroup: 0 }
     const createMessage = useCreateMessage(recepientDetails?.userId || recepientDetails?.groupId)
     const userMessages = useMessages(messagesDetails)
@@ -130,29 +95,20 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
             for (let i = userMessages.data.length - 1; i >= 0; i--) {
                 const page = userMessages?.data[i]
                 const messages = page.messages
-
                 const _messages = [...messages]
-
                 const lastMessage = _messages?.reverse()?.find((message) => {
                     return message.sender == messagesDetails.recepientId
                 })
 
-                console.log(lastMessage, 'this is lastmessage')
-
                 if (lastMessage) {
-                    console.log(lastMessage, 'lastmessage found')
                     if (recepientDetails.chatlistId && lastMessage._id) {
-                        console.log(recepientDetails.chatlistId, lastMessage._id)
                         socket.emit("message-deliverability", { senderId: messagesDetails.recepientId, recepientId: user._id, messageId: lastMessage._id })
                     }
                     return lastMessage
                 }
-                console.log(lastMessage, 'lastmessage not found')
-
             }
 
         } catch (error) {
-            console.log(error, 'this is error')
             return error
         }
         return null
@@ -189,58 +145,8 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
         socket.emit("leavegroup", { userId: user?._id, groupId: recepientDetails?.groupId })
     }
 
-
-    // useEffect(() => {
-
-
-    // listen chat event messages
-    // socket.on("chat", (newMessage) => {
-    //     console.log(newMessage)
-    // queryClient.invalidateQueries({queryKey: ["messages", recepientDetails.userId]})
-
-    // queryClient.setQueryData(["messages", recepientDetails.userId], (pages: any) => {
-    //     const updatedMessages = produce(pages, (draft: any) => {
-    //         if (draft.pages[draft.pages.length - 1].messages) {
-    //             draft.pages[draft.pages.length - 1].messages.push({
-    //                 recepient: newMessage?.recepientDetails?.userId,
-    //                 sender: newMessage?.senderDetails?.targetId,
-    //                 content: newMessage?.body,
-    //                 // type: newMessage?.type
-    //             })
-    //             return draft
-    //         }
-    //         throw new Error()
-    //     })
-    //     return updatedMessages
-    // });
-    // setMessages((previousMessages) => [
-    // ...previousMessages,
-    // ]);
-    // });
-
-    // remove all event listeners
-    // return () => {
-    // socket.off("connect");
-    // socket.off("disconnect");
-    // socket.off("chat");
-    // };
-    // }, []);
-
-
-
-    // useEffect(() => {
-    //     console.log('inview')
-    //     if (userMessages?.data[0]?.nextCursor !== null ) {
-    //         console.log('true fetching...')
-    //         console.log(userMessages.data.nextCursor)
-    //         userMessages.fetchPreviousPage()
-    //     }
-    // }, [inView])
-
     const scrollToBottom = () => {
-        // console.log(userMessages.data.length, 'length')
         if (userMessages.data.length == 1) {
-            // console.log('scrolling...')
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
         }
@@ -315,13 +221,6 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
             return updatedMessages
         });
 
-        // if (recepientDetails.type == "ChatGroup") {
-        //     socket.emit("groupchat", { senderDetails: { targetId: user?._id, username: user?.username, firstname: user.firstname, profile: user?.profile, lastname: user.lastname }, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, targetId: messageData.recepeint } });
-        //     setInputValue("");
-        //     return
-        // }
-
-
         socket.emit("chat", { senderDetails: { targetId: user?._id, username: user?.username }, uuid, messageType: "Text", body: inputValue, recepientDetails: { ...recepientDetails, groupName: recepientDetails.name, targetId: messageData.recepeint } });
         setInputValue("");
     };
@@ -329,7 +228,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
     const dispatch = useAppDispatch()
     const callData = useAppSelector((state) => state.call)
 
-    // audio / video calling
+
     const initiateAudioCall = useCallback(() => {
         dispatch(startCall(
             {
@@ -358,7 +257,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
         socket.emit("initiate-call", { type: 'VIDEO', userDetails: { userId: user?._id, username: user?.username, fullname: user?.firstname + " " + user?.lastname, profile: user?.profile }, recepientDetails })
     }, [])
 
-    // chat method
+
     const deleteMessage = async (message) => {
         try {
             const { data } = await axiosClient.post("/messages/remove", { messageId: message.messageId, senderId: message.senderId, recepientId: message.recepientId })
@@ -368,8 +267,8 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
             return false
         }
     }
-    // const lastMessage = userMessages.data[userMessages.data.length - 1].messages[userMessages.data[userMessages.data.length - 1].messages.length - 1].content
-    // console.log(lastMessage.includes("removed"))
+
+
 
 
     const deleteChat = async () => {
@@ -381,19 +280,19 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
 
     const handleMediaLoad = (event: React.SyntheticEvent<HTMLImageElement | HTMLVideoElement>) => {
         const media = event.currentTarget;
-        // media.classList.remove('blur-md');
-        // media.classList.add('blur-none');
 
-        // const loadingIndicator = media.parentElement?.querySelector('.loading-indicator');
-        // if (loadingIndicator) {
-        //   loadingIndicator.remove();
-        // }
+
+
+
+
+
+
     };
 
     const blockUser = async () => {
         alert('under development')
-        // const {data} = await axiosClient.post("/user/block", {blockUserId: recepientDetails?.userId})
-        // console.log(data)
+
+
     }
 
     function emojiToImageUrl(emoji) {
@@ -412,7 +311,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
         return canvas.toDataURL();
     }
 
-    // Chat Group
+
 
     const updateGroup = useUpdateChatGroup()
 
@@ -602,13 +501,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                 {!userMessages.isLoading && userMessages.data[0]?.nextCursor !== null && <Button className="relative m-1 w-fit bg-card text-xs mx-auto" ref={ref} onClick={() => {
                     userMessages.fetchPreviousPage()
                 }}>Load More</Button>}
-                {/* <div className="w-full text-center pb-4">
-                    <span>Today</span>
-                </div> */}
 
-                {/* user */}
-
-                {/* {console.log(userMessages?.data)} */}
                 {!userMessages.isLoading && userMessages.data?.map((page, pageIndex) => {
                     return page.messages.map((message, messageIndex) => {
                         if (!message?._id) {
@@ -622,20 +515,6 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                 }
                             })
 
-                            // if (isDeleted?.[0]?.userId == user?._id) {
-                            //     return (
-                            //         <div className="flex gap-2 justify-end" key={message?._id}>
-
-                            //             <div className="relative max-w-80 w-fit">
-
-                            //                 <div className="relative border border-muted
-                            //          text-sm bg-card p-1 text-foreground rounded-lg pr-3" onMouseEnter={() => setDropDownMessageId(message?._id)} onMouseLeave={() => setDropDownMessageId(null)}>
-                            //                     <p className="" >message deleted</p>
-                            //                 </div>
-                            //             </div>
-                            //         </div>
-                            //     )
-                            // }
                         }
 
                         if (message?.messageType == 'Info') {
@@ -656,11 +535,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                         return (
                             ((message?.sender == user._id) || (message?.sender?._id == user._id)) ?
                                 <div className="flex gap-2 justify-end" key={message?._id}>
-
-                                    {/* {userMessages.data.length - 1 == pageIndex && (pageIndex == 0 && messageIndex == 0) && <div ref={ref}></div>} */}
-
                                     <div className="relative max-w-80 w-fit">
-                                        {/* <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p> */}
                                         <p className="py-1 text-xs" >{formatDistanceToNow(message?.createdAt ?? Date.now(), { addSuffix: true })}</p>
 
 
@@ -670,15 +545,6 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                             onMouseDown={() => handleTouchStart({ messageId: message._id, senderId: message.sender?._id || message.sender, recepientId: recepientDetails?.userId })}
                                             onMouseUp={handleTouchEnd}
                                             onMouseLeave={handleTouchEnd}
-                                        // onMouseEnter={() => {
-                                        // setDropDownMessageIndex(messageIndex)
-                                        // setDropDownMessagePageIndex(pageIndex)
-                                        // setDropDownMessageId(message?._id || null)
-                                        // }} onMouseLeave={() => {
-                                        // setDropDownMessageIndex(null)
-                                        // setDropDownMessagePageIndex(null)
-                                        // setDropDownMessageId(null)
-                                        // }}
                                         >
                                             {message?.media && (isDeleted?.[0]?.userId !== user._id) && message.media.type == "audio" &&
                                                 <AudioPlayer src={message.media.url} duration={message.media.duration} />
@@ -718,7 +584,6 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                         <FaFilePdf className="text-red-500 text-2xl mr-3" />
                                                         <div className="flex-grow">
                                                             <p className="font-semibold truncate">{'File'}</p>
-                                                            {/* <p className="text-sm text-gray-500">{(12 / 1024 / 1024).toFixed(2)} MB</p> */}
                                                         </div>
                                                     </a>
                                                 </div>
@@ -751,7 +616,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                 </p>
 
                                             }
-                                            {(message._id && (selectedMessageId?.messageId == message._id)) && <MessageActionsDropdown onDelete={async() => {
+                                            {(message._id && (selectedMessageId?.messageId == message._id)) && <MessageActionsDropdown onDelete={async () => {
                                                 try {
                                                     const isDeleted = await deleteSelectedMessage(false)
                                                     if (isDeleted) {
@@ -761,24 +626,6 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                     deleteSelectedMessage(true)
                                                 }
                                             }} setSelectedMessage={setSelectedMessage} />}
-                                            {/* {
-                                                (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) &&
-                                                <div className="cursor-pointer absolute top-0 -right-2" onClick={() => {
-                                                    setOpenedDropDownMessageId(message?._id)
-                                                }}>
-                                                    <EllipsisIcon />
-                                                </div>
-
-                                            } */}
-                                            {/* {
-                                                 (message?._id == selectedMessageId) &&
-                                                <div className="absolute top-10 right-0 z-20">
-                                                    <Button className="bg-card border border-accent" onClick={() => {
-                                                        message?.deletedFor.push({ userId: user?._id })
-                                                        deleteSelectedMessage()
-                                                    }}><MdDelete size={20} className="mr-2"/> Delete</Button>
-                                                </div>
-                                            }  */}
                                         </div>
                                         {recepientDetails?.lastSeenMessageId !== undefined && recepientDetails.lastSeenMessageId == message._id &&
                                             <div className='absolute -bottom-2 -right-4 max-w-10 max-h-10 bg-accent rounded-full overflow-hidden'>
@@ -804,10 +651,7 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                 :
 
                                 <div className="flex" key={message?._id}>
-
-                                    {/* {userMessages.data.length - 1 == pageIndex && userMessages.data[userMessages.data.length - 1].messages.length - 1 == messageIndex && <div ref={ref}></div>} */}
                                     <div className="flex gap-2">
-
                                         <div className='max-w-10 max-h-10 bg-accent rounded-full overflow-hidden'>
                                             <Avatar className="h-9 w-9 flex items-center justify-center">
                                                 <AvatarImage src={message?.sender?.profile || recepientDetails?.profile} alt="Avatar" />
@@ -824,7 +668,6 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                         <div className="relative max-w-80 w-fit">
                                             <p className="py-1 text-xs" >{formatDistanceToNow(message?.createdAt ?? Date.now(), { addSuffix: true })}</p>
 
-                                            {/* <p className="p-1 px-2 text-xs" >{format(message?.createdAt ?? Date.now(), 'MMM d, yyy h:mm a')}</p> */}
                                             <div className={`flex items-center justify-center relative ${!message?.media ? selectedMessageId?.messageId == message._id ? "bg-card p-2 pr-3" : "p-2 pr-3 bg-card" : "p-0"} ${selectedMessageId?.messageId == message._id && "bg-card"} select-none border border-muted text-sm  text-primary-foreground rounded-lg `}
                                                 onMouseEnter={() => {
                                                     setDropDownMessageIndex(messageIndex)
@@ -857,7 +700,6 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                             <FaFilePdf className="text-red-500 text-2xl mr-3" />
                                                             <div className="flex-grow">
                                                                 <p className="font-semibold truncate">{'File'}</p>
-                                                                {/* <p className="text-sm text-gray-500">{(12 / 1024 / 1024).toFixed(2)} MB</p> */}
                                                             </div>
                                                         </a>
                                                     </div>
@@ -894,24 +736,6 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                                     message?.deletedFor.push({ userId: message?.sender?._id })
                                                     deleteSelectedMessage()
                                                 }} setSelectedMessage={setSelectedMessage} />}
-                                                {/* {
-                                                    (dropDownMessagePageIndex == pageIndex && dropDownMessageIndex == messageIndex && message?._id == dropDownMessageId) &&
-                                                    <div className="cursor-pointer absolute top-0 -right-2" onClick={() => {
-                                                        setOpenedDropDownMessageId(message?._id)
-                                                    }}>
-                                                        <EllipsisIcon />
-                                                    </div>
-
-                                                } */}
-                                                {/* {
-                                                    dropDownMessagePageIndex == pageIndex && dropDownMessageIndex && message?._id && message?._id == openedDropDownMessageId &&
-                                                    <div className="absolute top-10 right-0 z-20">
-                                                        <Button onClick={() => {
-                                                            message?.deletedFor.push({ userId: user?._id })
-                                                            deleteMessage(message?._id)
-                                                        }}>Delete</Button>
-                                                    </div>
-                                                } */}
                                             </div>
                                         </div>
                                     </div>
@@ -1058,11 +882,9 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                     ]}
                                     customEmojis={[
                                         { id: '12rwtfadfasdf', names: ['freedom'], imgUrl: emojiToImageUrl('🪽') },
-                                        // { id: '1adf2asfsdf4', names: ['freedom'], imgUrl: emojiToImageUrl('𓆩𓆪') },
                                         { id: '1asftujyyiz2623', names: ['freedom'], imgUrl: emojiToImageUrl('🕊️') }
                                     ]} open={emojiPickerState} onEmojiClick={({ emoji, names }) => {
                                         let selection = textRef.current.selectionStart
-                                        // console.log(emoji)
                                         let _emoji = emoji
                                         if (emoji == "1asftujyyiz2623") {
                                             _emoji = '🕊️'
@@ -1082,7 +904,6 @@ function Chat({ user, socket, recepientDetails, setChatOpen, stopRecordingRef, i
                                             setInputValue(textBefore + _emoji + textAfter)
 
                                             const newCursorPos = selection + emoji.length;
-                                            // console.log(newCursorPos)
                                             textRef.current.setSelectionRange(newCursorPos, newCursorPos);
 
                                         }

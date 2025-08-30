@@ -59,7 +59,7 @@ function HashtagFeedSection() {
 
     const hashtag = hashtagParam || '';
 
-    // Add reels cursor state
+    
     const reelsCursorRef = useRef(null);
     const [reelsCursor, setReelsCursor] = useState(null);
 
@@ -93,9 +93,9 @@ function HashtagFeedSection() {
         navigate(-1);
     }, [navigate]);
 
-    // Function to navigate to reels screen
+    
     const navigateToReels = useCallback((reel) => {
-        // Navigate to reels screen with the selected reel
+        
         navigate(`/reels/${reel._id}`, {
             state: {
                 sourceMode: 'hashtag-feed',
@@ -105,30 +105,30 @@ function HashtagFeedSection() {
         });
     }, [navigate]);
 
-    // Process flattened data similar to React Native version
+    
     const flattenedData = useMemo(() => {
         if (!data || !data.length) return [];
 
-        // Group reels by page for easier display
+        
         const reelsByPage = {};
 
         return data.flatMap((page, pageIndex) => {
-            // Split posts and reels
+            
             const regularPosts = page.posts || [];
             const reelsSuggestions = page.reels || [];
 
-            // Store reels for this page
+            
             if (reelsSuggestions.length > 0) {
                 reelsByPage[pageIndex] = reelsSuggestions;
 
-                // Update reels cursor if available
+                
                 if (pageIndex === data.length - 1) {
                     const lastReel = reelsSuggestions[reelsSuggestions.length - 1];
                     setReelsCursor(lastReel.createdAt);
                 }
             }
 
-            // Add regular posts with metadata
+            
             const result = regularPosts.map((post, postIndex) => ({
                 ...post,
                 pageIndex,
@@ -136,7 +136,7 @@ function HashtagFeedSection() {
                 isReelsSection: false
             }));
 
-            // Only add reels section if this page has reels
+            
             if (reelsByPage[pageIndex]?.length > 0) {
                 result.push({
                     _id: `reels-section-${pageIndex}`,
@@ -158,9 +158,9 @@ function HashtagFeedSection() {
         })
     }, [])
 
-    // Render individual item (post or reels section)
+    
     const renderItem = useCallback((item, index) => {
-        // Render reels section
+        
         if (item.isReelsSection) {
             return (
                 <ReelsSuggestionSection
@@ -171,11 +171,11 @@ function HashtagFeedSection() {
             );
         }
 
-        // Render regular post
+        
         const isSecondLastItem = index === flattenedData.length - 2;
         const isThirdLastItem = index === flattenedData.length - 3;
 
-        // Trigger fetch on 3rd last item, or 2nd last if there are only 2 items, or last if there's only 1 item
+        
         const shouldAddRef = (
             (flattenedData.length >= 3 && isThirdLastItem) ||
             (flattenedData.length === 2 && isSecondLastItem)
@@ -218,7 +218,6 @@ function HashtagFeedSection() {
                 />
             )}
 
-            {/* Updated to pass both createPost and createReel functions */}
             {searchParams.get("createpost") && (width < 540) ? (
                 <BottomCreatePost
                     setModelTrigger={setPostModal}
@@ -234,7 +233,6 @@ function HashtagFeedSection() {
             )}
 
             <div className='max-w-xl w-full flex flex-col gap-2'>
-                {/* Hashtag Header */}
                 <div className='w-full border border-muted bg-card'>
                     <HashtagHeader
                         isLoading={hashtagDataIsLoading}
@@ -244,7 +242,6 @@ function HashtagFeedSection() {
                 </div>
 
                 <div className='max-w-xl w-full flex flex-col gap-2 relative'>
-                    {/* Feed Content */}
                     <div className='flex w-full items-center flex-col gap-2'>
                         {isLoading &&
                             <ScreenLoader />

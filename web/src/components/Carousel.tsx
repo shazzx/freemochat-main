@@ -1,19 +1,16 @@
 import {
-    CarouselApi,
     Carousel,
     CarouselContent,
     CarouselItem,
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel"
-import { MdCancel, MdRemove } from "react-icons/md"
+import { MdCancel } from "react-icons/md"
 
 function PostCarousel({ postMedia, setPostMedia, selectedMedia, setSelectedMedia }) {
-    // Filter out removed media for display
     const visibleMedia = postMedia.filter(media => !media?.remove);
 
     const handleRemoveMedia = (index) => {
-        // Find the actual index in the original postMedia array
         let actualIndex = 0;
         let visibleIndex = 0;
         
@@ -31,7 +28,6 @@ function PostCarousel({ postMedia, setPostMedia, selectedMedia, setSelectedMedia
         _postMedia[actualIndex] = { ..._postMedia[actualIndex], remove: true };
         setPostMedia(_postMedia);
 
-        // Also remove from selectedMedia if it exists there
         if (selectedMedia && setSelectedMedia) {
             const mediaToRemove = _postMedia[actualIndex];
             const updatedSelectedMedia = selectedMedia.filter(media => 
@@ -40,7 +36,6 @@ function PostCarousel({ postMedia, setPostMedia, selectedMedia, setSelectedMedia
             setSelectedMedia(updatedSelectedMedia);
         }
 
-        // Clear file inputs to allow re-selection of the same files
         const imageInput = document.getElementById('post-image');
         const videoInput = document.getElementById('post-video');
         if (imageInput) imageInput['value'] = '';

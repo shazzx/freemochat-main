@@ -1,3 +1,5 @@
+// deprecated
+
 import { BadRequestException, Body, Controller, Get, ParseFilePipe, Post, Req, Request, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from './upload/upload.service';

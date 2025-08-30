@@ -34,12 +34,12 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
     });
     const navigate = useNavigate()
 
-    // console.log(groupDetails)
+    
     const groupName = useRef<HTMLInputElement>()
     const groupDescription = useRef<HTMLTextAreaElement>()
 
     const onSubmit = async (groupData) => {
-        // console.log(editState, 'editstate')
+        
         if (editState) {
             editGroup({ groupData, imageUpload, coverImageUpload })
             return
@@ -50,7 +50,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
     const { user } = useAppSelector(state => state.user)
 
     const userFriends = useUserFriends(user._id, groupDetails?.groupId)
-    // console.log(groupDetails)
+    
 
     const [addMemberState, setAddMemberState] = useState(false)
     const { data, isLoading } = useGroupMembers(groupDetails?.groupId)
@@ -63,7 +63,7 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
         <div className='absolute top-0 right-0 w-screen z-10 sm:p-8 overflow-hidden h-screen flex items-center justify-center'>
             <div className='absolute top-0 right-0 backdrop-blur-[1.5px] w-full h-full' onClick={() => {
                 navigate('', { replace: true })
-                // setModelTrigger(false)
+                
             }}></div>
             {
                 imageUpload && cropperModel &&
@@ -85,7 +85,6 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
             <div className='z-10 max-w-[460px] w-full bg-background rounded-lg h-full  border-2 border-accent overflow-auto'>
                 <div className="grid gap-8 p-1  overflow-y-auto relative">
                     <div className="flex flex-col items-center justify-center relative">
-                        {/* cover image */}
                         <div className='relative w-full max-h-72 roundd-md  overflow-hidden'>
                             <MdClose className="absolute right-1 top-1" size={24} cursor="pointer" onClick={() => {
                                 navigate('', { replace: true })
@@ -122,7 +121,6 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                             </div>
 
                         </div>
-                        {/* profile image */}
                         <div className='w-28 h-28 rounded-xl absolute -bottom-16 border-primary border-2 overflow-hidden'>
                             <div >
                                 <label htmlFor="image-profile" className="cursor-pointer">
@@ -192,9 +190,6 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                 </div>
                             </div>
                             <div className="w-full flex justify-end" onClick={() => {
-                                if (currentTab !== "groups") {
-                                    // setCurrentTab("groups")
-                                }
                             }}>
 
                                 {!editState && <Button type="submit" >Create</Button>}
@@ -207,7 +202,6 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                     <div>
                         {editState &&
                             !chatGroup.isLoading && chatGroup?.data?.admins?.map((admin) => {
-                                // console.log(admin._id, chatGroup.data.user)
                                 if (admin?._id == chatGroup.data.user) {
                                     return (
                                         <div className='flex flex-col gap-1 w-full bg-card' key={admin?._id}>
@@ -264,7 +258,6 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md' >
                                                     <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' onClick={() => {
-                                                        // console.log('admin remove')
                                                         groupMemberToggle.mutate({ userId: admin._id, type: "chatgroup" })
 
                                                     }}>
@@ -292,7 +285,6 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                         {!isLoading && data.map((page, pageIndex) => {
                             return page.members.map((memberData, userIndex) => {
                                 if (memberData?.isAdmin) {
-                                    // console.log('yes')
                                     return null
                                 }
                                 return (
@@ -324,8 +316,6 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                                     <DropdownMenuContent align="end" className='border-2 z-50 border-accent cursor-pointer relative top-2 bg-card rounded-md'>
                                                         <DropdownMenuItem className='cursor-pointer hover:bg-accent flex gap-2 p-2 items-center' onClick={() => {
                                                             groupMemberToggle.mutate({ userId: memberData.user._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'remove' })
-                                                            // socket.emit("toggleJoin", { userId: memberData.user._id, groupId: chatGroup.data._id, memberUsername: memberData.user.username, adminUsername: user.username })
-                                                            // console.log('user remove')
                                                         }}  >
                                                             <RiUserUnfollowLine size={22} />
                                                             <span>Remove User</span>
@@ -358,7 +348,6 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                     {chatGroup?.data?.user !== user._id
                         &&
                         <div onClick={() => {
-                            // socket.emit("toggleJoin", { userId: user._id, groupId: chatGroup.data._id, memberUsername: user.username, type: "leave" })
                                 
                             setChatOpen(false)
                             navigate('', { replace: true })
@@ -406,8 +395,6 @@ const CreateChatGroup: FC<any> = ({ currentTab, createGroup, editGroup, editStat
                                                     <Button onClick={() => {
 
                                                         groupMemberToggle.mutate({ userId: friend._id, pageIndex, userIndex, type: "chatgroup", toggleState: 'add' })
-                                                        // socket.emit("toggleJoin", { userId: friend._id, groupId: chatGroup.data._id, memberUsername: friend.username, adminUsername: user.username })
-                                                        // console.log('adding')
                                                     }}>
                                                         Add
                                                     </Button>}

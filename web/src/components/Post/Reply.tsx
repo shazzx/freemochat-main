@@ -23,7 +23,6 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
     const { user } = useAppSelector((state) => state.user);
     const deleteReply = useDeleteReply(reply?.parentId, postId);
 
-    // Find reaction index if there's a reaction
     let reactionIndex = reply?.reaction ? reactions.findIndex((reaction) => {
         if (reaction.name === reply.reaction) {
             return reaction;
@@ -64,17 +63,17 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
     };
 
     const handleTouchStart = (e) => {
-        e.preventDefault(); // Prevent mouse events from firing
+        e.preventDefault(); 
         handleMouseDown(e.touches[0]);
     };
 
     const handleTouchEnd = (e) => {
-        e.preventDefault(); // Prevent mouse events from firing
+        e.preventDefault(); 
         handleMouseUp(e.changedTouches[0]);
     };
 
     const handleTouchCancel = (e) => {
-        e.preventDefault(); // Prevent mouse events from firing
+        e.preventDefault(); 
         handleMouseLeave(e.changedTouches[0]);
     };
 
@@ -233,7 +232,7 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className='bg-card p-2 rounded-md'>
                                             <DropdownMenuItem className='cursor-pointer' onClick={async () => {
-                                                // same comment model is used for reply
+                                                
                                                 setEditCommentModelState(!editCommentModelState)
                                                 
                                                 setCommentDetails({ 
@@ -241,9 +240,9 @@ const Reply: FC<any> = ({ reply, pageIndex, replyIndex, postId, userId, ref, set
                                                     replyId: reply._id, 
                                                     pageIndex, 
                                                     replyIndex,
-                                                    mentions: reply?.mentions || [], // Pass the mentions directly
+                                                    mentions: reply?.mentions || [], 
                                                     mentionReferences: reply?.mentionReferences || [],
-                                                    commentId: reply.parentId // This is needed to identify this as a reply edit
+                                                    commentId: reply.parentId 
                                                 })
                                             }}>Edit</DropdownMenuItem>
                                             <DropdownMenuItem className='cursor-pointer' onClick={async () => {

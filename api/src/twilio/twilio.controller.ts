@@ -22,7 +22,6 @@ export class TwilioController {
       from: 'freedombook99@gmail.com',
       subject: "test subject",
       text: 'test',
-      // html: emailData.html,
     };
     return this.twilioService.sendEmail(mail);
   };

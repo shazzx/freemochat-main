@@ -63,10 +63,7 @@ const ImageCropper = ({image, setCropperModel, aspect, _onCropComplete}) => {
     if (croppedAreaPixels && image) {
       try {
         const croppedImage = await getCroppedImg(image, croppedAreaPixels);
-        
         _onCropComplete(croppedImage)
-
-        // Example of sending to server (replace with your actual API endpoint)
       } catch (e) {
         console.error('Error creating or uploading cropped image:', e);
       }

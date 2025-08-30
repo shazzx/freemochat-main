@@ -32,7 +32,6 @@ export class AccountManagementService {
         return this.userService.updateUser(userId, { isActive: true })
     }
 
-    // it just checks the account suspension status not the account activation or deactivation status because that's verified on 
     async getAccountStatus(userId: string) {
         const user = await this.userService.getRawUser(userId)
         const isSuspended = await this.suspensionModel.findOne({ userId: new Types.ObjectId(userId) })

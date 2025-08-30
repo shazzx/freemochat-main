@@ -210,8 +210,8 @@ export class UserChatListService {
             },
             {
                 upsert: true,
-                new: true, // This is equivalent to returnDocument: 'after' in the Node.js driver
-                runValidators: true // This ensures that any schema validators are run on insert
+                new: true,
+                runValidators: true
             }
         );
         return removedChat
@@ -245,8 +245,6 @@ export class UserChatListService {
                 let onlineStatus = await this.cacheService.isUserOnline(_chat.recepient._id.toString())
                 return { ..._chat, onlineStatus }
             }))
-            // console.log(onlineStatusIntegeration)
-
 
             const groups = await this.userChatListModel.find({ user: userId, type: 'ChatGroup' }).populate({
                 path: "recepient",

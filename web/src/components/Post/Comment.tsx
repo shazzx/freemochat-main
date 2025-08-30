@@ -22,7 +22,6 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
 
     let [likeParentComment, setLikeParentComment] = useState(comment?.isLikedByUser);
 
-    // Find reaction index if there's a reaction
     let reactionIndex = comment?.reaction ? reactions.findIndex((reaction) => {
         if (reaction.name === comment.reaction) {
             return reaction;
@@ -63,17 +62,17 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
     };
 
     const handleTouchStart = (e) => {
-        e.preventDefault(); // Prevent mouse events from firing
+        e.preventDefault(); 
         handleMouseDown(e.touches[0]);
     };
     
     const handleTouchEnd = (e) => {
-        e.preventDefault(); // Prevent mouse events from firing
+        e.preventDefault(); 
         handleMouseUp(e.changedTouches[0]);
     };
     
     const handleTouchCancel = (e) => {
-        e.preventDefault(); // Prevent mouse events from firing
+        e.preventDefault(); 
         handleMouseLeave(e.changedTouches[0]);
     };
 
@@ -246,7 +245,7 @@ const Comment: FC<any> = ({ fetchNextPage, reply, comment, pageIndex, commentInd
                                                     commentId: comment?._id, 
                                                     pageIndex, 
                                                     commentIndex,
-                                                    mentions: comment?.mentions || [], // Pass the mentions directly
+                                                    mentions: comment?.mentions || [],
                                                     mentionReferences: comment?.mentionReferences || []
                                                 })
                                             }}>Edit</DropdownMenuItem>

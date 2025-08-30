@@ -35,10 +35,8 @@ export class FriendService {
                 let friendID = friendId.toString()
                 const isOnline = await this.cacheService.isUserOnline(friendID)
                 if (isOnline) {
-                    // await this.cacheService.addOnlineFriend(userId, friendID)
                     return friendID
                 }
-                // await this.cacheService.removeOnlineFriend(userId, friendID)
                 return null
             })
         )

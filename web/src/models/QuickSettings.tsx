@@ -30,32 +30,32 @@ import { toast } from "react-toastify"
 
 const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
-    // profile stats
+    
     let [profileLocalUrl, setProfileLocalUrl] = useState(undefined)
     let [profileForCrop, setProfileForCrop] = useState(undefined)
     let [profileUploadBlob, setProfileUploadBlob] = useState(undefined)
 
-    // cover status
+    
     let [coverLocalUrl, setCoverLocalUrl] = useState(undefined)
     let [coverForCrop, setCoverForCrop] = useState(undefined)
     let [coverUploadBlob, setCoverUploadBlob] = useState(undefined)
 
-    // other states
+    
     let [uploadImageState, setUploadImageState] = useState(false)
     let [cropperModel, setCropperModel] = useState(false)
 
-    // Modal states
+    
     const [changeCountryModel, setChangeCountryModel] = useState(false)
     const [changePhoneModel, setChangePhoneModel] = useState(false)
     const [changeEmailModel, setChangeEmailModel] = useState(false)
     const [changePasswordModel, setChangePasswordModel] = useState(false)
     const [forgetPasswordModel, setForgetPasswordModel] = useState(false)
 
-    // Form states
+    
     const [educationFormOpen, setEducationFormOpen] = useState(false)
     const [workExperienceFormOpen, setWorkExperienceFormOpen] = useState(false)
 
-    // Edit states
+    
     const [currentEditingEducation, setCurrentEditingEducation] = useState(null)
     const [currentEditingWorkExperience, setCurrentEditingWorkExperience] = useState(null)
 
@@ -64,7 +64,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
 
     const dispatch = useAppDispatch()
 
-    // references
+    
     const usernameRef = useRef<HTMLInputElement>()
     const bioRef = useRef<HTMLTextAreaElement>()
     const firstnameRef = useRef<HTMLInputElement>()
@@ -81,7 +81,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     const coverInputRef = useRef<HTMLInputElement>(null)
     const profileInputRef = useRef<HTMLInputElement>(null)
 
-    // Date state
+    
     const [date, setDate] = useState<Date | undefined>(dateOfBirth ? new Date(dateOfBirth) : undefined)
 
     const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
@@ -98,7 +98,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
         }
     }, [handleWatch, setValue]);
 
-    // Handle editing education
+    
     const editEducation = (index) => {
         setCurrentEditingEducation({
             data: user.education[index],
@@ -107,7 +107,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
         setEducationFormOpen(true);
     };
 
-    // Handle editing work experience
+    
     const editWorkExperience = (index) => {
         setCurrentEditingWorkExperience({
             data: user.workExperience[index],
@@ -116,19 +116,19 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
         setWorkExperienceFormOpen(true);
     };
 
-    // Handle education save (add or update)
+    
     const handleEducationSave = async (educationData, isEdit) => {
         try {
             let updatedEducation;
 
             if (isEdit && currentEditingEducation) {
-                // Update existing item at index
+                
                 updatedEducation = [...(user.education || [])];
                 updatedEducation[currentEditingEducation.index] = educationData;
 
                 toast.success("Education updated successfully");
             } else {
-                // Add new item
+                
                 updatedEducation = [...(user.education || []), educationData];
 
                 toast.success("Education added successfully");
@@ -137,7 +137,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
             dispatch(updateUser({ ...user, education: updatedEducation }));
             const isUpdated = await uploadSingle(null, null, { education: updatedEducation }, true);
 
-            // Reset the current editing state
+            
             setCurrentEditingEducation(null);
 
             return isUpdated;
@@ -148,19 +148,19 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
         }
     };
 
-    // Handle work experience save (add or update)
+    
     const handleWorkExperienceSave = async (workData, isEdit) => {
         try {
             let updatedWorkExperience;
 
             if (isEdit && currentEditingWorkExperience) {
-                // Update existing item at index
+                
                 updatedWorkExperience = [...(user.workExperience || [])];
                 updatedWorkExperience[currentEditingWorkExperience.index] = workData;
 
                 toast.success("Work experience updated successfully");
             } else {
-                // Add new item
+                
                 updatedWorkExperience = [...(user.workExperience || []), workData];
 
                 toast.success("Work experience added successfully");
@@ -169,7 +169,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
             dispatch(updateUser({ ...user, workExperience: updatedWorkExperience }));
             const isUpdated = await uploadSingle(null, null, { workExperience: updatedWorkExperience }, true);
 
-            // Reset the current editing state
+            
             setCurrentEditingWorkExperience(null);
 
             return isUpdated;
@@ -180,7 +180,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
         }
     };
 
-    // Remove education item
+    
     const removeEducation = async (index) => {
         try {
             const updatedEducation = [...(user.education || [])];
@@ -196,7 +196,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
         }
     };
 
-    // Remove work experience item
+    
     const removeWorkExperience = async (index) => {
         try {
             const updatedWorkExperience = [...(user.workExperience || [])];
@@ -215,7 +215,7 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
     const onSubmit = async (data) => {
         console.log(data)
 
-        // Add date of birth if set
+        
         if (date) {
             data.dateOfBirth = date.toISOString();
         }
@@ -430,7 +430,6 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                     </div>
                                 </div>
 
-                                {/* Website Field */}
                                 <div className="w-full">
                                     <div className="w-full">
                                         <Label>
@@ -449,7 +448,6 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                     </div>
                                 </div>
 
-                                {/* Date of Birth Field */}
                                 <div className="w-full">
                                     <Label>Date of Birth</Label>
                                     <Popover>
@@ -474,7 +472,6 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                     </Popover>
                                 </div>
 
-                                {/* Marital Status */}
                                 <div className="w-full">
                                     <Label>Marital Status</Label>
                                     <Select defaultValue={maritalStatus || "single"} onValueChange={(value: any) => setValue("maritalStatus", value)}>
@@ -488,7 +485,6 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                     </Select>
                                 </div>
 
-                                {/* Social Media Section */}
                                 <div className="w-full mt-4">
                                     <h3 className="text-lg font-medium mb-2">Social Media</h3>
 
@@ -641,7 +637,6 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                 </div>
                             </div>
 
-                            {/* Education Section */}
                             <div className="w-full flex flex-col gap-2">
                                 <div className="flex items-center gap-2">
                                     <h2>Education</h2>
@@ -682,7 +677,6 @@ const QuickSettings: FC<any> = ({ user, uploadSingle }) => {
                                 </div>
                             </div>
 
-                            {/* Work Experience Section */}
                             <div className="w-full flex flex-col gap-2">
                                 <div className="flex items-center gap-2">
                                     <h2>Work Experience</h2>

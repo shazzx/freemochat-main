@@ -126,12 +126,10 @@ export class SearchService {
     return users;
   }
 
-  // NEW: Get trending hashtags
   async getTrendingHashtags(limit: number = 5) {
     return this.hashtagService.getTrendingHashtags(limit);
   }
 
-  // NEW: Search hashtags with suggestions
   async searchHashtagSuggestions(query: string, limit: number = 10) {
     const cleanQuery = query.replace('#', '');
     if (!cleanQuery) return [];
@@ -139,7 +137,6 @@ export class SearchService {
     return this.hashtagService.searchHashtags(cleanQuery, limit);
   }
 
-  // NEW: Get hashtag details
   async getHashtagDetails(hashtagName: string) {
     return this.hashtagService.getHashtagByName(hashtagName);
   }

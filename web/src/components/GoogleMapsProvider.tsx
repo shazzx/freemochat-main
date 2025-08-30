@@ -16,16 +16,16 @@ export const GoogleMapsProvider: React.FC<{ children: React.ReactNode; apiKey: s
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if Google Maps is already loaded
+    
     if (window.google && window.google.maps) {
       setIsLoaded(true);
       return;
     }
 
-    // Check if script is already loading
+    
     const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
     if (existingScript) {
-      // Script is already loading, wait for it
+      
       const checkLoaded = () => {
         if (window.google && window.google.maps) {
           setIsLoaded(true);
@@ -37,7 +37,7 @@ export const GoogleMapsProvider: React.FC<{ children: React.ReactNode; apiKey: s
       return;
     }
 
-    // Load Google Maps script
+    
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
     script.async = true;

@@ -40,24 +40,6 @@ export class LocationService {
     ]
 
     return await this.locationModel.bulkWrite(docs)
-    // await this.locationModel.findOneAndUpdate(
-    //     { name: country, type: AddressTypes.COUNTRY },
-    //     {
-    //         $setOnInsert: { name: city, type: city },
-    //     },
-    //     { upsert: true })
-    // await this.locationModel.findOneAndUpdate(
-    //     { name: city, country, type: AddressTypes.CITY },
-    //     {
-    //         $setOnInsert: { name: city, type: city },
-    //     },
-    //     { upsert: true })
-    // await this.locationModel.findOneAndUpdate(
-    //     { name: city, country, type: AddressTypes.CITY },
-    //     {
-    //         $setOnInsert: { name: city, type: city },
-    //     },
-    //     { upsert: true })
   }
 
   async isValidAddress({ country, city }: { country: string, city: string }) {
@@ -73,19 +55,19 @@ export class LocationService {
   async isValidRegisteredAddress({ country, city, area }: { country?: string, city?: string, area?: string }) {
     const isValidCountry = await this.locationModel.findOne({ name: country, type: AddressTypes.COUNTRY })
 
-    if(!isValidCountry){
+    if (!isValidCountry) {
       throw new BadRequestException(Address.INVALID)
     }
 
-    if(city){
+    if (city) {
       const isValidCity = await this.locationModel.findOne({ name: city, country, type: AddressTypes.CITY })
 
-      if(!isValidCity){
+      if (!isValidCity) {
         throw new BadRequestException(Address.INVALID)
       }
     }
 
-    if(area){
+    if (area) {
       const isValidArea = await this.locationModel.findOne({ name: area, city, type: AddressTypes.AREA })
       if (!isValidArea) {
         throw new BadRequestException(Address.INVALID)
@@ -119,14 +101,4 @@ export class LocationService {
     const areas = await this.locationModel.find({ type: AddressTypes.AREA, city }).sort({ name: 1 }).collation({ locale: LANGUAGES.ENGLISH, caseLevel: true })
     return areas
   }
-
-  // async seedCountries() {
-  //   await this.citiesModel.create([
-  //     { name: "Karachi", country: "Pakistan" },
-  //     { name: "Islamabad", country: "Pakistan" },
-  //     { name: "Washington", country: "United States America" }
-  //   ])
-  //   return true
-  // }
-
 }

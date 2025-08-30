@@ -13,7 +13,7 @@ function ProtectedRoute() {
     const { user } = useAppSelector((state) => state.user)
     const navigate = useNavigate()
     const location = useLocation()
-    // console.log(location.pathname == '/login')
+    
 
 
 
@@ -23,19 +23,19 @@ function ProtectedRoute() {
             try {
                 let response = await axiosClient.get("user")
                 if (response.status == 200) {
-                    // setTimeout(() => {
+                    
                     dispatch(setUser(response.data))
                     console.log('timout')
                     setIsFetched(true)
-                    // }, 5000);
+                    
                     if (location.pathname == "/login") {
                         return navigate("/")
                     }
                 } else {
-                    // setTimeout(() => {
+                    
                     setIsFetched(true)
                     dispatch(logout())
-                    // }, 5000);
+                    
                     return navigate('/login')
 
                 }

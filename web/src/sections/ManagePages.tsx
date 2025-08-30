@@ -64,28 +64,28 @@ export function ManagePages() {
     const updatePageMutation = useUpdatePage()
 
     const columns = [
-        // {
-        //     id: "select",
-        //     header: ({ table }) => (
-        //         <Checkbox
-        //             checked={
-        //                 table.getIsAllPageRowsSelected() ||
-        //                 (table.getIsSomePageRowsSelected() && "indeterminate")
-        //             }
-        //             onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        //             aria-label="Select all"
-        //         />
-        //     ),
-        //     cell: ({ row }) => (
-        //         <Checkbox
-        //             checked={row.getIsSelected()}
-        //             onCheckedChange={(value) => row.toggleSelected(!!value)}
-        //             aria-label="Select row"
-        //         />
-        //     ),
-        //     enableSorting: false,
-        //     enableHiding: false,
-        // },
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         {
             accessorKey: "name",
             header: ({ column }) => {
@@ -154,7 +154,7 @@ export function ManagePages() {
         React.useState<VisibilityState>({})
     const [rowSelection, setRowSelection] = React.useState({})
 
-    // console.log(data)
+    
     const table = useReactTable({
         data,
         columns,
@@ -178,7 +178,7 @@ export function ManagePages() {
     const [modelState, setModelState] = useState(false)
 
     const removePage = async (_data) => {
-        // console.log(_data.row.original._id, _data.row.index, _data.row.original.images)
+        
         if (_data.row.original._id == null || _data.row.original.isUploaded == false) {
             toast.info('please wait...')
             return
