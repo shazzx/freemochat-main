@@ -66,7 +66,7 @@ const EnvironmentalContributorTag: React.FC<EnvironmentalContributorTagProps> = 
     <>
       <button
         onClick={() => setModalVisible(true)}
-        className="flex items-center bg-white px-[2px] py-[2px] rounded-2xl border border-green-100 hover:bg-green-50 transition-colors duration-200 shadow-sm"
+        className="flex items-center bg-white p-1 rounded-2xl border border-green-100 hover:bg-green-50 transition-colors duration-200 shadow-sm"
       >
         <div className="flex items-center">
           {activeContributorTypes.map((item, index) => {

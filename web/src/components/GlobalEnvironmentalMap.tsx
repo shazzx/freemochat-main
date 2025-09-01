@@ -7,6 +7,7 @@ import CountryContributionsModal from './CountryContributionsModal';
 import { debouncedCountrySearch } from '@/lib/utils';
 import { domain } from '@/config/domain';
 import { Link } from 'react-router-dom';
+import { useGlobalEnvironmentalContributionsCount } from '@/hooks/Post/usePost';
 
 interface MapData {
   type: 'clustered' | 'individual';
@@ -109,7 +110,7 @@ const mapOptions = {
 
 const getCategoryConfig = (category: string) => {
   const baseConfig = {
-    plantation: { icon: TreePine, color: '#4CAF50', name: 'Trees', singular: 'Tree' },
+    plantation: { icon: TreePine, color: '#4CAF50', name: 'Plants', singular: 'Plant' },
     garbage_collection: { icon: Trash2, color: '#FF9800', name: 'Bins', singular: 'Bin' },
     water_ponds: { icon: Droplets, color: '#2196F3', name: 'Ponds', singular: 'Pond' },
     rain_water: { icon: CloudRain, color: '#00BCD4', name: 'Harvesters', singular: 'Harvester' },
@@ -215,7 +216,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   visible = true,
   onClose
 }) => {
-  
+
   const [currentRegion, setCurrentRegion] = useState<MapRegion | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
   const [googleMapsReady, setGoogleMapsReady] = useState(false);
@@ -224,16 +225,11 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'plantation' | 'garbage_collection' | 'water_ponds' | 'rain_water'>('plantation');
   const [mapData, setMapData] = useState<MapData | null>(null);
-  const [globalCounts, setGlobalCounts] = useState<GlobalMapCounts | null>({
-    totalPosts: 0,
-    totalElements: 0,
-    categories: {
-      plantation: { posts: 0, totalTrees: 0 },
-      garbage_collection: { posts: 0, totalBins: 0 },
-      water_ponds: { posts: 0, totalPonds: 0 },
-      rain_water: { posts: 0, totalHarvesters: 0 }
-    }
-  });
+  const {
+    data: globalCounts,
+    isLoading,
+  } = useGlobalEnvironmentalContributionsCount()
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -241,7 +237,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  
+
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
   const [showElementModal, setShowElementModal] = useState(false);
   const [activeMarker, setActiveMarker] = useState<any>(null);
@@ -249,13 +245,13 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   const [isLoadingElementDetails, setIsLoadingElementDetails] = useState(false);
   const [showCountryContributions, setShowCountryContributions] = useState(false);
 
-  
+
   const searchTimeoutRef = useRef<NodeJS.Timeout>(null);
   const dataFetchTimeoutRef = useRef<NodeJS.Timeout>(null);
   const lastFetchedBoundsRef = useRef<string>('');
   const mapRef = useRef<google.maps.Map>(null);
 
-  
+
   useEffect(() => {
     const checkGoogleMaps = () => {
       if (window.google && window.google.maps) {
@@ -269,14 +265,14 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     if (!checkGoogleMaps()) {
       console.log('Waiting for Google Maps to load...');
 
-      
+
       const interval = setInterval(() => {
         if (checkGoogleMaps()) {
           clearInterval(interval);
         }
       }, 100);
 
-      
+
       const timeout = setTimeout(() => {
         clearInterval(interval);
         if (!window.google || !window.google.maps) {
@@ -291,7 +287,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     }
   }, []);
 
-  
+
   useEffect(() => {
     const initializeLocation = async () => {
       if (!visible) return;
@@ -306,7 +302,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
             navigator.geolocation.getCurrentPosition(resolve, reject, {
               timeout: 5000,
               enableHighAccuracy: false,
-              maximumAge: 300000 
+              maximumAge: 300000
             });
           });
 
@@ -336,10 +332,9 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     };
 
     initializeLocation();
-    fetchGlobalCounts();
   }, [visible]);
 
-  
+
   useEffect(() => {
     if (visible && currentRegion && googleMapsReady && isInitialLoad) {
       console.log('Everything ready, fetching initial data...');
@@ -347,43 +342,6 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
       fetchMapData();
     }
   }, [visible, currentRegion, googleMapsReady, selectedCategory, isInitialLoad]);
-
-  
-  const fetchGlobalCounts = useCallback(async () => {
-    const defaultCounts = {
-      totalPosts: 0,
-      totalElements: 0,
-      categories: {
-        plantation: { posts: 0, totalTrees: 0 },
-        garbage_collection: { posts: 0, totalBins: 0 },
-        water_ponds: { posts: 0, totalPonds: 0 },
-        rain_water: { posts: 0, totalHarvesters: 0 }
-      }
-    };
-
-    try {
-      console.log('Fetching global element counts...');
-      const { data, status } = await axiosClient.get('/posts/global-map/counts');
-
-      if (status === 200) {
-        console.log('Global element counts received:', data);
-        setGlobalCounts({
-          ...defaultCounts,
-          ...data,
-          categories: { ...defaultCounts.categories, ...data?.categories }
-        });
-      } else {
-        throw new Error(`API returned status: ${status}`);
-      }
-    } catch (error) {
-      console.error('Error fetching global counts:', error);
-      setGlobalCounts(defaultCounts);
-
-      if (error.response?.status >= 500) {
-        console.warn('Server error fetching global element counts');
-      }
-    }
-  }, []);
 
   const fetchMapData = useCallback(async () => {
     if (!currentRegion) {
@@ -492,16 +450,16 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     }
   }, []);
 
-  
+
   const handleMarkerClick = useCallback((element: any, isCluster: boolean = false) => {
     if (isCluster && element.count > 1) {
-      
+
       const newCenter = { lat: element.center.latitude, lng: element.center.longitude };
       const newZoom = Math.min(mapZoom + 3, 18);
       setMapCenter(newCenter);
       setMapZoom(newZoom);
 
-      
+
       setCurrentRegion({
         latitude: element.center.latitude,
         longitude: element.center.longitude,
@@ -509,7 +467,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
         longitudeDelta: Math.max(currentRegion.longitudeDelta / 3, 0.01),
       });
     } else {
-      
+
       const elementToShow = isCluster ? element.elements[0] : element;
       setActiveMarker(elementToShow);
       setShowInfoWindow(true);
@@ -571,16 +529,16 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     }
   }, [currentRegion, isInitialLoad]);
 
-  
+
   const getCurrentCategoryTotals = () => {
-    if (!globalCounts) return { posts: 0, elements: 0, label: 'Elements' };
+    if (!isLoading && !globalCounts) return { posts: 0, elements: 0, label: 'Elements' };
 
     switch (selectedCategory) {
       case 'plantation':
         return {
           posts: globalCounts.categories.plantation.posts,
           elements: globalCounts.categories.plantation.totalTrees,
-          label: 'Trees'
+          label: 'Plants'
         };
       case 'garbage_collection':
         return {
@@ -610,11 +568,11 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
   };
 
   const getElementSpecificData = (element: any) => {
-    
+
     if (element.elementSummary && element.postType) {
       if (element.postType === 'plantation') {
         return {
-          type: 'Tree',
+          type: 'Plant',
           details: [
             { label: 'Species', value: element.elementSummary.species || 'Unknown' },
             { label: 'Type', value: element.elementSummary.type || 'Unknown' },
@@ -654,10 +612,10 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
       }
     }
 
-    
+
     if (element.plantationData) {
       return {
-        type: 'Tree',
+        type: 'Plant',
         details: [
           { label: 'Species', value: element.plantationData.species || 'Unknown' },
           { label: 'Type', value: element.plantationData.type || 'Unknown' },
@@ -740,7 +698,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
     }
   };
 
-  
+
   useEffect(() => {
     if (!isInitialLoad && visible && currentRegion && googleMapsReady) {
       if (dataFetchTimeoutRef.current) {
@@ -786,7 +744,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
 
   if (!visible) return null;
 
-  
+
   if (locationLoading || !currentRegion || !googleMapsReady) {
     return (
       <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
@@ -870,7 +828,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
             const IconComponent = config.icon;
 
             let elementCount = 0;
-            if (globalCounts) {
+            if (!isLoading && globalCounts) {
               switch (category) {
                 case 'plantation':
                   elementCount = globalCounts.categories.plantation.totalTrees;
@@ -993,7 +951,7 @@ const GlobalEnvironmentalMap: React.FC<GlobalEnvironmentalMapProps> = ({
           </div>
         )}
 
-        {globalCounts && (
+        {(!isLoading && globalCounts) && (
           <div className="absolute bottom-4 left-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-10">
             <div className="flex justify-between items-center mb-3">
               <div className="text-sm font-semibold text-gray-900 dark:text-white">Environmental Impact</div>

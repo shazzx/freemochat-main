@@ -102,3 +102,22 @@ export async function fetchHashtag(hashtag: string) {
   const { data } = await axiosClient.get("hashtag", { params: { name: hashtag } })
   return data
 }
+
+
+// environmental contributions
+
+export const fetchGlobalCounts = async () => {
+  const defaultCounts = {
+    totalPosts: 0,
+    totalElements: 0,
+    categories: {
+      plantation: { posts: 0, totalTrees: 0 },
+      garbage_collection: { posts: 0, totalBins: 0 },
+      water_ponds: { posts: 0, totalPonds: 0 },
+      rain_water: { posts: 0, totalHarvesters: 0 }
+    }
+  };
+
+  const { data } = await axiosClient.get('/posts/global-map/counts');
+  return { ...defaultCounts, ...data }
+};

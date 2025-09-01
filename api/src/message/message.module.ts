@@ -11,7 +11,18 @@ import { ChatModule } from 'src/chat/chat.module';
 import { MessageSoftDelete, MessageSoftDeleteSchema } from 'src/schema/chatsoftdelete';
 
 @Module({
-  imports: [AuthModule, forwardRef(() => ChatModule), ChatlistModule, forwardRef(() => UploadModule), JwtModule, MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }, { name: MessageSoftDelete.name, schema: MessageSoftDeleteSchema }])],
+  imports: [
+    AuthModule,
+    forwardRef(() => ChatModule),
+    ChatlistModule,
+    forwardRef(() => UploadModule),
+    JwtModule,
+    MongooseModule.forFeature(
+      [
+        { name: Message.name, schema: MessageSchema },
+        { name: MessageSoftDelete.name, schema: MessageSoftDeleteSchema }
+      ]
+    )],
   controllers: [MessageController],
   providers: [MessageService],
   exports: [MessageService]

@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { toast } from 'react-toastify';
 import { produce } from 'immer'
-import { bookmarkPost, createPost, createSharedPost, fetchFeed, fetchHashtag, fetchHashtagsFeed, fetchPost, fetchPostLikes, fetchPosts, likePost, promotePost, removePost, updatePost } from '@/api/Post/posts';
+import { bookmarkPost, createPost, createSharedPost, fetchFeed, fetchGlobalCounts, fetchHashtag, fetchHashtagsFeed, fetchPost, fetchPostLikes, fetchPosts, likePost, promotePost, removePost, updatePost } from '@/api/Post/posts';
 import { UrlObject } from 'url';
 import { axiosClient } from '@/api/axiosClient';
 import { redirectToCheckout } from '@/utils/redirectToCheckout';
@@ -120,8 +120,8 @@ export const useLikeHashtagsFeedPost = (hashtag: string) => {
     },
 
     onSettled: (data) => {
-      
-      
+
+
     }
   })
 
@@ -172,8 +172,8 @@ export const useBookmarkHashtagsFeedPost = (hashtag: string) => {
 
     onSettled: (data) => {
       queryClient.invalidateQueries({ queryKey: ['hashtags-feed', hashtag] })
-      
-      
+
+
     }
   })
 
@@ -283,8 +283,8 @@ export function useUserPosts(type: string, targetId: string, isSelf): any {
 
 
 export interface MentionReference {
-  _id: string;       
-  username: string;  
+  _id: string;
+  username: string;
   firstname: string;
   lastname: string;
   profile: string;
@@ -316,16 +316,16 @@ export const useCreatePost = (key: string, targetId?: string) => {
             return draft
           }
 
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
+
+
+
+
+
+
+
+
+
+
         })
         return updatedPosts
       });
@@ -338,16 +338,16 @@ export const useCreatePost = (key: string, targetId?: string) => {
             return draft
           }
 
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
+
+
+
+
+
+
+
+
+
+
         })
         return updatedPosts
       });
@@ -365,27 +365,27 @@ export const useCreatePost = (key: string, targetId?: string) => {
         queryClient.invalidateQueries({ queryKey: [key, targetId] })
         queryClient.invalidateQueries({ queryKey: ['feed'] })
       }
-      
-      
 
-      
-      
-      
-      
 
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
       return
     }
@@ -427,16 +427,16 @@ export const useCreateSharedPost = (key: string, targetId?: string) => {
             return draft
           }
 
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
+
+
+
+
+
+
+
+
+
+
         })
         return updatedPosts
       });
@@ -444,22 +444,22 @@ export const useCreateSharedPost = (key: string, targetId?: string) => {
       queryClient.setQueryData([key, targetId], (pages: any) => {
         const updatedPosts = produce(pages, (draft: any) => {
           if (draft?.pages && draft?.pages[0].posts) {
-            
+
 
             draft.pages[0].posts.unshift({ isBookmarkedByUser: false, isLikedByUser: false, content, createdAt: Date.now(), type, target: target, user: user._id, sharedPost, media: null, isUploaded: null })
             return draft
           }
 
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
+
+
+
+
+
+
+
+
+
+
         })
         return updatedPosts
       });
@@ -467,8 +467,8 @@ export const useCreateSharedPost = (key: string, targetId?: string) => {
     },
 
     onError: (err, newComment, context) => {
-      
-      
+
+
       queryClient.setQueryData([key, targetId], context.previousPosts)
     },
     onSettled: (data) => {
@@ -567,7 +567,7 @@ export const useUpdatePost = (key, id: string) => {
     },
 
 
-    onMutate: async ({ postId, postIndex, pageIndex, content, media, mentionReferences}) => {
+    onMutate: async ({ postId, postIndex, pageIndex, content, media, mentionReferences }) => {
       await queryClient.cancelQueries({ queryKey: [key, id] })
       const previousPosts = queryClient.getQueryData([key, id])
 
@@ -643,7 +643,7 @@ export const useRemovePost = (key, id) => {
             return page
           })
 
-          
+
         })
         return updatedPosts
       });
@@ -660,8 +660,8 @@ export const useRemovePost = (key, id) => {
       queryClient.invalidateQueries({ queryKey: ["userMedia", user._id] })
       queryClient.invalidateQueries({ queryKey: ['feed'] })
 
-      
-      
+
+
     }
   })
 
@@ -831,8 +831,8 @@ export const useLikePageFeedPost = () => {
     },
     onSettled: (e) => {
       console.log(e)
-      
-      
+
+
     }
   })
 
@@ -885,8 +885,8 @@ export const useLikeSinglePost = (postId: string) => {
     },
     onSettled: (e) => {
       console.log(e)
-      
-      
+
+
     }
   })
 
@@ -937,8 +937,8 @@ export const useBookmarkSinglePost = () => {
       toast.error("something went wrong")
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1024,8 +1024,8 @@ export const useLikeSearchFeedPost = () => {
     },
     onSettled: (e) => {
       console.log(e)
-      
-      
+
+
     }
   })
 
@@ -1083,8 +1083,8 @@ export const useBookmarkSearchFeedPost = () => {
       queryClient.setQueryData(['pageFeed'], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1142,8 +1142,8 @@ export const useBookmarkPageFeedPost = () => {
       queryClient.setQueryData(['pageFeed'], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1202,8 +1202,8 @@ export const useLikeGroupFeedPost = () => {
       queryClient.setQueryData(['groupFeed'], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1257,8 +1257,8 @@ export const useBookmarkGroupFeedPost = () => {
       queryClient.setQueryData(['groupFeed'], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1320,8 +1320,8 @@ export const useLikeSearchPost = (query: string) => {
       queryClient.setQueryData(['userPosts'], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1373,11 +1373,11 @@ export const useBookmarkSearchPost = (query: string) => {
     onError: (err, newComment, context) => {
       console.log(err)
       toast.error("something went wrong")
-      
+
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1440,8 +1440,8 @@ export const useLikePost = (type: string, targetId: string) => {
       queryClient.setQueryData(['userPosts'], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1495,8 +1495,8 @@ export const useBookmarkPost = (type: string, targetId: string) => {
       queryClient.setQueryData([type, targetId], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1550,8 +1550,8 @@ export const useLikePagePost = () => {
       queryClient.setQueryData(['pagePosts'], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1605,8 +1605,8 @@ export const useLikeGroupPost = () => {
       queryClient.setQueryData(['groupPosts'], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1661,8 +1661,8 @@ export const useBookmarkPagePost = () => {
       queryClient.setQueryData(['pagePosts'], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1717,8 +1717,8 @@ export const useBookmarkGroupPost = () => {
       queryClient.setQueryData(['groupPosts'], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1778,8 +1778,8 @@ export const useLikeFeedPost = () => {
       queryClient.setQueryData(['feed'], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1833,8 +1833,8 @@ export const useBookmarkFeedPost = () => {
       queryClient.setQueryData(['feed'], context.previousComments)
     },
     onSettled: (e) => {
-      
-      
+
+
     }
   })
 
@@ -1845,4 +1845,31 @@ export const useBookmarkFeedPost = () => {
     mutateAsync,
     mutate
   }
+}
+
+
+
+//environmental contributions
+
+export function useGlobalEnvironmentalContributionsCount() {
+  const {
+    data,
+    isLoading,
+  } = useQuery({
+    queryKey: ['global-environmental-contributions-count'],
+    queryFn: () => {
+      return fetchGlobalCounts();
+    },
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+  });
+
+
+  return {
+    data,
+    isLoading,
+  };
 }

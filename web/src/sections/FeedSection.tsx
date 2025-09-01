@@ -1,5 +1,6 @@
 import { axiosClient } from '@/api/axiosClient'
 import { useAppSelector } from '@/app/hooks'
+import GlobalPlantsCounter from '@/components/GlobalPlantsCounter'
 import Post from '@/components/Post'
 import CreatePostStack from '@/components/Post/CreatePostStack'
 import ReelsSuggestionSection from '@/components/Reel/ReelsSuggetion'
@@ -23,7 +24,7 @@ function FeedSection() {
     const { inView, ref } = useInView()
     const [openPostStackModal, setOpenPostStackModal] = useState(false)
 
-    
+
     const reelsCursorRef = useRef(null);
     const [reelsCursor, setReelsCursor] = useState(null);
 
@@ -52,9 +53,9 @@ function FeedSection() {
 
     const navigate = useNavigate()
 
-    
+
     const navigateToReels = useCallback((reel) => {
-        
+
         navigate(`/reels/${reel._id}`, {
             state: {
                 sourceMode: 'feed',
@@ -64,30 +65,30 @@ function FeedSection() {
         });
     }, [navigate]);
 
-    
+
     const flattenedData = useMemo(() => {
         if (!data || !data.length) return [];
 
-        
+
         const reelsByPage = {};
 
         return data.flatMap((page, pageIndex) => {
-            
+
             const regularPosts = page.posts;
             const reelsSuggestions = page.reels;
 
-            
+
             if (reelsSuggestions.length > 0) {
                 reelsByPage[pageIndex] = reelsSuggestions;
 
-                
+
                 if (pageIndex === data.length - 1) {
                     const lastReel = reelsSuggestions[reelsSuggestions.length - 1];
                     setReelsCursor(lastReel.createdAt);
                 }
             }
 
-            
+
             const result = regularPosts.map(post => ({
                 ...post,
                 pageIndex,
@@ -95,7 +96,7 @@ function FeedSection() {
                 isReelsSection: false
             }));
 
-            
+
             if (reelsByPage[pageIndex]?.length > 0) {
                 result.push({
                     _id: `reels-section-${pageIndex}`,
@@ -117,9 +118,9 @@ function FeedSection() {
         })
     }, [])
 
-    
+
     const renderItem = useCallback((item, index) => {
-        
+
         if (item.isReelsSection) {
             return (
                 <ReelsSuggestionSection
@@ -130,11 +131,11 @@ function FeedSection() {
             );
         }
 
-        
+
         const isSecondLastItem = index === flattenedData.length - 2;
         const isThirdLastItem = index === flattenedData.length - 3;
 
-        
+
         const shouldAddRef = (
             (flattenedData.length >= 3 && isThirdLastItem) ||
             (flattenedData.length === 2 && isSecondLastItem)
@@ -176,7 +177,7 @@ function FeedSection() {
                         navigate("?createpost=true")
                     }}
                     handleReelClick={() => {
-                        
+
                         setOpenPostStackModal(false)
                         navigate("?createpost=true")
                     }}
@@ -204,6 +205,9 @@ function FeedSection() {
                     <Stories />
                 </div>
 
+                <GlobalPlantsCounter onNavigate={() => {
+                    navigate("environmental-contributions")
+                }} />
                 <div className='max-w-xl w-full flex flex-col gap-2 relative'>
                     <div className='w-full flex items-center justify-center h-fit border border-muted p-3 bg-card'>
                         <div className="w-full flex-1">
