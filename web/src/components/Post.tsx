@@ -82,91 +82,6 @@ const MENTION_REGEX = /@(\w+)/g;
 const HASHTAG_REGEX = /#([a-zA-Z0-9_]+)/g;
 const MAX_CONTENT_LENGTH = 360;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const ContentWithLinksAndMentions: React.FC<{
     content: string;
     expanded: boolean;
@@ -183,7 +98,7 @@ const ContentWithLinksAndMentions: React.FC<{
 
         let displayContent = content;
 
-        
+
         const userIdRegex = /@([a-f\d]{24})/g;
         let match;
         const processedIds = new Set<string>();
@@ -429,16 +344,15 @@ const ContentWithLinksAndMentions: React.FC<{
 
 const SharedPostContent = ({ sharedPost, handleNavigation }) => {
     const navigate = useNavigate();
-    const [expanded, setExpanded] = useState(false);
-    const expandable = sharedPost?.content?.slice(0, 360);
     const [width, setWidth] = useState(window.innerWidth);
     const [date, setDate] = useState("");
     const [_profile, setProfile] = useState(undefined);
-    const [fullname, setFullname] = useState(undefined);
     const [contentExpanded, setContentExpanded] = useState(false);
+    const [mapModalVisible, setMapModalVisible] = useState(false);
     const touchStartTime = useRef(0);
     const touchStartPos = useRef({ x: 0, y: 0 });
 
+    const isLocationPost = sharedPost?.postType && ['plantation', 'garbage_collection', 'water_ponds', 'rain_water'].includes(sharedPost.postType);
     const navigateToPost = () => navigate(`/post/${sharedPost?._id}?type=post`)
 
     const toggleReadMore = React.useCallback(() => {
@@ -464,12 +378,10 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
         const touchEndTime = Date.now();
         const touchDuration = touchEndTime - touchStartTime.current;
 
-        
         const touch = e.changedTouches[0];
         const deltaX = Math.abs(touch.clientX - touchStartPos.current.x);
         const deltaY = Math.abs(touch.clientY - touchStartPos.current.y);
 
-        
         if (touchDuration < 300 && deltaX < 10 && deltaY < 10) {
             e.preventDefault();
             e.stopPropagation();
@@ -500,7 +412,6 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
         if (sharedPost) {
             let date = format(sharedPost.createdAt ?? Date.now(), 'MMM d, yyy h:mm a');
             setProfile(sharedPost?.target?.profile);
-            setFullname(sharedPost?.target?.firstname + sharedPost?.target?.lastname);
             setDate(date);
         }
     }, [sharedPost]);
@@ -509,10 +420,10 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
         if (!sharedPost) return;
 
         const navigation = sharedPost?.type === "group"
-            ? `${domain}/group/${sharedPost.target.handle}`
+            ? `/group/${sharedPost.target.handle}`
             : sharedPost?.type === "page"
-                ? `${domain}/page/${sharedPost.target.handle}`
-                : `${domain}/user/${sharedPost.target.username}`;
+                ? `/page/${sharedPost.target.handle}`
+                : `/user/${sharedPost.target.username}`;
 
         navigate(navigation);
     };
@@ -523,105 +434,120 @@ const SharedPostContent = ({ sharedPost, handleNavigation }) => {
 
     return (
         <Card className="w-full border-muted bg-muted/30">
-            <CardHeader className='p-3'>
-                <div className='flex items-center justify-between'>
-                    <div className='flex gap-2' onClick={handleCardPress} style={{ cursor: 'pointer' }}>
-                        {sharedPost.type == 'group'
-                            ?
-                            <div className='relative '>
+            {(
+                <CardHeader className='p-3'>
+                    <div className='flex items-center justify-between'>
+                        <div className='flex gap-2' onClick={handleCardPress} style={{ cursor: 'pointer' }}>
+                            {sharedPost.type == 'group'
+                                ?
+                                <div className='relative '>
+                                    <Link to={navigation && `${domain}/${sharedPost?.type}/${navigation}`}>
+                                        <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
+                                            <Avatar className='font-normal'>
+                                                <AvatarImage src={_profile} alt="Avatar" />
+                                                <AvatarFallback>{(sharedPost?.target?.name ? (sharedPost?.target?.name[0]?.toUpperCase()) + sharedPost?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
+                                            </Avatar>
+                                        </div>
+                                    </Link>
+                                    <Link to={sharedPost?.user?.username && `${domain}/user/${sharedPost?.user?.username}`}>
+                                        <div className='absolute -bottom-1 border border-accent -right-1 bg-accent w-8 h-8 flex items-center justify-center rounded-full overflow-hidden'>
+                                            <Avatar className='font-normal'>
+                                                <AvatarImage src={sharedPost.user.profile} alt="Avatar" />
+                                                <AvatarFallback>{(sharedPost?.user?.firstname ? sharedPost?.user?.firstname[0]?.toUpperCase() : "D")}</AvatarFallback>
+                                            </Avatar>
+                                        </div>
+                                    </Link>
+                                </div>
+                                :
                                 <Link to={navigation && `${domain}/${sharedPost?.type}/${navigation}`}>
                                     <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
-                                        <Avatar className='font-normal'>
-                                            <AvatarImage src={_profile} alt="Avatar" />
-                                            <AvatarFallback>{(sharedPost?.target?.name ? (sharedPost?.target?.name[0]?.toUpperCase()) + sharedPost?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
-                                        </Avatar>
+                                        {sharedPost?.type !== 'user' ?
+                                            <Avatar className='font-normal'>
+                                                <AvatarImage src={_profile} alt="Avatar" />
+                                                <AvatarFallback>{(sharedPost?.target?.name ? (sharedPost?.target?.name[0]?.toUpperCase()) + sharedPost?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
+                                            </Avatar>
+                                            :
+                                            <Avatar className='font-normal'>
+                                                <AvatarImage src={_profile} alt="Avatar" />
+                                                <AvatarFallback>{(sharedPost?.target?.firstname ? (sharedPost?.target?.firstname[0]?.toUpperCase()) + (sharedPost?.target?.lastname && sharedPost?.target?.lastname[0]?.toUpperCase()) : "D")}</AvatarFallback>
+                                            </Avatar>
+                                        }
                                     </div>
                                 </Link>
-                                <Link to={sharedPost?.user?.username && `${domain}/user/${sharedPost?.user?.username}`}>
-                                    <div className='absolute -bottom-1 border border-accent -right-1 bg-accent w-8 h-8 flex items-center justify-center rounded-full overflow-hidden'>
-                                        <Avatar className='font-normal'>
-                                            <AvatarImage src={sharedPost.user.profile} alt="Avatar" />
-                                            <AvatarFallback>{(sharedPost?.user?.firstname ? sharedPost?.user?.firstname[0]?.toUpperCase() : "D")}</AvatarFallback>
-                                        </Avatar>
-                                    </div>
-                                </Link>
-                            </div>
-                            :
-                            <Link to={navigation && `${domain}/${sharedPost?.type}/${navigation}`}>
-                                <div className='bg-accent w-10 h-10 flex items-center justify-center rounded-full overflow-hidden'>
-                                    {sharedPost?.type !== 'user' ?
-                                        <Avatar className='font-normal'>
-                                            <AvatarImage src={_profile} alt="Avatar" />
-                                            <AvatarFallback>{(sharedPost?.target?.name ? (sharedPost?.target?.name[0]?.toUpperCase()) + sharedPost?.target?.name[1]?.toUpperCase() : "D")}</AvatarFallback>
-                                        </Avatar>
-                                        :
-                                        <Avatar className='font-normal'>
-                                            <AvatarImage src={_profile} alt="Avatar" />
-                                            <AvatarFallback>{(sharedPost?.target?.firstname ? (sharedPost?.target?.firstname[0]?.toUpperCase()) + (sharedPost?.target?.lastname && sharedPost?.target?.lastname[0]?.toUpperCase()) : "D")}</AvatarFallback>
-                                        </Avatar>
-                                    }
-                                </div>
-                            </Link>
-                        }
-
-                        <div className='flex flex-col gap-1'>
-                            {sharedPost.type == 'group' ?
-                                <h3 className='text-card-foreground flex gap-2 text-sm font-normal'>
-                                    <Link to={sharedPost?.user?.username && `${domain}/user/${sharedPost?.user?.username}`}>
-                                        {sharedPost?.user?.firstname + " " + sharedPost?.user?.lastname}
-                                    </Link>
-                                    <Link to={navigation && `${domain}/${sharedPost?.type}/${navigation}`}>
-                                        ({sharedPost?.target?.name || "Deleted"})
-                                    </Link>
-                                </h3>
-                                :
-                                navigation ?
-                                    <Link to={`${domain}/${sharedPost?.type}/${navigation}`}>
-                                        <h3 className='text-card-foreground flex gap-2 text-sm font-normal'>{(sharedPost?.target?.firstname ? (sharedPost?.target?.firstname + " " + sharedPost?.target?.lastname) : sharedPost?.target?.name)}</h3>
-                                    </Link>
-                                    :
-                                    <div>
-                                        <h3 className='text-card-foreground flex gap-2 text-sm font-normal'>{(sharedPost?.target?.firstname ? (sharedPost?.target?.firstname + " " + sharedPost?.target?.lastname) : sharedPost?.target?.name || 'Deleted')}</h3>
-                                    </div>
                             }
-                            <span className='text-muted-foreground text-xs font-normal'>{date}</span>
-                        </div>
 
-                        {sharedPost?.postType === 'reel' && (
-                            <div className="flex gap-1 items-center bg-blue-600/80 px-3 rounded-full ml-3 shadow-sm">
-                                <FilmIcon size={16} color='white' />
-                                <span className="text-white text-xs font-semibold tracking-wide">Reel</span>
+                            <div className='flex flex-col gap-1'>
+                                {sharedPost.type == 'group' ?
+                                    <h3 className='text-card-foreground flex gap-2 text-sm font-normal'>
+                                        <Link to={sharedPost?.user?.username && `${domain}/user/${sharedPost?.user?.username}`}>
+                                            {sharedPost?.user?.firstname + " " + sharedPost?.user?.lastname}
+                                        </Link>
+                                        <Link to={navigation && `${domain}/${sharedPost?.type}/${navigation}`}>
+                                            ({sharedPost?.target?.name || "Deleted"})
+                                        </Link>
+                                    </h3>
+                                    :
+                                    navigation ?
+                                        <Link to={`${domain}/${sharedPost?.type}/${navigation}`}>
+                                            <h3 className='text-card-foreground flex gap-2 text-sm font-normal'>{(sharedPost?.target?.firstname ? (sharedPost?.target?.firstname + " " + sharedPost?.target?.lastname) : sharedPost?.target?.name)}</h3>
+                                        </Link>
+                                        :
+                                        <div>
+                                            <h3 className='text-card-foreground flex gap-2 text-sm font-normal'>{(sharedPost?.target?.firstname ? (sharedPost?.target?.firstname + " " + sharedPost?.target?.lastname) : sharedPost?.target?.name || 'Deleted')}</h3>
+                                        </div>
+                                }
+                                <span className='text-muted-foreground text-xs font-normal'>{date}</span>
                             </div>
-                        )}
+
+                            {sharedPost?.postType === 'reel' && (
+                                <div className="flex gap-1 items-center bg-blue-600/80 px-3 rounded-full ml-3 shadow-sm">
+                                    <FilmIcon size={16} color='white' />
+                                    <span className="text-white text-xs font-semibold tracking-wide">Reel</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            </CardHeader>
+                </CardHeader>
+            )}
+
             <CardContent className="flex flex-col gap-2 text-sm p-0 sm:px-3 font-normal"
                 onClick={handleClick}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
-
             >
-                <div className='text-sm font-normal px-2 sm:px-0'>
-                    {sharedPost?.backgroundColor ? (
-                        <BackgroundPost
-                            content={sharedPost.content}
-                            backgroundColor={sharedPost.backgroundColor}
-                            mentions={sharedPost.populatedMentions || []}
-                            onHashtagPress={handleHashtagPress}
-                            expanded={contentExpanded}
-                            toggleReadMore={toggleReadMore}
-                        />
-                    ) : (
-                        <ContentWithLinksAndMentions
-                            content={sharedPost?.content || ''}
-                            expanded={contentExpanded}
-                            toggleReadMore={toggleReadMore}
-                            mentions={sharedPost.populatedMentions || []}
-                            onHashtagPress={handleHashtagPress}
-                        />
-                    )}
-                </div>
+                {/* Location Post Display */}
+                {isLocationPost && (
+                    <LocationPostDisplay
+                        post={sharedPost}
+                        isShared={true}
+                        mapModalVisible={mapModalVisible}
+                        setMapModalVisible={setMapModalVisible}
+                    />
+                )}
+
+                {/* Regular content - only show for non-location posts */}
+                {(!isLocationPost && sharedPost?.content?.length > 0) && (
+                    <div className='text-sm font-normal px-2 sm:px-0'>
+                        {sharedPost?.backgroundColor ? (
+                            <BackgroundPost
+                                content={sharedPost.content}
+                                backgroundColor={sharedPost.backgroundColor}
+                                mentions={sharedPost.populatedMentions || []}
+                                onHashtagPress={handleHashtagPress}
+                                expanded={contentExpanded}
+                                toggleReadMore={toggleReadMore}
+                            />
+                        ) : (
+                            <ContentWithLinksAndMentions
+                                content={sharedPost?.content || ''}
+                                expanded={contentExpanded}
+                                toggleReadMore={toggleReadMore}
+                                mentions={sharedPost.populatedMentions || []}
+                                onHashtagPress={handleHashtagPress}
+                            />
+                        )}
+                    </div>
+                )}
 
                 {sharedPost?.postType === 'reel' && (
                     <div className="flex justify-center py-2">
@@ -759,8 +685,8 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
         }
 
         if (inView && postData?.promotion?.length > 0 && postData?.promotion[0]?.active == 1) {
-            
-            
+
+
         }
     }, [inView])
 
@@ -801,7 +727,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
 
     let navigation = postData?.type == "user" ? postData?.target?.username : postData?.target?.handle
 
-    
+
     const hasSharedPost = postData?.sharedPost && Object.keys(postData.sharedPost).length > 0;
 
     if (postData?.isUploaded == false) {
@@ -992,7 +918,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                         toggleReadMore={toggleReadMore}
                                     />
                                 ) : (
-                                    
+
                                     <ContentWithLinksAndMentions
                                         content={postData?.content || ''}
                                         expanded={contentExpanded}
@@ -1171,7 +1097,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                     sharedPost={postData}
                                     postId={postData._id}
                                     postType={postData.type}
-                                    
+
                                     onClose={() => setShareState(false)}
                                 />
                             }
@@ -1184,7 +1110,7 @@ const Post: React.FC<PostProps> = ({ postIndex, pageIndex, postData, model, useL
                                     sharedPost={postData}
                                     postId={postData._id}
                                     postType={postData.type}
-                                    
+
                                     onClose={() => setShareState(false)}
                                 />
                             }

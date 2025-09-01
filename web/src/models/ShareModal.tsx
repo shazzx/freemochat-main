@@ -59,7 +59,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
 
       createSharedPost.mutate(postDetails);
 
-      toast.success("Reel shared successfully!");
+      toast.success("Post shared successfully!");
       if (setPostIndex) {
         setPostIndex(null);
       }

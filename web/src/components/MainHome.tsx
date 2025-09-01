@@ -304,7 +304,7 @@ const MainHome = ({ children }: any) => {
               {searchParams.get('search') == 'active' &&
                 <form onSubmit={async (e) => {
                   e.preventDefault()
-                  navigate(`/search?query=${searchQuery.trim()}&&type=default`)
+                  navigate(`/search?query=${searchQuery.trim()}&&type=all`)
                 }}>
                   <div className="flex relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -338,7 +338,7 @@ const MainHome = ({ children }: any) => {
                             <div className="px-4 py-2 flex justify-between cursor-pointer hover:bg-accent" onClick={() => {
                               setSearchSuggestionsState(false)
                               searchRef.current.value = suggestion.value
-                              navigate(`/search?query=${suggestion.value}&&type=default`, { replace: true })
+                              navigate(`/search?query=${suggestion.value}&&type=all`, { replace: true })
                             }}>
                               <span >{suggestion.value}</span>
                             </div>

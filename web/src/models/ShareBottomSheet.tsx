@@ -59,7 +59,7 @@ const ShareBottomSheet: React.FC<ShareBottomSheetProps> = ({
 
       createSharedPost.mutate(postDetails);
 
-      toast.success("Reel shared successfully!");
+      toast.success("Post shared successfully!");
       if (setPostIndex) {
         setPostIndex(null);
       }

@@ -109,6 +109,7 @@ interface LocationPostDisplayProps {
     isLikedByUser?: boolean;
     isBookmarkedByUser?: boolean;
   };
+  isShared?: boolean,
   setEditModalVisible?: (value: boolean) => void;
   setMapModalVisible?: (value: boolean) => void;
   mapModalVisible?: boolean;
@@ -380,6 +381,7 @@ const ReusableMap: React.FC<ReusableMapProps> = ({
 
 const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
   post,
+  isShared,
   setMapModalVisible,
   mapModalVisible = false,
   theme = { colors: { text: '#000', card: '#fff', primary: '#007bff', surfaceVariant: '#f5f5f5', onSurfaceVariant: '#666' } }
@@ -668,7 +670,7 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
           </div>
         )}
 
-        {(post.likesCount > 0 || post.commentsCount > 0 || post.sharesCount > 0) && (
+        {(post.likesCount > 0 || post.commentsCount > 0 || post.sharesCount > 0) && !isShared && (
           <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
               {post.likesCount > 0 && (
@@ -693,7 +695,7 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
       </div>
 
       {mapModalVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" style={{ isolation: 'isolate', transform: 'translateZ(0)' }}>
           <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl h-[80vh] flex flex-col">
             <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
@@ -735,7 +737,7 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
       )}
 
       {imageModalVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[9999] p-4" style={{ isolation: 'isolate', transform: 'translateZ(0)' }}>
           <div className="relative w-full max-w-4xl h-full flex items-center justify-center">
             <button
               onClick={() => setImageModalVisible(false)}
@@ -801,7 +803,7 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
               </div>
             )}
           </div>
-        </div>
+        </div >
       )}
 
       <ElementDetailsModal
@@ -811,12 +813,14 @@ const LocationPostDisplay: React.FC<LocationPostDisplayProps> = ({
         onClose={() => setShowElementModal(false)}
       />
 
-      {showMenu && (
-        <div
-          className="fixed inset-0 z-0"
-          onClick={() => setShowMenu(false)}
-        />
-      )}
+      {
+        showMenu && (
+          <div
+            className="fixed inset-0 z-0"
+            onClick={() => setShowMenu(false)}
+          />
+        )
+      }
     </>
   );
 };
