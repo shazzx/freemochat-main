@@ -1,5 +1,4 @@
 import { SimpleCard } from '@/components/Card'
-import { AdminDataTable } from '@/components/TestDataTable'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
@@ -7,6 +6,7 @@ import { MoreHorizontal } from 'lucide-react'
 import { format } from 'date-fns'
 import React, { useState } from 'react'
 import { useCampaigns, useCampaignsActivationToggle } from '@/hooks/Campaigns/useCampaigns'
+import { DataTableCampaigns } from './DataTableCampaigns'
 
 
 function CampaignsSection() {
@@ -128,7 +128,7 @@ function CampaignsSection() {
 
 
       </div>
-      <AdminDataTable title={"Campaigns"} filter={true} setReverse={setReverse} refetch={refetch} reverse={reverse} columns={columns} data={!isLoading && data[0]?.promotions || []} isLoading={isLoading} />
+      <DataTableCampaigns title={"Campaigns"} filter={true} setReverse={setReverse} refetch={refetch} reverse={reverse} columns={columns} data={!isLoading && data[0]?.promotions || []} isLoading={isLoading} />
     </main>
   )
 }
